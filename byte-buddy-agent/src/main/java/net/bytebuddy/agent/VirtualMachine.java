@@ -1660,35 +1660,9 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, false);
-        }
-
-        /**
-         * Attaches to the supplied process id using the default JNA implementation.
-         *
-         * @param processId  The process id.
-         * @param ignoreUser {@code true} if VM processes that are owned by different users should be considered.
-         * @return A suitable virtual machine implementation.
-         * @throws IOException If an IO exception occurs during establishing the connection.
-         */
-        public static VirtualMachine attach(String processId, boolean ignoreUser) throws IOException {
             return attach(processId, 5000, Platform.isWindows()
                     ? new Dispatcher.ForJnaWindowsEnvironment()
                     : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
-        }
-
-        /**
-         * Attaches to the supplied process id. This method will not consider attaching to VMs owned by
-         * different users than the current user.
-         *
-         * @param processId  The process id.
-         * @param timeout    The timeout for establishing the socket connection.
-         * @param dispatcher The connector to use to communicate with the target VM.
-         * @return A suitable virtual machine implementation.
-         * @throws IOException If an IO exception occurs during establishing the connection.
-         */
-        public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher) throws IOException {
-            return attach(processId, timeout, dispatcher, false);
         }
 
         /**
@@ -1697,12 +1671,12 @@ public interface VirtualMachine {
          * @param processId  The process id.
          * @param timeout    The timeout for establishing the socket connection.
          * @param dispatcher The connector to use to communicate with the target VM.
-         * @param ignoreUser {@code true} if VM processes that are owned by different users should be considered.
          * @return A suitable virtual machine implementation.
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
-        public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher, boolean ignoreUser) throws IOException {
+        public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher) throws IOException {
             File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, dispatcher.getTemporaryFolder(processId)), ".com_ibm_tools_attach");
+            long userId = dispatcher.userId();
             RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
             try {
                 FileLock attachLockLock = attachLock.getChannel().lock();
@@ -1716,10 +1690,9 @@ public interface VirtualMachine {
                             if (vmFolder == null) {
                                 throw new IllegalStateException("No descriptor files found in " + directory);
                             }
-                            long userId = dispatcher.userId();
                             virtualMachines = new ArrayList<Properties>();
                             for (File aVmFolder : vmFolder) {
-                                if (aVmFolder.isDirectory() && (ignoreUser || dispatcher.getOwnerIdOf(aVmFolder) == userId)) {
+                                if (aVmFolder.isDirectory() && isFileOwnedByUid(dispatcher, aVmFolder, userId)) {
                                     File attachInfo = new File(aVmFolder, "attachInfo");
                                     if (attachInfo.isFile()) {
                                         Properties virtualMachine = new Properties();
@@ -1730,12 +1703,7 @@ public interface VirtualMachine {
                                             inputStream.close();
                                         }
                                         int targetProcessId = Integer.parseInt(virtualMachine.getProperty("processId"));
-                                        long targetUserId;
-                                        try {
-                                            targetUserId = Long.parseLong(virtualMachine.getProperty("userUid"));
-                                        } catch (NumberFormatException ignored) {
-                                            targetUserId = 0L;
-                                        }
+                                        long targetUserId = getUserId(virtualMachine);
                                         if (userId != 0L && targetUserId == 0L) {
                                             targetUserId = dispatcher.getOwnerIdOf(attachInfo);
                                         }
@@ -1782,9 +1750,13 @@ public interface VirtualMachine {
                             key = Long.toHexString(SECURE_RANDOM.nextLong());
                         }
                         File reply = new File(receiver, "replyInfo");
+                        long targetUserId = getUserId(target);
                         try {
                             if (reply.createNewFile()) {
                                 dispatcher.setPermissions(reply, 0600);
+                            }
+                            if (0 == userId && 0 != targetUserId) {
+                                dispatcher.chownFileToTargetUid(reply, targetUserId);
                             }
                             FileOutputStream outputStream = new FileOutputStream(reply);
                             try {
@@ -1865,6 +1837,26 @@ public interface VirtualMachine {
             } finally {
                 attachLock.close();
             }
+        }
+
+        private static long getUserId(Properties virtualMachine) {
+            long targetUserId;
+            try {
+                targetUserId = Long.parseLong(virtualMachine.getProperty("userUid"));
+            } catch (NumberFormatException ignored) {
+                targetUserId = 0L;
+            }
+            return targetUserId;
+        }
+
+        /**
+         * Check if the file is owned by the UID.  Note that UID 0 "owns" all files.
+         * @param aVmFolder File or directory
+         * @param userId user UID.
+         * @return true if the uid owns the file or uid == 0.
+         */
+        private static boolean isFileOwnedByUid(Dispatcher dispatcher, File aVmFolder, long userId) {
+            return 0 == userId || dispatcher.getOwnerIdOf(aVmFolder) == userId;
         }
 
         /**
@@ -2078,6 +2070,13 @@ public interface VirtualMachine {
             void decrementSemaphore(File directory, String name, boolean global, int count);
 
             /**
+             * change the ownership of a file.  Can be called only if this process is owned by root.
+             * @param path path to the file
+             * @param targetUserId effective userid
+             */
+            void chownFileToTargetUid(File path, long targetUserId);
+
+            /**
              * A connector implementation for a POSIX environment using JNA.
              */
             class ForJnaPosixEnvironment implements Dispatcher {
@@ -2215,6 +2214,14 @@ public interface VirtualMachine {
                 }
 
                 /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void chownFileToTargetUid(File file, long targetUserId) {
+                    library.chown(file.getAbsolutePath(), targetUserId);
+                }
+
+                /**
                  * Notifies a POSIX semaphore.
                  *
                  * @param directory         The semaphore's directory.
@@ -2318,6 +2325,16 @@ public interface VirtualMachine {
                      * @throws LastErrorException If an error occurred.
                      */
                     int chmod(String path, int mode) throws LastErrorException;
+
+                    /**
+                     * Runs the {@code chown} command.
+                     *
+                     * @param path The file path.
+                     * @param uid The userid to set.
+                     * @return The return code.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int chown(String path, long uid) throws LastErrorException;
 
                     /**
                      * Runs the {@code ftok} command.
@@ -2500,6 +2517,14 @@ public interface VirtualMachine {
                     } finally {
                         handle.close();
                     }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void chownFileToTargetUid(File path, long targetUserId) {
+                    /* do nothing */
                 }
 
                 /**
