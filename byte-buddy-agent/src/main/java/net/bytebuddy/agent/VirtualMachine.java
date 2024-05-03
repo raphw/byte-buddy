@@ -1662,7 +1662,7 @@ public interface VirtualMachine {
         public static VirtualMachine attach(String processId) throws IOException {
             return attach(processId, 5000, Platform.isWindows()
                     ? new Dispatcher.ForJnaWindowsEnvironment()
-                    : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
+                    : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS), ignoreUser);
         }
 
         /**
