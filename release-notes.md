@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. Mai 2024: version 1.14.15
+
+- Allow attaching from root on J9.
+
 ### 23. April 2024: version 1.14.14
 
 - Adjust type validation to accept additional names that are legal in the class file format.
