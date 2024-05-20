@@ -23,7 +23,7 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Build project
-        run: ./mvnw verify -Pjava21 -Dnet.bytebuddy.experimental
+        run: ./mvnw verify -Pjava22 -Dnet.bytebuddy.experimental
         continue-on-error: false
   hotspot-supported:
     name: Any (supported)
@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, macos-11, windows-2022 ]
+        os: [ ubuntu-20.04, macos-12, windows-2022 ]
         java: [ 8, 11 ]
     runs-on: ${{ matrix.os }}
     needs: [ extended ]
