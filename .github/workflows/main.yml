@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, macos-11, windows-2022 ]
+        os: [ ubuntu-20.04, macos-12, windows-2022 ]
         java: [ 8, 11, 17, 21 ]
     runs-on: ${{ matrix.os }}
     needs: [ extended ]
