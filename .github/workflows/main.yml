@@ -23,7 +23,7 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Build project
-        run: ./mvnw verify -Pjava22 -Dnet.bytebuddy.experimental
+        run: ./mvnw verify -Pjava23
         continue-on-error: false
   hotspot-supported:
     name: Any (supported)

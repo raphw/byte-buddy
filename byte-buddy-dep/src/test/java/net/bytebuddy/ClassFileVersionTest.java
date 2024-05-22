@@ -80,7 +80,7 @@ public class ClassFileVersionTest {
                 {20, 20, Arrays.asList("1.20", "20"), Opcodes.V20, (short) 64, (short) 0, true, true, true},
                 {21, 21, Arrays.asList("1.21", "21"), Opcodes.V21, (short) 65, (short) 0, true, true, true},
                 {22, 22, Arrays.asList("1.22", "22"), Opcodes.V22, (short) 66, (short) 0, true, true, true},
-                {23, 23, Arrays.asList("1.23", "23"), Opcodes.V22 + 1, (short) 67, (short) 0, true, true, true}
+                {23, 23, Arrays.asList("1.23", "23"), Opcodes.V23, (short) 67, (short) 0, true, true, true}
         });
     }
 
