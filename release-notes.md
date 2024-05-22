@@ -1,7 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
-### 8. Mai 2024: version 1.14.15
+### 22. May 2024: version 1.14.16
+
+- Update ASM and introduce support for Java 23.
+
+### 8. May 2024: version 1.14.15
 
 - Allow attaching from root on J9.
 
@@ -28,7 +32,7 @@ Byte Buddy release notes
 - Adjusts Gradle plugin to support Gradle 8.4 without warnings.
 - Avoid blurry exception on build plugin for fail fast.
 
-### 9. October 2023: version 1.14.10
+### 16. October 2023: version 1.14.10
 
 - Add lazy facade to default `TypePool` in `AgentBuilder` to avoid parsing of types ignored by name.
 - Avoid module info classes in Android plugin.
