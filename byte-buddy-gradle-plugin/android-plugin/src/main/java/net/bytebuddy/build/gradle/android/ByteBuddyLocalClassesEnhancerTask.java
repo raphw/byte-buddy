@@ -378,7 +378,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     outputStream.closeEntry();
                 } catch (ZipException exception) {
                     String name = element.getName();
-                    if (!name.startsWith("META-INF") && !name.endsWith("-info.class")) {
+                    if (!name.startsWith("META-INF") && !name.endsWith("-info.class") && name.endsWith(".class")) {
                         throw exception;
                     }
                 }
