@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. May 2024: version 1.14.17
+
+- Avoid crashing of Android plugin when there are duplicate files for licenses or license notices.
+
 ### 22. May 2024: version 1.14.16
 
 - Update ASM and introduce support for Java 23.
