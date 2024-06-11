@@ -8,15 +8,19 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
@@ -1638,7 +1642,7 @@ public class AdviceTest {
     @Test
     public void testAssigningEnterPostProcessorInline() throws Exception {
         Class<?> type = new ByteBuddy()
-                .redefine(PostProcessorInlineTest.class)
+                .redefine(PostProcessorInline.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
                     public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
                         return new Advice.PostProcessor() {
@@ -1655,7 +1659,7 @@ public class AdviceTest {
                             }
                         };
                     }
-                }).to(PostProcessorInlineTest.class).on(named(FOO)))
+                }).to(PostProcessorInline.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -1665,7 +1669,7 @@ public class AdviceTest {
     @Test
     public void testAssigningEnterPostProcessorDelegate() throws Exception {
         Class<?> type = new ByteBuddy()
-                .redefine(PostProcessorDelegateTest.class)
+                .redefine(PostProcessorDelegate.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
                     public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
                         return new Advice.PostProcessor() {
@@ -1682,7 +1686,7 @@ public class AdviceTest {
                             }
                         };
                     }
-                }).to(PostProcessorDelegateTest.class).on(named(FOO)))
+                }).to(PostProcessorDelegate.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -1785,13 +1789,37 @@ public class AdviceTest {
     @Test
     public void testWriteFieldInConstructor() throws Exception {
         Class<?> sample = new ByteBuddy()
-                .redefine(ConstructorWriteFieldTest.class)
-                .visit(Advice.to(ConstructorWriteFieldTest.class).on(isConstructor()))
+                .redefine(ConstructorWriteField.class)
+                .visit(Advice.to(ConstructorWriteField.class).on(isConstructor()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(sample.getField(FOO).get(sample.getConstructor().newInstance()), is((Object) FOO));
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDroppingOfThisFrameInConstructor() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineConstructor(Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(
+                        MethodVariableAccess.loadThis(),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedConstructor(Object.class.getConstructor()))
+                                .special(TypeDescription.ForLoadedType.of(Object.class)),
+                        new StackManipulation.AbstractBase() {
+                            @Override
+                            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                                methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                                return Size.ZERO;
+                            }
+                        },
+                        MethodReturn.VOID
+                ))
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(EmptyExitAdvice.class).on(isConstructor()))
+                .make();
+    }
+
 
     @Test(expected = IllegalArgumentException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
@@ -4127,7 +4155,7 @@ public class AdviceTest {
         }
     }
 
-    public static class PostProcessorInlineTest {
+    public static class PostProcessorInline {
 
         @Advice.OnMethodEnter
         static String enter() {
@@ -4139,7 +4167,7 @@ public class AdviceTest {
         }
     }
 
-    public static class PostProcessorDelegateTest {
+    public static class PostProcessorDelegate {
 
         @Advice.OnMethodEnter(inline = false)
         static String enter() {
@@ -4151,13 +4179,21 @@ public class AdviceTest {
         }
     }
 
-    public static class ConstructorWriteFieldTest {
+    public static class ConstructorWriteField {
 
         public String foo;
 
         @Advice.OnMethodEnter
         static String enter(@Advice.FieldValue(value = "foo", readOnly = false) String value) {
             return value = "foo";
+        }
+    }
+
+    public static class EmptyExitAdvice {
+
+        @Advice.OnMethodExit
+        static void exit() {
+            /* do nothing */
         }
     }
 }

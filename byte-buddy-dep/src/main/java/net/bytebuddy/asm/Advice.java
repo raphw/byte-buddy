@@ -7186,7 +7186,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * {@inheritDoc}
                  */
                 public void injectCompletionFrame(MethodVisitor methodVisitor) {
-                    if (allowCompactCompletionFrame && !expandFrames && currentFrameDivergence == 0 && postMethodTypes.size() < 4) {
+                    if (false && allowCompactCompletionFrame && !expandFrames && currentFrameDivergence == 0 && postMethodTypes.size() < 4) {
                         if (postMethodTypes.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
@@ -7439,6 +7439,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 break;
                             default:
                                 throw new IllegalArgumentException("Unexpected frame type: " + type);
+                        }
+                        if (instrumentedMethod.isConstructor() && currentFrameDivergence < instrumentedMethod.getStackSize()) {
+                            throw new IllegalStateException(instrumentedMethod + " dropped implicit 'this' frame");
                         }
                         methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
                     }
