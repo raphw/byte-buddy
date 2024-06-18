@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.agent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.agent.utility.nullability.MaybeNull;
 
 import java.lang.instrument.Instrumentation;
@@ -114,6 +115,7 @@ public class Installer {
      *
      * @param instrumentation The instrumentation instance.
      */
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not interrupt agent attachment.")
     private static void doMain(Instrumentation instrumentation) {
         Installer.instrumentation = instrumentation;
         try {
