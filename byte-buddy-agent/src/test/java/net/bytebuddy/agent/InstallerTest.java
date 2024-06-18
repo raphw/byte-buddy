@@ -89,6 +89,6 @@ public class InstallerTest {
 
     @Test
     public void testInstallerObfuscatedNameMatches() throws Exception {
-        assertThat(Installer.NAME, CoreMatchers.is(Installer.class.getName()));
+        assertThat(Installer.NAME, is(Installer.class.getName()));
     }
 }
