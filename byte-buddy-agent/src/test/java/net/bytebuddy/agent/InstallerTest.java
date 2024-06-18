@@ -1,5 +1,6 @@
 package net.bytebuddy.agent;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -84,5 +85,10 @@ public class InstallerTest {
         } catch (InvocationTargetException exception) {
             throw (Exception) exception.getTargetException();
         }
+    }
+
+    @Test
+    public void testInstallerObfuscatedNameMatches() throws Exception {
+        assertThat(Installer.NAME, CoreMatchers.is(Installer.class.getName()));
     }
 }

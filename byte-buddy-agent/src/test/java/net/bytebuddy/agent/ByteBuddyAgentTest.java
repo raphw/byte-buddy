@@ -61,12 +61,4 @@ public class ByteBuddyAgentTest {
             throw (Exception) exception.getTargetException();
         }
     }
-
-    @Test
-    public void testInstallerObfuscatedNameMatches() throws Exception {
-        Field field = ByteBuddyAgent.class.getDeclaredField("INSTALLER_NAME");
-        field.setAccessible(true);
-        Object value = field.get(null);
-        assertThat(value, CoreMatchers.is(Installer.class.getName()));
-    }
 }

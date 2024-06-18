@@ -66,11 +66,6 @@ public class ByteBuddyAgent {
     public static final String LATENT_RESOLVE = "net.bytebuddy.agent.latent";
 
     /**
-     * The name of the {@link Installer} class that is stored in an obfuscated format which will not be relocated.
-     */
-    private static final String INSTALLER_NAME = new StringBuilder("rellatsnI.tnega.yddubetyb.ten").reverse().toString();
-
-    /**
      * The manifest property specifying the agent class.
      */
     private static final String AGENT_CLASS_PROPERTY = "Agent-Class";
@@ -735,8 +730,8 @@ public class ByteBuddyAgent {
      */
     @MaybeNull
     private static Instrumentation doGetInstrumentation() {
-        if (!INSTALLER_NAME.equals(Installer.class.getName())) {
-            Instrumentation instrumentation = doGetInstrumentation(INSTALLER_NAME);
+        if (!Installer.NAME.equals(Installer.class.getName())) {
+            Instrumentation instrumentation = doGetInstrumentation(Installer.NAME);
             if (instrumentation != null) {
                 return instrumentation;
             }
@@ -1535,9 +1530,9 @@ public class ByteBuddyAgent {
              */
             public File resolve() throws IOException {
                 try {
-                    if (!Installer.class.getName().equals(INSTALLER_NAME)) {
+                    if (!Installer.class.getName().equals(Installer.NAME)) {
                         try {
-                            File resolved = trySelfResolve(Class.forName(INSTALLER_NAME,
+                            File resolved = trySelfResolve(Class.forName(Installer.NAME,
                                     false,
                                     ClassLoader.getSystemClassLoader()));
                             if (resolved != null) {
