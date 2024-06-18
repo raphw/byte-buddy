@@ -1,5 +1,6 @@
 package net.bytebuddy.agent;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,5 +60,13 @@ public class ByteBuddyAgentTest {
         } catch (InvocationTargetException exception) {
             throw (Exception) exception.getTargetException();
         }
+    }
+
+    @Test
+    public void testInstallerObfuscatedNameMatches() throws Exception {
+        Field field = ByteBuddyAgent.class.getDeclaredField("INSTALLER_NAME");
+        field.setAccessible(true);
+        Object value = field.get(null);
+        assertThat(value, CoreMatchers.is(Installer.class.getName()));
     }
 }

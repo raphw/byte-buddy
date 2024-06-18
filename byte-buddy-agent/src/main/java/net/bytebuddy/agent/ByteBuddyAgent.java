@@ -66,6 +66,11 @@ public class ByteBuddyAgent {
     public static final String LATENT_RESOLVE = "net.bytebuddy.agent.latent";
 
     /**
+     * The name of the {@link Installer} class that is stored in an obfuscated format which will not be relocated.
+     */
+    private static final String INSTALLER_NAME = new StringBuilder("rellatsnI.tnega.yddubetyb.ten").reverse().toString();
+
+    /**
      * The manifest property specifying the agent class.
      */
     private static final String AGENT_CLASS_PROPERTY = "Agent-Class";
@@ -89,21 +94,6 @@ public class ByteBuddyAgent {
      * The manifest property value for the manifest version.
      */
     private static final String MANIFEST_VERSION_VALUE = "1.0";
-
-    /**
-     * The size of the buffer for copying the agent installer file into another jar.
-     */
-    private static final int BUFFER_SIZE = 1024 * 8;
-
-    /**
-     * Convenience indices for reading and writing to the buffer to make the code more readable.
-     */
-    private static final int START_INDEX = 0, END_OF_FILE = -1;
-
-    /**
-     * The status code expected as a result of a successful attachment.
-     */
-    private static final int SUCCESSFUL_ATTACH = 0;
 
     /**
      * Representation of the bootstrap {@link java.lang.ClassLoader}.
@@ -153,26 +143,9 @@ public class ByteBuddyAgent {
     private static final String OS_NAME = "os.name";
 
     /**
-     * The name of the method for reading the installer's instrumentation.
-     */
-    private static final String INSTRUMENTATION_METHOD = "getInstrumentation";
-
-    /**
      * Represents the {@code file} URL protocol.
      */
     private static final String FILE_PROTOCOL = "file";
-
-    /**
-     * An indicator variable to express that no instrumentation is available.
-     */
-    @AlwaysNull
-    private static final Instrumentation UNAVAILABLE = null;
-
-    /**
-     * Represents a failed attempt to self-resolve a jar file location.
-     */
-    @AlwaysNull
-    private static final File CANNOT_SELF_RESOLVE = null;
 
     /**
      * The attachment type evaluator to be used for determining if an attachment requires an external process.
@@ -672,10 +645,10 @@ public class ByteBuddyAgent {
                     JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(attachmentJar));
                     try {
                         jarOutputStream.putNextEntry(new JarEntry(Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
-                        byte[] buffer = new byte[BUFFER_SIZE];
+                        byte[] buffer = new byte[1024 * 8];
                         int index;
-                        while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                            jarOutputStream.write(buffer, START_INDEX, index);
+                        while ((index = inputStream.read(buffer)) != -1) {
+                            jarOutputStream.write(buffer, 0, index);
                         }
                         jarOutputStream.closeEntry();
                     } finally {
@@ -702,7 +675,7 @@ public class ByteBuddyAgent {
                     processId,
                     agent.getAbsolutePath(),
                     Boolean.toString(isNative),
-                    argument == null ? "" : (AGENT_ARGUMENT_SEPARATOR + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
+                    argument == null ? "" : (AGENT_ARGUMENT_SEPARATOR + argument)).start().waitFor() != 0) {
                 throw new IllegalStateException("Could not self-attach to current VM using external process - set a property "
                         + Attacher.DUMP_PROPERTY
                         + " to dump the process output to a file at the specified location");
@@ -726,31 +699,31 @@ public class ByteBuddyAgent {
     private static File trySelfResolve() {
         try {
             if (Boolean.getBoolean(LATENT_RESOLVE)) {
-                return CANNOT_SELF_RESOLVE;
+                return null;
             }
             ProtectionDomain protectionDomain = Attacher.class.getProtectionDomain();
             if (protectionDomain == null) {
-                return CANNOT_SELF_RESOLVE;
+                return null;
             }
             CodeSource codeSource = protectionDomain.getCodeSource();
             if (codeSource == null) {
-                return CANNOT_SELF_RESOLVE;
+                return null;
             }
             URL location = codeSource.getLocation();
             if (!location.getProtocol().equals(FILE_PROTOCOL)) {
-                return CANNOT_SELF_RESOLVE;
+                return null;
             }
             try {
                 File file = new File(location.toURI());
                 if (file.getPath().contains(AGENT_ARGUMENT_SEPARATOR)) {
-                    return CANNOT_SELF_RESOLVE;
+                    return null;
                 }
                 return file;
             } catch (URISyntaxException ignored) {
                 return new File(location.getPath());
             }
         } catch (Exception ignored) {
-            return CANNOT_SELF_RESOLVE;
+            return null;
         }
     }
 
@@ -761,10 +734,28 @@ public class ByteBuddyAgent {
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
     @MaybeNull
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     private static Instrumentation doGetInstrumentation() {
+        if (!INSTALLER_NAME.equals(Installer.class.getName())) {
+            Instrumentation instrumentation = doGetInstrumentation(INSTALLER_NAME);
+            if (instrumentation != null) {
+                return instrumentation;
+            }
+        }
+        return doGetInstrumentation(Installer.class.getName());
+    }
+
+    /**
+     * Performs the actual lookup of the {@link java.lang.instrument.Instrumentation} from an installed
+     * Byte Buddy agent and returns the instance, or returns {@code null} if not present.
+     *
+     * @param name The name of the {@link Installer} class which might be shaded.
+     * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
+     */
+    @MaybeNull
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
+    private static Instrumentation doGetInstrumentation(String name) {
         try {
-            Class<?> installer = Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader());
+            Class<?> installer = Class.forName(name, true, ClassLoader.getSystemClassLoader());
             try {
                 Class<?> module = Class.forName("java.lang.Module");
                 Method getModule = Class.class.getMethod("getModule");
@@ -775,11 +766,11 @@ public class ByteBuddyAgent {
             } catch (ClassNotFoundException ignored) {
                 /* empty */
             }
-            return (Instrumentation) Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader())
-                    .getMethod(INSTRUMENTATION_METHOD)
+            return (Instrumentation) Class.forName(name, true, ClassLoader.getSystemClassLoader())
+                    .getMethod("getInstrumentation")
                     .invoke(null);
         } catch (Exception ignored) {
-            return UNAVAILABLE;
+            return null;
         }
     }
 
@@ -1447,25 +1438,26 @@ public class ByteBuddyAgent {
              * to avoid the creation of a temporary jar file which can remain undeleted on Windows operating systems where the agent
              * is linked by a class loader such that {@link File#deleteOnExit()} does not have an effect.
              *
+             * @param installer The installer class to attempt to resolve which might be a shaded version of the class.
              * @return This jar file's location or {@code null} if this jar file's location is inaccessible.
              * @throws IOException If an I/O exception occurs.
              */
             @MaybeNull
-            private static File trySelfResolve() throws IOException {
-                ProtectionDomain protectionDomain = Installer.class.getProtectionDomain();
+            private static File trySelfResolve(Class<?> installer) throws IOException {
+                ProtectionDomain protectionDomain = installer.getProtectionDomain();
                 if (Boolean.getBoolean(LATENT_RESOLVE)) {
-                    return CANNOT_SELF_RESOLVE;
+                    return null;
                 }
                 if (protectionDomain == null) {
-                    return CANNOT_SELF_RESOLVE;
+                    return null;
                 }
                 CodeSource codeSource = protectionDomain.getCodeSource();
                 if (codeSource == null) {
-                    return CANNOT_SELF_RESOLVE;
+                    return null;
                 }
                 URL location = codeSource.getLocation();
                 if (!location.getProtocol().equals(FILE_PROTOCOL)) {
-                    return CANNOT_SELF_RESOLVE;
+                    return null;
                 }
                 File agentJar;
                 try {
@@ -1474,26 +1466,26 @@ public class ByteBuddyAgent {
                     agentJar = new File(location.getPath());
                 }
                 if (!agentJar.isFile() || !agentJar.canRead()) {
-                    return CANNOT_SELF_RESOLVE;
+                    return null;
                 }
                 // It is necessary to check the manifest of the containing file as this code can be shaded into another artifact.
                 JarInputStream jarInputStream = new JarInputStream(new FileInputStream(agentJar));
                 try {
                     Manifest manifest = jarInputStream.getManifest();
                     if (manifest == null) {
-                        return CANNOT_SELF_RESOLVE;
+                        return null;
                     }
                     Attributes attributes = manifest.getMainAttributes();
                     if (attributes == null) {
-                        return CANNOT_SELF_RESOLVE;
+                        return null;
                     }
-                    if (Installer.class.getName().equals(attributes.getValue(AGENT_CLASS_PROPERTY))
+                    if (installer.getName().equals(attributes.getValue(AGENT_CLASS_PROPERTY))
                             && Boolean.parseBoolean(attributes.getValue(CAN_REDEFINE_CLASSES_PROPERTY))
                             && Boolean.parseBoolean(attributes.getValue(CAN_RETRANSFORM_CLASSES_PROPERTY))
                             && Boolean.parseBoolean(attributes.getValue(CAN_SET_NATIVE_METHOD_PREFIX))) {
                         return agentJar;
                     } else {
-                        return CANNOT_SELF_RESOLVE;
+                        return null;
                     }
                 } finally {
                     jarInputStream.close();
@@ -1523,10 +1515,10 @@ public class ByteBuddyAgent {
                     JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
                     try {
                         jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
-                        byte[] buffer = new byte[BUFFER_SIZE];
+                        byte[] buffer = new byte[1024 * 8];
                         int index;
-                        while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                            jarOutputStream.write(buffer, START_INDEX, index);
+                        while ((index = inputStream.read(buffer)) != -1) {
+                            jarOutputStream.write(buffer, 0, index);
                         }
                         jarOutputStream.closeEntry();
                     } finally {
@@ -1543,7 +1535,19 @@ public class ByteBuddyAgent {
              */
             public File resolve() throws IOException {
                 try {
-                    File resolved = trySelfResolve();
+                    if (!Installer.class.getName().equals(INSTALLER_NAME)) {
+                        try {
+                            File resolved = trySelfResolve(Class.forName(INSTALLER_NAME,
+                                    false,
+                                    ClassLoader.getSystemClassLoader()));
+                            if (resolved != null) {
+                                return resolved;
+                            }
+                        } catch (ClassNotFoundException ignored) {
+                            /* do nothing */
+                        }
+                    }
+                    File resolved = trySelfResolve(Installer.class);
                     if (resolved != null) {
                         return resolved;
                     }
