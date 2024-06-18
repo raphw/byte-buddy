@@ -95,7 +95,7 @@ public class Installer {
      * @param arguments       The unused agent arguments.
      * @param instrumentation The instrumentation instance.
      */
-    public static void premain(String arguments, Instrumentation instrumentation) {doMain(instrumentation);
+    public static void premain(String arguments, Instrumentation instrumentation) {
         doMain(instrumentation);
     }
 
