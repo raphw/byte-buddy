@@ -96,6 +96,7 @@ public class Installer {
      * @param instrumentation The instrumentation instance.
      */
     public static void premain(String arguments, Instrumentation instrumentation) {doMain(instrumentation);
+        doMain(instrumentation);
     }
 
     /**
