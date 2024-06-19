@@ -34,6 +34,7 @@ public class InstallerTest {
         Field field = Installer.class.getDeclaredField("instrumentation");
         field.setAccessible(true);
         actualInstrumentation = (Instrumentation) field.get(null);
+        field.set(null, null);
     }
 
     @After
