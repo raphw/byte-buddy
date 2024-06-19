@@ -116,7 +116,10 @@ public class Installer {
      * @param instrumentation The instrumentation instance.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not interrupt agent attachment.")
-    private static void doMain(Instrumentation instrumentation) {
+    private static synchronized void doMain(Instrumentation instrumentation) {
+        if (Installer.instrumentation != null) {
+            return;
+        }
         Installer.instrumentation = instrumentation;
         try {
             if (!Installer.class.getName().equals(NAME)) {
