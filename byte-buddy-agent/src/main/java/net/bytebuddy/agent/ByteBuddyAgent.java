@@ -1528,6 +1528,7 @@ public class ByteBuddyAgent {
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public File resolve() throws IOException {
                 try {
                     if (!Installer.class.getName().equals(Installer.NAME)) {
@@ -1547,6 +1548,7 @@ public class ByteBuddyAgent {
                         return resolved;
                     }
                 } catch (Exception ignored) {
+                    /* do nothing */
                 }
                 return createJarFile();
             }
