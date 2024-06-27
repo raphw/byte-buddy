@@ -140,8 +140,10 @@ jobs:
             downloads.gradle-dn.com:443
             github.com:443
             javadoc.io:443
+            plugins-artifacts.gradle.org:443
             plugins.gradle.org:443
             raw.githubusercontent.com:443
+            repo.gradle.org:443
             repo.maven.apache.org:443
             services.gradle.org:443
       - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
