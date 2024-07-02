@@ -33,6 +33,8 @@ import java.security.PrivilegedAction;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -2077,20 +2079,7 @@ public interface VirtualMachine {
                  */
                 private final PosixLibrary library;
 
-                /**
-                 * The maximum amount of attempts for checking the result of a foreign process.
-                 */
-                private final int attempts;
-
-                /**
-                 * The pause between two checks for another process to return.
-                 */
-                private final long pause;
-
-                /**
-                 * The time unit of the pause time.
-                 */
-                private final TimeUnit timeUnit;
+                private final PosixOwner posixOwner;
 
                 /**
                  * Creates a new connector for a POSIX enviornment using JNA.
@@ -2101,9 +2090,13 @@ public interface VirtualMachine {
                  */
                 @SuppressWarnings("deprecation")
                 public ForJnaPosixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
-                    this.attempts = attempts;
-                    this.pause = pause;
-                    this.timeUnit = timeUnit;
+                    if (Platform.isMac()) {
+                        posixOwner = new PosixOwner.ForMacEnvironment(attempts, pause, timeUnit);
+                    } else if (Platform.isAIX()) {
+                        posixOwner = new PosixOwner.ForAixEnvironment(attempts, pause, timeUnit);
+                    } else {
+                        posixOwner = new PosixOwner.ForLinuxEnvironment(attempts, pause, timeUnit);
+                    }
                     library = Native.loadLibrary("c", PosixLibrary.class);
                 }
 
@@ -2147,40 +2140,7 @@ public interface VirtualMachine {
                  */
                 @SuppressFBWarnings(value = "OS_OPEN_STREAM", justification = "The stream life-cycle is bound to its process.")
                 public int getOwnerIdOf(File file) {
-                    try {
-                        // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
-                        // stat is called as a separate command. This is less efficient but more portable.
-                        Process process = Runtime.getRuntime().exec(new String[]{"stat",
-                                Platform.isMac() ? "-f" : "-c",
-                                "%u",
-                                file.getAbsolutePath()});
-                        int attempts = this.attempts;
-                        boolean exited = false;
-                        String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
-                        do {
-                            try {
-                                if (process.exitValue() != 0) {
-                                    throw new IllegalStateException("Error while executing stat");
-                                }
-                                exited = true;
-                                break;
-                            } catch (IllegalThreadStateException ignored) {
-                                try {
-                                    Thread.sleep(timeUnit.toMillis(pause));
-                                } catch (InterruptedException exception) {
-                                    Thread.currentThread().interrupt();
-                                    throw new IllegalStateException(exception);
-                                }
-                            }
-                        } while (--attempts > 0);
-                        if (!exited) {
-                            process.destroy();
-                            throw new IllegalStateException("Command for stat did not exit in time");
-                        }
-                        return Integer.parseInt(line);
-                    } catch (IOException exception) {
-                        throw new IllegalStateException("Unable to execute stat command", exception);
-                    }
+                    return posixOwner.getOwnerIdOf(file);
                 }
 
                 /**
@@ -2382,6 +2342,249 @@ public interface VirtualMachine {
                         @Override
                         protected List<String> getFieldOrder() {
                             return Arrays.asList("number", "operation", "flags");
+                        }
+                    }
+                }
+
+                protected interface PosixOwner {
+                    /**
+                     * Returns the user id of the owner of the supplied file.
+                     *
+                     * @param file The file for which to locate the owner.
+                     * @return The owner id of the supplied file.
+                     */
+                    int getOwnerIdOf(File file);
+
+                    class ForLinuxEnvironment implements PosixOwner {
+
+                        /**
+                         * The maximum amount of attempts for checking the result of a foreign process.
+                         */
+                        private final int attempts;
+
+                        /**
+                         * The pause between two checks for another process to return.
+                         */
+                        private final long pause;
+
+                        /**
+                         * The time unit of the pause time.
+                         */
+                        private final TimeUnit timeUnit;
+
+                        /**
+                         * Creates a new connector for a Linux POSIX enviornment using stat.
+                         *
+                         * @param attempts The maximum amount of attempts for checking the result of a foreign process.
+                         * @param pause    The pause between two checks for another process to return.
+                         * @param timeUnit The time unit of the pause time.
+                         */
+                        public ForLinuxEnvironment(int attempts, long pause, TimeUnit timeUnit) {
+                            this.attempts = attempts;
+                            this.pause = pause;
+                            this.timeUnit = timeUnit;
+                        }
+
+                        /**
+                         * Returns the user id of the owner of the supplied file.
+                         *
+                         * @param file The file for which to locate the owner.
+                         * @return The owner id of the supplied file.
+                         */
+                        @Override
+                        public int getOwnerIdOf(File file) {
+                            try {
+                                // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
+                                // stat is called as a separate command. This is less efficient but more portable.
+                                Process process = Runtime.getRuntime().exec(new String[]{"stat",
+                                        "-f",
+                                        "%u",
+                                        file.getAbsolutePath()});
+                                int attempts = this.attempts;
+                                boolean exited = false;
+                                String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
+                                do {
+                                    try {
+                                        if (process.exitValue() != 0) {
+                                            throw new IllegalStateException("Error while executing stat");
+                                        }
+                                        exited = true;
+                                        break;
+                                    } catch (IllegalThreadStateException ignored) {
+                                        try {
+                                            Thread.sleep(timeUnit.toMillis(pause));
+                                        } catch (InterruptedException exception) {
+                                            Thread.currentThread().interrupt();
+                                            throw new IllegalStateException(exception);
+                                        }
+                                    }
+                                } while (--attempts > 0);
+                                if (!exited) {
+                                    process.destroy();
+                                    throw new IllegalStateException("Command for stat did not exit in time");
+                                }
+                                return Integer.parseInt(line);
+                            } catch (IOException exception) {
+                                throw new IllegalStateException("Unable to execute stat command", exception);
+                            }
+                        }
+                    }
+
+                    class ForAixEnvironment implements PosixOwner {
+
+                        /**
+                         * The maximum amount of attempts for checking the result of a foreign process.
+                         */
+                        private final int attempts;
+
+                        /**
+                         * The pause between two checks for another process to return.
+                         */
+                        private final long pause;
+
+                        /**
+                         * The time unit of the pause time.
+                         */
+                        private final TimeUnit timeUnit;
+
+                        /**
+                         * Creates a new connector for an AIX POSIX enviornment using stat.
+                         *
+                         * @param attempts The maximum amount of attempts for checking the result of a foreign process.
+                         * @param pause    The pause between two checks for another process to return.
+                         * @param timeUnit The time unit of the pause time.
+                         */
+                        public ForAixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
+                            this.attempts = attempts;
+                            this.pause = pause;
+                            this.timeUnit = timeUnit;
+                        }
+
+                        private static final Pattern AIX_OWNER_PATTERN = Pattern.compile("Owner: (\\d+)\\(");
+
+                        /**
+                         * Returns the user id of the owner of the supplied file.
+                         *
+                         * @param file The file for which to locate the owner.
+                         * @return The owner id of the supplied file.
+                         */
+                        @Override
+                        public int getOwnerIdOf(File file) {
+                            try {
+                                Process process = Runtime.getRuntime().exec(new String[]{"istat", file.getAbsolutePath()});
+                                int attempts = this.attempts;
+                                boolean exited = false;
+                                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                                StringBuilder output = new StringBuilder();
+                                String line;
+                                while ((line = bufferedReader.readLine()) != null) {
+                                    output.append(line).append("\n");
+                                }
+                                do {
+                                    try {
+                                        if (process.exitValue() != 0) {
+                                            throw new IllegalStateException("Error while executing istat");
+                                        }
+                                        exited = true;
+                                        break;
+                                    } catch (IllegalThreadStateException ignored) {
+                                        try {
+                                            Thread.sleep(timeUnit.toMillis(pause));
+                                        } catch (InterruptedException exception) {
+                                            Thread.currentThread().interrupt();
+                                            throw new IllegalStateException(exception);
+                                        }
+                                    }
+                                } while (--attempts > 0);
+                                if (!exited) {
+                                    process.destroy();
+                                    throw new IllegalStateException("Command for istat did not exit in time");
+                                }
+                                Matcher matcher = AIX_OWNER_PATTERN.matcher(output.toString());
+                                // Find and print the Owner UID
+                                if (matcher.find()) {
+                                    return Integer.parseInt(matcher.group(1));
+                                } else {
+                                    throw new IllegalStateException("Unable to parse response from istat command: " + output);
+                                }
+                            } catch (IOException exception) {
+                                throw new IllegalStateException("Unable to execute istat command", exception);
+                            }
+                        }
+                    }
+
+                    class ForMacEnvironment implements PosixOwner {
+
+                        /**
+                         * The maximum amount of attempts for checking the result of a foreign process.
+                         */
+                        private final int attempts;
+
+                        /**
+                         * The pause between two checks for another process to return.
+                         */
+                        private final long pause;
+
+                        /**
+                         * The time unit of the pause time.
+                         */
+                        private final TimeUnit timeUnit;
+
+                        /**
+                         * Creates a new connector for a Mac POSIX enviornment using stat.
+                         *
+                         * @param attempts The maximum amount of attempts for checking the result of a foreign process.
+                         * @param pause    The pause between two checks for another process to return.
+                         * @param timeUnit The time unit of the pause time.
+                         */
+                        public ForMacEnvironment(int attempts, long pause, TimeUnit timeUnit) {
+                            this.attempts = attempts;
+                            this.pause = pause;
+                            this.timeUnit = timeUnit;
+                        }
+
+                        /**
+                         * Returns the user id of the owner of the supplied file.
+                         *
+                         * @param file The file for which to locate the owner.
+                         * @return The owner id of the supplied file.
+                         */
+                        @Override
+                        public int getOwnerIdOf(File file) {
+                            try {
+                                // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
+                                // stat is called as a separate command. This is less efficient but more portable.
+                                Process process = Runtime.getRuntime().exec(new String[]{"stat",
+                                         "-f",
+                                        "%u",
+                                        file.getAbsolutePath()});
+                                int attempts = this.attempts;
+                                boolean exited = false;
+                                String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
+                                do {
+                                    try {
+                                        if (process.exitValue() != 0) {
+                                            throw new IllegalStateException("Error while executing stat");
+                                        }
+                                        exited = true;
+                                        break;
+                                    } catch (IllegalThreadStateException ignored) {
+                                        try {
+                                            Thread.sleep(timeUnit.toMillis(pause));
+                                        } catch (InterruptedException exception) {
+                                            Thread.currentThread().interrupt();
+                                            throw new IllegalStateException(exception);
+                                        }
+                                    }
+                                } while (--attempts > 0);
+                                if (!exited) {
+                                    process.destroy();
+                                    throw new IllegalStateException("Command for stat did not exit in time");
+                                }
+                                return Integer.parseInt(line);
+                            } catch (IOException exception) {
+                                throw new IllegalStateException("Unable to execute stat command", exception);
+                            }
                         }
                     }
                 }
