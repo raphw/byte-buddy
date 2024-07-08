@@ -1346,20 +1346,20 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * Checks if a resource name represents a class file of a class that was loaded by this class loader.
          *
-         * @param resourceName The resource name of the class to be exposed as its class file.
+         * @param resource The resource name of the class to be exposed as its class file.
          * @return {@code true} if this class represents a class that is being loaded by this class loader.
          */
-        private boolean isShadowed(String resourceName) {
-            if (persistenceHandler.isManifest() || !resourceName.endsWith(CLASS_FILE_SUFFIX)) {
+        private boolean isShadowed(String resource) {
+            if (persistenceHandler.isManifest() || !resource.endsWith(CLASS_FILE_SUFFIX)) {
                 return false;
             }
             // This synchronization is required to avoid a racing condition to the actual class loading.
-            synchronized (this) {
-                String typeName = resourceName.replace('/', '.').substring(0, resourceName.length() - CLASS_FILE_SUFFIX.length());
-                if (typeDefinitions.containsKey(typeName)) {
+            String name = resource.replace('/', '.').substring(0, resource.length() - CLASS_FILE_SUFFIX.length());
+            synchronized (SYNCHRONIZATION_STRATEGY.initialize().getClassLoadingLock(this, name)) {
+                if (typeDefinitions.containsKey(name)) {
                     return true;
                 }
-                Class<?> loadedClass = findLoadedClass(typeName);
+                Class<?> loadedClass = findLoadedClass(name);
                 return loadedClass != null && loadedClass.getClassLoader() == this;
             }
         }
