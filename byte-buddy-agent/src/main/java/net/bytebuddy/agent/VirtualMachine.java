@@ -2094,7 +2094,7 @@ public interface VirtualMachine {
                  */
                 @SuppressWarnings("deprecation")
                 public ForJnaPosixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
-                    provider = Platform.isAIX() 
+                    provider = Platform.isAIX()
                             ? new PosixOwnerProvider.UsingIStat(attempts, pause, timeUnit)
                             : new PosixOwnerProvider.UsingStat(attempts, pause, timeUnit);
                     library = Native.loadLibrary("c", PosixLibrary.class);
