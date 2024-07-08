@@ -2585,6 +2585,16 @@ public interface AgentBuilder {
             private final ConcurrentMap<Thread, Boolean> threads = new ConcurrentHashMap<Thread, Boolean>();
 
             /**
+             * Creates a default circularity lock. The constructor invokes all methods that are used by
+             * the lock to avoid that using this lock triggers class loading under use.
+             */
+            public Default() {
+                Thread thread = Thread.currentThread();
+                threads.putIfAbsent(thread, true);
+                threads.remove(thread);
+            }
+
+            /**
              * {@inheritDoc}
              */
             public boolean acquire() {
@@ -2646,6 +2656,15 @@ public interface AgentBuilder {
                 lock = new ReentrantLock();
                 this.time = time;
                 this.timeUnit = timeUnit;
+                try {
+                    if (!(time == 0 ? lock.tryLock() : lock.tryLock(time, timeUnit))) {
+                        throw new IllegalStateException();
+                    }
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                lock.unlock();
             }
 
             /**
@@ -7006,7 +7025,7 @@ public interface AgentBuilder {
                  * during reiteration. For these reasons, this strategy has to be used with care!
                  * </p>
                  */
-                enum WithSortOrderAssumption implements DiscoveryStrategy {
+                public enum WithSortOrderAssumption implements DiscoveryStrategy {
 
                     /**
                      * The singleton instance.
