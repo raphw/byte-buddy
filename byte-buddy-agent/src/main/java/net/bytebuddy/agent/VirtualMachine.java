@@ -2410,7 +2410,7 @@ public interface VirtualMachine {
                                 try {
                                     line = reader.readLine();
                                 } finally {
-                                    reader.close();
+                                    //reader.close();
                                 }
                                 do {
                                     try {
@@ -2493,7 +2493,7 @@ public interface VirtualMachine {
                                         output.append(line).append("\n");
                                     }
                                 } finally {
-                                    reader.close();
+                                    //reader.close();
                                 }
                                 do {
                                     try {
@@ -2578,7 +2578,7 @@ public interface VirtualMachine {
                                 try {
                                     line = reader.readLine();
                                 } finally {
-                                    reader.close();
+                                    //reader.close();
                                 }
                                 do {
                                     try {
