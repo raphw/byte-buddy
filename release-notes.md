@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. August 2024: version 1.14.18
+
+- Avoid verification error if constructor advice meats dropped implicit *this* frame and throw exception during instrumentation instead.
+- Add support to resolve `ByteBuddyAgent` from non-obfuscated name if obfuscation is used.
+- Make sure `CircularityLock` implementations never load classes during locking.
+- Offer use of *istat* if *stat* command is not available for emulated attachment.
+- Avoid locking entire class loader when child-first class loader loads shadowed class and parallel class loading is supported.
+
 ### 29. May 2024: version 1.14.17
 
 - Avoid crashing of Android plugin when there are duplicate files for licenses or license notices.
