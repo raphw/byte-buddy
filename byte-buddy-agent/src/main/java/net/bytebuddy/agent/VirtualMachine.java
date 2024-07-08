@@ -2405,7 +2405,13 @@ public interface VirtualMachine {
                                         file.getAbsolutePath()});
                                 int attempts = this.attempts;
                                 boolean exited = false;
-                                String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
+                                String line;
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                                try {
+                                    line = reader.readLine();
+                                } finally {
+                                    reader.close();
+                                }
                                 do {
                                     try {
                                         if (process.exitValue() != 0) {
@@ -2479,11 +2485,15 @@ public interface VirtualMachine {
                                 Process process = Runtime.getRuntime().exec(new String[]{"istat", file.getAbsolutePath()});
                                 int attempts = this.attempts;
                                 boolean exited = false;
-                                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
                                 StringBuilder output = new StringBuilder();
-                                String line;
-                                while ((line = bufferedReader.readLine()) != null) {
-                                    output.append(line).append("\n");
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                                try {
+                                    String line;
+                                    while ((line = reader.readLine()) != null) {
+                                        output.append(line).append("\n");
+                                    }
+                                } finally {
+                                    reader.close();
                                 }
                                 do {
                                     try {
@@ -2563,7 +2573,13 @@ public interface VirtualMachine {
                                         file.getAbsolutePath()});
                                 int attempts = this.attempts;
                                 boolean exited = false;
-                                String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
+                                String line;
+                                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                                try {
+                                    line = reader.readLine();
+                                } finally {
+                                    reader.close();
+                                }
                                 do {
                                     try {
                                         if (process.exitValue() != 0) {
