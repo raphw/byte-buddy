@@ -2404,20 +2404,18 @@ public interface VirtualMachine {
                                         "%u",
                                         file.getAbsolutePath()});
                                 int attempts = this.attempts;
-                                boolean exited = false;
-                                String line;
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
-                                try {
-                                    line = reader.readLine();
-                                } finally {
-                                    //reader.close();
-                                }
+                                String line = null;
                                 do {
                                     try {
                                         if (process.exitValue() != 0) {
                                             throw new IllegalStateException("Error while executing stat");
                                         }
-                                        exited = true;
+                                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                                        try {
+                                            line = reader.readLine();
+                                        } finally {
+                                            reader.close();
+                                        }
                                         break;
                                     } catch (IllegalThreadStateException ignored) {
                                         try {
@@ -2428,7 +2426,7 @@ public interface VirtualMachine {
                                         }
                                     }
                                 } while (--attempts > 0);
-                                if (!exited) {
+                                if (line == null) {
                                     process.destroy();
                                     throw new IllegalStateException("Command for stat did not exit in time");
                                 }
@@ -2484,23 +2482,23 @@ public interface VirtualMachine {
                             try {
                                 Process process = Runtime.getRuntime().exec(new String[]{"istat", file.getAbsolutePath()});
                                 int attempts = this.attempts;
-                                boolean exited = false;
-                                StringBuilder output = new StringBuilder();
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
-                                try {
-                                    String line;
-                                    while ((line = reader.readLine()) != null) {
-                                        output.append(line).append("\n");
-                                    }
-                                } finally {
-                                    //reader.close();
-                                }
+                                String lines = null;
                                 do {
                                     try {
                                         if (process.exitValue() != 0) {
                                             throw new IllegalStateException("Error while executing istat");
                                         }
-                                        exited = true;
+                                        StringBuilder output = new StringBuilder();
+                                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                                        try {
+                                            String line;
+                                            while ((line = reader.readLine()) != null) {
+                                                output.append(line).append("\n");
+                                            }
+                                        } finally {
+                                            reader.close();
+                                        }
+                                        lines = output.toString();
                                         break;
                                     } catch (IllegalThreadStateException ignored) {
                                         try {
@@ -2511,15 +2509,15 @@ public interface VirtualMachine {
                                         }
                                     }
                                 } while (--attempts > 0);
-                                if (!exited) {
+                                if (lines == null) {
                                     process.destroy();
                                     throw new IllegalStateException("Command for istat did not exit in time");
                                 }
-                                Matcher matcher = AIX_OWNER_PATTERN.matcher(output.toString());
+                                Matcher matcher = AIX_OWNER_PATTERN.matcher(lines);
                                 if (matcher.find()) {
                                     return Integer.parseInt(matcher.group(1));
                                 } else {
-                                    throw new IllegalStateException("Unable to parse response from istat command: " + output);
+                                    throw new IllegalStateException("Unable to parse response from istat command: " + lines);
                                 }
                             } catch (IOException exception) {
                                 throw new IllegalStateException("Unable to execute istat command", exception);
@@ -2572,20 +2570,18 @@ public interface VirtualMachine {
                                         "%u",
                                         file.getAbsolutePath()});
                                 int attempts = this.attempts;
-                                boolean exited = false;
-                                String line;
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
-                                try {
-                                    line = reader.readLine();
-                                } finally {
-                                    //reader.close();
-                                }
+                                String line = null;
                                 do {
                                     try {
                                         if (process.exitValue() != 0) {
                                             throw new IllegalStateException("Error while executing stat");
                                         }
-                                        exited = true;
+                                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                                        try {
+                                            line = reader.readLine();
+                                        } finally {
+                                            reader.close();
+                                        }
                                         break;
                                     } catch (IllegalThreadStateException ignored) {
                                         try {
@@ -2596,7 +2592,7 @@ public interface VirtualMachine {
                                         }
                                     }
                                 } while (--attempts > 0);
-                                if (!exited) {
+                                if (line == null) {
                                     process.destroy();
                                     throw new IllegalStateException("Command for stat did not exit in time");
                                 }
