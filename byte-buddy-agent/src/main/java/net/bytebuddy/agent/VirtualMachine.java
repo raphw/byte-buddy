@@ -685,7 +685,7 @@ public interface VirtualMachine {
             }
 
             /**
-             * Implements a connection for a Posix socket in JNA.
+             * Implements a connection for a POSIX socket in JNA.
              */
             class ForJnaPosixSocket extends OnPersistentByteChannel<Integer> {
 
@@ -700,7 +700,7 @@ public interface VirtualMachine {
                 private final File socket;
 
                 /**
-                 * Creates a connection for a virtual posix socket implemented in JNA.
+                 * Creates a connection for a virtual POSIX socket implemented in JNA.
                  *
                  * @param library The JNA library to use.
                  * @param socket  The POSIX socket.
@@ -752,7 +752,7 @@ public interface VirtualMachine {
                 }
 
                 /**
-                 * A JNA library binding for Posix sockets.
+                 * A JNA library binding for POSIX sockets.
                  */
                 protected interface PosixLibrary extends Library {
 
@@ -2081,12 +2081,12 @@ public interface VirtualMachine {
                 private final PosixLibrary library;
 
                 /**
-                 * The posix owner to use.
+                 * The POSIX owner provider to use.
                  */
-                private final PosixOwner posixOwner;
+                private final PosixOwnerProvider provider;
 
                 /**
-                 * Creates a new connector for a POSIX enviornment using JNA.
+                 * Creates a new connector for a POSIX environment using JNA.
                  *
                  * @param attempts The maximum amount of attempts for checking the result of a foreign process.
                  * @param pause    The pause between two checks for another process to return.
@@ -2094,13 +2094,9 @@ public interface VirtualMachine {
                  */
                 @SuppressWarnings("deprecation")
                 public ForJnaPosixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
-                    if (Platform.isMac()) {
-                        posixOwner = new PosixOwner.ForMacEnvironment(attempts, pause, timeUnit);
-                    } else if (Platform.isAIX()) {
-                        posixOwner = new PosixOwner.ForAixEnvironment(attempts, pause, timeUnit);
-                    } else {
-                        posixOwner = new PosixOwner.ForLinuxEnvironment(attempts, pause, timeUnit);
-                    }
+                    provider = Platform.isAIX() 
+                            ? new PosixOwnerProvider.UsingIStat(attempts, pause, timeUnit)
+                            : new PosixOwnerProvider.UsingStat(attempts, pause, timeUnit);
                     library = Native.loadLibrary("c", PosixLibrary.class);
                 }
 
@@ -2144,7 +2140,7 @@ public interface VirtualMachine {
                  */
                 @SuppressFBWarnings(value = "OS_OPEN_STREAM", justification = "The stream life-cycle is bound to its process.")
                 public int getOwnerIdOf(File file) {
-                    return posixOwner.getOwnerIdOf(file);
+                    return provider.getOwnerIdOf(file);
                 }
 
                 /**
@@ -2347,9 +2343,9 @@ public interface VirtualMachine {
                 }
 
                 /**
-                 * Represents a system that supports posix.
+                 * Represents a system that supports POSIX ownership.
                  */
-                protected interface PosixOwner {
+                protected interface PosixOwnerProvider {
 
                     /**
                      * Returns the user id of the owner of the supplied file.
@@ -2360,9 +2356,9 @@ public interface VirtualMachine {
                     int getOwnerIdOf(File file);
 
                     /**
-                     * An implementation of a posix owner for Linux.
+                     * An implementation of reading POSIX ownership using {@code stat}.
                      */
-                    class ForLinuxEnvironment implements PosixOwner {
+                    class UsingStat implements PosixOwnerProvider {
 
                         /**
                          * The maximum amount of attempts for checking the result of a foreign process.
@@ -2380,13 +2376,13 @@ public interface VirtualMachine {
                         private final TimeUnit timeUnit;
 
                         /**
-                         * Creates a new connector for a Linux POSIX enviornment using stat.
+                         * Creates a new provider where an owner is derived using the {@code stat} command.
                          *
                          * @param attempts The maximum amount of attempts for checking the result of a foreign process.
                          * @param pause    The pause between two checks for another process to return.
                          * @param timeUnit The time unit of the pause time.
                          */
-                        public ForLinuxEnvironment(int attempts, long pause, TimeUnit timeUnit) {
+                        public UsingStat(int attempts, long pause, TimeUnit timeUnit) {
                             this.attempts = attempts;
                             this.pause = pause;
                             this.timeUnit = timeUnit;
@@ -2400,7 +2396,7 @@ public interface VirtualMachine {
                                 // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
                                 // stat is called as a separate command. This is less efficient but more portable.
                                 Process process = Runtime.getRuntime().exec(new String[]{"stat",
-                                        "-f",
+                                        Platform.isMac() ? "-f" : "-c",
                                         "%u",
                                         file.getAbsolutePath()});
                                 int attempts = this.attempts;
@@ -2438,9 +2434,9 @@ public interface VirtualMachine {
                     }
 
                     /**
-                     * An implementation for a posix owner that represents AIX.
+                     * An implementation for reading a POSIX owner using {@code istat}.
                      */
-                    class ForAixEnvironment implements PosixOwner {
+                    class UsingIStat implements PosixOwnerProvider {
 
                         /**
                          * A pattern to represent the owner on the console output.
@@ -2463,13 +2459,13 @@ public interface VirtualMachine {
                         private final TimeUnit timeUnit;
 
                         /**
-                         * Creates a new connector for an AIX POSIX enviornment using stat.
+                         * Creates a new provider for reading a POSIX owner using {@code istat}.
                          *
                          * @param attempts The maximum amount of attempts for checking the result of a foreign process.
                          * @param pause    The pause between two checks for another process to return.
                          * @param timeUnit The time unit of the pause time.
                          */
-                        public ForAixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
+                        public UsingIStat(int attempts, long pause, TimeUnit timeUnit) {
                             this.attempts = attempts;
                             this.pause = pause;
                             this.timeUnit = timeUnit;
@@ -2521,84 +2517,6 @@ public interface VirtualMachine {
                                 }
                             } catch (IOException exception) {
                                 throw new IllegalStateException("Unable to execute istat command", exception);
-                            }
-                        }
-                    }
-
-                    /**
-                     * An implementation for a posix owner that represents MacOS.
-                     */
-                    class ForMacEnvironment implements PosixOwner {
-
-                        /**
-                         * The maximum amount of attempts for checking the result of a foreign process.
-                         */
-                        private final int attempts;
-
-                        /**
-                         * The pause between two checks for another process to return.
-                         */
-                        private final long pause;
-
-                        /**
-                         * The time unit of the pause time.
-                         */
-                        private final TimeUnit timeUnit;
-
-                        /**
-                         * Creates a new connector for a Mac POSIX enviornment using stat.
-                         *
-                         * @param attempts The maximum amount of attempts for checking the result of a foreign process.
-                         * @param pause    The pause between two checks for another process to return.
-                         * @param timeUnit The time unit of the pause time.
-                         */
-                        public ForMacEnvironment(int attempts, long pause, TimeUnit timeUnit) {
-                            this.attempts = attempts;
-                            this.pause = pause;
-                            this.timeUnit = timeUnit;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public int getOwnerIdOf(File file) {
-                            try {
-                                // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
-                                // stat is called as a separate command. This is less efficient but more portable.
-                                Process process = Runtime.getRuntime().exec(new String[]{"stat",
-                                        "-f",
-                                        "%u",
-                                        file.getAbsolutePath()});
-                                int attempts = this.attempts;
-                                String line = null;
-                                do {
-                                    try {
-                                        if (process.exitValue() != 0) {
-                                            throw new IllegalStateException("Error while executing stat");
-                                        }
-                                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
-                                        try {
-                                            line = reader.readLine();
-                                        } finally {
-                                            reader.close();
-                                        }
-                                        break;
-                                    } catch (IllegalThreadStateException ignored) {
-                                        try {
-                                            Thread.sleep(timeUnit.toMillis(pause));
-                                        } catch (InterruptedException exception) {
-                                            Thread.currentThread().interrupt();
-                                            throw new IllegalStateException(exception);
-                                        }
-                                    }
-                                } while (--attempts > 0);
-                                if (line == null) {
-                                    process.destroy();
-                                    throw new IllegalStateException("Command for stat did not exit in time");
-                                }
-                                return Integer.parseInt(line);
-                            } catch (IOException exception) {
-                                throw new IllegalStateException("Unable to execute stat command", exception);
                             }
                         }
                     }
