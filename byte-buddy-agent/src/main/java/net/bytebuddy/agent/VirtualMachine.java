@@ -1081,6 +1081,7 @@ public interface VirtualMachine {
                  * Custom {@link WinBase.SECURITY_ATTRIBUTES} is required here to "get" Medium Integrity Level.
                  * In order to allow Medium Integrity Level clients to open
                  * and use a NamedPipe created by an High Integrity Level process.
+                 *
                  * @return A security attributes object that gives everyone read and write access.
                  */
                 private WinBase.SECURITY_ATTRIBUTES createSecurityAttributesToAllowMediumIntegrity() {
@@ -2064,7 +2065,7 @@ public interface VirtualMachine {
             /**
              * Changes the ownership of a file. Can be called only if this process is owned by root.
              *
-             * @param file The path of the file to change ownership of.
+             * @param file   The path of the file to change ownership of.
              * @param userId The user that should own the file.
              */
             void chownFileToUser(File file, long userId);
@@ -2079,6 +2080,9 @@ public interface VirtualMachine {
                  */
                 private final PosixLibrary library;
 
+                /**
+                 * The posix owner to use.
+                 */
                 private final PosixOwner posixOwner;
 
                 /**
@@ -2187,21 +2191,17 @@ public interface VirtualMachine {
                     PosixLibrary.SemaphoreOperation target = new PosixLibrary.SemaphoreOperation();
                     target.operation = operation;
                     target.flags = flags;
-                    try {
-                        while (count-- > 0) {
-                            try {
-                                library.semop(semaphore, target, 1);
-                            } catch (LastErrorException exception) {
-                                if (acceptUnavailable && (Native.getLastError() == PosixLibrary.EAGAIN
-                                        || Native.getLastError() == PosixLibrary.EDEADLK)) {
-                                    break;
-                                } else {
-                                    throw exception;
-                                }
+                    while (count-- > 0) {
+                        try {
+                            library.semop(semaphore, target, 1);
+                        } catch (LastErrorException exception) {
+                            if (acceptUnavailable && (Native.getLastError() == PosixLibrary.EAGAIN
+                                    || Native.getLastError() == PosixLibrary.EDEADLK)) {
+                                break;
+                            } else {
+                                throw exception;
                             }
                         }
-                    } finally {
-                        target = null;
                     }
                 }
 
@@ -2346,7 +2346,11 @@ public interface VirtualMachine {
                     }
                 }
 
+                /**
+                 * Represents a system that supports posix.
+                 */
                 protected interface PosixOwner {
+
                     /**
                      * Returns the user id of the owner of the supplied file.
                      *
@@ -2355,6 +2359,9 @@ public interface VirtualMachine {
                      */
                     int getOwnerIdOf(File file);
 
+                    /**
+                     * An implementation of a posix owner for Linux.
+                     */
                     class ForLinuxEnvironment implements PosixOwner {
 
                         /**
@@ -2386,12 +2393,8 @@ public interface VirtualMachine {
                         }
 
                         /**
-                         * Returns the user id of the owner of the supplied file.
-                         *
-                         * @param file The file for which to locate the owner.
-                         * @return The owner id of the supplied file.
+                         * {@inheritDoc}
                          */
-                        @Override
                         public int getOwnerIdOf(File file) {
                             try {
                                 // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
@@ -2430,7 +2433,15 @@ public interface VirtualMachine {
                         }
                     }
 
+                    /**
+                     * An implementation for a posix owner that represents AIX.
+                     */
                     class ForAixEnvironment implements PosixOwner {
+
+                        /**
+                         * A pattern to represent the owner on the console output.
+                         */
+                        private static final Pattern AIX_OWNER_PATTERN = Pattern.compile("Owner: (\\d+)\\(");
 
                         /**
                          * The maximum amount of attempts for checking the result of a foreign process.
@@ -2460,15 +2471,9 @@ public interface VirtualMachine {
                             this.timeUnit = timeUnit;
                         }
 
-                        private static final Pattern AIX_OWNER_PATTERN = Pattern.compile("Owner: (\\d+)\\(");
-
                         /**
-                         * Returns the user id of the owner of the supplied file.
-                         *
-                         * @param file The file for which to locate the owner.
-                         * @return The owner id of the supplied file.
+                         * {@inheritDoc}
                          */
-                        @Override
                         public int getOwnerIdOf(File file) {
                             try {
                                 Process process = Runtime.getRuntime().exec(new String[]{"istat", file.getAbsolutePath()});
@@ -2501,7 +2506,6 @@ public interface VirtualMachine {
                                     throw new IllegalStateException("Command for istat did not exit in time");
                                 }
                                 Matcher matcher = AIX_OWNER_PATTERN.matcher(output.toString());
-                                // Find and print the Owner UID
                                 if (matcher.find()) {
                                     return Integer.parseInt(matcher.group(1));
                                 } else {
@@ -2513,6 +2517,9 @@ public interface VirtualMachine {
                         }
                     }
 
+                    /**
+                     * An implementation for a posix owner that represents MacOS.
+                     */
                     class ForMacEnvironment implements PosixOwner {
 
                         /**
@@ -2544,18 +2551,14 @@ public interface VirtualMachine {
                         }
 
                         /**
-                         * Returns the user id of the owner of the supplied file.
-                         *
-                         * @param file The file for which to locate the owner.
-                         * @return The owner id of the supplied file.
+                         * {@inheritDoc}
                          */
-                        @Override
                         public int getOwnerIdOf(File file) {
                             try {
                                 // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
                                 // stat is called as a separate command. This is less efficient but more portable.
                                 Process process = Runtime.getRuntime().exec(new String[]{"stat",
-                                         "-f",
+                                        "-f",
                                         "%u",
                                         file.getAbsolutePath()});
                                 int attempts = this.attempts;
