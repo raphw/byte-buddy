@@ -2579,7 +2579,7 @@ public interface AgentBuilder {
             /**
              * The default size of the global class loading lock array.
              */
-            protected static int DEFAULT_SIZE = 100;
+            protected static final int DEFAULT_SIZE = 100;
 
             /**
              * An additional global lock that avoids circularity errors cause by class loading
@@ -2650,7 +2650,7 @@ public interface AgentBuilder {
              * Creates a default lock with a default size for the amount of global locks.
              */
             public Default() {
-                super(WithInnerClassLoadingLock.DEFAULT_SIZE);
+                super(DEFAULT_SIZE);
             }
 
             /**
