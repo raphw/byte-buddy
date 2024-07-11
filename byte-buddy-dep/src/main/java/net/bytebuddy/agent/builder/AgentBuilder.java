@@ -2585,20 +2585,31 @@ public interface AgentBuilder {
             private final ConcurrentMap<Thread, Boolean> threads = new ConcurrentHashMap<Thread, Boolean>();
 
             /**
-             * Creates a default circularity lock. The constructor invokes all methods that are used by
-             * the lock to avoid that using this lock triggers class loading under use.
+             * An additional global lock that avoids circularity errors cause by class loading
+             * by the locking mechanism.
+             */
+            private final AtomicBoolean open = new AtomicBoolean();
+
+            /**
+             * Creates a default circularity lock.
              */
             public Default() {
-                Thread thread = Thread.currentThread();
-                threads.putIfAbsent(thread, true);
-                threads.remove(thread);
+                open.compareAndSet(false, true); // trigger expected class loading
             }
 
             /**
              * {@inheritDoc}
              */
             public boolean acquire() {
-                return threads.putIfAbsent(Thread.currentThread(), true) == null;
+                if (open.compareAndSet(true, false)) {
+                    try {
+                        return threads.putIfAbsent(Thread.currentThread(), true) == null;
+                    } finally {
+                        open.set(true);
+                    }
+                } else {
+                    return false;
+                }
             }
 
             /**
@@ -2640,6 +2651,12 @@ public interface AgentBuilder {
             private final TimeUnit timeUnit;
 
             /**
+             * An additional global lock that avoids circularity errors cause by class loading
+             * by the locking mechanism.
+             */
+            private final AtomicBoolean open = new AtomicBoolean();
+
+            /**
              * Creates a new global circularity lock that does not wait for a release.
              */
             public Global() {
@@ -2656,26 +2673,24 @@ public interface AgentBuilder {
                 lock = new ReentrantLock();
                 this.time = time;
                 this.timeUnit = timeUnit;
-                try {
-                    if (!(time == 0 ? lock.tryLock() : lock.tryLock(time, timeUnit))) {
-                        throw new IllegalStateException();
-                    }
-                } catch (InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                lock.unlock();
+                open.compareAndSet(false, true); // trigger expected class loading
             }
 
             /**
              * {@inheritDoc}
              */
             public boolean acquire() {
-                try {
-                    return time == 0
-                            ? lock.tryLock()
-                            : lock.tryLock(time, timeUnit);
-                } catch (InterruptedException ignored) {
+                if (open.compareAndSet(true, false)) {
+                    try {
+                        return time == 0
+                                ? lock.tryLock()
+                                : lock.tryLock(time, timeUnit);
+                    } catch (InterruptedException ignored) {
+                        return false;
+                    } finally {
+                        open.set(true);
+                    }
+                } else {
                     return false;
                 }
             }
