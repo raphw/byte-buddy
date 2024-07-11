@@ -2611,14 +2611,16 @@ public interface AgentBuilder {
                 AtomicBoolean lock = this.lock.length == 1
                     ? this.lock[0]
                     : this.lock[System.identityHashCode(Thread.currentThread()) % this.lock.length];
-                if (lock.compareAndSet(true, false)) {
-                    try {
-                        return doAcquire();
-                    } finally {
-                        lock.set(true);
+                synchronized (lock) { // avoid that different class loaders skip class loading of each other
+                    if (lock.compareAndSet(true, false)) {
+                        try {
+                            return doAcquire();
+                        } finally {
+                            lock.set(true);
+                        }
+                    } else {
+                        return false;
                     }
-                } else {
-                    return false;
                 }
             }
 
