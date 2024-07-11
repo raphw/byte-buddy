@@ -2571,10 +2571,70 @@ public interface AgentBuilder {
         }
 
         /**
+         * A circularity lock that surrounds the locking mechanism with a global lock to prevent that the
+         * locking mechanism itself loads classes and causes a circularity issue.
+         */
+        abstract class WithInnerClassLoadingLock implements CircularityLock {
+
+            /**
+             * The default size of the global class loading lock array.
+             */
+            protected static int DEFAULT_SIZE = 100;
+
+            /**
+             * An additional global lock that avoids circularity errors cause by class loading
+             * by the locking mechanism.
+             */
+            private final AtomicBoolean[] lock;
+
+            /**
+             * Creates a circularity lock with a global outer lock.
+             *
+             * @param size The amount of locks used in parallel or {@code 0} if no global locks should be used.
+             */
+            protected WithInnerClassLoadingLock(int size) {
+                lock = new AtomicBoolean[size];
+                for (int index = 0; index < size; index++) {
+                    AtomicBoolean lock = new AtomicBoolean();
+                    lock.compareAndSet(false, true); // use same method as in the locking code.
+                    this.lock[index] = lock;
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean acquire() {
+                if (lock.length == 0) {
+                    return doAcquire();
+                }
+                AtomicBoolean lock = this.lock.length == 1
+                    ? this.lock[0]
+                    : this.lock[System.identityHashCode(Thread.currentThread()) % this.lock.length];
+                if (lock.compareAndSet(true, false)) {
+                    try {
+                        return doAcquire();
+                    } finally {
+                        lock.set(true);
+                    }
+                } else {
+                    return false;
+                }
+            }
+
+            /**
+             * Acquires the actual lock for the current thread.
+             *
+             * @return {@code true} if the lock was acquired successfully, {@code false} if it is already hold.
+             */
+            protected abstract boolean doAcquire();
+        }
+
+        /**
          * A default implementation of a circularity lock. Since class loading already synchronizes on a class loader,
          * it suffices to apply a thread-local lock.
          */
-        class Default implements CircularityLock {
+        class Default extends WithInnerClassLoadingLock {
 
             /**
              * A map of threads to an unused boolean to emulate a thread-local state without using
@@ -2585,31 +2645,24 @@ public interface AgentBuilder {
             private final ConcurrentMap<Thread, Boolean> threads = new ConcurrentHashMap<Thread, Boolean>();
 
             /**
-             * An additional global lock that avoids circularity errors cause by class loading
-             * by the locking mechanism.
-             */
-            private final AtomicBoolean open = new AtomicBoolean();
-
-            /**
-             * Creates a default circularity lock.
+             * Creates a default lock with a default size for the amount of global locks.
              */
             public Default() {
-                open.compareAndSet(false, true); // trigger expected class loading
+                super(WithInnerClassLoadingLock.DEFAULT_SIZE);
             }
 
             /**
-             * {@inheritDoc}
+             * Creates a default lock with the supplied number of global locks.
+             *
+             * @param size The amount of locks used in parallel or {@code 0} if no global locks should be used.
              */
-            public boolean acquire() {
-                if (open.compareAndSet(true, false)) {
-                    try {
-                        return threads.putIfAbsent(Thread.currentThread(), true) == null;
-                    } finally {
-                        open.set(true);
-                    }
-                } else {
-                    return false;
-                }
+            public Default(int size) {
+                super(size);
+            }
+
+            @Override
+            protected boolean doAcquire() {
+                return threads.putIfAbsent(Thread.currentThread(), true) == null;
             }
 
             /**
@@ -2633,7 +2686,7 @@ public interface AgentBuilder {
          * A circularity lock that holds a global monitor and does not permit concurrent access.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class Global implements CircularityLock {
+        class Global extends WithInnerClassLoadingLock {
 
             /**
              * The lock to hold.
@@ -2651,46 +2704,53 @@ public interface AgentBuilder {
             private final TimeUnit timeUnit;
 
             /**
-             * An additional global lock that avoids circularity errors cause by class loading
-             * by the locking mechanism.
-             */
-            private final AtomicBoolean open = new AtomicBoolean();
-
-            /**
-             * Creates a new global circularity lock that does not wait for a release.
+             * Creates a new global circularity lock that does not wait for a release and a
+             * default size for the amount of global locks.
              */
             public Global() {
-                this(0, TimeUnit.MILLISECONDS);
+                this(DEFAULT_SIZE);
             }
 
             /**
-             * Creates a new global circularity lock.
+             * Creates a new global circularity lock with a default size for the amount of global locks.
              *
              * @param time     The time to wait for the lock.
              * @param timeUnit The time's time unit.
              */
             public Global(long time, TimeUnit timeUnit) {
-                lock = new ReentrantLock();
-                this.time = time;
-                this.timeUnit = timeUnit;
-                open.compareAndSet(false, true); // trigger expected class loading
+                this(DEFAULT_SIZE, time, timeUnit);
             }
 
             /**
-             * {@inheritDoc}
+             * Creates a new global circularity lock that does not wait for a release.
+             *
+             * @param size The amount of locks used in parallel or {@code 0} if no global locks should be used.
              */
-            public boolean acquire() {
-                if (open.compareAndSet(true, false)) {
-                    try {
-                        return time == 0
-                                ? lock.tryLock()
-                                : lock.tryLock(time, timeUnit);
-                    } catch (InterruptedException ignored) {
-                        return false;
-                    } finally {
-                        open.set(true);
-                    }
-                } else {
+            public Global(int size) {
+                this(size, 0, TimeUnit.MILLISECONDS);
+            }
+
+            /**
+             * Creates a new global circularity lock.
+             *
+             * @param size     The amount of locks used in parallel or {@code 0} if no global locks should be used.
+             * @param time     The time to wait for the lock.
+             * @param timeUnit The time's time unit.
+             */
+            public Global(int size, long time, TimeUnit timeUnit) {
+                super(size);
+                lock = new ReentrantLock();
+                this.time = time;
+                this.timeUnit = timeUnit;
+            }
+
+            @Override
+            protected boolean doAcquire() {
+                try {
+                    return time == 0
+                        ? lock.tryLock()
+                        : lock.tryLock(time, timeUnit);
+                } catch (InterruptedException ignored) {
                     return false;
                 }
             }
