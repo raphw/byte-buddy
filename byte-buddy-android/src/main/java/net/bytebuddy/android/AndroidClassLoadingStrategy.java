@@ -891,7 +891,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                         throw new IllegalArgumentException("On Android P, a class injection can only be applied to BaseDexClassLoader: " + classLoader);
                     }
                     try {
-                        addDexPath.invoke(classLoader, jar.getAbsolutePath(), true);
+                        addDexPath.invoke(classLoader, jar.getAbsolutePath(), false);
                         return NO_RETURN_VALUE;
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access BaseDexClassLoader#addDexPath(String, boolean)", exception);
