@@ -2585,7 +2585,7 @@ public interface AgentBuilder {
              * An additional global lock that avoids circularity errors cause by class loading
              * by the locking mechanism.
              */
-            private final Lock[] lock;
+            private final TrivialLock[] lock;
 
             /**
              * Creates a circularity lock with a global outer lock.
@@ -2593,9 +2593,9 @@ public interface AgentBuilder {
              * @param size The amount of locks used in parallel or {@code 0} if no global locks should be used.
              */
             protected WithInnerClassLoadingLock(int size) {
-                lock = new Lock[size];
+                lock = new TrivialLock[size];
                 for (int index = 0; index < size; index++) {
-                    this.lock[index] = new Lock();
+                    this.lock[index] = new TrivialLock();
                 }
             }
 
@@ -2606,7 +2606,7 @@ public interface AgentBuilder {
                 if (lock.length == 0) {
                     return doAcquire();
                 }
-                Lock lock;
+                TrivialLock lock;
                 if (this.lock.length == 1) {
                     lock = this.lock[0];
                 } else {
@@ -2635,9 +2635,9 @@ public interface AgentBuilder {
             protected abstract boolean doAcquire();
 
             /**
-             * A lock that monitors if a class is currently loaded by the current thread.
+             * A trivial lock that monitors if a class is currently loaded by the current thread.
              */
-            protected static class Lock {
+            protected static class TrivialLock {
 
                 /**
                  * If {@code true}, a class is currently loaded by the current lock.
