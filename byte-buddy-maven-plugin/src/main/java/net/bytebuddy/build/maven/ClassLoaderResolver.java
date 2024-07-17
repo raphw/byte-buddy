@@ -93,7 +93,7 @@ public class ClassLoaderResolver implements Closeable {
      * the previously created class loader is returned.
      *
      * @param mavenCoordinate The Maven coordinate to resolve.
-     * @return A class loader that references all of the class loader's dependencies and which is a child of this class's class loader.
+     * @return A class loader that references all the class loader's dependencies and which is a child of this class's class loader.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
      */
@@ -128,7 +128,7 @@ public class ClassLoaderResolver implements Closeable {
         } catch (DependencyCollectionException exception) {
             throw new MojoExecutionException("Could not collect dependencies for " + mavenCoordinate, exception);
         } catch (DependencyResolutionException exception) {
-            throw new MojoExecutionException("Could not resolve dependencies for " + mavenCoordinate, exception);
+            throw new MojoFailureException("Could not resolve dependencies for " + mavenCoordinate, exception);
         } catch (MalformedURLException exception) {
             throw new MojoFailureException("Could not resolve file as URL for " + mavenCoordinate, exception);
         }

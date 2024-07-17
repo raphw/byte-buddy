@@ -36,36 +36,26 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.Scanner;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.collection.DependencyCollectionException;
+import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -260,6 +250,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 }
             }
         }
+        List<String> elements = resolveClassPathElements();
         if (discovery.isDiscover(transformers)) {
             try {
                 Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources(Plugin.Engine.Default.PLUGIN_FILE);
@@ -267,7 +258,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     discover(plugins.nextElement().openStream(), undiscoverable, transformers, null);
                 }
                 if (classPathDiscovery) {
-                    List<String> elements = getClassPathElements();
                     for (String element : elements) {
                         File artifact = new File(element);
                         if (artifact.isFile()) {
@@ -299,21 +289,31 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().debug(transformers.size() + " plugins are being applied via configuration and discovery");
         }
         try {
-            apply(transformers);
+            apply(transformers, elements);
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
         }
     }
 
     /**
-     * Returns the class path elements of the relevant output directory.
+     * Resolves the class path elements of the relevant output directory.
      *
      * @return The class path elements of the relevant output directory.
-     * @throws MojoFailureException If the class path cannot be resolved.
+     * @throws MojoExecutionException If the user configuration results in an error.
+     * @throws MojoFailureException   If the plugin application raises an error.
      */
-    protected abstract List<String> getClassPathElements() throws MojoFailureException;
+    protected abstract List<String> resolveClassPathElements() throws MojoExecutionException, MojoFailureException;
 
-    protected abstract void apply(List<Transformer> transformers) throws MojoExecutionException, MojoFailureException, IOException;
+    /**
+     * Applies this mojo for the given setup.
+     *
+     * @param transformers The transformers to apply.
+     * @param elements     The class path elements to consider.
+     * @throws MojoExecutionException If the plugin fails due to a user error.
+     * @throws MojoFailureException   If the plugin fails due to an application error.
+     * @throws IOException            If an I/O exception occurs.
+     */
+    protected abstract void apply(List<Transformer> transformers, List<String> elements) throws MojoExecutionException, MojoFailureException, IOException;
 
     /**
      * Applies the instrumentation.
@@ -322,6 +322,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param transformers The transformers to apply.
      * @param source       The source for the plugin engine's application.
      * @param target       The target for the plugin engine's application.
+     * @param file         The file representing the source location.
      * @param filtered     {@code true} if files are already filtered and should not be checked for staleness.
      * @return A summary of the applied transformation.
      * @throws MojoExecutionException If the plugin cannot be applied.
@@ -332,7 +333,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                               List<Transformer> transformers,
                                               Plugin.Engine.Source source,
                                               Plugin.Engine.Target target,
-                                              File root,
+                                              File file,
                                               boolean filtered) throws MojoExecutionException, IOException {
         File staleness = new File(project.getBuild().getDirectory(), "maven-status"
                 + File.separator + execution.getArtifactId()
@@ -365,7 +366,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 try {
                     factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin, false, transformer.toClassLoader(classLoaderResolver, coordinates, project.getGroupId(), project.getArtifactId(), project.getVersion(), project.getPackaging())))
                             .with(transformer.toArgumentResolvers())
-                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, root),
+                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, file),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
                     getLog().info("Resolved plugin: " + plugin);
@@ -385,7 +386,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             Plugin.Engine.Summary summary;
             try {
-                getLog().info("Processing class files located in in: " + root);
+                getLog().info("Processing class files located in in: " + file);
                 Plugin.Engine pluginEngine;
                 try {
                     String javaVersionString = findJavaVersionString(project, "release");
@@ -417,7 +418,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             .with(threads == 0 ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
                             .apply(source, target, factories);
                 } catch (Throwable throwable) {
-                    throw new MojoExecutionException("Failed to transform class files in " + root, throwable);
+                    throw new MojoExecutionException("Failed to transform class files in " + file, throwable);
                 }
             } finally {
                 classFileLocator.close();
@@ -566,7 +567,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         protected abstract String getSourceDirectory();
 
         @Override
-        protected void apply(List<Transformer> transformers) throws MojoExecutionException, IOException, MojoFailureException {
+        protected void apply(List<Transformer> transformers, List<String> elements) throws MojoExecutionException, IOException, MojoFailureException {
             File root = new File(getOutputDirectory());
             if (!root.exists()) {
                 if (warnOnMissingOutputDirectory) {
@@ -597,13 +598,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     source = new Plugin.Engine.Source.ForFolder(root);
                     getLog().debug("Cannot build incrementally - all class files are processed");
                 }
-                Plugin.Engine.Summary summary = transform(getClassPathElements(), transformers, source, new Plugin.Engine.Target.ForFolder(root), root, true);
+                Plugin.Engine.Summary summary = transform(elements, transformers, source, new Plugin.Engine.Target.ForFolder(root), root, true);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
                     context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
                 }
             } else {
                 getLog().debug("Not applying incremental build with context: " + context);
-                transform(getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), root, false);
+                transform(elements, transformers, new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), root, false);
             }
         }
 
@@ -631,7 +632,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             public static class WithoutRuntimeDependencies extends ForProductionTypes {
 
                 @Override
-                protected List<String> getClassPathElements() throws MojoFailureException {
+                protected List<String> resolveClassPathElements() throws MojoFailureException {
                     try {
                         return project.getCompileClasspathElements();
                     } catch (DependencyResolutionRequiredException e) {
@@ -648,7 +649,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             public static class WithRuntimeDependencies extends ForProductionTypes {
 
                 @Override
-                protected List<String> getClassPathElements() {
+                protected List<String> resolveClassPathElements() {
                     try {
                         return project.getRuntimeClasspathElements();
                     } catch (DependencyResolutionRequiredException e) {
@@ -664,7 +665,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             public static class WithExtendedDependencies extends ForProductionTypes {
 
                 @Override
-                protected List<String> getClassPathElements() {
+                protected List<String> resolveClassPathElements() {
                     List<String> classPath = new ArrayList<String>(project.getArtifacts().size() + 1);
                     String directory = project.getBuild().getOutputDirectory();
                     if (directory != null) {
@@ -703,13 +704,78 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
 
             @Override
-            protected List<String> getClassPathElements() throws MojoFailureException {
+            protected List<String> resolveClassPathElements() throws MojoFailureException {
                 try {
                     return project.getTestClasspathElements();
                 } catch (DependencyResolutionRequiredException e) {
                     throw new MojoFailureException("Could not resolve test class path", e);
                 }
             }
+        }
+    }
+
+    /**
+     * Transforms specified classes from files in a folder or a jar file to a folder or jar file.
+     */
+    @Mojo(name = "transform-location", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
+    public static class ForExplicitLocations extends ByteBuddyMojo {
+
+        @UnknownNull
+        @Parameter(required = true)
+        public String source;
+
+        @UnknownNull
+        @Parameter(required = true)
+        public String target;
+
+        @MaybeNull
+        @Parameter
+        public List<MavenCoordinate> dependencies;
+
+        @Override
+        protected List<String> resolveClassPathElements() throws MojoExecutionException, MojoFailureException {
+            List<String> classPath = new ArrayList<>();
+            classPath.add(source);
+            if (dependencies != null && !dependencies.isEmpty()) {
+                RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
+                for (MavenCoordinate mavenCoordinate : dependencies) {
+                    try {
+                        DependencyNode root = repositorySystem.collectDependencies(
+                                repositorySystemSession,
+                                new CollectRequest(new org.eclipse.aether.graph.Dependency(mavenCoordinate.asArtifact(), "runtime"), project.getRemotePluginRepositories())).getRoot();
+                        repositorySystem.resolveDependencies(repositorySystemSession, new DependencyRequest().setRoot(root));
+                        PreorderNodeListGenerator preorderNodeListGenerator = new PreorderNodeListGenerator();
+                        root.accept(preorderNodeListGenerator);
+                        for (org.eclipse.aether.artifact.Artifact artifact : preorderNodeListGenerator.getArtifacts(false)) {
+                            classPath.add(artifact.getFile().toString());
+                        }
+                    } catch (DependencyCollectionException exception) {
+                        throw new MojoExecutionException("Could not collect dependencies for " + mavenCoordinate, exception);
+                    } catch (DependencyResolutionException exception) {
+                        throw new MojoFailureException("Could not resolve dependencies for " + mavenCoordinate, exception);
+                    }
+                }
+            }
+            return classPath;
+        }
+
+        @Override
+        protected void apply(List<Transformer> transformers, List<String> elements) throws MojoExecutionException, MojoFailureException, IOException {
+            File source = new File(this.source), target = new File(this.target);
+            Plugin.Engine.Source resolved;
+            if (source.isDirectory()) {
+                resolved = new Plugin.Engine.Source.ForFolder(source);
+            } else if (source.exists()) {
+                resolved = new Plugin.Engine.Source.ForJarFile(source);
+            } else {
+                throw new MojoFailureException("Source location does not exist: " + source);
+            }
+            transform(elements,
+                    transformers,
+                    resolved,
+                    target.isDirectory() ? new Plugin.Engine.Target.ForFolder(target) : new Plugin.Engine.Target.ForJarFile(target),
+                    source,
+                    false);
         }
     }
 
