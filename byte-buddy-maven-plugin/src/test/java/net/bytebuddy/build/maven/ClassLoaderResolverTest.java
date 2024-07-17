@@ -1,6 +1,7 @@
 package net.bytebuddy.build.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -87,7 +88,7 @@ public class ClassLoaderResolverTest {
         classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX, JAR));
     }
 
-    @Test(expected = MojoExecutionException.class)
+    @Test(expected = MojoFailureException.class)
     public void testResolutionFailure() throws Exception {
         when(repositorySystem.resolveDependencies(eq(repositorySystemSession), any(DependencyRequest.class)))
                 .thenThrow(new DependencyResolutionException(new DependencyResult(new DependencyRequest(root, mock(DependencyFilter.class))), new Throwable()));
