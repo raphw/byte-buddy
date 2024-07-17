@@ -318,31 +318,22 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * Applies the instrumentation.
      *
-     * @param root         The root folder that contains all class files.
      * @param classPath    An iterable over all class path elements.
      * @param transformers The transformers to apply.
-     * @param source       The source for the plugin's application.
+     * @param source       The source for the plugin engine's application.
+     * @param target       The target for the plugin engine's application.
      * @param filtered     {@code true} if files are already filtered and should not be checked for staleness.
      * @return A summary of the applied transformation.
      * @throws MojoExecutionException If the plugin cannot be applied.
      * @throws IOException            If an I/O exception occurs.
      */
     @SuppressWarnings("unchecked")
-    protected Plugin.Engine.Summary doApply(File root,
-                                            List<? extends String> classPath,
-                                            List<Transformer> transformers,
-                                            Plugin.Engine.Source source,
-                                            boolean filtered) throws MojoExecutionException, IOException {
-        if (!root.exists()) {
-            if (warnOnMissingOutputDirectory) {
-                getLog().warn("Skipping instrumentation due to missing directory: " + root);
-            } else {
-                getLog().info("Skipping instrumentation due to missing directory: " + root);
-            }
-            return new Plugin.Engine.Summary(Collections.<TypeDescription>emptyList(), Collections.<TypeDescription, List<Throwable>>emptyMap(), Collections.<String>emptyList());
-        } else if (!root.isDirectory()) {
-            throw new MojoExecutionException("Not a directory: " + root);
-        }
+    protected Plugin.Engine.Summary transform(List<? extends String> classPath,
+                                              List<Transformer> transformers,
+                                              Plugin.Engine.Source source,
+                                              Plugin.Engine.Target target,
+                                              File root,
+                                              boolean filtered) throws MojoExecutionException, IOException {
         File staleness = new File(project.getBuild().getDirectory(), "maven-status"
                 + File.separator + execution.getArtifactId()
                 + File.separator + execution.getGoal()
@@ -387,8 +378,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().info("Resolved entry point: " + entryPoint);
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
             classFileLocators.add(ClassFileLocator.ForClassLoader.ofPlatformLoader());
-            for (String target : classPath) {
-                File artifact = new File(target);
+            for (String element : classPath) {
+                File artifact = new File(element);
                 classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
@@ -409,12 +400,22 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                         classFileVersion = ClassFileVersion.ofJavaVersionString(javaVersionString);
                         getLog().debug("Java version detected: " + javaVersionString);
                     }
-                    pluginEngine = Plugin.Engine.Default.of(entryPoint, classFileVersion, suffix == null || suffix.length() == 0 ? MethodNameTransformer.Suffixing.withRandomSuffix() : new MethodNameTransformer.Suffixing(suffix));
+                    pluginEngine = Plugin.Engine.Default.of(entryPoint,
+                            classFileVersion,
+                            suffix == null || suffix.length() == 0 ? MethodNameTransformer.Suffixing.withRandomSuffix() : new MethodNameTransformer.Suffixing(suffix));
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Cannot create plugin engine", throwable);
                 }
                 try {
-                    summary = pluginEngine.with(extendedParsing ? Plugin.Engine.PoolStrategy.Default.EXTENDED : Plugin.Engine.PoolStrategy.Default.FAST).with(classFileLocator).with(new TransformationLogger(getLog())).withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, failOnLiveInitializer ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS : Plugin.Engine.Listener.NoOp.INSTANCE, failFast ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST).with(threads == 0 ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads)).apply(source, new Plugin.Engine.Target.ForFolder(root), factories);
+                    summary = pluginEngine
+                            .with(extendedParsing ? Plugin.Engine.PoolStrategy.Default.EXTENDED : Plugin.Engine.PoolStrategy.Default.FAST)
+                            .with(classFileLocator)
+                            .with(new TransformationLogger(getLog()))
+                            .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED,
+                                    failOnLiveInitializer ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS : Plugin.Engine.Listener.NoOp.INSTANCE,
+                                    failFast ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
+                            .with(threads == 0 ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
+                            .apply(source, target, factories);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Failed to transform class files in " + root, throwable);
                 }
@@ -566,6 +567,17 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
         @Override
         protected void apply(List<Transformer> transformers) throws MojoExecutionException, IOException, MojoFailureException {
+            File root = new File(getOutputDirectory());
+            if (!root.exists()) {
+                if (warnOnMissingOutputDirectory) {
+                    getLog().warn("Skipping instrumentation due to missing directory: " + root);
+                } else {
+                    getLog().info("Skipping instrumentation due to missing directory: " + root);
+                }
+                return;
+            } else if (!root.isDirectory()) {
+                throw new MojoExecutionException("Not a directory: " + root);
+            }
             String sourceDirectory = getSourceDirectory();
             if (incremental && context != null && sourceDirectory != null) {
                 getLog().debug("Considering incremental build with context: " + context);
@@ -579,19 +591,19 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             names.add(file.substring(0, file.length() - JAVA_FILE_EXTENSION.length()));
                         }
                     }
-                    source = new Plugin.Engine.Source.Filtering(new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), new FilePrefixMatcher(names));
+                    source = new Plugin.Engine.Source.Filtering(new Plugin.Engine.Source.ForFolder(root), new FilePrefixMatcher(names));
                     getLog().debug("Incrementally processing: " + names);
                 } else {
-                    source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
+                    source = new Plugin.Engine.Source.ForFolder(root);
                     getLog().debug("Cannot build incrementally - all class files are processed");
                 }
-                Plugin.Engine.Summary summary = doApply(new File(getOutputDirectory()), getClassPathElements(), transformers, source, true);
+                Plugin.Engine.Summary summary = transform(getClassPathElements(), transformers, source, new Plugin.Engine.Target.ForFolder(root), root, true);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
                     context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
                 }
             } else {
                 getLog().debug("Not applying incremental build with context: " + context);
-                doApply(new File(getOutputDirectory()), getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), false);
+                transform(getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), root, false);
             }
         }
 
