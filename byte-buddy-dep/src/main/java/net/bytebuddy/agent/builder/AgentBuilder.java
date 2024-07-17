@@ -2585,7 +2585,7 @@ public interface AgentBuilder {
              * An additional global lock that avoids circularity errors cause by class loading
              * by the locking mechanism.
              */
-            private final AtomicBoolean[] lock;
+            private final Lock[] lock;
 
             /**
              * Creates a circularity lock with a global outer lock.
@@ -2593,11 +2593,9 @@ public interface AgentBuilder {
              * @param size The amount of locks used in parallel or {@code 0} if no global locks should be used.
              */
             protected WithInnerClassLoadingLock(int size) {
-                lock = new AtomicBoolean[size];
+                lock = new Lock[size];
                 for (int index = 0; index < size; index++) {
-                    AtomicBoolean lock = new AtomicBoolean();
-                    lock.compareAndSet(false, true); // use same method as in the locking code.
-                    this.lock[index] = lock;
+                    this.lock[index] = new Lock();
                 }
             }
 
@@ -2608,18 +2606,23 @@ public interface AgentBuilder {
                 if (lock.length == 0) {
                     return doAcquire();
                 }
-                AtomicBoolean lock = this.lock.length == 1
-                    ? this.lock[0]
-                    : this.lock[System.identityHashCode(Thread.currentThread()) % this.lock.length];
+                Lock lock;
+                if (this.lock.length == 1) {
+                    lock = this.lock[0];
+                } else {
+                    int hash = System.identityHashCode(Thread.currentThread());
+                    lock = this.lock[hash == Integer.MIN_VALUE ? 0 : Math.abs(hash) % this.lock.length];
+                }
                 synchronized (lock) { // avoid that different class loaders skip class loading of each other
-                    if (lock.compareAndSet(true, false)) {
+                    if (lock.locked) {
+                        return false;
+                    } else {
+                        lock.locked = true;
                         try {
                             return doAcquire();
                         } finally {
-                            lock.set(true);
+                            lock.locked = false;
                         }
-                    } else {
-                        return false;
                     }
                 }
             }
@@ -2630,6 +2633,17 @@ public interface AgentBuilder {
              * @return {@code true} if the lock was acquired successfully, {@code false} if it is already hold.
              */
             protected abstract boolean doAcquire();
+
+            /**
+             * A lock that monitors if a class is currently loaded by the current thread.
+             */
+            protected static class Lock {
+
+                /**
+                 * If {@code true}, a class is currently loaded by the current lock.
+                 */
+                protected boolean locked;
+            }
         }
 
         /**
