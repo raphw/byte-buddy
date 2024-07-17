@@ -85,13 +85,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     private static final String JAVA_CLASS_EXTENSION = ".class";
 
     /**
-     * The build context to support incremental builds.
-     */
-    @MaybeNull
-    @Component
-    public BuildContext context;
-
-    /**
      * The Maven project.
      */
     @UnknownNull
@@ -241,12 +234,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public int threads;
 
     /**
-     * Determines if plugins are attempted to be built incrementally.
-     */
-    @Parameter(defaultValue = "false", required = true)
-    public boolean incremental;
-
-    /**
      * Determines the tolerance of many milliseconds between this plugin run and the last edit are permitted
      * for considering a file as stale if the plugin was executed before. Can be set to {@code -1} to disable.
      */
@@ -312,52 +299,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().debug(transformers.size() + " plugins are being applied via configuration and discovery");
         }
         try {
-            String sourceDirectory = getSourceDirectory();
-            if (incremental && context != null && sourceDirectory != null) {
-                getLog().debug("Considering incremental build with context: " + context);
-                Plugin.Engine.Source source;
-                if (context.isIncremental()) {
-                    Scanner scanner = context.newScanner(new File(sourceDirectory));
-                    scanner.scan();
-                    List<String> names = new ArrayList<String>();
-                    for (String file : scanner.getIncludedFiles()) {
-                        if (file.endsWith(JAVA_FILE_EXTENSION)) {
-                            names.add(file.substring(0, file.length() - JAVA_FILE_EXTENSION.length()));
-                        }
-                    }
-                    source = new Plugin.Engine.Source.Filtering(new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), new FilePrefixMatcher(names));
-                    getLog().debug("Incrementally processing: " + names);
-                } else {
-                    source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
-                    getLog().debug("Cannot build incrementally - all class files are processed");
-                }
-                Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), transformers, source, true);
-                for (TypeDescription typeDescription : summary.getTransformed()) {
-                    context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
-                }
-            } else {
-                getLog().debug("Not applying incremental build with context: " + context);
-                apply(new File(getOutputDirectory()), getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), false);
-            }
+            apply(transformers);
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
         }
     }
-
-    /**
-     * Returns the output directory to search for class files.
-     *
-     * @return The output directory to search for class files.
-     */
-    protected abstract String getOutputDirectory();
-
-    /**
-     * Returns the source directory that determines the class files to process.
-     *
-     * @return The source directory that serves as an input for the transformation.
-     */
-    @MaybeNull
-    protected abstract String getSourceDirectory();
 
     /**
      * Returns the class path elements of the relevant output directory.
@@ -366,6 +312,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @throws MojoFailureException If the class path cannot be resolved.
      */
     protected abstract List<String> getClassPathElements() throws MojoFailureException;
+
+    protected abstract void apply(List<Transformer> transformers) throws MojoExecutionException, MojoFailureException, IOException;
 
     /**
      * Applies the instrumentation.
@@ -380,11 +328,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @throws IOException            If an I/O exception occurs.
      */
     @SuppressWarnings("unchecked")
-    private Plugin.Engine.Summary apply(File root,
-                                        List<? extends String> classPath,
-                                        List<Transformer> transformers,
-                                        Plugin.Engine.Source source,
-                                        boolean filtered) throws MojoExecutionException, IOException {
+    protected Plugin.Engine.Summary doApply(File root,
+                                            List<? extends String> classPath,
+                                            List<Transformer> transformers,
+                                            Plugin.Engine.Source source,
+                                            boolean filtered) throws MojoExecutionException, IOException {
         if (!root.exists()) {
             if (warnOnMissingOutputDirectory) {
                 getLog().warn("Skipping instrumentation due to missing directory: " + root);
@@ -584,106 +532,171 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     }
 
     /**
-     * A Byte Buddy plugin that transforms a project's production class files.
+     * A version of the plugin that is bound to Maven's lifecycle.
      */
-    public abstract static class ForProductionTypes extends ByteBuddyMojo {
+    public abstract static class ForLifecycleTypes extends ByteBuddyMojo {
 
-        @Override
-        protected String getOutputDirectory() {
-            return project.getBuild().getOutputDirectory();
-        }
-
+        /**
+         * The build context to support incremental builds.
+         */
         @MaybeNull
+        @Component
+        public BuildContext context;
+
+        /**
+         * Determines if plugins are attempted to be built incrementally.
+         */
+        @Parameter(defaultValue = "false", required = true)
+        public boolean incremental;
+
+        /**
+         * Returns the output directory to search for class files.
+         *
+         * @return The output directory to search for class files.
+         */
+        protected abstract String getOutputDirectory();
+
+        /**
+         * Returns the source directory that determines the class files to process.
+         *
+         * @return The source directory that serves as an input for the transformation.
+         */
+        @MaybeNull
+        protected abstract String getSourceDirectory();
+
         @Override
-        protected String getSourceDirectory() {
-            return project.getBuild().getSourceDirectory();
+        protected void apply(List<Transformer> transformers) throws MojoExecutionException, IOException, MojoFailureException {
+            String sourceDirectory = getSourceDirectory();
+            if (incremental && context != null && sourceDirectory != null) {
+                getLog().debug("Considering incremental build with context: " + context);
+                Plugin.Engine.Source source;
+                if (context.isIncremental()) {
+                    Scanner scanner = context.newScanner(new File(sourceDirectory));
+                    scanner.scan();
+                    List<String> names = new ArrayList<String>();
+                    for (String file : scanner.getIncludedFiles()) {
+                        if (file.endsWith(JAVA_FILE_EXTENSION)) {
+                            names.add(file.substring(0, file.length() - JAVA_FILE_EXTENSION.length()));
+                        }
+                    }
+                    source = new Plugin.Engine.Source.Filtering(new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), new FilePrefixMatcher(names));
+                    getLog().debug("Incrementally processing: " + names);
+                } else {
+                    source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
+                    getLog().debug("Cannot build incrementally - all class files are processed");
+                }
+                Plugin.Engine.Summary summary = doApply(new File(getOutputDirectory()), getClassPathElements(), transformers, source, true);
+                for (TypeDescription typeDescription : summary.getTransformed()) {
+                    context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
+                }
+            } else {
+                getLog().debug("Not applying incremental build with context: " + context);
+                doApply(new File(getOutputDirectory()), getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), false);
+            }
         }
 
         /**
-         * A Byte Buddy plugin that transforms a project's production class files where runtime class
-         * path elements are not included.
+         * A Byte Buddy plugin that transforms a project's production class files.
          */
-        @Mojo(name = "transform", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
-        public static class WithoutRuntimeDependencies extends ForProductionTypes {
+        public abstract static class ForProductionTypes extends ForLifecycleTypes {
+
+            @Override
+            protected String getOutputDirectory() {
+                return project.getBuild().getOutputDirectory();
+            }
+
+            @MaybeNull
+            @Override
+            protected String getSourceDirectory() {
+                return project.getBuild().getSourceDirectory();
+            }
+
+            /**
+             * A Byte Buddy plugin that transforms a project's production class files where runtime class
+             * path elements are not included.
+             */
+            @Mojo(name = "transform", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
+            public static class WithoutRuntimeDependencies extends ForProductionTypes {
+
+                @Override
+                protected List<String> getClassPathElements() throws MojoFailureException {
+                    try {
+                        return project.getCompileClasspathElements();
+                    } catch (DependencyResolutionRequiredException e) {
+                        throw new MojoFailureException("Could not resolve class path", e);
+                    }
+                }
+            }
+
+            /**
+             * A Byte Buddy plugin that transforms a project's production class files where runtime class
+             * path elements are included.
+             */
+            @Mojo(name = "transform-runtime", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+            public static class WithRuntimeDependencies extends ForProductionTypes {
+
+                @Override
+                protected List<String> getClassPathElements() {
+                    try {
+                        return project.getRuntimeClasspathElements();
+                    } catch (DependencyResolutionRequiredException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+
+            /**
+             * A Byte Buddy plugin that transforms a project's production class files where all scopes but the test scope are included.
+             */
+            @Mojo(name = "transform-extended", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+            public static class WithExtendedDependencies extends ForProductionTypes {
+
+                @Override
+                protected List<String> getClassPathElements() {
+                    List<String> classPath = new ArrayList<String>(project.getArtifacts().size() + 1);
+                    String directory = project.getBuild().getOutputDirectory();
+                    if (directory != null) {
+                        classPath.add(directory);
+                    }
+                    for (Artifact artifact : project.getArtifacts()) {
+                        if (artifact.getArtifactHandler().isAddedToClasspath()
+                                && !Artifact.SCOPE_TEST.equals(artifact.getScope())
+                                && !Artifact.SCOPE_IMPORT.equals(artifact.getScope())) {
+                            File file = artifact.getFile();
+                            if (file != null) {
+                                classPath.add(file.getPath());
+                            }
+                        }
+                    }
+                    return classPath;
+                }
+            }
+        }
+
+        /**
+         * A Byte Buddy plugin that transforms a project's test class files.
+         */
+        @Mojo(name = "transform-test", defaultPhase = LifecyclePhase.PROCESS_TEST_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
+        public static class ForTestTypes extends ForLifecycleTypes {
+
+            @Override
+            protected String getOutputDirectory() {
+                return project.getBuild().getTestOutputDirectory();
+            }
+
+            @MaybeNull
+            @Override
+            protected String getSourceDirectory() {
+                return project.getBuild().getTestSourceDirectory();
+            }
 
             @Override
             protected List<String> getClassPathElements() throws MojoFailureException {
                 try {
-                    return project.getCompileClasspathElements();
+                    return project.getTestClasspathElements();
                 } catch (DependencyResolutionRequiredException e) {
-                    throw new MojoFailureException("Could not resolve class path", e);
+                    throw new MojoFailureException("Could not resolve test class path", e);
                 }
-            }
-        }
-
-        /**
-         * A Byte Buddy plugin that transforms a project's production class files where runtime class
-         * path elements are included.
-         */
-        @Mojo(name = "transform-runtime", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-        public static class WithRuntimeDependencies extends ForProductionTypes {
-
-            @Override
-            protected List<String> getClassPathElements() {
-                try {
-                    return project.getRuntimeClasspathElements();
-                } catch (DependencyResolutionRequiredException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        /**
-         * A Byte Buddy plugin that transforms a project's production class files where all scopes but the test scope are included.
-         */
-        @Mojo(name = "transform-extended", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-        public static class WithExtendedDependencies extends ForProductionTypes {
-
-            @Override
-            protected List<String> getClassPathElements() {
-                List<String> classPath = new ArrayList<String>(project.getArtifacts().size() + 1);
-                String directory = project.getBuild().getOutputDirectory();
-                if (directory != null) {
-                    classPath.add(directory);
-                }
-                for (Artifact artifact : project.getArtifacts()) {
-                    if (artifact.getArtifactHandler().isAddedToClasspath()
-                            && !Artifact.SCOPE_TEST.equals(artifact.getScope())
-                            && !Artifact.SCOPE_IMPORT.equals(artifact.getScope())) {
-                        File file = artifact.getFile();
-                        if (file != null) {
-                            classPath.add(file.getPath());
-                        }
-                    }
-                }
-                return classPath;
-            }
-        }
-    }
-
-    /**
-     * A Byte Buddy plugin that transforms a project's test class files.
-     */
-    @Mojo(name = "transform-test", defaultPhase = LifecyclePhase.PROCESS_TEST_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
-    public static class ForTestTypes extends ByteBuddyMojo {
-
-        @Override
-        protected String getOutputDirectory() {
-            return project.getBuild().getTestOutputDirectory();
-        }
-
-        @MaybeNull
-        @Override
-        protected String getSourceDirectory() {
-            return project.getBuild().getTestSourceDirectory();
-        }
-
-        @Override
-        protected List<String> getClassPathElements() throws MojoFailureException {
-            try {
-                return project.getTestClasspathElements();
-            } catch (DependencyResolutionRequiredException e) {
-                throw new MojoFailureException("Could not resolve test class path", e);
             }
         }
     }
