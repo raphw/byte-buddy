@@ -329,6 +329,7 @@
                     <configuration>
                         <!-- Setting this property suppresses a warning on implicit setting the filter encoding. -->
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <propertiesEncoding>${project.build.sourceEncoding}</propertiesEncoding>
                     </configuration>
                 </plugin>
                 <plugin>
