@@ -743,7 +743,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
         @Override
         protected List<String> resolveClassPathElements() throws MojoExecutionException, MojoFailureException {
-            List<String> classPath = new ArrayList<>();
+            List<String> classPath = new ArrayList<String>();
             classPath.add(source);
             if (dependencies != null && !dependencies.isEmpty()) {
                 RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
