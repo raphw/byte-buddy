@@ -720,14 +720,23 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @Mojo(name = "transform-location", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
     public static class ForExplicitLocations extends ByteBuddyMojo {
 
+        /**
+         * The source folder or jar file that should be transformed.
+         */
         @UnknownNull
         @Parameter(required = true)
         public String source;
 
+        /**
+         * The target folder or jar file to where the transformed sources should be written to.
+         */
         @UnknownNull
         @Parameter(required = true)
         public String target;
 
+        /**
+         * A list of dependencies to be included when resolving class files, additionally to the source jar.
+         */
         @MaybeNull
         @Parameter
         public List<MavenCoordinate> dependencies;
