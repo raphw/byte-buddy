@@ -754,7 +754,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 }
                 RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
                 for (CoordinateConfiguration dependency : dependencies) {
-                    String managed = coordinates.get(new Coordinate(project.getGroupId(), project.getArtifactId()));
+                    String managed = coordinates.get(new Coordinate(dependency.getGroupId(project.getGroupId()), dependency.getArtifactId(project.getArtifactId())));
                     MavenCoordinate mavenCoordinate = dependency.asCoordinate(project.getGroupId(),
                             project.getArtifactId(),
                             managed == null ? project.getVersion() : managed,
