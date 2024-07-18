@@ -571,7 +571,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         protected abstract String getSourceDirectory();
 
         @Override
-        protected void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, IOException, MojoFailureException {
+        protected void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, IOException {
             File root = new File(getOutputDirectory());
             if (!root.exists()) {
                 if (warnOnMissingOutputDirectory) {
