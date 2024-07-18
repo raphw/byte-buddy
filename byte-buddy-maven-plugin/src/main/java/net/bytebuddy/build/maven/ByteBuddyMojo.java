@@ -250,7 +250,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 }
             }
         }
-        List<String> elements = resolveClassPathElements();
+        Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
+        if (project.getDependencyManagement() != null) {
+            for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
+                coordinates.put(new Coordinate(dependency.getGroupId(), dependency.getArtifactId()), dependency.getVersion());
+            }
+        }
+        List<String> elements = resolveClassPathElements(coordinates);
         if (discovery.isDiscover(transformers)) {
             try {
                 Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources(Plugin.Engine.Default.PLUGIN_FILE);
@@ -289,7 +295,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().debug(transformers.size() + " plugins are being applied via configuration and discovery");
         }
         try {
-            apply(transformers, elements);
+            apply(transformers, elements, coordinates);
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
         }
@@ -298,27 +304,30 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * Resolves the class path elements of the relevant output directory.
      *
+     * @param coordinates Versions for managed dependencies.
      * @return The class path elements of the relevant output directory.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
      */
-    protected abstract List<String> resolveClassPathElements() throws MojoExecutionException, MojoFailureException;
+    protected abstract List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException;
 
     /**
      * Applies this mojo for the given setup.
      *
      * @param transformers The transformers to apply.
      * @param elements     The class path elements to consider.
+     * @param coordinates  Versions for managed dependencies.
      * @throws MojoExecutionException If the plugin fails due to a user error.
      * @throws MojoFailureException   If the plugin fails due to an application error.
      * @throws IOException            If an I/O exception occurs.
      */
-    protected abstract void apply(List<Transformer> transformers, List<String> elements) throws MojoExecutionException, MojoFailureException, IOException;
+    protected abstract void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException, IOException;
 
     /**
      * Applies the instrumentation.
      *
      * @param classPath    An iterable over all class path elements.
+     * @param coordinates  Versions for managed dependencies.
      * @param transformers The transformers to apply.
      * @param source       The source for the plugin engine's application.
      * @param target       The target for the plugin engine's application.
@@ -330,6 +339,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      */
     @SuppressWarnings("unchecked")
     protected Plugin.Engine.Summary transform(List<? extends String> classPath,
+                                              Map<Coordinate, String> coordinates,
                                               List<Transformer> transformers,
                                               Plugin.Engine.Source source,
                                               Plugin.Engine.Target target,
@@ -351,12 +361,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         } else {
             stalenessFilter = null;
             getLog().debug("Did not discover previous staleness file");
-        }
-        Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
-        if (project.getDependencyManagement() != null) {
-            for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
-                coordinates.put(new Coordinate(dependency.getGroupId(), dependency.getArtifactId()), dependency.getVersion());
-            }
         }
         ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(), repositorySystem, repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession, project.getRemotePluginRepositories());
         try {
@@ -567,7 +571,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         protected abstract String getSourceDirectory();
 
         @Override
-        protected void apply(List<Transformer> transformers, List<String> elements) throws MojoExecutionException, IOException, MojoFailureException {
+        protected void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, IOException, MojoFailureException {
             File root = new File(getOutputDirectory());
             if (!root.exists()) {
                 if (warnOnMissingOutputDirectory) {
@@ -598,13 +602,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     source = new Plugin.Engine.Source.ForFolder(root);
                     getLog().debug("Cannot build incrementally - all class files are processed");
                 }
-                Plugin.Engine.Summary summary = transform(elements, transformers, source, new Plugin.Engine.Target.ForFolder(root), root, true);
+                Plugin.Engine.Summary summary = transform(elements, coordinates, transformers, source, new Plugin.Engine.Target.ForFolder(root), root, true);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
                     context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
                 }
             } else {
                 getLog().debug("Not applying incremental build with context: " + context);
-                transform(elements, transformers, new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), root, false);
+                transform(elements, coordinates, transformers, new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), root, false);
             }
         }
 
@@ -632,7 +636,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             public static class WithoutRuntimeDependencies extends ForProductionTypes {
 
                 @Override
-                protected List<String> resolveClassPathElements() throws MojoFailureException {
+                protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoFailureException {
                     try {
                         return project.getCompileClasspathElements();
                     } catch (DependencyResolutionRequiredException e) {
@@ -649,7 +653,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             public static class WithRuntimeDependencies extends ForProductionTypes {
 
                 @Override
-                protected List<String> resolveClassPathElements() {
+                protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) {
                     try {
                         return project.getRuntimeClasspathElements();
                     } catch (DependencyResolutionRequiredException e) {
@@ -665,7 +669,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             public static class WithExtendedDependencies extends ForProductionTypes {
 
                 @Override
-                protected List<String> resolveClassPathElements() {
+                protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) {
                     List<String> classPath = new ArrayList<String>(project.getArtifacts().size() + 1);
                     String directory = project.getBuild().getOutputDirectory();
                     if (directory != null) {
@@ -704,7 +708,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
 
             @Override
-            protected List<String> resolveClassPathElements() throws MojoFailureException {
+            protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoFailureException {
                 try {
                     return project.getTestClasspathElements();
                 } catch (DependencyResolutionRequiredException e) {
@@ -742,16 +746,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         public List<CoordinateConfiguration> dependencies;
 
         @Override
-        protected List<String> resolveClassPathElements() throws MojoExecutionException, MojoFailureException {
+        protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException {
             List<String> classPath = new ArrayList<String>();
             classPath.add(source);
             if (dependencies != null && !dependencies.isEmpty()) {
-                Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
-                if (project.getDependencyManagement() != null) {
-                    for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
-                        coordinates.put(new Coordinate(dependency.getGroupId(), dependency.getArtifactId()), dependency.getVersion());
-                    }
-                }
                 RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
                 for (CoordinateConfiguration dependency : dependencies) {
                     String managed = coordinates.get(new Coordinate(dependency.getGroupId(project.getGroupId()), dependency.getArtifactId(project.getArtifactId())));
@@ -780,7 +778,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         }
 
         @Override
-        protected void apply(List<Transformer> transformers, List<String> elements) throws MojoExecutionException, MojoFailureException, IOException {
+        protected void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException, IOException {
             File source = new File(this.source), target = new File(this.target);
             Plugin.Engine.Source resolved;
             if (source.isDirectory()) {
@@ -791,6 +789,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 throw new MojoFailureException("Source location does not exist: " + source);
             }
             transform(elements,
+                    coordinates,
                     transformers,
                     resolved,
                     target.isDirectory() ? new Plugin.Engine.Target.ForFolder(target) : new Plugin.Engine.Target.ForJarFile(target),
