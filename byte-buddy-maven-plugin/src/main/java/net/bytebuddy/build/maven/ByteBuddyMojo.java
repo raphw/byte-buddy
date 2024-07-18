@@ -739,7 +739,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          */
         @MaybeNull
         @Parameter
-        public List<MavenCoordinate> dependencies;
+        public List<CoordinateConfiguration> dependencies;
 
         @Override
         protected List<String> resolveClassPathElements() throws MojoExecutionException, MojoFailureException {
@@ -747,7 +747,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             classPath.add(source);
             if (dependencies != null && !dependencies.isEmpty()) {
                 RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
-                for (MavenCoordinate mavenCoordinate : dependencies) {
+                for (CoordinateConfiguration dependency : dependencies) {
+                    MavenCoordinate mavenCoordinate = dependency.asCoordinate(project.getGroupId(),
+                            project.getArtifactId(),
+                            project.getVersion(),
+                            project.getPackaging());
                     try {
                         DependencyNode root = repositorySystem.collectDependencies(
                                 repositorySystemSession,
