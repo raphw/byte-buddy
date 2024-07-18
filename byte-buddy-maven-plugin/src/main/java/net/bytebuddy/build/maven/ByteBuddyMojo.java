@@ -639,8 +639,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoFailureException {
                     try {
                         return project.getCompileClasspathElements();
-                    } catch (DependencyResolutionRequiredException e) {
-                        throw new MojoFailureException("Could not resolve class path", e);
+                    } catch (DependencyResolutionRequiredException exception) {
+                        throw new MojoFailureException("Could not resolve class path", exception);
                     }
                 }
             }
@@ -656,8 +656,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) {
                     try {
                         return project.getRuntimeClasspathElements();
-                    } catch (DependencyResolutionRequiredException e) {
-                        throw new RuntimeException(e);
+                    } catch (DependencyResolutionRequiredException exception) {
+                        throw new RuntimeException("Could not resolve runtime class path", exception);
                     }
                 }
             }
@@ -711,8 +711,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoFailureException {
                 try {
                     return project.getTestClasspathElements();
-                } catch (DependencyResolutionRequiredException e) {
-                    throw new MojoFailureException("Could not resolve test class path", e);
+                } catch (DependencyResolutionRequiredException exception) {
+                    throw new MojoFailureException("Could not resolve test class path", exception);
                 }
             }
         }
@@ -721,7 +721,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * Transforms specified classes from files in a folder or a jar file to a folder or jar file.
      */
-    @Mojo(name = "transform-location", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
+    @Mojo(name = "transform-location-empty", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
     public static class ForExplicitLocations extends ByteBuddyMojo {
 
         /**
@@ -747,7 +747,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
         @Override
         protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException {
-            List<String> classPath = new ArrayList<String>();
+            List<String> classPath = new ArrayList<String>(resolveImplicitClassPathElements());
             classPath.add(source);
             if (dependencies != null && !dependencies.isEmpty()) {
                 RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
@@ -777,9 +777,20 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return classPath;
         }
 
+        /**
+         * Resolves any implicit dependencies that should be added to the class path.
+         *
+         * @return The class path elements of the relevant output directory.
+         * @throws MojoFailureException If the class loader resolution yields a failure.
+         */
+        protected List<String> resolveImplicitClassPathElements() throws MojoFailureException {
+            return Collections.emptyList();
+        }
+
         @Override
         protected void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException, IOException {
             File source = new File(this.source), target = new File(this.target);
+            getLog().info("Transforming " + source.getAbsolutePath() + " to " + target.getAbsolutePath());
             Plugin.Engine.Source resolved;
             if (source.isDirectory()) {
                 resolved = new Plugin.Engine.Source.ForFolder(source);
@@ -795,6 +806,85 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     target.isDirectory() ? new Plugin.Engine.Target.ForFolder(target) : new Plugin.Engine.Target.ForJarFile(target),
                     source,
                     false);
+        }
+
+        /**
+         * Transforms specified classes from files in a folder or a jar file to a folder or jar file. Additionally, all class path dependencies
+         * will be made visible during plugin application.
+         */
+        @Mojo(name = "transform-location", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
+        public static class WithoutRuntimeDependencies extends ForExplicitLocations {
+
+            @Override
+            protected List<String> resolveImplicitClassPathElements() throws MojoFailureException {
+                try {
+                    return project.getCompileClasspathElements();
+                } catch (DependencyResolutionRequiredException exception) {
+                    throw new MojoFailureException("Could not resolve class path", exception);
+                }
+            }
+        }
+
+        /**
+         * Transforms specified classes from files in a folder or a jar file to a folder or jar file. Additionally, all class path dependencies
+         * will be made visible during plugin application, including runtime dependencies.
+         */
+        @Mojo(name = "transform-location-runtime", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+        public static class WithRuntimeDependencies extends ForExplicitLocations {
+
+            @Override
+            protected List<String> resolveImplicitClassPathElements() {
+                try {
+                    return project.getRuntimeClasspathElements();
+                } catch (DependencyResolutionRequiredException exception) {
+                    throw new RuntimeException("Could not resolve runtime class path", exception);
+                }
+            }
+        }
+
+        /**
+         * Transforms specified classes from files in a folder or a jar file to a folder or jar file. Additionally, all class path dependencies
+         * will be made visible during plugin application, including any non-test dependencies.
+         */
+        @Mojo(name = "transform-location-extended", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+        public static class WithExtendedDependencies extends ForExplicitLocations {
+
+            @Override
+            protected List<String> resolveImplicitClassPathElements() {
+                List<String> classPath = new ArrayList<String>(project.getArtifacts().size() + 1);
+                String directory = project.getBuild().getOutputDirectory();
+                if (directory != null) {
+                    classPath.add(directory);
+                }
+                for (Artifact artifact : project.getArtifacts()) {
+                    if (artifact.getArtifactHandler().isAddedToClasspath()
+                            && !Artifact.SCOPE_TEST.equals(artifact.getScope())
+                            && !Artifact.SCOPE_IMPORT.equals(artifact.getScope())) {
+                        File file = artifact.getFile();
+                        if (file != null) {
+                            classPath.add(file.getPath());
+                        }
+                    }
+                }
+                return classPath;
+            }
+        }
+
+        /**
+         * Transforms specified classes from files in a folder or a jar file to a folder or jar file. Additionally, all class path dependencies
+         * will be made visible during plugin application, including any non-test and test dependencies.
+         */
+        @Mojo(name = "transform-location-test", defaultPhase = LifecyclePhase.PROCESS_TEST_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
+        public static class ForTestTypes extends ForExplicitLocations {
+
+            @Override
+            protected List<String> resolveImplicitClassPathElements() throws MojoFailureException {
+                try {
+                    return project.getTestClasspathElements();
+                } catch (DependencyResolutionRequiredException exception) {
+                    throw new MojoFailureException("Could not resolve test class path", exception);
+                }
+            }
         }
     }
 
@@ -978,7 +1068,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * @param packaging           The packaging of this project.
          * @return The class loader to use.
          * @throws MojoFailureException   If the class loader resolution yields a failure.
-         * @throws MojoExecutionException The the class loader resolution is incorrect.
+         * @throws MojoExecutionException The class loader resolution is incorrect.
          */
         protected abstract ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver, Map<Coordinate, String> coordinates, String groupId, String artifactId, String version, String packaging) throws MojoFailureException, MojoExecutionException;
 
