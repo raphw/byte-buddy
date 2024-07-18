@@ -746,11 +746,18 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             List<String> classPath = new ArrayList<String>();
             classPath.add(source);
             if (dependencies != null && !dependencies.isEmpty()) {
+                Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
+                if (project.getDependencyManagement() != null) {
+                    for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
+                        coordinates.put(new Coordinate(dependency.getGroupId(), dependency.getArtifactId()), dependency.getVersion());
+                    }
+                }
                 RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
                 for (CoordinateConfiguration dependency : dependencies) {
+                    String managed = coordinates.get(new Coordinate(project.getGroupId(), project.getArtifactId()));
                     MavenCoordinate mavenCoordinate = dependency.asCoordinate(project.getGroupId(),
                             project.getArtifactId(),
-                            project.getVersion(),
+                            managed == null ? project.getVersion() : managed,
                             project.getPackaging());
                     try {
                         DependencyNode root = repositorySystem.collectDependencies(
