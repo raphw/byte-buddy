@@ -747,20 +747,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
         @Override
         protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException {
-            List<String> classPath = new ArrayList<String>(resolveImplicitClassPathElements());
-            if (source.endsWith("*")) {
-                File folder = new File(source.substring(0, source.length() - 1));
-                File[] file = folder.listFiles();
-                if (file != null) {
-                    for (File aFile : file) {
-                        if (aFile.isFile()) {
-                            classPath.add(aFile.toString());
-                        }
-                    }
-                }
-            } else {
-                classPath.add(source);
-            }
+            List<String> classPath = new ArrayList<String>();
+            classPath.add(source);
+            classPath.addAll(resolveImplicitClassPathElements());
             if (dependencies != null && !dependencies.isEmpty()) {
                 RepositorySystemSession repositorySystemSession = this.repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : this.repositorySystemSession;
                 for (CoordinateConfiguration dependency : dependencies) {
@@ -801,21 +790,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
         @Override
         protected void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException, IOException {
-            File source = new File(this.source.endsWith("*") ? this.source.substring(0, this.source.length() - 1) : this.source), target = new File(this.target);
+            File source = new File(this.source), target = new File(this.target);
             getLog().info("Transforming " + this.source + " to " + this.target);
             Plugin.Engine.Source resolved;
-            if (this.source.endsWith("*")) {
-                List<Plugin.Engine.Source> sources = new ArrayList<Plugin.Engine.Source>();
-                File[] file = source.listFiles();
-                if (file != null) {
-                    for (File aFile : file) {
-                        if (aFile.isFile()) {
-                            sources.add(new Plugin.Engine.Source.ForJarFile(source));
-                        }
-                    }
-                }
-                resolved = new Plugin.Engine.Source.Compound(sources);
-            } else if (source.isDirectory()) {
+            if (source.isDirectory()) {
                 resolved = new Plugin.Engine.Source.ForFolder(source);
             } else if (source.exists()) {
                 resolved = new Plugin.Engine.Source.ForJarFile(source);
