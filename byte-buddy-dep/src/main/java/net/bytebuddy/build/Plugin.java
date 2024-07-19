@@ -2762,6 +2762,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public Source.Origin read() throws IOException {
                     if (sources.isEmpty()) {
                         return Empty.INSTANCE;
+                    } else if (sources.size() == 1) {
+                        return sources.iterator().next().read();
                     }
                     List<Source.Origin> origins = new ArrayList<Source.Origin>(sources.size());
                     try {
