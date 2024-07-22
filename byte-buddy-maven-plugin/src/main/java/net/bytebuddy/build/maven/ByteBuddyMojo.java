@@ -889,6 +889,58 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         }
     }
 
+    @Mojo(name = "transform-dependencies", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
+    public static class ForDependencyFolder extends ByteBuddyMojo {
+
+        /**
+         * The source folder that contains the project's dependencies.
+         */
+        @UnknownNull
+        @Parameter(required = true)
+        public String source;
+
+        /**
+         * The target folder that contains the project's dependencies or {@code null} if the {@link ForDependencyFolder#source} folder should be used.
+         */
+        @MaybeNull
+        @Parameter(required = false)
+        public String target;
+
+        @Override
+        protected List<String> resolveClassPathElements(Map<Coordinate, String> coordinates) {
+            try {
+                return project.getCompileClasspathElements();
+            } catch (DependencyResolutionRequiredException exception) {
+                throw new RuntimeException("Could not resolve class path", exception);
+            }
+        }
+
+        @Override
+        protected void apply(List<Transformer> transformers, List<String> elements, Map<Coordinate, String> coordinates) throws MojoExecutionException, MojoFailureException, IOException {
+            File source = new File(this.source), target = this.target == null ? source : new File(this.target);
+            getLog().info("Transforming dependencies in " + this.source + (this.target == null ? "" : (" to " + this.target)));
+            if (!source.isDirectory()) {
+                throw new MojoFailureException("Expected " + this.source + " to be a folder");
+            } else if (this.target != null && target.isFile()) {
+                throw new MojoFailureException("Did not expect " + this.target + " to be a file");
+            }
+            File[] file = source.listFiles();
+            if (file != null) {
+                for (File aFile : file) {
+                    if (aFile.isFile()) {
+                        transform(elements,
+                                coordinates,
+                                transformers,
+                                new Plugin.Engine.Source.ForJarFile(aFile),
+                                new Plugin.Engine.Target.ForJarFile(new File(target, aFile.getName())),
+                                aFile,
+                                false);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * A {@link BuildLogger} implementation for a Maven {@link Log}.
      */
