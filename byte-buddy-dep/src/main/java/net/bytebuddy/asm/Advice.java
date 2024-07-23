@@ -5815,7 +5815,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * {@inheritDoc}
                  */
                 public Delegator make(MethodDescription.InDefinedShape adviceMethod, boolean exit) {
-                    return new ForDynamicInvocation(bootstrapMethod, adviceMethod, resolverFactory.resolve(adviceMethod, exit));
+                    return new ForDynamicInvocation(bootstrapMethod, resolverFactory.override(adviceMethod), resolverFactory.resolve(adviceMethod, exit));
                 }
             }
         }
@@ -5848,6 +5848,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return An appropriate bootstrap argument resolver.
              */
             BootstrapArgumentResolver resolve(MethodDescription.InDefinedShape adviceMethod, boolean exit);
+
+            /**
+             * Overrides the advice method as it will be presented to the bootstrap method.
+             *
+             * @param adviceMethod The advice method that is being bound.
+             * @return The advice method in the version that is being presented to the bootstrap method.
+             */
+            MethodDescription.InDefinedShape override(MethodDescription.InDefinedShape adviceMethod);
+
+            /**
+             * An abstract base implementation of a factory that resolves the advice method in its actual format when
+             * it is presented to the bootstrap method.
+             */
+            abstract class AbstractBase implements Factory {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public MethodDescription.InDefinedShape override(MethodDescription.InDefinedShape adviceMethod) {
+                    return adviceMethod;
+                }
+            }
         }
 
         /**
@@ -5917,6 +5939,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public BootstrapArgumentResolver resolve(MethodDescription.InDefinedShape adviceMethod, boolean exit) {
                     return new ForDefaultValues(adviceMethod, exit);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public MethodDescription.InDefinedShape override(MethodDescription.InDefinedShape adviceMethod) {
+                    return adviceMethod;
                 }
             }
         }
