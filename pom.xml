@@ -1225,7 +1225,6 @@
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
-                                        <exclude>net.bytebuddy.asm.Advice$BootstrapArgumentResolver$Factory</exclude>
                                     </parameter>
                                 </configuration>
                             </execution>
