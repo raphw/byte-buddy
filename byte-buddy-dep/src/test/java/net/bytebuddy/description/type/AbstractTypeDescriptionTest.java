@@ -620,9 +620,17 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test(expected = IllegalStateException.class)
     public void testMalformedParameterizedTypeVariableDefinition() throws Exception {
-        TypeDescription typeDescription = describe(TypeVariableMalformer.malform(MalformedTypeVariable.class));
+        TypeDescription typeDescription = describe(TypeVariableMalformer.malform(MalformedParameterizedTypeVariable.class));
         assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().size(), is(1));
         typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().getOnly().getUpperBounds();
+    }
+
+    @Test
+    public void testMalformedParameterizedLengthDefinition() throws Exception {
+        TypeDescription typeDescription = describe(ParameterizedTypeLengthMalformer.malform(MalformedParameterizedLength.class));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().size(), is(2));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().get(0).represents(Object.class), is(true));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().get(1).represents(Object.class), is(true));
     }
 
     @Test
@@ -994,6 +1002,41 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         }
     }
 
+    private static class ParameterizedTypeLengthMalformer extends ClassVisitor {
+
+        public ParameterizedTypeLengthMalformer(ClassVisitor classVisitor) {
+            super(OpenedClassReader.ASM_API, classVisitor);
+        }
+
+        public static Class<?> malform(Class<?> type) throws Exception {
+            ClassReader classReader = new ClassReader(type.getName());
+            ClassWriter classWriter = new ClassWriter(classReader, 0);
+            classReader.accept(new TypeVariableMalformer(classWriter), 0);
+            ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                    Collections.singletonMap(type.getName(), classWriter.toByteArray()),
+                    ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+            return classLoader.loadClass(type.getName());
+        }
+
+        @Override
+        public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+            if (descriptor.equals(Type.getDescriptor(Map.class))) {
+                signature = Type.getDescriptor(Map.class) + "<" + Type.getDescriptor(Object.class) + ">";
+            }
+            return super.visitField(access, name, descriptor, signature, value);
+        }
+
+        @Override
+        public void visitInnerClass(String name, String outerName, String innerName, int access) {
+            /* do nothing */
+        }
+
+        @Override
+        public void visitOuterClass(String owner, String name, String descriptor) {
+            /* do nothing */
+        }
+    }
+
     @SuppressWarnings("unused")
     public abstract static class MalformedBase<T> implements Callable<T> {
 
@@ -1012,6 +1055,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     public abstract static class MalformedParameterizedTypeVariable {
 
         Set<Object> foo;
+    }
+
+    @SuppressWarnings("unused")
+    public abstract static class MalformedParameterizedLength {
+
+        Map<Object, Object> foo;
     }
 
     static class SamplePackagePrivate {
