@@ -23,6 +23,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.*;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -31,6 +32,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericSignatureFormatError;
+import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -625,12 +627,16 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().getOnly().getUpperBounds();
     }
 
-    @Test
-    public void testMalformedParameterizedLengthDefinition() throws Exception {
+    @Test(expected = MalformedParameterizedTypeException.class)
+    public void testMalformedParameterizedLengthDefinitionArguments() throws Exception {
         TypeDescription typeDescription = describe(ParameterizedTypeLengthMalformer.malform(MalformedParameterizedLength.class));
-        assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().size(), is(2));
-        assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().get(0).represents(Object.class), is(true));
-        assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().get(1).represents(Object.class), is(true));
+        typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments();
+    }
+
+    @Test(expected = MalformedParameterizedTypeException.class)
+    public void testMalformedParameterizedLengthDefinitionOwner() throws Exception {
+        TypeDescription typeDescription = describe(ParameterizedTypeLengthMalformer.malform(MalformedParameterizedLength.class));
+        typeDescription.getDeclaredFields().getOnly().getType().getOwnerType();
     }
 
     @Test
@@ -985,8 +991,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
             if (descriptor.equals(Type.getDescriptor(Object.class))) {
                 signature = "TA;";
-            } else if (descriptor.equals(Type.getDescriptor(Set.class) + "<" + Type.getDescriptor(Object.class) + ">")) {
-                signature = Type.getDescriptor(Set.class) + "<TA;>";
+            } else if (descriptor.equals(Type.getDescriptor(Set.class))) {
+                signature = "L" + Type.getInternalName(Set.class) + "<TA;>;";
             }
             return super.visitField(access, name, descriptor, signature, value);
         }
@@ -1011,7 +1017,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         public static Class<?> malform(Class<?> type) throws Exception {
             ClassReader classReader = new ClassReader(type.getName());
             ClassWriter classWriter = new ClassWriter(classReader, 0);
-            classReader.accept(new TypeVariableMalformer(classWriter), 0);
+            classReader.accept(new ParameterizedTypeLengthMalformer(classWriter), 0);
             ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                     Collections.singletonMap(type.getName(), classWriter.toByteArray()),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST);
@@ -1021,7 +1027,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         @Override
         public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
             if (descriptor.equals(Type.getDescriptor(Map.class))) {
-                signature = Type.getDescriptor(Map.class) + "<" + Type.getDescriptor(Object.class) + ">";
+                signature = "L" + Type.getInternalName(Map.class) + "<" + Type.getDescriptor(Object.class) + ">;";
             }
             return super.visitField(access, name, descriptor, signature, value);
         }

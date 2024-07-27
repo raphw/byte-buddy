@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.GenericSignatureFormatError;
+import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -5421,6 +5422,10 @@ public interface TypePool {
                          * {@inheritDoc}
                          */
                         public TypeList.Generic getTypeArguments() {
+                            TypeDescription typeDescription = typePool.describe(name).resolve();
+                            if (typeDescription.getTypeVariables().size() != parameterTypeTokens.size()) {
+                                throw new MalformedParameterizedTypeException();
+                            }
                             return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
                         }
 
@@ -5429,7 +5434,11 @@ public interface TypePool {
                          */
                         @MaybeNull
                         public Generic getOwnerType() {
-                            TypeDescription ownerType = typePool.describe(name).resolve().getEnclosingType();
+                            TypeDescription typeDescription = typePool.describe(name).resolve();
+                            if (typeDescription.getTypeVariables().size() != parameterTypeTokens.size()) {
+                                throw new MalformedParameterizedTypeException();
+                            }
+                            TypeDescription ownerType = typeDescription.getEnclosingType();
                             return ownerType == null
                                     ? Generic.UNDEFINED
                                     : ownerType.asGenericType();
