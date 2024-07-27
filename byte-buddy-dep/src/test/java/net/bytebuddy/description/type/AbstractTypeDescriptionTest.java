@@ -611,6 +611,20 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().getSort();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testMalformedTypeVariableDefinition() throws Exception {
+        TypeDescription typeDescription = describe(TypeVariableMalformer.malform(MalformedTypeVariable.class));
+        assertThat(typeDescription.getDeclaredFields().size(), is(1));
+        typeDescription.getDeclaredFields().getOnly().getType().getUpperBounds();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMalformedParameterizedTypeVariableDefinition() throws Exception {
+        TypeDescription typeDescription = describe(TypeVariableMalformer.malform(MalformedTypeVariable.class));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().size(), is(1));
+        typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().getOnly().getUpperBounds();
+    }
+
     @Test
     public void testRepresents() throws Exception {
         assertThat(describe(Object.class).represents(Object.class), is(true));
@@ -913,8 +927,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     private static class SignatureMalformer extends ClassVisitor {
 
-        private static final String FOO = "foo";
-
         public SignatureMalformer(ClassVisitor classVisitor) {
             super(OpenedClassReader.ASM_API, classVisitor);
         }
@@ -935,13 +947,50 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         }
 
         @Override
-        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-            return super.visitField(access, name, desc, FOO, value);
+        public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+            return super.visitField(access, name, descriptor, FOO, value);
         }
 
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
             return super.visitMethod(access, name, desc, FOO, exceptions);
+        }
+    }
+
+    private static class TypeVariableMalformer extends ClassVisitor {
+
+        public TypeVariableMalformer(ClassVisitor classVisitor) {
+            super(OpenedClassReader.ASM_API, classVisitor);
+        }
+
+        public static Class<?> malform(Class<?> type) throws Exception {
+            ClassReader classReader = new ClassReader(type.getName());
+            ClassWriter classWriter = new ClassWriter(classReader, 0);
+            classReader.accept(new TypeVariableMalformer(classWriter), 0);
+            ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                    Collections.singletonMap(type.getName(), classWriter.toByteArray()),
+                    ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+            return classLoader.loadClass(type.getName());
+        }
+
+        @Override
+        public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+            if (descriptor.equals(Type.getDescriptor(Object.class))) {
+                signature = "TA;";
+            } else if (descriptor.equals(Type.getDescriptor(Set.class) + "<" + Type.getDescriptor(Object.class) + ">")) {
+                signature = Type.getDescriptor(Set.class) + "<TA;>";
+            }
+            return super.visitField(access, name, descriptor, signature, value);
+        }
+
+        @Override
+        public void visitInnerClass(String name, String outerName, String innerName, int access) {
+            /* do nothing */
+        }
+
+        @Override
+        public void visitOuterClass(String owner, String name, String descriptor) {
+            /* do nothing */
         }
     }
 
@@ -951,6 +1000,18 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         Callable<T> foo;
 
         abstract Callable<T> foo();
+    }
+
+    @SuppressWarnings("unused")
+    public abstract static class MalformedTypeVariable {
+
+        Object foo;
+    }
+
+    @SuppressWarnings("unused")
+    public abstract static class MalformedParameterizedTypeVariable {
+
+        Set<Object> foo;
     }
 
     static class SamplePackagePrivate {

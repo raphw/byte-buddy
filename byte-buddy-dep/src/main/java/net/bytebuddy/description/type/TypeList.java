@@ -822,7 +822,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = this.type.getGenericInterfaces();
                     return erasure.length == type.length
-                            ? Sort.describe(type[index], getAnnotationReader())
+                            ? Sort.describeOrNull(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
@@ -918,7 +918,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericExceptionTypes();
                     return erasure.length == type.length
-                            ? Sort.describe(type[index], getAnnotationReader())
+                            ? Sort.describeOrNull(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
@@ -1014,7 +1014,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericExceptionTypes();
                     return erasure.length == type.length
-                            ? Sort.describe(type[index], getAnnotationReader())
+                            ? Sort.describeOrNull(type[index], getAnnotationReader())
                             : asRawType();
                 }
 

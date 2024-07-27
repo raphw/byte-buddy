@@ -4478,7 +4478,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 @MaybeNull
                 public Generic getComponentType() {
-                    return Sort.describe(genericArrayType.getGenericComponentType(), annotationReader.ofComponentType());
+                    return Sort.describeOrNull(genericArrayType.getGenericComponentType(), annotationReader.ofComponentType());
                 }
 
                 /**
@@ -4838,7 +4838,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public Generic get(int index) {
-                        return Sort.describe(upperBound[index], annotationReader.ofWildcardUpperBoundType(index));
+                        return Sort.describeOrNull(upperBound[index], annotationReader.ofWildcardUpperBoundType(index));
                     }
 
                     /**
@@ -4879,7 +4879,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public Generic get(int index) {
-                        return Sort.describe(lowerBound[index], annotationReader.ofWildcardLowerBoundType(index));
+                        return Sort.describeOrNull(lowerBound[index], annotationReader.ofWildcardLowerBoundType(index));
                     }
 
                     /**
@@ -5358,8 +5358,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public Generic get(int index) {
-                        // Obfuscators sometimes render parameterized type arguments as null values.
-                        return Sort.describe(argumentType[index], annotationReader.ofTypeArgument(index));
+                        return Sort.describeOrNull(argumentType[index], annotationReader.ofTypeArgument(index));
                     }
 
                     /**
@@ -6112,7 +6111,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public Generic get(int index) {
-                        return Sort.describe(bound[index], annotationReader.ofTypeVariableBoundType(index));
+                        return Sort.describeOrNull(bound[index], annotationReader.ofTypeVariableBoundType(index));
                     }
 
                     /**
@@ -6687,7 +6686,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
-                    return Sort.describe(field.getGenericType(), getAnnotationReader());
+                    return Sort.describeOrNull(field.getGenericType(), getAnnotationReader());
                 }
 
                 /**
@@ -6725,7 +6724,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
-                    return Sort.describe(method.getGenericReturnType(), getAnnotationReader());
+                    return Sort.describeOrNull(method.getGenericReturnType(), getAnnotationReader());
                 }
 
                 /**
@@ -6780,7 +6779,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
                     return erasure.length == type.length
-                            ? Sort.describe(type[index], getAnnotationReader())
+                            ? Sort.describeOrNull(type[index], getAnnotationReader())
                             : OfNonGenericType.ForLoadedType.of(erasure[index]);
                 }
 
@@ -6836,7 +6835,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericParameterTypes();
                     return erasure.length == type.length
-                            ? Sort.describe(type[index], getAnnotationReader())
+                            ? Sort.describeOrNull(type[index], getAnnotationReader())
                             : OfNonGenericType.ForLoadedType.of(erasure[index]);
                 }
 
@@ -6875,7 +6874,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
-                    return Sort.describe(RecordComponentDescription.ForLoadedRecordComponent.RECORD_COMPONENT.getGenericType(recordComponent), getAnnotationReader());
+                    return Sort.describeOrNull(RecordComponentDescription.ForLoadedRecordComponent.RECORD_COMPONENT.getGenericType(recordComponent), getAnnotationReader());
                 }
 
                 /**
