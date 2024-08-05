@@ -39,10 +39,7 @@ import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.Duplication;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
@@ -114,6 +111,13 @@ public class ByteBuddy {
     public static final String DEFAULT_NAMING_PROPERTY = "net.bytebuddy.naming";
 
     /**
+     * A property that controls the default type validation applied by Byte Buddy. If not set,
+     * and if not otherwise configured by the user, types will be explicitly validated to
+     * supply better error messages.
+     */
+    public static final String DEFAULT_VALIDATION_PROPERTY = "net.bytebuddy.validation";
+
+    /**
      * The default prefix for the default {@link net.bytebuddy.NamingStrategy}.
      */
     private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
@@ -127,6 +131,11 @@ public class ByteBuddy {
      * The default name of a fixed context name for synthetic fields and methods.
      */
     private static final String BYTE_BUDDY_DEFAULT_CONTEXT_NAME = "synthetic";
+
+    /**
+     * The default type validation to apply.
+     */
+    private static final TypeValidation DEFAULT_TYPE_VALIDATION;
 
     /**
      * The default naming strategy or {@code null} if no such strategy is set.
@@ -150,11 +159,25 @@ public class ByteBuddy {
      * Resolves the default naming strategy.
      */
     static {
-        String value = doPrivileged(new GetSystemPropertyAction(DEFAULT_NAMING_PROPERTY));
+        String validation;
+        try {
+            validation = doPrivileged(new GetSystemPropertyAction(DEFAULT_VALIDATION_PROPERTY));
+        } catch (Throwable ignored) {
+            validation = null;
+        }
+        DEFAULT_TYPE_VALIDATION = validation == null || Boolean.parseBoolean(validation)
+                ? TypeValidation.ENABLED
+                : TypeValidation.DISABLED;
+        String naming;
+        try {
+            naming = doPrivileged(new GetSystemPropertyAction(DEFAULT_NAMING_PROPERTY));
+        } catch (Throwable ignored) {
+            naming = null;
+        }
         NamingStrategy namingStrategy;
         AuxiliaryType.NamingStrategy auxiliaryNamingStrategy;
         Implementation.Context.Factory implementationContextFactory;
-        if (value == null) {
+        if (naming == null) {
             if (GraalImageCode.getCurrent().isDefined()) {
                 namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                         new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE),
@@ -166,13 +189,13 @@ public class ByteBuddy {
                 auxiliaryNamingStrategy = null;
                 implementationContextFactory = null;
             }
-        } else if (value.equalsIgnoreCase("fixed")) {
+        } else if (naming.equalsIgnoreCase("fixed")) {
             namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                     NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
                     NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
             auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_SUFFIX);
             implementationContextFactory = new Implementation.Context.Default.Factory.WithFixedSuffix(BYTE_BUDDY_DEFAULT_CONTEXT_NAME);
-        } else if (value.equalsIgnoreCase("caller")) {
+        } else if (naming.equalsIgnoreCase("caller")) {
             namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                     new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE),
                     NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
@@ -181,9 +204,9 @@ public class ByteBuddy {
         } else {
             long seed;
             try {
-                seed = Long.parseLong(value);
+                seed = Long.parseLong(naming);
             } catch (Exception ignored) {
-                throw new IllegalStateException("'net.bytebuddy.naming' is set to an unknown, non-numeric value: " + value);
+                throw new IllegalStateException("'net.bytebuddy.naming' is set to an unknown, non-numeric value: " + naming);
             }
             namingStrategy = new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX,
                     NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
@@ -305,7 +328,7 @@ public class ByteBuddy {
                         : DEFAULT_IMPLEMENTATION_CONTEXT_FACTORY,
                 MethodGraph.Compiler.DEFAULT,
                 InstrumentedType.Factory.Default.MODIFIABLE,
-                TypeValidation.ENABLED,
+                DEFAULT_TYPE_VALIDATION,
                 VisibilityBridgeStrategy.Default.ALWAYS,
                 ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING,
                 new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
