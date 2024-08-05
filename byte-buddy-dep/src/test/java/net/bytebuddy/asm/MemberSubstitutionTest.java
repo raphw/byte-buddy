@@ -846,7 +846,7 @@ public class MemberSubstitutionTest {
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredMethod(RUN, Object.class).invoke(instance, QUX), nullValue(Object.class));
-        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) QUX + BAZ));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) (QUX + BAZ)));
     }
 
     @Test
