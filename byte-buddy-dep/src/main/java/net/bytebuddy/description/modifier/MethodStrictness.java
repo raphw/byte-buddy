@@ -20,7 +20,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * A modifier contributor to determine the use of {@code strictfp} on a method.
  */
-public enum MethodStrictness implements ModifierContributor.ForMethod {
+public enum MethodStrictness implements ModifierContributor.ForMethod, ModifierContributor.ForType {
 
     /**
      * Modifier for a non-strict method. (This is the default modifier.)

@@ -35,6 +35,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.ElementType;
 import java.util.*;
@@ -1699,6 +1700,8 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Duplicate method signature for " + methodDescription);
                 } else if ((methodDescription.getModifiers() & ~ModifierContributor.ForMethod.MASK) != 0) {
                     throw new IllegalStateException("Illegal modifiers " + methodDescription.getModifiers() + " for " + methodDescription);
+                } else if (methodDescription.isAbstract() && (methodDescription.getModifiers() & Opcodes.ACC_STRICT) != 0) {
+                    throw new IllegalStateException("Cannot declare strict computations for " + methodDescription);
                 } else if (isInterface() && !methodDescription.isPublic() && !methodDescription.isPrivate()) {
                     throw new IllegalStateException("Methods declared by an interface must be public or private " + methodDescription);
                 }
