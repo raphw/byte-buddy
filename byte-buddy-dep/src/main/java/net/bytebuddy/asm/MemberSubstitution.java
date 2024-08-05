@@ -237,6 +237,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
     /**
      * Specifies if this substitution should fail if applied on a method without a match.
+     *
      * @param failIfNoMatch {@code true} if the instrumentation should fail if applied to a method without match.
      * @return A new instance of this member substitution that fails if applied on a method without a match.
      */
@@ -2035,6 +2036,41 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     }
 
                     /**
+                     * Creates a factory that loads the argument for the targeted value's parameter of the specified index.
+                     *
+                     * @param index The index to load.
+                     * @return An appropriate factory.
+                     */
+                    public static Factory ofTarget(int index) {
+                        if (index < 0) {
+                            throw new IllegalArgumentException("Argument index cannot be negative: " + index);
+                        }
+                        return new ForArgumentLoading(index);
+                    }
+
+                    /**
+                     * Creates a factory that loads the argument for the instrumented method's parameter of the specified index.
+                     *
+                     * @param index The index to load.
+                     * @return An appropriate factory.
+                     */
+                    public static Factory ofInstrumentedMethod(int index) {
+                        if (index < 0) {
+                            throw new IllegalArgumentException("Argument index cannot be negative: " + index);
+                        }
+                        return new OfInstrumentedMethod(index);
+                    }
+
+                    /**
+                     * Creates a factory that loads the {@code this} reference of the instrumented method.
+                     *
+                     * @return An appropriate factory.
+                     */
+                    public static Factory ofThis() {
+                        return OfInstrumentedMethodThis.INSTANCE;
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
@@ -2057,6 +2093,65 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             throw new IllegalStateException(original + " has not " + index + " arguments");
                         }
                         return new Simple(new StackManipulation.Compound(Removal.of(current), MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index))), parameters.get(index));
+                    }
+
+                    /**
+                     * A factory that resolves the {@code this} reference of the instrumented method.
+                     */
+                    protected enum OfInstrumentedMethodThis implements Factory {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Step make(Assigner assigner,
+                                         Assigner.Typing typing,
+                                         TypeDescription instrumentedType,
+                                         MethodDescription instrumentedMethod) {
+                            if (instrumentedMethod.isStatic()) {
+                                throw new IllegalStateException(instrumentedMethod + " is static and does not define a this reference");
+                            }
+                            return new Simple(MethodVariableAccess.loadThis(), instrumentedType.asGenericType());
+                        }
+                    }
+
+                    /**
+                     * A factory that resolves a given argument of the instrumented method.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    protected static class OfInstrumentedMethod implements Factory {
+
+                        /**
+                         * The index of the argument to load.
+                         */
+                        private final int index;
+
+                        /**
+                         * Creates a new factory for resolving an argument of the instrumented method.
+                         *
+                         * @param index The index of the argument to load.
+                         */
+                        protected OfInstrumentedMethod(int index) {
+                            this.index = index;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Step make(Assigner assigner,
+                                         Assigner.Typing typing,
+                                         TypeDescription instrumentedType,
+                                         MethodDescription instrumentedMethod) {
+                            if (instrumentedMethod.getParameters().size() < index) {
+                                throw new IllegalStateException(instrumentedMethod + " does not declare " + index + " parameters");
+                            }
+                            ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
+                            return new Simple(MethodVariableAccess.load(parameterDescription), parameterDescription.getType());
+                        }
                     }
                 }
 

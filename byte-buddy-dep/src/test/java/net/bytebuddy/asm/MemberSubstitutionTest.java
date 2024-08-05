@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
@@ -834,11 +835,56 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    public void testSubstitutionChainArgumentLoaded() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ArgumentSample.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).replaceWithChain(
+                        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofTarget(0)).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(RUN, Object.class).invoke(instance, QUX), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) QUX + BAZ));
+    }
+
+    @Test
+    public void testSubstitutionChainArgumentInstrumentedMethodLoaded() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ArgumentSample.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).replaceWithChain(
+                        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofInstrumentedMethod(0)).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(RUN, Object.class).invoke(instance, QUX), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) QUX));
+    }
+
+    @Test
+    public void testSubstitutionChainArgumentInstrumentedMethodLoadedThis() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ArgumentSample.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).replaceWithChain(
+                        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofThis()).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(RUN, Object.class).invoke(instance, QUX), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) instance));
+    }
+
+    @Test
     public void testSubstitutionChainFieldRead() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
+                        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofTarget(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForField.Read.Factory(FieldAccessSample.class.getDeclaredField("qux"))).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -873,7 +919,7 @@ public class MemberSubstitutionTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(BAR)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
+                        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofTarget(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForField.Write.Factory(FieldAccessSample.class.getDeclaredField("baz"), 0)).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -891,7 +937,7 @@ public class MemberSubstitutionTest {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(BAR)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
+                        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofTarget(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForField.Write.Factory(StaticFieldAccessSample.class.getDeclaredField("baz"), 0)).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -909,7 +955,7 @@ public class MemberSubstitutionTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
+                        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofTarget(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForInvocation.Factory(FieldAccessSample.class.getDeclaredMethod("baz"))).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -1185,6 +1231,31 @@ public class MemberSubstitutionTest {
     @Test(expected = IllegalArgumentException.class)
     public void testChainArgumentNegativeIndex() {
         MemberSubstitution.Substitution.Chain.Step.ForArgumentSubstitution.of(FOO, -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testChainArgumentLoadingNegativeIndex() throws Exception {
+        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofTarget(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testChainArgumentLoadingInstrumentedMethodNegativeIndex() throws Exception {
+        MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.ofInstrumentedMethod(-1);
+    }
+
+    public static class ArgumentSample {
+
+        public Object foo = FOO;
+
+        @SuppressWarnings("unused")
+        public void run(Object argument) {
+            foo = foo(argument + BAZ);
+        }
+
+        @SuppressWarnings("unused")
+        private static Object foo(Object argument) {
+            return BAR;
+        }
     }
 
     public static class FieldAccessSample {
