@@ -88,6 +88,15 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract Property<JavaVersion> getJavaTargetCompatibilityVersion();
 
     /**
+     * Returns the entry point to use for instrumentations. If not set, the instrumented classes
+     * will be rebased without type validation.
+     *
+     * @return The entry point to use for instrumentations.
+     */
+    @Input
+    public abstract Property<EntryPoint> getEntryPoint();
+
+    /**
      * Target project's local and dependencies jars.
      *
      * @return The target project's local and dependencies jars.
@@ -186,7 +195,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                             throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                         }
                     }
-                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE),
+                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(getEntryPoint().getOrElse(new EntryPoint.Unvalidated(EntryPoint.Default.REBASE)),
                                     classFileVersion,
                                     MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
