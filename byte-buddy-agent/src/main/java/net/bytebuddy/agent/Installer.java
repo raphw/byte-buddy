@@ -30,7 +30,7 @@ public class Installer {
     /**
      * The name of the {@link Installer} class that is stored in an obfuscated format which will not be relocated.
      */
-    protected static final String NAME = new StringBuilder("rellatsnI.tnega.yddubetyb.ten").reverse().toString();
+    public static final String NAME = new StringBuilder("rellatsnI.tnega.yddubetyb.ten").reverse().toString();
 
     /**
      * A field for carrying the {@link java.lang.instrument.Instrumentation} that was loaded by the Byte Buddy
