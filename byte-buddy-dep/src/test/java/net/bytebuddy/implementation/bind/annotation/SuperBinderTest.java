@@ -19,9 +19,6 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     @Mock
     private TypeDescription.Generic genericTargetType;
 
-    @Mock
-    private Super.Instantiation instantiation;
-
     public SuperBinderTest() {
         super(Super.class);
     }
@@ -32,8 +29,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         super.setUp();
         when(target.getType()).thenReturn(genericTargetType);
         when(genericTargetType.asErasure()).thenReturn(targetType);
-        when(annotation.strategy()).thenReturn(instantiation);
-        when(instantiation.proxyFor(targetType, implementationTarget, annotationDescription)).thenReturn(stackManipulation);
+        when(annotation.strategy()).thenReturn(Super.Instantiation.CONSTRUCTOR);
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
         when(targetType.asErasure()).thenReturn(targetType);
     }
@@ -50,7 +46,6 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(instantiation).proxyFor(targetType, implementationTarget, annotationDescription);
     }
 
     @Test
