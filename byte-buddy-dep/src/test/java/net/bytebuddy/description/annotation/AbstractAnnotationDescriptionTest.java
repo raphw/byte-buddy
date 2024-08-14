@@ -1202,7 +1202,7 @@ public abstract class AbstractAnnotationDescriptionTest {
                 if (allowIncompatibleDeclaration) {
                     annotationVisitor.visitAnnotation("incompatibleEnumerationDeclaration", Type.getDescriptor(IncompatibleAnnotationProperty.class)).visitEnd();
                     AnnotationVisitor incompatibleAnnotationDeclarationArray = annotationVisitor.visitArray("incompatibleEnumerationDeclarationArray");
-                    incompatibleAnnotationDeclarationArray.visitAnnotation(null, Type.getDescriptor(IncompatibleAnnotationProperty.class));
+                    incompatibleAnnotationDeclarationArray.visitAnnotation(null, Type.getDescriptor(IncompatibleAnnotationProperty.class)).visitEnd();
                     incompatibleAnnotationDeclarationArray.visitEnd();
                     annotationVisitor.visitArray("incompatibleEnumerationDeclarationEmptyArray").visitEnd();
                     annotationVisitor.visitEnum("incompatibleAnnotationDeclaration", Type.getDescriptor(IncompatibleEnumerationProperty.class), FOO.toUpperCase());
