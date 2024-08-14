@@ -2452,6 +2452,9 @@ public interface AnnotationValue<T, S> {
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             if (typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType)) {
                 for (AnnotationValue<?, ?> value : values) {
+                    if (value.getSort() != Sort.of(componentType)) {
+                        return new ForMismatchedType<U, V>(property, RenderingDispatcher.CURRENT.toArrayErrorString(value.getSort()));
+                    }
                     value = value.filter(property, typeDefinition.getComponentType());
                     if (value.getState() != State.RESOLVED) {
                         return (AnnotationValue<U, V>) value;
