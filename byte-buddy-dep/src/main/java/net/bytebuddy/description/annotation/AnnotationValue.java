@@ -1108,6 +1108,8 @@ public interface AnnotationValue<T, S> {
                 return of((float[]) value);
             } else if (value instanceof double[]) {
                 return of((double[]) value);
+            } else if (value instanceof String[]) {
+                return of((String[]) value);
             } else {
                 throw new IllegalArgumentException("Not a constant annotation value: " + value);
             }
