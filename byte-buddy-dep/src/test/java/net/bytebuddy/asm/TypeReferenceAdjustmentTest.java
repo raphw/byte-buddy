@@ -217,6 +217,7 @@ public class TypeReferenceAdjustmentTest {
             @Override
             public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
                 visited.add(internalName);
+                super.visitInnerClass(internalName, outerName, innerName, modifiers);
             }
 
             @Override
@@ -228,6 +229,7 @@ public class TypeReferenceAdjustmentTest {
                     missing.removeAll(visited);
                     throw new AssertionError("Missing internal type references: " + missing);
                 }
+                super.visitEnd();
             }
         }
     }

@@ -6787,11 +6787,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (TypeDescription typeDescription : additionalTypes) {
                             translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                         }
-                        System.arraycopy(localVariable,
-                                methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
-                                translated,
-                                index,
-                                translated.length - index);
+                        if (translated.length != index) {
+                            System.arraycopy(localVariable,
+                                    methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
+                                    translated,
+                                    index,
+                                    translated.length - index);
+                        }
                         localVariableLength = translated.length;
                         localVariable = translated;
                         currentFrameDivergence = translated.length - index;

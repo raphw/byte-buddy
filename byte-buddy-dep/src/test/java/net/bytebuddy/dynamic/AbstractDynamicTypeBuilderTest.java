@@ -355,6 +355,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                         mv.visitInsn(Opcodes.ARETURN);
                         mv.visitMaxs(-1, -1);
                         mv.visitEnd();
+                        super.visitEnd();
                     }
                 };
             }

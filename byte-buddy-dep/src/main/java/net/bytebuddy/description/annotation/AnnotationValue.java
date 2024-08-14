@@ -2486,7 +2486,9 @@ public interface AnnotationValue<T, S> {
                 values.add(value.load(classLoader));
             }
             try {
-                return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), values);
+                return new Loaded<V>((Class<V>) (componentType.isPrimitive()
+                        ? unloadedComponentType
+                        : Class.forName(componentType.getName(), false, classLoader)), values);
             } catch (ClassNotFoundException exception) {
                 return new ForMissingType.Loaded<V>(componentType.getName(), exception);
             }
@@ -2589,14 +2591,13 @@ public interface AnnotationValue<T, S> {
              * {@inheritDoc}
              */
             public boolean represents(Object value) {
-                if (!(value instanceof Object[])) return false;
+                if (!value.getClass().isArray()) return false;
                 if (value.getClass().getComponentType() != componentType) return false;
-                Object[] array = (Object[]) value;
-                if (values.size() != array.length) return false;
+                if (values.size() != Array.getLength(value)) return false;
                 Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
-                for (Object aValue : array) {
+                for (int index = 0; index < Array.getLength(value); index++) {
                     AnnotationValue.Loaded<?> self = iterator.next();
-                    if (!self.represents(aValue)) {
+                    if (!self.represents(Array.get(value, index))) {
                         return false;
                     }
                 }
@@ -2625,17 +2626,16 @@ public interface AnnotationValue<T, S> {
                     return false;
                 }
                 Object value = annotationValue.resolve();
-                if (!(value instanceof Object[])) {
+                if (!value.getClass().isArray()) {
                     return false;
                 }
-                Object[] arrayValue = (Object[]) value;
-                if (values.size() != arrayValue.length) {
+                if (values.size() != Array.getLength(value)) {
                     return false;
                 }
                 Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
-                for (Object aValue : arrayValue) {
+                for (int index = 0; index < Array.getLength(value); index++) {
                     AnnotationValue.Loaded<?> self = iterator.next();
-                    if (!self.getState().isResolved() || !self.resolve().equals(aValue)) {
+                    if (!self.getState().isResolved() || !self.resolve().equals(Array.get(value, index))) {
                         return false;
                     }
                 }

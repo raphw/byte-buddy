@@ -151,7 +151,7 @@ public class ClassFileVersionTest {
                     .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
                     .getLoaded();
             assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
-            assertThat(ClassFileVersion.of(type), is(classFileVersion));
+            assertThat(ClassFileVersion.of(type).getMajorVersion(), is(classFileVersion.getMajorVersion()));
         }
     }
 

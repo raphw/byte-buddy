@@ -322,7 +322,7 @@ public interface AnnotationAppender {
          *
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param valueType         The type of the annotation.
-         * @param name              The name of the annotation type or {@code null} if no name is available..
+         * @param name              The name of the annotation type or {@code null} if no name is available.
          * @param value             The annotation's value.
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, @MaybeNull String name, Object value) {

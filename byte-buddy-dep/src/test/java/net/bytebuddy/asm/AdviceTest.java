@@ -20,7 +20,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
@@ -1815,7 +1814,6 @@ public class AdviceTest {
                         },
                         MethodReturn.VOID
                 ))
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(EmptyExitAdvice.class).on(isConstructor()))
                 .make();
     }
