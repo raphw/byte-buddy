@@ -120,6 +120,8 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
+    public abstract Property<Boolean> getLazy();
+
     /**
      * Translates a collection of files to {@link URL}s.
      *

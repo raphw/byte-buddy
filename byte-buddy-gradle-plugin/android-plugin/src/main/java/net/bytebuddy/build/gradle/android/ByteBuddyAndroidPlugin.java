@@ -117,6 +117,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             throw new IllegalStateException("Byte Buddy requires at least Gradle Plugin version 7.2+, but found " + currentAgpVersion);
         }
         project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfigurationAction());
+        project.getExtensions().add(name, new ByteBuddyAndroidTaskExtension(project));
         extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
     }
 
