@@ -33,7 +33,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 /**
  * An entry point for a build tool which is responsible for the transformation's configuration.
  */
-public interface EntryPoint {
+public interface EntryPoint extends Serializable {
 
     /**
      * Returns the Byte Buddy instance to use.
@@ -159,7 +159,7 @@ public interface EntryPoint {
      * An entry point that wraps another entry point but disables validation.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class Unvalidated implements EntryPoint, Serializable {
+    class Unvalidated implements EntryPoint {
 
         /**
          * The serial version UID.
