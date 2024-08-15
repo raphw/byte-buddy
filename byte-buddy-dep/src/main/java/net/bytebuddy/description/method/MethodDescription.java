@@ -610,23 +610,21 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
-                    && (isPublic()
-                    || typeDescription.equals(getDeclaringType().asErasure())
-                    || isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription)
-                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())
-                    || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure()));
+            return getDeclaringType().asErasure().equals(typeDescription)
+                    || isPublic() && getDeclaringType().isPublic()
+                    || (isPublic() || isProtected()) && getDeclaringType().asErasure().isAssignableFrom(typeDescription)
+                    || !isPrivate() && getDeclaringType().asErasure().isSamePackage(typeDescription)
+                    || isPrivate() && getDeclaringType().asErasure().isNestMateOf(typeDescription);
         }
 
         /**
          * {@inheritDoc}
          */
         public boolean isAccessibleTo(TypeDescription typeDescription) {
-            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
-                    && (isPublic()
-                    || typeDescription.equals(getDeclaringType().asErasure())
-                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()))
-                    || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure());
+            return getDeclaringType().asErasure().equals(typeDescription)
+                    || isPublic() && getDeclaringType().isPublic()
+                    || !isPrivate() && getDeclaringType().asErasure().isSamePackage(typeDescription)
+                    || isPrivate() && getDeclaringType().asErasure().isNestMateOf(typeDescription);
         }
 
         /**
