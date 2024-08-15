@@ -25,13 +25,15 @@ import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 
+import java.io.Serializable;
+
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * An entry point for a build tool which is responsible for the transformation's configuration.
  */
-public interface EntryPoint {
+public interface EntryPoint extends Serializable {
 
     /**
      * Returns the Byte Buddy instance to use.
@@ -158,6 +160,11 @@ public interface EntryPoint {
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Unvalidated implements EntryPoint {
+
+        /**
+         * The serial version UID.
+         */
+        private static final long serialVersionUID = 1L;
 
         /**
          * The entry point to use.
