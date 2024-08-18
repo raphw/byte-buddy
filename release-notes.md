@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. August 2024: version 1.14.19
+
+- Add Maven Mojo for transforming jars and for transforming dependencies folder.
+- Better error handling for unresolved type variables.
+- Allow loading arguments of the instrumented method in `MemberSubstitution`.
+- Fix checks for method visibility.
+
 ### 8. August 2024: version 1.14.18
 
 - Avoid verification error if constructor advice meats dropped implicit *this* frame and throw exception during instrumentation instead.
