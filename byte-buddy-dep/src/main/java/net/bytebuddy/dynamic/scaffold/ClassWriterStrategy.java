@@ -85,27 +85,50 @@ public interface ClassWriterStrategy {
         }
     }
 
+    /**
+     * A class writer factory that delegates to a {@link ClassWriterStrategy}.
+     */
     @HashCodeAndEqualsPlugin.Enhance
     class Delegating implements AsmClassWriter.Factory {
 
+        /**
+         * The class writer strategy to delegate to.
+         */
         private final ClassWriterStrategy classWriterStrategy;
 
+        /**
+         * Creates a delegating class writer factory.
+         *
+         * @param classWriterStrategy The class writer strategy to delegate to.
+         */
         public Delegating(ClassWriterStrategy classWriterStrategy) {
             this.classWriterStrategy = classWriterStrategy;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public AsmClassWriter make(int flags) {
             return make(flags, TypePool.Empty.INSTANCE);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public AsmClassWriter make(int flags, AsmClassReader classReader) {
             return make(flags, classReader, TypePool.Empty.INSTANCE);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public AsmClassWriter make(int flags, TypePool typePool) {
             return new AsmClassWriter.Default(classWriterStrategy.resolve(flags, typePool));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
             ClassReader unwrapped = classReader.unwrap(ClassReader.class);
             return new AsmClassWriter.Default(unwrapped == null

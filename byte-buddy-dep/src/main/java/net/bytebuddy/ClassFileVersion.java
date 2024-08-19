@@ -560,6 +560,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
         String EARLY_ACCESS = "-ea";
 
         /**
+         * A suffix that might indicate an internal version of Java.
+         */
+        String INTERNAL = "-internal";
+
+        /**
          * The property for reading the current VM's Java version.
          */
         String JAVA_VERSION = "java.version";
@@ -605,6 +610,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
                         }
                         if (versionString.endsWith(EARLY_ACCESS)) {
                             versionString = versionString.substring(0, versionString.length() - EARLY_ACCESS.length());
+                        } else if (versionString.endsWith(INTERNAL)) {
+                            versionString = versionString.substring(0, versionString.length() - INTERNAL.length());
                         }
                         int[] versionIndex = {-1, 0, 0};
                         for (int index = 1; index < 3; index++) {

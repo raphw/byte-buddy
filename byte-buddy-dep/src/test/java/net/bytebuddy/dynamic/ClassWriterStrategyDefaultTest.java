@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.dynamic.scaffold.ClassWriterStrategy;
 import net.bytebuddy.pool.TypePool;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,16 +26,16 @@ public class ClassWriterStrategyDefaultTest {
     @Test
     @SuppressWarnings("deprecation")
     public void testConstantPoolRetention() {
-        ClassWriter withoutReader = ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING.resolve(0, typePool);
-        ClassWriter withReader = ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING.resolve(0, typePool, classReader);
+        ClassWriter withoutReader = net.bytebuddy.dynamic.scaffold.ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING.resolve(0, typePool);
+        ClassWriter withReader = net.bytebuddy.dynamic.scaffold.ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING.resolve(0, typePool, classReader);
         assertThat(withReader.toByteArray().length > withoutReader.toByteArray().length, is(true));
     }
 
     @Test
     @SuppressWarnings("deprecation")
     public void testConstantPoolDiscarding() {
-        ClassWriter withoutReader = ClassWriterStrategy.Default.CONSTANT_POOL_DISCARDING.resolve(0, typePool);
-        ClassWriter withReader = ClassWriterStrategy.Default.CONSTANT_POOL_DISCARDING.resolve(0, typePool, classReader);
+        ClassWriter withoutReader = net.bytebuddy.dynamic.scaffold.ClassWriterStrategy.Default.CONSTANT_POOL_DISCARDING.resolve(0, typePool);
+        ClassWriter withReader = net.bytebuddy.dynamic.scaffold.ClassWriterStrategy.Default.CONSTANT_POOL_DISCARDING.resolve(0, typePool, classReader);
         assertThat(withReader.toByteArray().length == withoutReader.toByteArray().length, is(true));
     }
 }

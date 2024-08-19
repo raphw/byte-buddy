@@ -613,14 +613,14 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().getSort();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = TypeNotPresentException.class)
     public void testMalformedTypeVariableDefinition() throws Exception {
         TypeDescription typeDescription = describe(TypeVariableMalformer.malform(MalformedTypeVariable.class));
         assertThat(typeDescription.getDeclaredFields().size(), is(1));
         typeDescription.getDeclaredFields().getOnly().getType().getUpperBounds();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = TypeNotPresentException.class)
     public void testMalformedParameterizedTypeVariableDefinition() throws Exception {
         TypeDescription typeDescription = describe(TypeVariableMalformer.malform(MalformedParameterizedTypeVariable.class));
         assertThat(typeDescription.getDeclaredFields().getOnly().getType().getTypeArguments().size(), is(1));

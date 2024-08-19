@@ -60,32 +60,32 @@ public class TypeWriterDeclarationPreservationTest {
 
     @Test
     public void testRedefinition() throws Exception {
-//        TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-//        OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
-//        new ByteBuddy()
-//                .redefine(type)
-//                .visit(new TypeValidator.Wrapper(typeModifierExtractor))
-//                .make();
+        TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
+        OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
+        new ByteBuddy()
+                .redefine(type)
+                .visit(new TypeValidator.Wrapper(typeModifierExtractor))
+                .make();
     }
 
     @Test
     public void testRebasing() throws Exception {
-//        TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-//        OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
-//        new ByteBuddy()
-//                .rebase(type)
-//                .visit(new TypeValidator.Wrapper(typeModifierExtractor))
-//                .make();
+        TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
+        OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
+        new ByteBuddy()
+                .rebase(type)
+                .visit(new TypeValidator.Wrapper(typeModifierExtractor))
+                .make();
     }
-//
+
     @Test
     public void testDecoration() throws Exception {
-//        TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-//        OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
-//        new ByteBuddy()
-//                .decorate(type)
-//                .visit(new TypeValidator.Wrapper(typeModifierExtractor))
-//                .make();
+        TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
+        OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
+        new ByteBuddy()
+                .decorate(type)
+                .visit(new TypeValidator.Wrapper(typeModifierExtractor))
+                .make();
     }
 
     private static class InnerClassAttribute {

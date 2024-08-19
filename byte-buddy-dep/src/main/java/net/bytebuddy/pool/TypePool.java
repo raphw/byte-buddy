@@ -4628,7 +4628,7 @@ public interface TypePool {
                          * {@inheritDoc}
                          */
                         public TypeList.Generic getUpperBounds() {
-                            throw new IllegalStateException("Cannot resolve bounds of unresolved type variable " + this + " by " + typeVariableSource);
+                            throw new TypeNotPresentException(symbol, null);
                         }
 
                         /**
