@@ -366,7 +366,7 @@
                     <inherited>true</inherited>
                     <configuration>
                         <enablePreview>true</enablePreview>
-                        <release>22</release>
+                        <release>24</release>
                         <testSource>${sourcecode.test.version}</testSource>
                         <testTarget>${bytecode.test.version}</testTarget>
                         <encoding>${project.build.sourceEncoding}</encoding>
