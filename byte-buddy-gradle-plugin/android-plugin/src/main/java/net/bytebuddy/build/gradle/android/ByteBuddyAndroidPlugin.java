@@ -117,7 +117,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             throw new IllegalStateException("Byte Buddy requires at least Gradle Plugin version 7.2+, but found " + currentAgpVersion);
         }
         project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfigurationAction());
-        project.getExtensions().add(name, new ByteBuddyAndroidTaskExtension(project));
+        project.getExtensions().add("byteBuddy", new ByteBuddyAndroidTaskExtension(project));
         extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
     }
 
@@ -485,6 +485,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     LegacyByteBuddyLocalClassesEnhancerTask.class,
                     new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
                         project.getExtensions().getByType(BaseExtension.class),
+                        (ByteBuddyAndroidTaskExtension) project.getExtensions().getByName("byteBuddy"),
                         classPath));
                 variant.getArtifacts()
                     .use(provider)
@@ -582,7 +583,10 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
+                            project.getExtensions().getByType(BaseExtension.class),
+                            project.getExtensions().getByType(ByteBuddyAndroidTaskExtension.class),
+                            (ByteBuddyAndroidTaskExtension) project.getExtensions().getByName("byteBuddy")));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,

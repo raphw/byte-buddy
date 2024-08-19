@@ -428,37 +428,20 @@ public abstract class ByteBuddyAndroidTaskExtension {
     protected abstract boolean isEmptyDiscovery();
 
     /**
-     * Applies any extension-specific properties.
-     *
-     * @param task The task to configure.
-     */
-    protected abstract void doConfigure(T task);
-
-    /**
      * Applies this extension's properties.
      *
      * @param task The task to configure.
      */
     protected void configure(T task) {
-        task.getTransformations().addAll(getTransformations());
-        task.setEntryPoint(getEntryPoint());
-        task.setSuffix(getSuffix());
-        task.setFailOnLiveInitializer(isFailOnLiveInitializer());
-        task.setWarnOnEmptyTypeSet(isWarnOnEmptyTypeSet());
-        task.setFailFast(isFailFast());
-        task.setExtendedParsing(isExtendedParsing());
-        task.setDiscovery(getDiscovery());
-        task.setThreads(getThreads());
-        task.setClassFileVersion(getClassFileVersion());
-        doConfigure(task);
+//        task.getTransformations().addAll(getTransformations());
+        task.getEntryPoint().convention(getEntryPoint());
+//        task.setSuffix(getSuffix());
+//        task.setFailOnLiveInitializer(isFailOnLiveInitializer());
+//        task.setWarnOnEmptyTypeSet(isWarnOnEmptyTypeSet());
+//        task.setFailFast(isFailFast());
+//        task.setExtendedParsing(isExtendedParsing());
+//        task.setDiscovery(getDiscovery());
+//        task.setThreads(getThreads());
+//        task.setClassFileVersion(getClassFileVersion());
     }
-
-    protected abstract void discoverySet(FileCollection fileCollection);
-
-    /**
-     * Returns the type of the Byte Buddy task.
-     *
-     * @return The type of the Byte Buddy task.
-     */
-    protected abstract Class<? extends T> toType();
 }

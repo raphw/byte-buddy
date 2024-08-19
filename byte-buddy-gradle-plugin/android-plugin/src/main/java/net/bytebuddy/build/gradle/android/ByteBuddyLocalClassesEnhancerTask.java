@@ -199,7 +199,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                             throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                         }
                     }
-                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(getEntryPoint().getOrElse(new EntryPoint.Unvalidated(EntryPoint.Default.REBASE)),
+                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(getEntryPoint().get(),
                                     classFileVersion,
                                     MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
@@ -236,19 +236,28 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
          * The current variant's Byte Buddy configuration.
          */
         private final FileCollection byteBuddyConfiguration;
-        /**
-         * The android gradle extension.
-         */
 
+        /**
+         * The Android gradle extension.
+         */
         private final BaseExtension androidExtension;
 
         /**
-         * @param byteBuddyConfiguration The current variant Byte Buddy configuration.
-         * @param androidExtension       The android gradle extension.
+         * The Byte Buddy task extension.
          */
-        public ConfigurationAction(FileCollection byteBuddyConfiguration, BaseExtension androidExtension) {
+        private final ByteBuddyAndroidTaskExtension byteBuddyExtension;
+
+        /**
+         * @param byteBuddyConfiguration The current variant Byte Buddy configuration.
+         * @param androidExtension       The Android gradle extension.
+         * @param byteBuddyExtension     The Byte Buddy task extension.
+         */
+        public ConfigurationAction(FileCollection byteBuddyConfiguration,
+                                   BaseExtension androidExtension,
+                                   ByteBuddyAndroidTaskExtension byteBuddyExtension) {
             this.byteBuddyConfiguration = byteBuddyConfiguration;
             this.androidExtension = androidExtension;
+            this.byteBuddyExtension = byteBuddyExtension;
         }
 
         @Override
@@ -256,6 +265,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
             task.getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
+            byteBuddyExtension.configure(task);
         }
     }
 
