@@ -292,7 +292,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
          */
         protected static TypeDescription.Generic describeOrNull(@MaybeNull Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
             if (type == null) {
-                throw new IllegalStateException("A generic type is represented as null what indicates that a type variable was used without declaration");
+                throw new TypeNotPresentException("<unknown>", null);
             }
             return describe(type, annotationReader);
         }
