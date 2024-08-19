@@ -15,14 +15,19 @@
  */
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.AsmClassReader;
+import net.bytebuddy.utility.AsmClassWriter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 /**
  * A class writer strategy is responsible for the creation of a {@link ClassWriter} when creating a type.
+ *
+ * @deprecated Use {@link AsmClassWriter.Factory}.
  */
+@Deprecated
 public interface ClassWriterStrategy {
 
     /**
@@ -46,7 +51,10 @@ public interface ClassWriterStrategy {
 
     /**
      * Default implementations of class writer strategies.
+     *
+     * @deprecated Use {@link AsmClassWriter.Factory.Suppressing} or {@link net.bytebuddy.ByteBuddy#withIgnoredClassReader()}.
      */
+    @Deprecated
     enum Default implements ClassWriterStrategy {
 
         /**
@@ -77,16 +85,43 @@ public interface ClassWriterStrategy {
         }
     }
 
+    @HashCodeAndEqualsPlugin.Enhance
+    class Delegating implements AsmClassWriter.Factory {
+
+        private final ClassWriterStrategy classWriterStrategy;
+
+        public Delegating(ClassWriterStrategy classWriterStrategy) {
+            this.classWriterStrategy = classWriterStrategy;
+        }
+
+        public AsmClassWriter make(int flags) {
+            return make(flags, TypePool.Empty.INSTANCE);
+        }
+
+        public AsmClassWriter make(int flags, AsmClassReader classReader) {
+            return make(flags, classReader, TypePool.Empty.INSTANCE);
+        }
+
+        public AsmClassWriter make(int flags, TypePool typePool) {
+            return new AsmClassWriter.Default(classWriterStrategy.resolve(flags, typePool));
+        }
+
+        public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
+            ClassReader unwrapped = classReader.unwrap(ClassReader.class);
+            return new AsmClassWriter.Default(unwrapped == null
+                    ? classWriterStrategy.resolve(flags, typePool)
+                    : classWriterStrategy.resolve(flags, typePool, unwrapped));
+        }
+    }
+
     /**
      * A class writer that piggy-backs on Byte Buddy's {@link TypePool} to avoid class loading or look-up errors when redefining a class.
      * This is not available when creating a new class where automatic frame computation is however not normally a requirement.
+     *
+     * @deprecated Use {@link AsmClassWriter.FrameComputingClassWriter}.
      */
-    class FrameComputingClassWriter extends ClassWriter {
-
-        /**
-         * The type pool to use for computing stack map frames, if required.
-         */
-        private final TypePool typePool;
+    @Deprecated
+    class FrameComputingClassWriter extends AsmClassWriter.FrameComputingClassWriter {
 
         /**
          * Creates a new frame computing class writer.
@@ -95,8 +130,7 @@ public interface ClassWriterStrategy {
          * @param typePool The type pool to use for computing stack map frames, if required.
          */
         public FrameComputingClassWriter(int flags, TypePool typePool) {
-            super(flags);
-            this.typePool = typePool;
+            super(flags, typePool);
         }
 
         /**
@@ -107,32 +141,7 @@ public interface ClassWriterStrategy {
          * @param typePool    The type pool to use for computing stack map frames, if required.
          */
         public FrameComputingClassWriter(ClassReader classReader, int flags, TypePool typePool) {
-            super(classReader, flags);
-            this.typePool = typePool;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        protected String getCommonSuperClass(String leftTypeName, String rightTypeName) {
-            TypeDescription leftType = typePool.describe(leftTypeName.replace('/', '.')).resolve();
-            TypeDescription rightType = typePool.describe(rightTypeName.replace('/', '.')).resolve();
-            if (leftType.isAssignableFrom(rightType)) {
-                return leftType.getInternalName();
-            } else if (leftType.isAssignableTo(rightType)) {
-                return rightType.getInternalName();
-            } else if (leftType.isInterface() || rightType.isInterface()) {
-                return TypeDescription.ForLoadedType.of(Object.class).getInternalName();
-            } else {
-                do {
-                    TypeDescription.Generic superClass = leftType.getSuperClass();
-                    if (superClass == null) {
-                        return TypeDescription.ForLoadedType.of(Object.class).getInternalName();
-                    }
-                    leftType = superClass.asErasure();
-                } while (!leftType.isAssignableFrom(rightType));
-                return leftType.getInternalName();
-            }
+            super(classReader, flags, typePool);
         }
     }
 }

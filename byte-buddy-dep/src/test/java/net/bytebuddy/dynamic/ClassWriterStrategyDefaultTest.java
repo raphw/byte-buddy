@@ -25,6 +25,7 @@ public class ClassWriterStrategyDefaultTest {
     private ClassReader classReader;
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testConstantPoolRetention() {
         ClassWriter withoutReader = ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING.resolve(0, typePool);
         ClassWriter withReader = ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING.resolve(0, typePool, classReader);
@@ -32,6 +33,7 @@ public class ClassWriterStrategyDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testConstantPoolDiscarding() {
         ClassWriter withoutReader = ClassWriterStrategy.Default.CONSTANT_POOL_DISCARDING.resolve(0, typePool);
         ClassWriter withReader = ClassWriterStrategy.Default.CONSTANT_POOL_DISCARDING.resolve(0, typePool, classReader);

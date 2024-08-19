@@ -24,9 +24,10 @@ import org.objectweb.asm.Opcodes;
 import java.security.PrivilegedAction;
 
 /**
- * A {@link ClassReader} that does not apply a class file version check if the {@code net.bytebuddy.experimental} property is set.
+ * A factory for a {@link ClassReader} that does not apply a class file version check if the
+ * {@code net.bytebuddy.experimental} property is set.
  */
-public class OpenedClassReader {
+public class OpenedClassReader implements AsmClassReader.Factory {
 
     /**
      * Indicates that Byte Buddy should not validate the maximum supported class file version.
@@ -58,10 +59,10 @@ public class OpenedClassReader {
     }
 
     /**
-     * Not intended for construction.
+     * {@inheritDoc}
      */
-    private OpenedClassReader() {
-        throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
+    public AsmClassReader make(byte[] binaryRepresentation) {
+        return new AsmClassReader.Default(of(binaryRepresentation));
     }
 
     /**

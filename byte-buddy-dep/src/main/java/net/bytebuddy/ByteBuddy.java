@@ -289,9 +289,14 @@ public class ByteBuddy {
     protected final VisibilityBridgeStrategy visibilityBridgeStrategy;
 
     /**
-     * The class writer strategy to use.
+     * The class reader factory to use.
      */
-    protected final ClassWriterStrategy classWriterStrategy;
+    protected final AsmClassReader.Factory classReaderFactory;
+
+    /**
+     * The class writer factory to use.
+     */
+    protected final AsmClassWriter.Factory classWriterFactory;
 
     /**
      * <p>
@@ -330,7 +335,8 @@ public class ByteBuddy {
                 InstrumentedType.Factory.Default.MODIFIABLE,
                 DEFAULT_TYPE_VALIDATION,
                 VisibilityBridgeStrategy.Default.ALWAYS,
-                ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING,
+                AsmClassReader.Factory.Default.INSTANCE,
+                AsmClassWriter.Factory.Default.INSTANCE,
                 new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
     }
 
@@ -347,7 +353,8 @@ public class ByteBuddy {
      * @param instrumentedTypeFactory      The instrumented type factory to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
      * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
-     * @param classWriterStrategy          The class writer strategy to use.
+     * @param classReaderFactory           The class reader factory to use.
+     * @param classWriterFactory           The class writer factory to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
@@ -360,7 +367,8 @@ public class ByteBuddy {
                         InstrumentedType.Factory instrumentedTypeFactory,
                         TypeValidation typeValidation,
                         VisibilityBridgeStrategy visibilityBridgeStrategy,
-                        ClassWriterStrategy classWriterStrategy,
+                        AsmClassReader.Factory classReaderFactory,
+                        AsmClassWriter.Factory classWriterFactory,
                         LatentMatcher<? super MethodDescription> ignoredMethods) {
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
@@ -372,7 +380,8 @@ public class ByteBuddy {
         this.instrumentedTypeFactory = instrumentedTypeFactory;
         this.typeValidation = typeValidation;
         this.visibilityBridgeStrategy = visibilityBridgeStrategy;
-        this.classWriterStrategy = classWriterStrategy;
+        this.classReaderFactory = classReaderFactory;
+        this.classWriterFactory = classWriterFactory;
         this.ignoredMethods = ignoredMethods;
     }
 
@@ -549,7 +558,8 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 constructorStrategy);
     }
@@ -704,7 +714,8 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
@@ -738,7 +749,8 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 RecordConstructorStrategy.INSTANCE)
                 .method(isHashCode()).intercept(RecordObjectMethod.HASH_CODE)
@@ -770,7 +782,8 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
@@ -819,7 +832,8 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Visibility.PRIVATE).withParameters(String.class, int.class)
@@ -915,7 +929,8 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 type,
                 classFileLocator);
@@ -1021,7 +1036,8 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 type,
                 classFileLocator,
@@ -1124,7 +1140,8 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods,
                 classFileLocator);
     }
@@ -1149,7 +1166,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1173,7 +1191,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1196,7 +1215,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1220,7 +1240,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1251,7 +1272,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1277,7 +1299,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1303,7 +1326,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1325,7 +1349,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1349,7 +1374,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1371,7 +1397,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 
@@ -1381,7 +1408,9 @@ public class ByteBuddy {
      *
      * @param classWriterStrategy The class writer strategy to apply during type creation.
      * @return A new Byte Buddy instance that applies the supplied class writer strategy.
+     * @deprecated Use {@link ByteBuddy#with(AsmClassWriter.Factory)}.
      */
+    @Deprecated
     public ByteBuddy with(ClassWriterStrategy classWriterStrategy) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
@@ -1393,7 +1422,73 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                new ClassWriterStrategy.Delegating(classWriterStrategy),
+                ignoredMethods);
+    }
+
+    /**
+     * Creates a new configuration that applies the supplied class reader factory.
+     *
+     * @param classReaderFactory The class reader factory to apply during type creation.
+     * @return A new Byte Buddy instance that applies the supplied class reader factory.
+     */
+    public ByteBuddy with(AsmClassReader.Factory classReaderFactory) {
+        return new ByteBuddy(classFileVersion,
+                namingStrategy,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                instrumentedTypeFactory,
+                typeValidation,
+                visibilityBridgeStrategy,
+                classReaderFactory,
+                classWriterFactory,
+                ignoredMethods);
+    }
+
+    /**
+     * Creates a new configuration that applies the supplied class writer factory.
+     *
+     * @param classWriterFactory The class writer factory to apply during type creation.
+     * @return A new Byte Buddy instance that applies the supplied class writer factory.
+     */
+    public ByteBuddy with(AsmClassWriter.Factory classWriterFactory) {
+        return new ByteBuddy(classFileVersion,
+                namingStrategy,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                instrumentedTypeFactory,
+                typeValidation,
+                visibilityBridgeStrategy,
+                classReaderFactory,
+                classWriterFactory,
+                ignoredMethods);
+    }
+
+    /**
+     * Creates a new configuration that ignores any original {@link AsmClassReader} while creating classes.
+     *
+     * @return A new Byte Buddy instance that applies the supplied class writer factory.
+     */
+    public ByteBuddy withIgnoredClassReader() {
+        return new ByteBuddy(classFileVersion,
+                namingStrategy,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                instrumentedTypeFactory,
+                typeValidation,
+                visibilityBridgeStrategy,
+                classReaderFactory,
+                new AsmClassWriter.Factory.Suppressing(classWriterFactory),
                 ignoredMethods);
     }
 
@@ -1433,7 +1528,8 @@ public class ByteBuddy {
                 instrumentedTypeFactory,
                 typeValidation,
                 visibilityBridgeStrategy,
-                classWriterStrategy,
+                classReaderFactory,
+                classWriterFactory,
                 ignoredMethods);
     }
 

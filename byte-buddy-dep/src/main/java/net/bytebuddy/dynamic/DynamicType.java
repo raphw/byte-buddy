@@ -38,6 +38,8 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.AsmClassReader;
+import net.bytebuddy.utility.AsmClassWriter;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.nullability.MaybeNull;
@@ -288,7 +290,7 @@ public interface DynamicType extends ClassFileLocator {
          * consistent among the definitions of connected types.
          * </p>
          *
-         * @return A new builder that is equal to this builder but without any declaration of a a declared or enclosed type.
+         * @return A new builder that is equal to this builder but without any declaration of a declared or enclosed type.
          */
         Builder<T> topLevelType();
 
@@ -1681,7 +1683,7 @@ public interface DynamicType extends ClassFileLocator {
 
             /**
              * Applies the supplied transformer onto the previously defined or matched field. The transformed
-             * field is written <i>as it is</i> and it not subject to any validations.
+             * field is written <i>as it is</i> and is not subject to any validations.
              *
              * @param transformer The transformer to apply to the previously defined or matched field.
              * @return A new builder that is equal to this builder but with the supplied field transformer
@@ -4156,10 +4158,9 @@ public interface DynamicType extends ClassFileLocator {
                  */
                 protected final VisibilityBridgeStrategy visibilityBridgeStrategy;
 
-                /**
-                 * The class writer strategy to use.
-                 */
-                protected final ClassWriterStrategy classWriterStrategy;
+                protected final AsmClassReader.Factory classReaderFactory;
+
+                protected final AsmClassWriter.Factory classWriterFactory;
 
                 /**
                  * A matcher for identifying methods that should be excluded from instrumentation.
@@ -4188,7 +4189,8 @@ public interface DynamicType extends ClassFileLocator {
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param typeValidation               Determines if a type should be explicitly validated.
                  * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
-                 * @param classWriterStrategy          The class writer strategy to use.
+                 * @param classReaderFactory           The class reader factory to use.
+                 * @param classWriterFactory           The class writer factory to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  * @param auxiliaryTypes               A list of explicitly defined auxiliary types.
                  */
@@ -4206,7 +4208,8 @@ public interface DynamicType extends ClassFileLocator {
                                   MethodGraph.Compiler methodGraphCompiler,
                                   TypeValidation typeValidation,
                                   VisibilityBridgeStrategy visibilityBridgeStrategy,
-                                  ClassWriterStrategy classWriterStrategy,
+                                  AsmClassReader.Factory classReaderFactory,
+                                  AsmClassWriter.Factory classWriterFactory,
                                   LatentMatcher<? super MethodDescription> ignoredMethods,
                                   List<? extends DynamicType> auxiliaryTypes) {
                     this.instrumentedType = instrumentedType;
@@ -4223,7 +4226,8 @@ public interface DynamicType extends ClassFileLocator {
                     this.methodGraphCompiler = methodGraphCompiler;
                     this.typeValidation = typeValidation;
                     this.visibilityBridgeStrategy = visibilityBridgeStrategy;
-                    this.classWriterStrategy = classWriterStrategy;
+                    this.classReaderFactory = classReaderFactory;
+                    this.classWriterFactory = classWriterFactory;
                     this.ignoredMethods = ignoredMethods;
                     this.auxiliaryTypes = auxiliaryTypes;
                 }
@@ -4289,7 +4293,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods),
                             auxiliaryTypes);
                 }
@@ -4326,7 +4331,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4349,7 +4355,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4372,7 +4379,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4402,7 +4410,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4425,7 +4434,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4451,7 +4461,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4490,7 +4501,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4513,7 +4525,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4536,7 +4549,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4559,7 +4573,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4582,7 +4597,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4612,7 +4628,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4635,7 +4652,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4658,7 +4676,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4681,7 +4700,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             auxiliaryTypes);
                 }
@@ -4704,7 +4724,8 @@ public interface DynamicType extends ClassFileLocator {
                             methodGraphCompiler,
                             typeValidation,
                             visibilityBridgeStrategy,
-                            classWriterStrategy,
+                            classReaderFactory,
+                            classWriterFactory,
                             ignoredMethods,
                             CompoundList.of(this.auxiliaryTypes, new ArrayList<DynamicType>(auxiliaryTypes)));
                 }
@@ -4733,7 +4754,8 @@ public interface DynamicType extends ClassFileLocator {
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param typeValidation               The type validation state.
                  * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
-                 * @param classWriterStrategy          The class writer strategy to use.
+                 * @param classReaderFactory           The class reader factory to use.
+                 * @param classWriterFactory           The class writer factory to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  * @param auxiliaryTypes               A list of explicitly required auxiliary types.
                  * @return A type builder that represents the supplied arguments.
@@ -4752,7 +4774,8 @@ public interface DynamicType extends ClassFileLocator {
                                                           MethodGraph.Compiler methodGraphCompiler,
                                                           TypeValidation typeValidation,
                                                           VisibilityBridgeStrategy visibilityBridgeStrategy,
-                                                          ClassWriterStrategy classWriterStrategy,
+                                                          AsmClassReader.Factory classReaderFactory,
+                                                          AsmClassWriter.Factory classWriterFactory,
                                                           LatentMatcher<? super MethodDescription> ignoredMethods,
                                                           List<? extends DynamicType> auxiliaryTypes);
 
@@ -4797,7 +4820,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -4824,7 +4848,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -4848,7 +4873,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -4895,7 +4921,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -4919,7 +4946,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -4970,7 +4998,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -5041,7 +5070,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -5116,7 +5146,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -5471,7 +5502,8 @@ public interface DynamicType extends ClassFileLocator {
                                     methodGraphCompiler,
                                     typeValidation,
                                     visibilityBridgeStrategy,
-                                    classWriterStrategy,
+                                    classReaderFactory,
+                                    classWriterFactory,
                                     ignoredMethods,
                                     auxiliaryTypes);
                         }
@@ -5607,7 +5639,8 @@ public interface DynamicType extends ClassFileLocator {
                                     methodGraphCompiler,
                                     typeValidation,
                                     visibilityBridgeStrategy,
-                                    classWriterStrategy,
+                                    classReaderFactory,
+                                    classWriterFactory,
                                     ignoredMethods,
                                     auxiliaryTypes);
                         }
@@ -5650,7 +5683,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -5789,7 +5823,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }
@@ -5880,7 +5915,8 @@ public interface DynamicType extends ClassFileLocator {
                                 methodGraphCompiler,
                                 typeValidation,
                                 visibilityBridgeStrategy,
-                                classWriterStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
                     }

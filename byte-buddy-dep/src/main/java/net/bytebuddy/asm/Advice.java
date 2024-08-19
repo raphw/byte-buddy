@@ -60,11 +60,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.ConstantValue;
-import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
-import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
@@ -201,7 +197,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * Indicates that no class reader is available to an advice method.
      */
     @AlwaysNull
-    private static final ClassReader UNDEFINED = null;
+    private static final AsmClassReader UNDEFINED = null;
 
     /**
      * A reference to the {@link OnMethodEnter#skipOn()} method.
@@ -375,7 +371,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
-        return to(advice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForRegularInvocation.Factory.INSTANCE);
+        return to(advice,
+                PostProcessor.NoOp.INSTANCE,
+                classFileLocator,
+                Collections.<OffsetMapping.Factory<?>>emptyList(),
+                Delegator.ForRegularInvocation.Factory.INSTANCE,
+                AsmClassReader.Factory.Default.INSTANCE);
     }
 
     /**
@@ -386,13 +387,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param classFileLocator     The class file locator for locating the advisory class's class file.
      * @param userFactories        A list of custom factories for user generated offset mappings.
      * @param delegatorFactory     The delegator factory to use.
+     * @param classReaderFactory   The class reader factory to use.
      * @return A method visitor wrapper representing the supplied advice.
      */
     protected static Advice to(TypeDescription advice,
                                PostProcessor.Factory postProcessorFactory,
                                ClassFileLocator classFileLocator,
                                List<? extends OffsetMapping.Factory<?>> userFactories,
-                               Delegator.Factory delegatorFactory) {
+                               Delegator.Factory delegatorFactory,
+                               AsmClassReader.Factory classReaderFactory) {
         Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
         for (MethodDescription.InDefinedShape methodDescription : advice.getDeclaredMethods()) {
             methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription, delegatorFactory);
@@ -402,8 +405,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             throw new IllegalArgumentException("No advice defined by " + advice);
         }
         try {
-            ClassReader classReader = methodEnter.isBinary() || methodExit.isBinary()
-                    ? OpenedClassReader.of(classFileLocator.locate(advice.getName()).resolve())
+            AsmClassReader classReader = methodEnter.isBinary() || methodExit.isBinary()
+                    ? classReaderFactory.make(classFileLocator.locate(advice.getName()).resolve())
                     : UNDEFINED;
             return new Advice(methodEnter.asMethodEnter(userFactories, classReader, methodExit, postProcessorFactory),
                     methodExit.asMethodExit(userFactories, classReader, methodEnter, postProcessorFactory));
@@ -461,7 +464,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
-        return to(enterAdvice, exitAdvice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForRegularInvocation.Factory.INSTANCE);
+        return to(enterAdvice,
+                exitAdvice,
+                PostProcessor.NoOp.INSTANCE,
+                classFileLocator,
+                Collections.<OffsetMapping.Factory<?>>emptyList(),
+                Delegator.ForRegularInvocation.Factory.INSTANCE,
+                AsmClassReader.Factory.Default.INSTANCE);
     }
 
     /**
@@ -473,6 +482,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param classFileLocator     The class file locator for locating the advisory class's class file.
      * @param userFactories        A list of custom factories for user generated offset mappings.
      * @param delegatorFactory     The delegator factory to use.
+     * @param classReaderFactory   The class reader factory to use.
      * @return A method visitor wrapper representing the supplied advice.
      */
     protected static Advice to(TypeDescription enterAdvice,
@@ -480,7 +490,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                PostProcessor.Factory postProcessorFactory,
                                ClassFileLocator classFileLocator,
                                List<? extends OffsetMapping.Factory<?>> userFactories,
-                               Delegator.Factory delegatorFactory) {
+                               Delegator.Factory delegatorFactory,
+                               AsmClassReader.Factory classReaderFactory) {
         Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
         for (MethodDescription.InDefinedShape methodDescription : enterAdvice.getDeclaredMethods()) {
             methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription, delegatorFactory);
@@ -496,9 +507,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
         try {
             return new Advice(methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
-                    ? OpenedClassReader.of(classFileLocator.locate(enterAdvice.getName()).resolve())
+                    ? classReaderFactory.make(classFileLocator.locate(enterAdvice.getName()).resolve())
                     : UNDEFINED, methodExit, postProcessorFactory), methodExit.asMethodExit(userFactories, methodExit.isBinary()
-                    ? OpenedClassReader.of(classFileLocator.locate(exitAdvice.getName()).resolve())
+                    ? classReaderFactory.make(classFileLocator.locate(exitAdvice.getName()).resolve())
                     : UNDEFINED, methodEnter, postProcessorFactory));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + enterAdvice + " or " + exitAdvice, exception);
@@ -7779,7 +7790,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return This dispatcher as a dispatcher for entering a method.
              */
             Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                  @MaybeNull ClassReader classReader,
+                                                  @MaybeNull AsmClassReader classReader,
                                                   Unresolved methodExit,
                                                   PostProcessor.Factory postProcessorFactory);
 
@@ -7793,7 +7804,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return This dispatcher as a dispatcher for exiting a method.
              */
             Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                @MaybeNull ClassReader classReader,
+                                                @MaybeNull AsmClassReader classReader,
                                                 Unresolved methodEnter,
                                                 PostProcessor.Factory postProcessorFactory);
         }
@@ -8845,7 +8856,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                         @MaybeNull ClassReader classReader,
+                                                         @MaybeNull AsmClassReader classReader,
                                                          Unresolved methodExit,
                                                          PostProcessor.Factory postProcessorFactory) {
                 return this;
@@ -8855,7 +8866,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                       @MaybeNull ClassReader classReader,
+                                                       @MaybeNull AsmClassReader classReader,
                                                        Unresolved methodEnter,
                                                        PostProcessor.Factory postProcessorFactory) {
                 return this;
@@ -8967,7 +8978,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    @MaybeNull ClassReader classReader,
+                                                                    @MaybeNull AsmClassReader classReader,
                                                                     Unresolved methodExit,
                                                                     PostProcessor.Factory postProcessorFactory) {
                 if (classReader == null) {
@@ -8986,7 +8997,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                  @MaybeNull ClassReader classReader,
+                                                                  @MaybeNull AsmClassReader classReader,
                                                                   Unresolved methodEnter,
                                                                   PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = new HashMap<String, TypeDefinition>(methodEnter.getNamedTypes()), uninitializedNamedTypes = new HashMap<String, TypeDefinition>();
@@ -9016,7 +9027,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A class reader to query for the class file of the advice method.
                  */
-                protected final ClassReader classReader;
+                protected final AsmClassReader classReader;
 
                 /**
                  * Creates a new resolved version of a dispatcher.
@@ -9035,7 +9046,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                    TypeDescription throwableType,
                                    TypeDescription relocatableType,
                                    int relocatableIndex,
-                                   ClassReader classReader) {
+                                   AsmClassReader classReader) {
                     super(adviceMethod, postProcessor, factories, throwableType, relocatableType, relocatableIndex, OffsetMapping.Factory.AdviceType.INLINING);
                     this.classReader = classReader;
                 }
@@ -9140,7 +9151,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A class reader for parsing the class file containing the represented advice method.
                      */
-                    protected final ClassReader classReader;
+                    protected final AsmClassReader classReader;
 
                     /**
                      * The labels that were found during parsing the method's exception handler in the order of their discovery.
@@ -9174,7 +9185,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   SuppressionHandler.Bound suppressionHandler,
                                                   RelocationHandler.Bound relocationHandler,
                                                   StackManipulation exceptionHandler,
-                                                  ClassReader classReader) {
+                                                  AsmClassReader classReader) {
                         super(OpenedClassReader.ASM_API);
                         this.instrumentedType = instrumentedType;
                         this.instrumentedMethod = instrumentedMethod;
@@ -9433,7 +9444,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              Map<String, TypeDefinition> namedTypes,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType,
-                                             ClassReader classReader) {
+                                             AsmClassReader classReader) {
                         super(adviceMethod,
                                 postProcessor,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
@@ -9477,7 +9488,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                 Map<String, TypeDefinition> namedTypes,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                 TypeDefinition exitType,
-                                                                ClassReader classReader,
+                                                                AsmClassReader classReader,
                                                                 boolean methodExit) {
                         return methodExit
                                 ? new WithRetainedEnterType(adviceMethod, postProcessor, namedTypes, userFactories, exitType, classReader)
@@ -9639,7 +9650,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                         Map<String, TypeDefinition> namedTypes,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
                                                         TypeDefinition exitType,
-                                                        ClassReader classReader) {
+                                                        AsmClassReader classReader) {
                             super(adviceMethod, postProcessor, namedTypes, userFactories, exitType, classReader);
                         }
 
@@ -9671,7 +9682,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                          Map<String, TypeDefinition> namedTypes,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          TypeDefinition exitType,
-                                                         ClassReader classReader) {
+                                                         AsmClassReader classReader) {
                             super(adviceMethod, postProcessor, namedTypes, userFactories, exitType, classReader);
                         }
 
@@ -9746,7 +9757,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             Map<String, TypeDefinition> namedTypes,
                                             Map<String, TypeDefinition> uninitializedNamedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
-                                            ClassReader classReader,
+                                            AsmClassReader classReader,
                                             TypeDefinition enterType) {
                         super(adviceMethod,
                                 postProcessor,
@@ -9792,7 +9803,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                Map<String, TypeDefinition> namedTypes,
                                                                Map<String, TypeDefinition> uninitializedNamedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                               ClassReader classReader,
+                                                               AsmClassReader classReader,
                                                                TypeDefinition enterType) {
                         TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
@@ -9970,7 +9981,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                        Map<String, TypeDefinition> namedTypes,
                                                        Map<String, TypeDefinition> uninitializedNamedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                       ClassReader classReader,
+                                                       AsmClassReader classReader,
                                                        TypeDefinition enterType,
                                                        TypeDescription throwable) {
                             super(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType);
@@ -10007,7 +10018,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                           Map<String, TypeDefinition> namedTypes,
                                                           Map<String, TypeDefinition> uninitializedNamedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                          ClassReader classReader,
+                                                          AsmClassReader classReader,
                                                           TypeDefinition enterType) {
                             super(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType);
                         }
@@ -10391,7 +10402,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    @MaybeNull ClassReader classReader,
+                                                                    @MaybeNull AsmClassReader classReader,
                                                                     Unresolved methodExit,
                                                                     PostProcessor.Factory postProcessorFactory) {
                 return Resolved.ForMethodEnter.of(adviceMethod,
@@ -10406,7 +10417,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                  @MaybeNull ClassReader classReader,
+                                                                  @MaybeNull AsmClassReader classReader,
                                                                   Unresolved methodEnter,
                                                                   PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
@@ -14803,6 +14814,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         private final Delegator.Factory delegatorFactory;
 
         /**
+         * The class reader factory to use.
+         */
+        private final AsmClassReader.Factory classReaderFactory;
+
+        /**
          * A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
          */
         private final Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings;
@@ -14811,7 +14827,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Creates a new custom mapping builder step without including any custom mappings.
          */
         protected WithCustomMapping() {
-            this(PostProcessor.NoOp.INSTANCE, Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap(), Delegator.ForRegularInvocation.Factory.INSTANCE);
+            this(PostProcessor.NoOp.INSTANCE,
+                    Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap(),
+                    Delegator.ForRegularInvocation.Factory.INSTANCE,
+                    AsmClassReader.Factory.Default.INSTANCE);
         }
 
         /**
@@ -14820,13 +14839,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param postProcessorFactory The post processor factory to apply.
          * @param offsetMappings       A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
          * @param delegatorFactory     The delegator factory to use.
+         * @param classReaderFactory   The class reader factory to use.
          */
         protected WithCustomMapping(PostProcessor.Factory postProcessorFactory,
                                     Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings,
-                                    Delegator.Factory delegatorFactory) {
+                                    Delegator.Factory delegatorFactory,
+                                    AsmClassReader.Factory classReaderFactory) {
             this.postProcessorFactory = postProcessorFactory;
             this.offsetMappings = offsetMappings;
             this.delegatorFactory = delegatorFactory;
+            this.classReaderFactory = classReaderFactory;
         }
 
         /**
@@ -15298,7 +15320,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             } else if (offsetMappings.put(offsetMapping.getAnnotationType(), offsetMapping) != null) {
                 throw new IllegalArgumentException("Annotation type already mapped: " + offsetMapping.getAnnotationType());
             }
-            return new WithCustomMapping(postProcessorFactory, offsetMappings, delegatorFactory);
+            return new WithCustomMapping(postProcessorFactory, offsetMappings, delegatorFactory, classReaderFactory);
         }
 
         /**
@@ -15397,7 +15419,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that uses the supplied method or constructor for bootstrapping.
          */
         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap, BootstrapArgumentResolver.Factory resolverFactory) {
-            return new WithCustomMapping(postProcessorFactory, offsetMappings, Delegator.ForDynamicInvocation.of(bootstrap, resolverFactory));
+            return new WithCustomMapping(postProcessorFactory,
+                    offsetMappings,
+                    Delegator.ForDynamicInvocation.of(bootstrap, resolverFactory),
+                    classReaderFactory);
         }
 
         /**
@@ -15407,7 +15432,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that applies the supplied post processor factory.
          */
         public WithCustomMapping with(PostProcessor.Factory postProcessorFactory) {
-            return new WithCustomMapping(new PostProcessor.Factory.Compound(this.postProcessorFactory, postProcessorFactory), offsetMappings, delegatorFactory);
+            return new WithCustomMapping(new PostProcessor.Factory.Compound(this.postProcessorFactory, postProcessorFactory),
+                    offsetMappings,
+                    delegatorFactory,
+                    classReaderFactory);
+        }
+
+        /**
+         * Defines the factory for producing class readers.
+         *
+         * @param classReaderFactory The class reader factory to use.
+         * @return A new builder for an advice that applies the supplied post processor factory.
+         */
+        public WithCustomMapping with(AsmClassReader.Factory classReaderFactory) {
+            return new WithCustomMapping(postProcessorFactory, offsetMappings, delegatorFactory, classReaderFactory);
         }
 
         /**
@@ -15440,7 +15478,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
-            return Advice.to(advice, postProcessorFactory, classFileLocator, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()), delegatorFactory);
+            return Advice.to(advice,
+                    postProcessorFactory,
+                    classFileLocator,
+                    new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()),
+                    delegatorFactory,
+                    classReaderFactory);
         }
 
         /**
@@ -15492,7 +15535,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
-            return Advice.to(enterAdvice, exitAdvice, postProcessorFactory, classFileLocator, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()), delegatorFactory);
+            return Advice.to(enterAdvice,
+                    exitAdvice,
+                    postProcessorFactory,
+                    classFileLocator,
+                    new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()),
+                    delegatorFactory,
+                    classReaderFactory);
         }
     }
 
