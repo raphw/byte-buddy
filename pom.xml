@@ -766,12 +766,27 @@
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
-        <!-- Runs the build with compatibility for Java 22 JVMs. -->
+        <!-- Runs the build with compatibility for Java 23 JVMs. -->
         <profile>
             <id>java23-compatibility</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <jdk>23</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 24 JVMs. -->
+        <profile>
+            <id>java24-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>24</jdk>
             </activation>
             <properties>
                 <sourcecode.main.version>8</sourcecode.main.version>
@@ -972,7 +987,7 @@
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
-        <!-- Builds using a byte code target for Java 22. -->
+        <!-- Builds using a byte code target for Java 23. -->
         <profile>
             <id>java23</id>
             <activation>
@@ -981,6 +996,18 @@
             <properties>
                 <bytecode.main.version>23</bytecode.main.version>
                 <bytecode.test.version>23</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 24. -->
+        <profile>
+            <id>java24</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>24</bytecode.main.version>
+                <bytecode.test.version>24</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>

@@ -4158,8 +4158,14 @@ public interface DynamicType extends ClassFileLocator {
                  */
                 protected final VisibilityBridgeStrategy visibilityBridgeStrategy;
 
+                /**
+                 * The class reader factory to use.
+                 */
                 protected final AsmClassReader.Factory classReaderFactory;
 
+                /**
+                 * The class writer factory to use.
+                 */
                 protected final AsmClassWriter.Factory classWriterFactory;
 
                 /**
