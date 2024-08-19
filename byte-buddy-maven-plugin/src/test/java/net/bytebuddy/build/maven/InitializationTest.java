@@ -132,6 +132,8 @@ public class InitializationTest {
 
     public static class Foo implements EntryPoint {
 
+        private static final long serialVersionUID = 1L;
+
         public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
             throw new AssertionError();
         }

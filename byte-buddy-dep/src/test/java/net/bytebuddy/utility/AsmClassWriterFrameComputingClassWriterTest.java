@@ -1,4 +1,4 @@
-package net.bytebuddy.dynamic.scaffold;
+package net.bytebuddy.utility;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.pool.TypePool;
@@ -15,7 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ClassWriterStrategyFrameComputingClassWriterTest {
+public class AsmClassWriterFrameComputingClassWriterTest {
 
     private static final String FOO = "pkg/foo", BAR = "pkg/bar", QUX = "pkg/qux", BAZ = "pkg/baz", FOOBAR = "pkg/foobar";
 
@@ -31,11 +31,11 @@ public class ClassWriterStrategyFrameComputingClassWriterTest {
     @Mock
     private TypeDescription.Generic genericSuperClass;
 
-    private ClassWriterStrategy.FrameComputingClassWriter frameComputingClassWriter;
+    private AsmClassWriter.FrameComputingClassWriter frameComputingClassWriter;
 
     @Before
     public void setUp() throws Exception {
-        frameComputingClassWriter = new ClassWriterStrategy.FrameComputingClassWriter(mock(ClassReader.class), 0, typePool);
+        frameComputingClassWriter = new AsmClassWriter.FrameComputingClassWriter(mock(ClassReader.class), 0, typePool);
         when(typePool.describe(FOO.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(leftType));
         when(typePool.describe(BAR.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(rightType));
         when(leftType.getInternalName()).thenReturn(QUX);

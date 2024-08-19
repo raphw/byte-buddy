@@ -50,15 +50,15 @@ public class AdviceInconsistentStackSizeTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {String.class, "foo", "bar", Opcodes.ARETURN},
-//                {boolean.class, 0, false, Opcodes.IRETURN},
-//                {byte.class, 0, (byte) 42, Opcodes.IRETURN},
-//                {short.class, 0, (short) 42, Opcodes.IRETURN},
-//                {char.class, 0, (char) 42, Opcodes.IRETURN},
-//                {int.class, 0, 42, Opcodes.IRETURN},
-//                {long.class, 0L, 42L, Opcodes.LRETURN},
-//                {float.class, 0f, 42f, Opcodes.FRETURN},
-//                {double.class, 0d, 42d, Opcodes.DRETURN},
-//                {void.class, null, null, Opcodes.RETURN},
+                {boolean.class, 0, false, Opcodes.IRETURN},
+                {byte.class, 0, (byte) 42, Opcodes.IRETURN},
+                {short.class, 0, (short) 42, Opcodes.IRETURN},
+                {char.class, 0, (char) 42, Opcodes.IRETURN},
+                {int.class, 0, 42, Opcodes.IRETURN},
+                {long.class, 0L, 42L, Opcodes.LRETURN},
+                {float.class, 0f, 42f, Opcodes.FRETURN},
+                {double.class, 0d, 42d, Opcodes.DRETURN},
+                {void.class, null, null, Opcodes.RETURN}
         });
     }
 

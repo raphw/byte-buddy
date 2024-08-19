@@ -10,6 +10,8 @@ import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 
 public class IllegalTransformEntryPoint implements EntryPoint {
 
+    private static final long serialVersionUID = 1L;
+
     public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
         return new ByteBuddy(classFileVersion);
     }

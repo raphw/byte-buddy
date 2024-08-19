@@ -17,6 +17,7 @@ package net.bytebuddy.pool;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.utility.AsmClassReader;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.TypeVariableSource;
@@ -781,6 +782,11 @@ public interface TypePool {
         protected final ReaderMode readerMode;
 
         /**
+         * The class reader factory to use.
+         */
+        protected final AsmClassReader.Factory classReaderFactory;
+
+        /**
          * Creates a new default type pool without a parent pool.
          *
          * @param cacheProvider    The cache provider to be used.
@@ -800,9 +806,36 @@ public interface TypePool {
          * @param parentPool       The parent type pool.
          */
         public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool) {
+            this(cacheProvider, classFileLocator, readerMode, AsmClassReader.Factory.Default.INSTANCE, parentPool);
+        }
+
+        /**
+         * Creates a new default type pool that uses an explicit class reader factory.
+         *
+         * @param cacheProvider      The cache provider to be used.
+         * @param classFileLocator   The class file locator to be used.
+         * @param readerMode         The reader mode to apply by this default type pool.
+         * @param classReaderFactory The class reader factory to use.
+         */
+        public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory) {
+            this(cacheProvider, classFileLocator, readerMode, classReaderFactory, Empty.INSTANCE);
+        }
+
+
+        /**
+         * Creates a new default type pool.
+         *
+         * @param cacheProvider      The cache provider to be used.
+         * @param classFileLocator   The class file locator to be used.
+         * @param readerMode         The reader mode to apply by this default type pool.
+         * @param classReaderFactory The class reader factory to use.
+         * @param parentPool         The parent type pool.
+         */
+        public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool) {
             super(cacheProvider, parentPool);
             this.classFileLocator = classFileLocator;
             this.readerMode = readerMode;
+            this.classReaderFactory = classReaderFactory;
         }
 
         /**
@@ -876,7 +909,7 @@ public interface TypePool {
          * @return A type description of the binary data.
          */
         private TypeDescription parse(byte[] binaryRepresentation) {
-            ClassReader classReader = OpenedClassReader.of(binaryRepresentation);
+            AsmClassReader classReader = classReaderFactory.make(binaryRepresentation);
             TypeExtractor typeExtractor = new TypeExtractor();
             classReader.accept(typeExtractor, readerMode.getFlags());
             return typeExtractor.toTypeDescription();
@@ -952,7 +985,7 @@ public interface TypePool {
              * @param readerMode       The reader mode to apply by this default type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
-                this(cacheProvider, classFileLocator, readerMode, Empty.INSTANCE);
+                super(cacheProvider, classFileLocator, readerMode);
             }
 
             /**
@@ -965,6 +998,31 @@ public interface TypePool {
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool) {
                 super(cacheProvider, classFileLocator, readerMode, parentPool);
+            }
+
+            /**
+             * Creates a new default type pool that uses an explicit class reader factory with lazy resolution.
+             *
+             * @param cacheProvider      The cache provider to be used.
+             * @param classFileLocator   The class file locator to be used.
+             * @param readerMode         The reader mode to apply by this default type pool.
+             * @param classReaderFactory The class reader factory to use.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory) {
+                super(cacheProvider, classFileLocator, readerMode, classReaderFactory);
+            }
+
+            /**
+             * Creates a new default type pool that uses an explicit class reader factory with lazy resolution.
+             *
+             * @param cacheProvider      The cache provider to be used.
+             * @param classFileLocator   The class file locator to be used.
+             * @param readerMode         The reader mode to apply by this default type pool.
+             * @param classReaderFactory The class reader factory to use.
+             * @param parentPool         The parent type pool.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool) {
+                super(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool);
             }
 
             /**
@@ -4570,7 +4628,7 @@ public interface TypePool {
                          * {@inheritDoc}
                          */
                         public TypeList.Generic getUpperBounds() {
-                            throw new IllegalStateException("Cannot resolve bounds of unresolved type variable " + this + " by " + typeVariableSource);
+                            throw new TypeNotPresentException(symbol, null);
                         }
 
                         /**
