@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import codes.rafael.asmjdkbridge.JdkClassReader;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
@@ -70,7 +71,8 @@ public interface AsmClassReader {
              * {@inheritDoc}
              */
             public AsmClassReader make(byte[] binaryRepresentation) {
-                return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation));
+                return new ForJdk(new JdkClassReader(binaryRepresentation));
+                //new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation));
             }
         }
     }
@@ -114,6 +116,25 @@ public interface AsmClassReader {
          */
         public void accept(ClassVisitor classVisitor, int flags) {
             classReader.accept(classVisitor, NO_ATTRIBUTES, flags);
+        }
+    }
+
+    class ForJdk implements AsmClassReader {
+
+        private final JdkClassReader classReader;
+
+        public ForJdk(JdkClassReader classReader) {
+            this.classReader = classReader;
+        }
+
+        @MaybeNull
+        public <T> T unwrap(Class<T> type) {
+            return null;
+        }
+
+        @Override
+        public void accept(ClassVisitor classVisitor, int flags) {
+            classReader.accept(classVisitor, flags);
         }
     }
 }

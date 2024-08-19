@@ -365,8 +365,8 @@
                     <version>${version.plugin.compiler}</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <source>${sourcecode.main.version}</source>
-                        <target>${bytecode.main.version}</target>
+                        <enablePreview>true</enablePreview>
+                        <release>22</release>
                         <testSource>${sourcecode.test.version}</testSource>
                         <testTarget>${bytecode.test.version}</testTarget>
                         <encoding>${project.build.sourceEncoding}</encoding>

@@ -240,7 +240,7 @@ public class ClassInjectorUsingReflectionTest {
         ClassLoader classLoader = new ClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER) {
             @Override
             protected Class<?> findClass(String name) throws ClassNotFoundException {
-                if (name.startsWith("net.bytebuddy.") || name.startsWith("org.objectweb.")) {
+                if (name.startsWith("net.bytebuddy.") || name.startsWith("org.objectweb.") || name.startsWith("codes.rafael.asmjdkbridge.")) {
                     InputStream inputStream = ClassInjectorUsingReflectionTest.class.getResourceAsStream("/"
                         + name.replace('.', '/')
                         + ".class");

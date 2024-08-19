@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import codes.rafael.asmjdkbridge.JdkClassWriter;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.pool.TypePool;
@@ -108,17 +109,19 @@ public interface AsmClassWriter {
              * {@inheritDoc}
              */
             public AsmClassWriter make(int flags, TypePool typePool) {
-                return new AsmClassWriter.Default(new FrameComputingClassWriter(flags, typePool));
+                return new ForJdk(new SuperClassResolvingJdkClassWriter(flags, typePool));
+                //return new AsmClassWriter.Default(new FrameComputingClassWriter(flags, typePool));
             }
 
             /**
              * {@inheritDoc}
              */
             public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                ClassReader unwrapped = classReader.unwrap(ClassReader.class);
+                return new ForJdk(new SuperClassResolvingJdkClassWriter(flags, typePool));
+                /*ClassReader unwrapped = classReader.unwrap(ClassReader.class);
                 return new AsmClassWriter.Default(unwrapped == null
                         ? new FrameComputingClassWriter(flags, typePool)
-                        : new FrameComputingClassWriter(unwrapped, flags, typePool));
+                        : new FrameComputingClassWriter(unwrapped, flags, typePool));*/
             }
         }
 
@@ -183,6 +186,23 @@ public interface AsmClassWriter {
         }
     }
 
+    class ForJdk implements AsmClassWriter {
+
+        private final JdkClassWriter writer;
+
+        public ForJdk(JdkClassWriter writer) {
+            this.writer = writer;
+        }
+
+        public ClassVisitor getVisitor() {
+            return writer;
+        }
+
+        public byte[] getBinaryRepresentation() {
+            return writer.toByteArray();
+        }
+    }
+
     /**
      * A class writer that piggy-backs on Byte Buddy's {@link TypePool} to avoid class loading or look-up errors when redefining a class.
      * This is not available when creating a new class where automatic frame computation is however not normally a requirement.
@@ -239,6 +259,24 @@ public interface AsmClassWriter {
                 } while (!leftType.isAssignableFrom(rightType));
                 return leftType.getInternalName();
             }
+        }
+    }
+
+    class SuperClassResolvingJdkClassWriter extends JdkClassWriter {
+
+        private final TypePool typePool;
+
+        public SuperClassResolvingJdkClassWriter(int flags, TypePool typePool) {
+            super(flags);
+            this.typePool = typePool;
+        }
+
+        @Override
+        protected String getSuperClass(String name) {
+            TypeDescription typeDescription = typePool.describe(name.replace('/', '.')).resolve();
+            return typeDescription.isInterface()
+                    ? null
+                    : typeDescription.getSuperClass().asErasure().getInternalName();
         }
     }
 }
