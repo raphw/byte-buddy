@@ -57,6 +57,15 @@ public interface AsmClassReader {
         AsmClassReader make(byte[] binaryRepresentation);
 
         /**
+         * Creates a class reader for a given class file.
+         *
+         * @param binaryRepresentation The class file's binary representation.
+         * @param experimental         {@code true} if unknown Java class files versions should also be considered.
+         * @return A class reader representation for the supplied class file.
+         */
+        AsmClassReader make(byte[] binaryRepresentation, boolean experimental);
+
+        /**
          * A default implementation that creates a pure ASM {@link ClassReader}.
          */
         enum Default implements Factory {
@@ -71,6 +80,13 @@ public interface AsmClassReader {
              */
             public AsmClassReader make(byte[] binaryRepresentation) {
                 return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation, experimental));
             }
         }
     }
