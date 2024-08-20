@@ -485,7 +485,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     LegacyByteBuddyLocalClassesEnhancerTask.class,
                     new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
                         project.getExtensions().getByType(BaseExtension.class),
-                        (ByteBuddyAndroidTaskExtension) project.getExtensions().getByName("byteBuddy"),
                         classPath));
                 variant.getArtifacts()
                     .use(provider)
@@ -585,8 +584,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     ByteBuddyLocalClassesEnhancerTask.class,
                     new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
                             project.getExtensions().getByType(BaseExtension.class),
-                            project.getExtensions().getByType(ByteBuddyAndroidTaskExtension.class),
-                            (ByteBuddyAndroidTaskExtension) project.getExtensions().getByName("byteBuddy")));
+                            project.getExtensions().getByType(ByteBuddyAndroidTaskExtension.class)));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
