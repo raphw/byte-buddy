@@ -1999,7 +1999,8 @@ public interface TypeWriter<T> {
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
-         * @param classWriterFactory          The class writer strategy to use.
+         * @param classReaderFactory           The class reader factory to use.
+         * @param classWriterFactory           The class writer factory to use.
          * @param typePool                     The type pool to use for computing stack map frames, if required.
          * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
          * @return A suitable type writer.

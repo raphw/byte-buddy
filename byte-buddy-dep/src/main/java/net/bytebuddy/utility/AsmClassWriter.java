@@ -67,7 +67,8 @@ public interface AsmClassWriter {
         /**
          * Creates a new class writer for the given flags.
          *
-         * @param flags The flags to consider while writing a class file.
+         * @param flags    The flags to consider while writing a class file.
+         * @param typePool A type pool to use for resolving type information for frame generation.
          * @return An appropriate class writer.
          */
         AsmClassWriter make(int flags, TypePool typePool);
@@ -77,6 +78,7 @@ public interface AsmClassWriter {
          *
          * @param flags       The flags to consider while writing a class file.
          * @param classReader A class reader to consider for writing a class file.
+         * @param typePool    A type pool to use for resolving type information for frame generation.
          * @return An appropriate class writer.
          */
         AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool);
@@ -125,27 +127,51 @@ public interface AsmClassWriter {
             }
         }
 
+        /**
+         * A class writer factory that suppresses any class reader implementation that might be provided
+         * upon constructing a class writer.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         class Suppressing implements Factory {
 
+            /**
+             * The factory to delegate to.
+             */
             private final Factory delegate;
 
+            /**
+             * Creates a suppressing class writer factory.
+             *
+             * @param delegate The factory to delegate to.
+             */
             public Suppressing(Factory delegate) {
                 this.delegate = delegate;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public AsmClassWriter make(int flags) {
                 return delegate.make(flags);
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public AsmClassWriter make(int flags, AsmClassReader classReader) {
                 return delegate.make(flags);
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public AsmClassWriter make(int flags, TypePool typePool) {
                 return delegate.make(flags, typePool);
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
                 return delegate.make(flags, typePool);
             }
