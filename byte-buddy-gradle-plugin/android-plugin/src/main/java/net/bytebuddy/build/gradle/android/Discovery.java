@@ -15,8 +15,6 @@
  */
 package net.bytebuddy.build.gradle.android;
 
-import net.bytebuddy.build.gradle.Transformation;
-
 import java.util.List;
 
 /**
@@ -29,7 +27,7 @@ public enum Discovery {
      */
     ALL(false) {
         @Override
-        protected boolean isDiscover(List<net.bytebuddy.build.gradle.Transformation> transformations) {
+        protected boolean isDiscover(List<Transformation> transformations) {
             return true;
         }
     },
@@ -39,7 +37,7 @@ public enum Discovery {
      */
     UNIQUE(true) {
         @Override
-        protected boolean isDiscover(List<net.bytebuddy.build.gradle.Transformation> transformations) {
+        protected boolean isDiscover(List<Transformation> transformations) {
             return true;
         }
     },
@@ -49,7 +47,7 @@ public enum Discovery {
      */
     EMPTY(true) {
         @Override
-        protected boolean isDiscover(List<net.bytebuddy.build.gradle.Transformation> transformations) {
+        protected boolean isDiscover(List<Transformation> transformations) {
             return transformations.isEmpty();
         }
     },
@@ -59,7 +57,7 @@ public enum Discovery {
      */
     NONE(true) {
         @Override
-        protected boolean isDiscover(List<net.bytebuddy.build.gradle.Transformation> transformations) {
+        protected boolean isDiscover(List<Transformation> transformations) {
             return false;
         }
     };

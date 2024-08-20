@@ -206,15 +206,15 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
          * The current variant's Byte Buddy configuration.
          */
         private final FileCollection byteBuddyConfiguration;
+
         /**
          * The android gradle extension.
          */
-
         private final BaseExtension androidExtension;
+
         /**
          * The current variant's runtime classpath.
          */
-
         private final FileCollection runtimeClasspath;
 
         /**

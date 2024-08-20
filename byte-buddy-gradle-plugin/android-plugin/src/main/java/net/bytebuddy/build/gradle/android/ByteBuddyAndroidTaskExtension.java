@@ -15,9 +15,9 @@
  */
 package net.bytebuddy.build.gradle.android;
 
+import groovy.lang.Closure;
 import net.bytebuddy.build.EntryPoint;
 import org.gradle.api.Action;
-import org.gradle.api.Closure;
 import org.gradle.api.Project;
 
 import java.util.ArrayList;

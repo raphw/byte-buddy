@@ -22,8 +22,6 @@ import net.bytebuddy.build.AndroidDescriptor;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.GradleBuildLogger;
-import net.bytebuddy.build.gradle.Transformation;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
@@ -33,34 +31,21 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.Directory;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFile;
-import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.file.*;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.Nested;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipException;
 
 /**
  * Transformation task for instrumenting the project's local and dependencies' classes.
@@ -204,11 +189,26 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
 
     /**
      * Executes the plugin for transforming all project's classes.
+     *
+     * @throws IOException If an I/O exception occurs.
      */
     @TaskAction
-    public void execute() {
-        List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
+    public void execute() throws IOException {
+        List<Transformation> transformations = new ArrayList<Transformation>(getTransformations().get());
+        Set<Plugin.Engine.Source> sources = new LinkedHashSet<Plugin.Engine.Source>();
+        Set<File> localClasspath = new HashSet<>();
+        for (Directory directory : getLocalClassesDirs().get()) {
+            File file = directory.getAsFile();
+            localClasspath.add(file);
+            sources.add(new Plugin.Engine.Source.ForFolder(file));
+        }
+        for (RegularFile jarFile : getInputJars().get()) {
+            sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
+        }
         Plugin.Engine.Summary summary;
+        ClassLoader classLoader = new URLClassLoader(
+                toUrls(getByteBuddyClasspath().getFiles()),
+                new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
         try {
             if (getDiscovery().get().isDiscover(transformations)) {
                 Set<String> undiscoverable = new HashSet<String>();
@@ -272,57 +272,40 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             try {
-                Set<Plugin.Engine.Source> sources = new LinkedHashSet<Plugin.Engine.Source>();
-                Set<File> localClasspath = new HashSet<>();
-                for (Directory directory : getLocalClassesDirs().get()) {
-                    File file = directory.getAsFile();
-                    localClasspath.add(file);
-                    sources.add(new Plugin.Engine.Source.ForFolder(file));
-                }
-                for (RegularFile jarFile : getInputJars().get()) {
-                    sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
-                }
-                ClassLoader classLoader = new URLClassLoader(
-                        toUrls(getByteBuddyClasspath().getFiles()),
-                        new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
-                try {
-                    summary = Plugin.Engine.Default.of(getEntryPoint().get(), classFileVersion, getSuffix().get().length() == 0
-                                    ? MethodNameTransformer.Suffixing.withRandomSuffix()
-                                    : new MethodNameTransformer.Suffixing(getSuffix().get()))
-                            .with(getExtendedParsing().get()
-                                    ? Plugin.Engine.PoolStrategy.Default.EXTENDED
-                                    : Plugin.Engine.PoolStrategy.Default.FAST)
-                            .with(classFileLocator)
-                            .with(new TransformationLogger(getLogger()))
-                            .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, getFailOnLiveInitializer().get()
-                                    ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
-                                    : Plugin.Engine.Listener.NoOp.INSTANCE, getFailFast().get()
-                                    ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
-                                    : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
-                            .with(getThreads().get() == 0
-                                    ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
-                                    : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(getThreads().get()))
-                            .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
-                } finally {
-                    if (classLoader instanceof Closeable) {
-                        ((Closeable) classLoader).close();
-                    }
-                    if (classLoader.getParent() instanceof Closeable) {
-                        ((Closeable) classLoader.getParent()).close();
-                    }
-                }
+                summary = Plugin.Engine.Default.of(getEntryPoint().get(), classFileVersion, getSuffix().get().length() == 0
+                                ? MethodNameTransformer.Suffixing.withRandomSuffix()
+                                : new MethodNameTransformer.Suffixing(getSuffix().get()))
+                        .with(getExtendedParsing().get()
+                                ? Plugin.Engine.PoolStrategy.Default.EXTENDED
+                                : Plugin.Engine.PoolStrategy.Default.FAST)
+                        .with(classFileLocator)
+                        .with(new TransformationLogger(getLogger()))
+                        .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, getFailOnLiveInitializer().get()
+                                ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
+                                : Plugin.Engine.Listener.NoOp.INSTANCE, getFailFast().get()
+                                ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
+                                : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
+                        .with(getThreads().get() == 0
+                                ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
+                                : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(getThreads().get()))
+                        .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
             } finally {
                 classFileLocator.close();
             }
-            if (!summary.getFailed().isEmpty()) {
-                throw new IllegalStateException(summary.getFailed() + " type transformation(s) have failed");
-            } else if (getWarnOnEmptyTypeSet().get() && summary.getTransformed().isEmpty()) {
-                getLogger().warn("No types were transformed during plugin execution");
-            } else {
-                getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
+        } finally {
+            if (classLoader instanceof Closeable) {
+                ((Closeable) classLoader).close();
             }
-        } catch (IOException exception) {
-            throw new GradleException("Failed to transform classes", exception);
+            if (classLoader.getParent() instanceof Closeable) {
+                ((Closeable) classLoader.getParent()).close();
+            }
+        }
+        if (!summary.getFailed().isEmpty()) {
+            throw new IllegalStateException(summary.getFailed() + " type transformation(s) have failed");
+        } else if (getWarnOnEmptyTypeSet().get() && summary.getTransformed().isEmpty()) {
+            getLogger().warn("No types were transformed during plugin execution");
+        } else {
+            getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
         }
     }
 

@@ -17,7 +17,6 @@ package net.bytebuddy.build.gradle.android;
 
 import groovy.lang.Closure;
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.PluginArgument;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Action;
