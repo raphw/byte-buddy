@@ -59,7 +59,7 @@
         <copyright.holder>Rafael Winterhalter</copyright.holder>
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
-        <bytebuddy.experimental>false</bytebuddy.experimental>
+        <bytebuddy.experimental>true</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.outputTimestamp>1723762906</project.build.outputTimestamp>
         <sourcecode.main.version>1.5</sourcecode.main.version>
