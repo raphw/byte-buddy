@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import codes.rafael.asmjdkbridge.JdkClassReader;
 import codes.rafael.asmjdkbridge.JdkClassWriter;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
@@ -22,6 +23,8 @@ import net.bytebuddy.pool.TypePool;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+
+import java.lang.classfile.ClassModel;
 
 /**
  * A facade for creating a {@link ClassVisitor} that writes a class file.
@@ -119,7 +122,10 @@ public interface AsmClassWriter {
              * {@inheritDoc}
              */
             public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                return new ForJdk(new SuperClassResolvingJdkClassWriter(flags, typePool));
+                JdkClassReader unwrapped = classReader.unwrap(JdkClassReader.class);
+                return new ForJdk(unwrapped == null
+                        ? new SuperClassResolvingJdkClassWriter(flags, typePool)
+                        : new SuperClassResolvingJdkClassWriter(flags, unwrapped.getClassModel(), typePool));
                 /*ClassReader unwrapped = classReader.unwrap(ClassReader.class);
                 return new AsmClassWriter.Default(unwrapped == null
                         ? new FrameComputingClassWriter(flags, typePool)
@@ -294,6 +300,11 @@ public interface AsmClassWriter {
 
         public SuperClassResolvingJdkClassWriter(int flags, TypePool typePool) {
             super(flags);
+            this.typePool = typePool;
+        }
+
+        public SuperClassResolvingJdkClassWriter(int flags, ClassModel classModel, TypePool typePool) {
+            super(flags, classModel);
             this.typePool = typePool;
         }
 
