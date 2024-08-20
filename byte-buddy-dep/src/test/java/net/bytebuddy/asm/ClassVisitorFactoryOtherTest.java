@@ -1,11 +1,9 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.utility.OpenedClassReader;
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
