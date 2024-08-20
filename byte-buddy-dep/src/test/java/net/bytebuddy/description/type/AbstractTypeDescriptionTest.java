@@ -16,6 +16,8 @@ import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.scope.EnclosingType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.visibility.Sample;
+import net.bytebuddy.utility.AsmClassReader;
+import net.bytebuddy.utility.AsmClassWriter;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -946,11 +948,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         }
 
         public static Class<?> malform(Class<?> type) throws Exception {
-            ClassReader classReader = new ClassReader(type.getName());
-            ClassWriter classWriter = new ClassWriter(classReader, 0);
-            classReader.accept(new SignatureMalformer(classWriter), 0);
+            AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type));
+            AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(0, classReader);
+            classReader.accept(new SignatureMalformer(classWriter.getVisitor()), 0);
             ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                    Collections.singletonMap(type.getName(), classWriter.toByteArray()),
+                    Collections.singletonMap(type.getName(), classWriter.getBinaryRepresentation()),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST);
             return classLoader.loadClass(type.getName());
         }
@@ -978,11 +980,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         }
 
         public static Class<?> malform(Class<?> type) throws Exception {
-            ClassReader classReader = new ClassReader(type.getName());
-            ClassWriter classWriter = new ClassWriter(classReader, 0);
-            classReader.accept(new TypeVariableMalformer(classWriter), 0);
+            AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type));
+            AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(0, classReader);
+            classReader.accept(new TypeVariableMalformer(classWriter.getVisitor()), 0);
             ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                    Collections.singletonMap(type.getName(), classWriter.toByteArray()),
+                    Collections.singletonMap(type.getName(), classWriter.getBinaryRepresentation()),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST);
             return classLoader.loadClass(type.getName());
         }
@@ -1015,11 +1017,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         }
 
         public static Class<?> malform(Class<?> type) throws Exception {
-            ClassReader classReader = new ClassReader(type.getName());
-            ClassWriter classWriter = new ClassWriter(classReader, 0);
-            classReader.accept(new ParameterizedTypeLengthMalformer(classWriter), 0);
+            AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type));
+            AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(0, classReader);
+            classReader.accept(new ParameterizedTypeLengthMalformer(classWriter.getVisitor()), 0);
             ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                    Collections.singletonMap(type.getName(), classWriter.toByteArray()),
+                    Collections.singletonMap(type.getName(), classWriter.getBinaryRepresentation()),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST);
             return classLoader.loadClass(type.getName());
         }
