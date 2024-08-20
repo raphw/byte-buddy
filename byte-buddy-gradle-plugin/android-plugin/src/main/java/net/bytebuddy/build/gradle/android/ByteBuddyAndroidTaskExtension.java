@@ -40,10 +40,10 @@ public abstract class ByteBuddyAndroidTaskExtension {
      */
     private final Project project;
 
-    /**
-     * The transformations to apply.
-     */
-    private final List<Transformation> transformations;
+//    /**
+//     * The transformations to apply.
+//     */
+//    private final List<Transformation> transformations;
 
     /**
      * The entry point to use.
@@ -81,24 +81,24 @@ public abstract class ByteBuddyAndroidTaskExtension {
      * where each line contains the fully qualified class name. Discovered plugins are not provided with any
      * explicit constructor arguments.
      */
-    private Discovery discovery;
+//    private Discovery discovery;
 
     /**
      * Determines what tasks are considered when adjusting the task dependency graph to include the Byte Buddy task.
      * By default, only the altered task's project's task is considered but the adjustment can include subprojects or
      * the entire project graph. Note that it might not always be legal to resolve such recursive dependencies.
      */
-    private Adjustment adjustment;
+//    private Adjustment adjustment;
 
     /**
      * Determines the reaction upon a failed task dependency resolution.
      */
-    private Adjustment.ErrorHandler adjustmentErrorHandler;
+//    private Adjustment.ErrorHandler adjustmentErrorHandler;
 
     /**
      * The adjustment post processor that is applied after the graph dependencies are is resolved.
      */
-    private Action<Task> adjustmentPostProcessor;
+//    private Action<Task> adjustmentPostProcessor;
 
     /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -114,8 +114,8 @@ public abstract class ByteBuddyAndroidTaskExtension {
      * The class file version to use for creating auxiliary types or {@code null} if the
      * version is determined implicitly.
      */
-    @MaybeNull
-    private ClassFileVersion classFileVersion;
+//    @MaybeNull
+//    private ClassFileVersion classFileVersion;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
@@ -124,16 +124,16 @@ public abstract class ByteBuddyAndroidTaskExtension {
      */
     public ByteBuddyAndroidTaskExtension(Project project) {
         this.project = project;
-        transformations = new ArrayList<Transformation>();
+//        transformations = new ArrayList<Transformation>();
         entryPoint = EntryPoint.Default.REBASE;
         suffix = "";
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
         failFast = true;
-        discovery = Discovery.EMPTY;
-        adjustment = Adjustment.FULL;
-        adjustmentErrorHandler = Adjustment.ErrorHandler.WARN;
-        adjustmentPostProcessor = Adjustment.NoOpPostProcessor.INSTANCE;
+//        discovery = Discovery.EMPTY;
+//        adjustment = Adjustment.FULL;
+//        adjustmentErrorHandler = Adjustment.ErrorHandler.WARN;
+//        adjustmentPostProcessor = Adjustment.NoOpPostProcessor.INSTANCE;
     }
 
     /**
@@ -141,36 +141,36 @@ public abstract class ByteBuddyAndroidTaskExtension {
      *
      * @return The transformations to apply.
      */
-    public List<Transformation> getTransformations() {
-        return transformations;
-    }
+//    public List<Transformation> getTransformations() {
+//        return transformations;
+//    }
 
     /**
      * Adds an additional transformation.
      *
      * @param closure The closure to configure the transformation.
      */
-    public void transformation(Closure<Transformation> closure) {
-        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
-        if (transformation == null) {
-            transformation = new Transformation(project);
-        }
-        transformations.add((Transformation) project.configure(transformation, closure));
-    }
+//    public void transformation(Closure<Transformation> closure) {
+//        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
+//        if (transformation == null) {
+//            transformation = new Transformation(project);
+//        }
+//        transformations.add((Transformation) project.configure(transformation, closure));
+//    }
 
     /**
      * Adds an additional transformation.
      *
      * @param action The action to configure the transformation.
      */
-    public void transformation(Action<Transformation> action) {
-        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
-        if (transformation == null) {
-            transformation = new Transformation(project);
-        }
-        action.execute(transformation);
-        transformations.add(transformation);
-    }
+//    public void transformation(Action<Transformation> action) {
+//        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
+//        if (transformation == null) {
+//            transformation = new Transformation(project);
+//        }
+//        action.execute(transformation);
+//        transformations.add(transformation);
+//    }
 
     /**
      * Returns the entry point to use.
@@ -285,72 +285,72 @@ public abstract class ByteBuddyAndroidTaskExtension {
      *
      * @return The discovery for finding plugins on the class path.
      */
-    public Discovery getDiscovery() {
-        return discovery;
-    }
+//    public Discovery getDiscovery() {
+//        return discovery;
+//    }
 
     /**
      * Determines the discovery for finding plugins on the class path.
      *
      * @param discovery The discovery for finding plugins on the class path.
      */
-    public void setDiscovery(Discovery discovery) {
-        this.discovery = discovery;
-    }
+//    public void setDiscovery(Discovery discovery) {
+//        this.discovery = discovery;
+//    }
 
     /**
      * Determines the adjustment for tasks that might depend on post-processed compile tasks.
      *
      * @return The adjustment for tasks that might depend on post-processed compile tasks.
      */
-    public Adjustment getAdjustment() {
-        return adjustment;
-    }
+//    public Adjustment getAdjustment() {
+//        return adjustment;
+//    }
 
     /**
      * Determines the adjustment for tasks that might depend on post-processed compile tasks.
      *
      * @param adjustment The adjustment for tasks that might depend on post-processed compile tasks.
      */
-    public void setAdjustment(Adjustment adjustment) {
-        this.adjustment = adjustment;
-    }
+//    public void setAdjustment(Adjustment adjustment) {
+//        this.adjustment = adjustment;
+//    }
 
     /**
      * Returns the error handler to be used when a task dependency cannot be resolved.
      *
      * @return The error handler to be used when a task dependency cannot be resolved.
      */
-    public Adjustment.ErrorHandler getAdjustmentErrorHandler() {
-        return adjustmentErrorHandler;
-    }
+//    public Adjustment.ErrorHandler getAdjustmentErrorHandler() {
+//        return adjustmentErrorHandler;
+//    }
 
     /**
      * Sets the error handler to be used when a task dependency cannot be resolved.
      *
      * @param adjustmentErrorHandler The error handler to be used when a task dependency cannot be resolved.
      */
-    public void setAdjustmentErrorHandler(Adjustment.ErrorHandler adjustmentErrorHandler) {
-        this.adjustmentErrorHandler = adjustmentErrorHandler;
-    }
+//    public void setAdjustmentErrorHandler(Adjustment.ErrorHandler adjustmentErrorHandler) {
+//        this.adjustmentErrorHandler = adjustmentErrorHandler;
+//    }
 
     /**
      * Returns the adjustment post processor that is applied after the graph dependencies are is resolved.
      *
      * @return The adjustment post processor to apply.
      */
-    public Action<Task> getAdjustmentPostProcessor() {
-        return adjustmentPostProcessor;
-    }
+//    public Action<Task> getAdjustmentPostProcessor() {
+//        return adjustmentPostProcessor;
+//    }
 
     /**
      * Sets the adjustment post processor that is applied after the graph dependencies are resolved.
      *
      * @param adjustmentPostProcessor The adjustment post processor to apply.
      */
-    public void setAdjustmentPostProcessor(Action<Task> adjustmentPostProcessor) {
-        this.adjustmentPostProcessor = adjustmentPostProcessor;
-    }
+//    public void setAdjustmentPostProcessor(Action<Task> adjustmentPostProcessor) {
+//        this.adjustmentPostProcessor = adjustmentPostProcessor;
+//    }
 
     /**
      * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -394,10 +394,10 @@ public abstract class ByteBuddyAndroidTaskExtension {
      *
      * @return The class file version to use for creating auxiliary types.
      */
-    @MaybeNull
-    public ClassFileVersion getClassFileVersion() {
-        return classFileVersion;
-    }
+//    @MaybeNull
+//    public ClassFileVersion getClassFileVersion() {
+//        return classFileVersion;
+//    }
 
     /**
      * Sets the class file version to use for creating auxiliary types or {@code null} if the
@@ -405,20 +405,9 @@ public abstract class ByteBuddyAndroidTaskExtension {
      *
      * @param classFileVersion The class file version to use for creating auxiliary types.
      */
-    public void setClassFileVersion(@MaybeNull ClassFileVersion classFileVersion) {
-        this.classFileVersion = classFileVersion;
-    }
-
-    /**
-     * Resolves default properties and considers the contextual Java version.
-     *
-     * @param version The Java version to resolve as a fallback if no explicit version is set.
-     */
-    protected void resolve(JavaVersion version) {
-        if (classFileVersion == null) {
-            classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(version.getMajorVersion()));
-        }
-    }
+//    public void setClassFileVersion(@MaybeNull ClassFileVersion classFileVersion) {
+//        this.classFileVersion = classFileVersion;
+//    }
 
     /**
      * Returns {@code true} if this extension defines an empty discovery.
@@ -432,7 +421,7 @@ public abstract class ByteBuddyAndroidTaskExtension {
      *
      * @param task The task to configure.
      */
-    protected void configure(T task) {
+    protected void configure(ByteBuddyLocalClassesEnhancerTask task) {
 //        task.getTransformations().addAll(getTransformations());
         task.getEntryPoint().convention(getEntryPoint());
 //        task.setSuffix(getSuffix());
