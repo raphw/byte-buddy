@@ -16,7 +16,12 @@
 package net.bytebuddy.build.gradle.android;
 
 import net.bytebuddy.build.EntryPoint;
+import org.gradle.api.Action;
+import org.gradle.api.Closure;
 import org.gradle.api.Project;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A Byte Buddy task extension for Android.
@@ -28,10 +33,10 @@ public class ByteBuddyAndroidTaskExtension {
      */
     private final Project project;
 
-//    /**
-//     * The transformations to apply.
-//     */
-//    private final List<Transformation> transformations;
+    /**
+     * The transformations to apply.
+     */
+    private final List<Transformation> transformations;
 
     /**
      * The entry point to use.
@@ -69,41 +74,12 @@ public class ByteBuddyAndroidTaskExtension {
      * where each line contains the fully qualified class name. Discovered plugins are not provided with any
      * explicit constructor arguments.
      */
-//    private Discovery discovery;
-
-    /**
-     * Determines what tasks are considered when adjusting the task dependency graph to include the Byte Buddy task.
-     * By default, only the altered task's project's task is considered but the adjustment can include subprojects or
-     * the entire project graph. Note that it might not always be legal to resolve such recursive dependencies.
-     */
-//    private Adjustment adjustment;
-
-    /**
-     * Determines the reaction upon a failed task dependency resolution.
-     */
-//    private Adjustment.ErrorHandler adjustmentErrorHandler;
-
-    /**
-     * The adjustment post processor that is applied after the graph dependencies are is resolved.
-     */
-//    private Action<Task> adjustmentPostProcessor;
+    private Discovery discovery;
 
     /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
-
-    /**
-     * If {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     */
-    private boolean lazy;
-
-    /**
-     * The class file version to use for creating auxiliary types or {@code null} if the
-     * version is determined implicitly.
-     */
-//    @MaybeNull
-//    private ClassFileVersion classFileVersion;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
@@ -112,16 +88,13 @@ public class ByteBuddyAndroidTaskExtension {
      */
     public ByteBuddyAndroidTaskExtension(Project project) {
         this.project = project;
-//        transformations = new ArrayList<Transformation>();
+        transformations = new ArrayList<Transformation>();
         entryPoint = EntryPoint.Default.REBASE;
         suffix = "";
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
         failFast = true;
-//        discovery = Discovery.EMPTY;
-//        adjustment = Adjustment.FULL;
-//        adjustmentErrorHandler = Adjustment.ErrorHandler.WARN;
-//        adjustmentPostProcessor = Adjustment.NoOpPostProcessor.INSTANCE;
+        discovery = Discovery.EMPTY;
     }
 
     /**
@@ -129,36 +102,29 @@ public class ByteBuddyAndroidTaskExtension {
      *
      * @return The transformations to apply.
      */
-//    public List<Transformation> getTransformations() {
-//        return transformations;
-//    }
+    public List<Transformation> getTransformations() {
+        return transformations;
+    }
 
     /**
      * Adds an additional transformation.
      *
      * @param closure The closure to configure the transformation.
      */
-//    public void transformation(Closure<Transformation> closure) {
-//        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
-//        if (transformation == null) {
-//            transformation = new Transformation(project);
-//        }
-//        transformations.add((Transformation) project.configure(transformation, closure));
-//    }
+    public void transformation(Closure<Transformation> closure) {
+        transformations.add((Transformation) project.configure(new Transformation(project), closure));
+    }
 
     /**
      * Adds an additional transformation.
      *
      * @param action The action to configure the transformation.
      */
-//    public void transformation(Action<Transformation> action) {
-//        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
-//        if (transformation == null) {
-//            transformation = new Transformation(project);
-//        }
-//        action.execute(transformation);
-//        transformations.add(transformation);
-//    }
+    public void transformation(Action<Transformation> action) {
+        Transformation transformation = new Transformation(project);
+        action.execute(transformation);
+        transformations.add(transformation);
+    }
 
     /**
      * Returns the entry point to use.
@@ -269,6 +235,24 @@ public class ByteBuddyAndroidTaskExtension {
     }
 
     /**
+     * Determines the discovery for finding plugins on the class path.
+     *
+     * @return The discovery for finding plugins on the class path.
+     */
+    public Discovery getDiscovery() {
+        return discovery;
+    }
+
+    /**
+     * Determines the discovery for finding plugins on the class path.
+     *
+     * @param discovery The discovery for finding plugins on the class path.
+     */
+    public void setDiscovery(Discovery discovery) {
+        this.discovery = discovery;
+    }
+
+    /**
      * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      *
      * @return The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -287,68 +271,19 @@ public class ByteBuddyAndroidTaskExtension {
     }
 
     /**
-     * Returns {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     *
-     * @return {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     */
-    public boolean isLazy() {
-        return lazy;
-    }
-
-    /**
-     * If set to {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     *
-     * @param lazy {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     */
-    public void setLazy(boolean lazy) {
-        this.lazy = lazy;
-    }
-
-    /**
-     * Returns the class file version to use for creating auxiliary types or {@code null} if the
-     * version is determined implicitly.
-     *
-     * @return The class file version to use for creating auxiliary types.
-     */
-//    @MaybeNull
-//    public ClassFileVersion getClassFileVersion() {
-//        return classFileVersion;
-//    }
-
-    /**
-     * Sets the class file version to use for creating auxiliary types or {@code null} if the
-     * version is determined implicitly.
-     *
-     * @param classFileVersion The class file version to use for creating auxiliary types.
-     */
-//    public void setClassFileVersion(@MaybeNull ClassFileVersion classFileVersion) {
-//        this.classFileVersion = classFileVersion;
-//    }
-
-    /**
-     * Returns {@code true} if this extension defines an empty discovery.
-     *
-     * @return {@code true} if this extension defines an empty discovery.
-     */
-    protected boolean isEmptyDiscovery() {
-        return false;
-    }
-
-    /**
      * Applies this extension's properties.
      *
      * @param task The task to configure.
      */
     protected void configure(ByteBuddyLocalClassesEnhancerTask task) {
-//        task.getTransformations().addAll(getTransformations());
+        task.getTransformations().convention(getTransformations());
         task.getEntryPoint().convention(getEntryPoint());
         task.getSuffix().convention(getSuffix());
         task.getFailOnLiveInitializer().convention(isFailOnLiveInitializer());
-//        task.getWarnOnEmptyTypeSet().convention(isWarnOnEmptyTypeSet());
+        task.getWarnOnEmptyTypeSet().convention(isWarnOnEmptyTypeSet());
         task.getFailFast().convention(isFailFast());
         task.getExtendedParsing().convention(isExtendedParsing());
-//        task.setDiscovery(getDiscovery());
+        task.getDiscovery().convention(getDiscovery());
         task.getThreads().convention(getThreads());
-//        task.setClassFileVersion(getClassFileVersion());
     }
 }
