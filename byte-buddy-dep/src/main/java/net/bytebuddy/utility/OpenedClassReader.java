@@ -66,6 +66,13 @@ public class OpenedClassReader implements AsmClassReader.Factory {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+        return new AsmClassReader.Default(of(binaryRepresentation, experimental));
+    }
+
+    /**
      * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
      *
      * @param action The action to execute from a privileged context.
@@ -77,6 +84,7 @@ public class OpenedClassReader implements AsmClassReader.Factory {
         return action.run();
     }
 
+
     /**
      * Creates a class reader for the given binary representation of a class file.
      *
@@ -84,9 +92,20 @@ public class OpenedClassReader implements AsmClassReader.Factory {
      * @return An appropriate class reader.
      */
     public static ClassReader of(byte[] binaryRepresentation) {
+        return of(binaryRepresentation, EXPERIMENTAL);
+    }
+
+    /**
+     * Creates a class reader for the given binary representation of a class file.
+     *
+     * @param binaryRepresentation The binary representation of a class file to read.
+     * @param experimental         {@code true} if unknown class file versions should also be processed.
+     * @return An appropriate class reader.
+     */
+    public static ClassReader of(byte[] binaryRepresentation, boolean experimental) {
         ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation), latest = ClassFileVersion.latest();
         if (classFileVersion.isGreaterThan(latest)) {
-            if (EXPERIMENTAL) {
+            if (experimental) {
                 binaryRepresentation[4] = (byte) (latest.getMinorVersion() >>> 8);
                 binaryRepresentation[5] = (byte) latest.getMinorVersion();
                 binaryRepresentation[6] = (byte) (latest.getMajorVersion() >>> 8);

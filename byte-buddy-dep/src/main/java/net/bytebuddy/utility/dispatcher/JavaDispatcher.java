@@ -17,6 +17,7 @@ package net.bytebuddy.utility.dispatcher;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
@@ -1234,7 +1235,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          */
         @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation.")
         protected static Object proxy(Class<?> proxy, Map<Method, Dispatcher> dispatchers) {
-            ClassWriter classWriter = new ClassWriter(0);
+            ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
             classWriter.visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(),
                     Opcodes.ACC_PUBLIC,
                     Type.getInternalName(proxy) + "$Proxy",
@@ -1310,7 +1311,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          */
         @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation.")
         protected static Invoker invoker() {
-            ClassWriter classWriter = new ClassWriter(0);
+            ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
             classWriter.visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(),
                     Opcodes.ACC_PUBLIC,
                     Type.getInternalName(Invoker.class) + "$Dispatcher",

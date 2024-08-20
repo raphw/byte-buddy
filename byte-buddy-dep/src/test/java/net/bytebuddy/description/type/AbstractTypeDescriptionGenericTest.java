@@ -1,13 +1,17 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.AsmClassReader;
+import net.bytebuddy.utility.AsmClassWriter;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -1991,11 +1995,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public static class GenericDisintegrator extends ClassVisitor {
 
         public static Field make() throws IOException, ClassNotFoundException, NoSuchFieldException {
-            ClassReader classReader = new ClassReader(InconsistentGenerics.class.getName());
-            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            classReader.accept(new GenericDisintegrator(classWriter), 0);
+            AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(InconsistentGenerics.class));
+            AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(ClassWriter.COMPUTE_MAXS, classReader);
+            classReader.accept(new GenericDisintegrator(classWriter.getVisitor()), AsmVisitorWrapper.NO_FLAGS);
             return new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                    Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.toByteArray()),
+                    Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.getBinaryRepresentation()),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST)
                     .loadClass(InconsistentGenerics.class.getName()).getDeclaredField(FOO);
         }

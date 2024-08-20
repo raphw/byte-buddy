@@ -18,6 +18,8 @@ import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.AsmClassReader;
+import net.bytebuddy.utility.AsmClassWriter;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Rule;
@@ -678,15 +680,15 @@ public class TypeWriterDefaultTest {
 
     @Test
     public void testOldJavaClassFileDeprecation() {
-        ClassWriter classWriter = new ClassWriter(0);
-        classWriter.visit(Opcodes.V1_4, Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "foo/Bar", null, "java/lang/Object", null);
-        classWriter.visitField(Opcodes.ACC_DEPRECATED, "qux", "Ljava/lang/Object;", null, null).visitEnd();
-        classWriter.visitMethod(Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "baz", "()V", null, null).visitEnd();
-        classWriter.visitEnd();
+        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(AsmVisitorWrapper.NO_FLAGS);
+        classWriter.getVisitor().visit(Opcodes.V1_4, Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "foo/Bar", null, "java/lang/Object", null);
+        classWriter.getVisitor().visitField(Opcodes.ACC_DEPRECATED, "qux", "Ljava/lang/Object;", null, null).visitEnd();
+        classWriter.getVisitor().visitMethod(Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "baz", "()V", null, null).visitEnd();
+        classWriter.getVisitor().visitEnd();
 
         TypeDescription typeDescription = new TypeDescription.Latent("foo.Bar", 0, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         Class<?> type = ByteArrayClassLoader.load(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                Collections.singletonMap(typeDescription, classWriter.toByteArray()),
+                Collections.singletonMap(typeDescription, classWriter.getBinaryRepresentation()),
                 ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.Trivial.INSTANCE,
@@ -700,7 +702,7 @@ public class TypeWriterDefaultTest {
                 .make()
                 .getBytes();
 
-        ClassReader classReader = new ClassReader(binaryRepresentation);
+        AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(binaryRepresentation);
         classReader.accept(new ClassVisitor(OpenedClassReader.ASM_API) {
             @Override
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
@@ -725,7 +727,7 @@ public class TypeWriterDefaultTest {
                 }
                 return super.visitMethod(access, name, descriptor, signature, exceptions);
             }
-        }, 0);
+        }, AsmVisitorWrapper.NO_FLAGS);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
