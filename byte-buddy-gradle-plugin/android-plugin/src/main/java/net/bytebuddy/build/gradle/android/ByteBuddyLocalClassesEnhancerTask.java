@@ -22,6 +22,7 @@ import net.bytebuddy.build.AndroidDescriptor;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.build.gradle.AbstractByteBuddyTask;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
@@ -95,7 +96,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
      * @return The entry point to use for instrumentations.
      */
     @Input
-    @Optional
     public abstract Property<EntryPoint> getEntryPoint();
 
     /**
@@ -125,6 +125,45 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     @Input
     @Optional
     public abstract Property<Boolean> getLazy();
+    /**
+     * Returns {@code true} if this task should fail fast.
+     *
+     * @return {@code true} if this task should fail fast.
+     */
+    @Internal
+    public abstract Property<Boolean> getFailFast();
+
+    /**
+     * Returns {@code true} if the transformation should fail if a live initializer is used.
+     *
+     * @return {@code true} if the transformation should fail if a live initializer is used.
+     */
+    @Internal
+    public abstract Property<Boolean> getFailOnLiveInitializer();
+
+    /**
+     * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
+     *
+     * @return The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
+     */
+    @Internal
+    public abstract Property<Integer> getThreads();
+
+    /**
+     * Returns the suffix to use for rebased methods or the empty string if a random suffix should be used.
+     *
+     * @return The suffix to use for rebased methods or the empty string if a random suffix should be used.
+     */
+    @Input
+    public abstract Property<String> getSuffix();
+
+    /**
+     * Returns {@code true} if extended parsing should be used.
+     *
+     * @return {@code true} if extended parsing should be used.
+     */
+    @Input
+    public abstract Property<Boolean> getExtendedParsing();
 
     /**
      * Translates a collection of files to {@link URL}s.
@@ -201,10 +240,22 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                             throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                         }
                     }
-                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(getEntryPoint().get(),
-                                    classFileVersion,
-                                    MethodNameTransformer.Suffixing.withRandomSuffix())
+                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(getEntryPoint().get(), classFileVersion, getSuffix().get().length() == 0
+                                    ? MethodNameTransformer.Suffixing.withRandomSuffix()
+                                    : new MethodNameTransformer.Suffixing(getSuffix().get()))
+                            .with(getExtendedParsing().get()
+                                    ? Plugin.Engine.PoolStrategy.Default.EXTENDED
+                                    : Plugin.Engine.PoolStrategy.Default.FAST)
                             .with(classFileLocator)
+                            .with(new TransformationLogger(getLogger()))
+                            .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, getFailOnLiveInitializer().get()
+                                    ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
+                                    : Plugin.Engine.Listener.NoOp.INSTANCE, getFailFast().get()
+                                    ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
+                                    : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
+                            .with(getThreads().get() == 0
+                                    ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
+                                    : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(getThreads().get()))
                             .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
                     if (!summary.getFailed().isEmpty()) {
                         throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
@@ -408,6 +459,51 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * A {@link net.bytebuddy.build.Plugin.Engine.Listener} that logs several relevant events during the build.
+     */
+    protected static class TransformationLogger extends Plugin.Engine.Listener.Adapter {
+
+        /**
+         * The logger to delegate to.
+         */
+        private final Logger logger;
+
+        /**
+         * Creates a new transformation logger.
+         *
+         * @param logger The logger to delegate to.
+         */
+        protected TransformationLogger(Logger logger) {
+            this.logger = logger;
+        }
+
+        @Override
+        public void onTransformation(TypeDescription typeDescription, List<Plugin> plugins) {
+            logger.debug("Transformed {} using {}", typeDescription, plugins);
+        }
+
+        @Override
+        public void onError(TypeDescription typeDescription, Plugin plugin, Throwable throwable) {
+            logger.warn("Failed to transform {} using {}", typeDescription, plugin, throwable);
+        }
+
+        @Override
+        public void onError(Map<TypeDescription, List<Throwable>> throwables) {
+            logger.warn("Failed to transform {} types", throwables.size());
+        }
+
+        @Override
+        public void onError(Plugin plugin, Throwable throwable) {
+            logger.error("Failed to close {}", plugin, throwable);
+        }
+
+        @Override
+        public void onLiveInitializer(TypeDescription typeDescription, TypeDescription definingType) {
+            logger.debug("Discovered live initializer for {} as a result of transforming {}", definingType, typeDescription);
         }
     }
 }

@@ -269,78 +269,6 @@ public class ByteBuddyAndroidTaskExtension {
     }
 
     /**
-     * Determines the discovery for finding plugins on the class path.
-     *
-     * @return The discovery for finding plugins on the class path.
-     */
-//    public Discovery getDiscovery() {
-//        return discovery;
-//    }
-
-    /**
-     * Determines the discovery for finding plugins on the class path.
-     *
-     * @param discovery The discovery for finding plugins on the class path.
-     */
-//    public void setDiscovery(Discovery discovery) {
-//        this.discovery = discovery;
-//    }
-
-    /**
-     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
-     *
-     * @return The adjustment for tasks that might depend on post-processed compile tasks.
-     */
-//    public Adjustment getAdjustment() {
-//        return adjustment;
-//    }
-
-    /**
-     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
-     *
-     * @param adjustment The adjustment for tasks that might depend on post-processed compile tasks.
-     */
-//    public void setAdjustment(Adjustment adjustment) {
-//        this.adjustment = adjustment;
-//    }
-
-    /**
-     * Returns the error handler to be used when a task dependency cannot be resolved.
-     *
-     * @return The error handler to be used when a task dependency cannot be resolved.
-     */
-//    public Adjustment.ErrorHandler getAdjustmentErrorHandler() {
-//        return adjustmentErrorHandler;
-//    }
-
-    /**
-     * Sets the error handler to be used when a task dependency cannot be resolved.
-     *
-     * @param adjustmentErrorHandler The error handler to be used when a task dependency cannot be resolved.
-     */
-//    public void setAdjustmentErrorHandler(Adjustment.ErrorHandler adjustmentErrorHandler) {
-//        this.adjustmentErrorHandler = adjustmentErrorHandler;
-//    }
-
-    /**
-     * Returns the adjustment post processor that is applied after the graph dependencies are is resolved.
-     *
-     * @return The adjustment post processor to apply.
-     */
-//    public Action<Task> getAdjustmentPostProcessor() {
-//        return adjustmentPostProcessor;
-//    }
-
-    /**
-     * Sets the adjustment post processor that is applied after the graph dependencies are resolved.
-     *
-     * @param adjustmentPostProcessor The adjustment post processor to apply.
-     */
-//    public void setAdjustmentPostProcessor(Action<Task> adjustmentPostProcessor) {
-//        this.adjustmentPostProcessor = adjustmentPostProcessor;
-//    }
-
-    /**
      * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      *
      * @return The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -414,13 +342,13 @@ public class ByteBuddyAndroidTaskExtension {
     protected void configure(ByteBuddyLocalClassesEnhancerTask task) {
 //        task.getTransformations().addAll(getTransformations());
         task.getEntryPoint().convention(getEntryPoint());
-//        task.setSuffix(getSuffix());
-//        task.setFailOnLiveInitializer(isFailOnLiveInitializer());
-//        task.setWarnOnEmptyTypeSet(isWarnOnEmptyTypeSet());
-//        task.setFailFast(isFailFast());
-//        task.setExtendedParsing(isExtendedParsing());
+        task.getSuffix().convention(getSuffix());
+        task.getFailOnLiveInitializer().convention(isFailOnLiveInitializer());
+//        task.getWarnOnEmptyTypeSet().convention(isWarnOnEmptyTypeSet());
+        task.getFailFast().convention(isFailFast());
+        task.getExtendedParsing().convention(isExtendedParsing());
 //        task.setDiscovery(getDiscovery());
-//        task.setThreads(getThreads());
+        task.getThreads().convention(getThreads());
 //        task.setClassFileVersion(getClassFileVersion());
     }
 }

@@ -231,9 +231,9 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
-     * Returns {@code true} if a warning should be issued for an empty type set.
+     * Returns {@code true} if this task should fail fast.
      *
-     * @return {@code true} if a warning should be issued for an empty type set.
+     * @return {@code true} if this task should fail fast.
      */
     @Internal
     public boolean isFailFast() {
@@ -241,9 +241,9 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
-     * Determines if a warning should be issued for an empty type set.
+     * Determines if this task should fail fast.
      *
-     * @param failFast {@code true} if a warning should be issued for an empty type set.
+     * @param failFast {@code true} if this task should fail fast.
      */
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
