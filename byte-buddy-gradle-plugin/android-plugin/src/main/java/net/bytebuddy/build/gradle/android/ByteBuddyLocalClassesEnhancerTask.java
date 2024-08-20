@@ -122,9 +122,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    @Input
-    @Optional
-    public abstract Property<Boolean> getLazy();
     /**
      * Returns {@code true} if this task should fail fast.
      *
