@@ -15,25 +15,13 @@
  */
 package net.bytebuddy.build.gradle.android;
 
-import groovy.lang.Closure;
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
-import net.bytebuddy.build.gradle.*;
-import net.bytebuddy.utility.nullability.MaybeNull;
-import net.bytebuddy.utility.nullability.UnknownNull;
-import org.gradle.api.Action;
-import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.file.FileCollection;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A Byte Buddy task extension for Android.
  */
-public abstract class ByteBuddyAndroidTaskExtension {
+public class ByteBuddyAndroidTaskExtension {
 
     /**
      * The current Gradle project.
@@ -414,7 +402,9 @@ public abstract class ByteBuddyAndroidTaskExtension {
      *
      * @return {@code true} if this extension defines an empty discovery.
      */
-    protected abstract boolean isEmptyDiscovery();
+    protected boolean isEmptyDiscovery() {
+        return false;
+    }
 
     /**
      * Applies this extension's properties.
