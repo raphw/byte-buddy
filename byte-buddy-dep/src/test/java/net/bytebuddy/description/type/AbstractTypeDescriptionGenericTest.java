@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -1996,7 +1997,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         public static Field make() throws IOException, ClassNotFoundException, NoSuchFieldException {
             AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(InconsistentGenerics.class));
             AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(ClassWriter.COMPUTE_MAXS, classReader);
-            classReader.accept(new GenericDisintegrator(classWriter.getVisitor()), 0);
+            classReader.accept(new GenericDisintegrator(classWriter.getVisitor()), AsmVisitorWrapper.NO_FLAGS);
             return new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                     Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.getBinaryRepresentation()),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST)

@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.scope.EnclosingType;
 import net.bytebuddy.utility.AsmClassReader;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Test;
@@ -62,7 +61,7 @@ public class TypeWriterDeclarationPreservationTest {
     @Test
     public void testRedefinition() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
+        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
         new ByteBuddy()
                 .redefine(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))
@@ -72,7 +71,7 @@ public class TypeWriterDeclarationPreservationTest {
     @Test
     public void testRebasing() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
+        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
         new ByteBuddy()
                 .rebase(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))
@@ -82,7 +81,7 @@ public class TypeWriterDeclarationPreservationTest {
     @Test
     public void testDecoration() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, 0);
+        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
         new ByteBuddy()
                 .decorate(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))

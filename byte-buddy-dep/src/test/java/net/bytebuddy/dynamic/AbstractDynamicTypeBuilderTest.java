@@ -29,6 +29,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.AsmClassWriter;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.visitor.ContextClassVisitor;
 import org.hamcrest.CoreMatchers;
@@ -1520,12 +1521,12 @@ public abstract class AbstractDynamicTypeBuilderTest {
         TypeDescription typeDescription = createPlain()
                 .make()
                 .getTypeDescription();
-        ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
+        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(AsmVisitorWrapper.NO_FLAGS);
         ContextClassVisitor classVisitor = createPlain()
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC, Ownership.STATIC)
                 .throwing(Exception.class)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
-                .wrap(classWriter);
+                .wrap(classWriter.getVisitor());
         classVisitor.visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
                 typeDescription.getActualModifiers(true),
                 typeDescription.getInternalName(),
@@ -1536,7 +1537,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(classVisitor.getAuxiliaryTypes().size(), is(0));
         assertThat(classVisitor.getLoadedTypeInitializer().isAlive(), is(false));
         Class<?> type = new DynamicType.Default.Unloaded<Object>(typeDescription,
-                classWriter.toByteArray(),
+                classWriter.getBinaryRepresentation(),
                 LoadedTypeInitializer.NoOp.INSTANCE,
                 Collections.<DynamicType>emptyList(),
                 TypeResolutionStrategy.Passive.INSTANCE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
