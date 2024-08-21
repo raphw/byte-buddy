@@ -19,12 +19,10 @@ import com.android.build.gradle.BaseExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AndroidDescriptor;
-import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
@@ -38,6 +36,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.*;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -205,107 +204,64 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         for (RegularFile jarFile : getInputJars().get()) {
             sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
         }
-        Plugin.Engine.Summary summary;
+        ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion().get().toString());
+        AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(localClasspath);
         ClassLoader classLoader = new URLClassLoader(
                 toUrls(getByteBuddyClasspath().getFiles()),
                 new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
         try {
-            if (getDiscovery().get().isDiscover(transformations)) {
-                Set<String> undiscoverable = new HashSet<String>();
-                if (getDiscovery().get().isRecordConfiguration()) {
-                    for (Transformation transformation : transformations) {
-                        undiscoverable.add(transformation.toPluginName());
-                    }
-                }
-                for (String name : Plugin.Engine.Default.scan(classLoader)) {
-                    if (undiscoverable.add(name)) {
-                        try {
-                            @SuppressWarnings("unchecked")
-                            Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(name, false, classLoader);
-                            Transformation transformation = new Transformation();
-                            transformation.setPlugin(plugin);
-                            transformations.add(transformation);
-                        } catch (ClassNotFoundException exception) {
-                            throw new IllegalStateException("Discovered plugin is not available: " + name, exception);
-                        }
-                        getLogger().debug("Registered discovered plugin: {}", name);
-                    } else {
-                        getLogger().info("Skipping discovered plugin {} which was previously discovered or registered", name);
-                    }
-                }
-            }
-            if (transformations.isEmpty()) {
-                getLogger().warn("No transformations are specified or discovered. Application will be non-operational.");
+        Class.forName("net.bytebuddy.build.gradle.AbstractByteBuddyTask").getMethod("apply",
+                Logger.class,
+                ClassLoader.class,
+                List.class,
+                Class.forName("net.bytebuddy.build.gradle.Discovery"),
+                ClassFileLocator.class,
+                Iterable.class,
+                Iterable.class,
+                EntryPoint.class,
+                ClassFileVersion.class,
+                Plugin.Factory.UsingReflection.ArgumentResolver.class,
+                String.class,
+                int.class,
+                boolean.class,
+                boolean.class,
+                boolean.class,
+                boolean.class,
+                Plugin.Engine.Source.class,
+                Plugin.Engine.Target.class).invoke(null,
+                    getLogger(),
+                    classLoader,
+                    transformations,
+                    getDiscovery().get(),
+                    ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()),
+                    getAndroidBootClasspath().plus(getByteBuddyClasspath()).getFiles(),
+                    Collections.emptyList(), // TODO
+                    getEntryPoint().get(),
+                    classFileVersion,
+                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor),
+                    getSuffix().get(),
+                    getThreads().get(),
+                    getExtendedParsing().get(),
+                    getFailFast().get(),
+                    getFailOnLiveInitializer().get(),
+                    getWarnOnEmptyTypeSet().get(),
+                    new Plugin.Engine.Source.Compound(sources),
+                    new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()));
+        } catch (InvocationTargetException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            } else if (cause instanceof RuntimeException){
+                throw (RuntimeException) cause;
             } else {
-                getLogger().debug("{} plugins are being applied via configuration and discovery", transformations.size());
+                throw new GradleException("Unexpected transformation error", exception);
             }
-            List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
-            BuildLogger buildLogger;
-            try {
-                buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
-                        .getConstructor(Logger.class)
-                        .newInstance(getLogger());
-            } catch (Exception exception) {
-                throw new GradleException("Failed to resolve Gradle build logger", exception);
-            }
-            AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(localClasspath);
-            for (Transformation transformation : transformations) {
-                try {
-                    factories.add(new Plugin.Factory.UsingReflection(transformation.toPlugin(classLoader))
-                            .with(transformation.makeArgumentResolvers())
-                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
-                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getLogger()))
-                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, getLogger()))
-                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
-                    getLogger().info("Resolved plugin: {}", transformation.toPluginName());
-                } catch (Throwable throwable) {
-                    throw new IllegalStateException("Cannot resolve plugin: " + transformation.toPluginName(), throwable);
-                }
-            }
-            ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion().get().toString());
-            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
-            for (File file : getAndroidBootClasspath().plus(getByteBuddyClasspath()).getFiles()) {
-                classFileLocators.add(file.isFile()
-                        ? ClassFileLocator.ForJarFile.of(file)
-                        : new ClassFileLocator.ForFolder(file));
-            }
-            classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
-            ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
-            try {
-                summary = Plugin.Engine.Default.of(getEntryPoint().get(), classFileVersion, getSuffix().get().length() == 0
-                                ? MethodNameTransformer.Suffixing.withRandomSuffix()
-                                : new MethodNameTransformer.Suffixing(getSuffix().get()))
-                        .with(getExtendedParsing().get()
-                                ? Plugin.Engine.PoolStrategy.Default.EXTENDED
-                                : Plugin.Engine.PoolStrategy.Default.FAST)
-                        .with(classFileLocator)
-                        .with(new TransformationLogger(getLogger()))
-                        .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, getFailOnLiveInitializer().get()
-                                ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
-                                : Plugin.Engine.Listener.NoOp.INSTANCE, getFailFast().get()
-                                ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
-                                : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
-                        .with(getThreads().get() == 0
-                                ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
-                                : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(getThreads().get()))
-                        .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
-            } finally {
-                classFileLocator.close();
-            }
+        } catch (Throwable throwable) {
+            throw new GradleException("Unexpected transformation error", throwable);
         } finally {
             if (classLoader instanceof Closeable) {
                 ((Closeable) classLoader).close();
             }
-            if (classLoader.getParent() instanceof Closeable) {
-                ((Closeable) classLoader.getParent()).close();
-            }
-        }
-        if (!summary.getFailed().isEmpty()) {
-            throw new IllegalStateException(summary.getFailed() + " type transformation(s) have failed");
-        } else if (getWarnOnEmptyTypeSet().get() && summary.getTransformed().isEmpty()) {
-            getLogger().warn("No types were transformed during plugin execution");
-        } else {
-            getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
         }
     }
 
@@ -488,51 +444,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     }
                 }
             }
-        }
-    }
-
-    /**
-     * A {@link net.bytebuddy.build.Plugin.Engine.Listener} that logs several relevant events during the build.
-     */
-    protected static class TransformationLogger extends Plugin.Engine.Listener.Adapter {
-
-        /**
-         * The logger to delegate to.
-         */
-        private final Logger logger;
-
-        /**
-         * Creates a new transformation logger.
-         *
-         * @param logger The logger to delegate to.
-         */
-        protected TransformationLogger(Logger logger) {
-            this.logger = logger;
-        }
-
-        @Override
-        public void onTransformation(TypeDescription typeDescription, List<Plugin> plugins) {
-            logger.debug("Transformed {} using {}", typeDescription, plugins);
-        }
-
-        @Override
-        public void onError(TypeDescription typeDescription, Plugin plugin, Throwable throwable) {
-            logger.warn("Failed to transform {} using {}", typeDescription, plugin, throwable);
-        }
-
-        @Override
-        public void onError(Map<TypeDescription, List<Throwable>> throwables) {
-            logger.warn("Failed to transform {} types", throwables.size());
-        }
-
-        @Override
-        public void onError(Plugin plugin, Throwable throwable) {
-            logger.error("Failed to close {}", plugin, throwable);
-        }
-
-        @Override
-        public void onLiveInitializer(TypeDescription typeDescription, TypeDescription definingType) {
-            logger.debug("Discovered live initializer for {} as a result of transforming {}", definingType, typeDescription);
         }
     }
 }
