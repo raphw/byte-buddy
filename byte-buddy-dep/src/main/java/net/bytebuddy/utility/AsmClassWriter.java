@@ -24,8 +24,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
-import java.lang.classfile.ClassModel;
-
 /**
  * A facade for creating a {@link ClassVisitor} that writes a class file.
  */
@@ -125,7 +123,7 @@ public interface AsmClassWriter {
                 JdkClassReader unwrapped = classReader.unwrap(JdkClassReader.class);
                 return new ForJdk(unwrapped == null
                         ? new SuperClassResolvingJdkClassWriter(flags, typePool)
-                        : new SuperClassResolvingJdkClassWriter(flags, unwrapped.getClassModel(), typePool));
+                        : new SuperClassResolvingJdkClassWriter(flags, unwrapped, typePool));
                 /*ClassReader unwrapped = classReader.unwrap(ClassReader.class);
                 return new AsmClassWriter.Default(unwrapped == null
                         ? new FrameComputingClassWriter(flags, typePool)
@@ -303,8 +301,8 @@ public interface AsmClassWriter {
             this.typePool = typePool;
         }
 
-        public SuperClassResolvingJdkClassWriter(int flags, ClassModel classModel, TypePool typePool) {
-            super(flags, classModel);
+        public SuperClassResolvingJdkClassWriter(int flags, JdkClassReader classReader, TypePool typePool) {
+            super(flags, classReader);
             this.typePool = typePool;
         }
 
