@@ -212,6 +212,17 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The appropriate class file version.
      */
     public static ClassFileVersion ofJavaVersionString(String javaVersionString) {
+        return ofJavaVersionString(javaVersionString, OpenedClassReader.EXPERIMENTAL);
+    }
+
+    /**
+     * Returns the Java class file by its representation by a version string in accordance to the formats known to <i>javac</i>.
+     *
+     * @param javaVersionString The Java version string.
+     * @param experimental      {@code true} if unknown version strings should be parsed as if they were known.
+     * @return The appropriate class file version.
+     */
+    public static ClassFileVersion ofJavaVersionString(String javaVersionString, boolean experimental) {
         if (javaVersionString.equals("1.1")) {
             return JAVA_V1;
         } else if (javaVersionString.equals("1.2")) {
@@ -259,7 +270,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
         } else if (javaVersionString.equals("1.23") || javaVersionString.equals("23")) {
             return JAVA_V23;
         } else {
-            if (OpenedClassReader.EXPERIMENTAL) {
+            if (experimental) {
                 try {
                     int version = Integer.parseInt(javaVersionString.startsWith("1.")
                             ? javaVersionString.substring(2)
@@ -282,6 +293,18 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return A wrapper for the given Java class file version.
      */
     public static ClassFileVersion ofJavaVersion(int javaVersion) {
+        return ofJavaVersion(javaVersion, OpenedClassReader.EXPERIMENTAL);
+    }
+
+    /**
+     * Creates a class file version for a given major release of Java. Currently, all versions reaching from
+     * Java 1 to Java 9 are supported.
+     *
+     * @param javaVersion  The Java version.
+     * @param experimental {@code true} if unknown Java versions should also be considered.
+     * @return A wrapper for the given Java class file version.
+     */
+    public static ClassFileVersion ofJavaVersion(int javaVersion, boolean experimental) {
         switch (javaVersion) {
             case 1:
                 return JAVA_V1;
@@ -330,7 +353,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             case 23:
                 return JAVA_V23;
             default:
-                if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
+                if (experimental && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);
                 } else {
                     throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
