@@ -88,7 +88,8 @@ public interface AsmClassReader {
              * {@inheritDoc}
              */
             public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation, experimental));
+                return new ForJdk(new JdkClassReader(binaryRepresentation));
+                //return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation, experimental));
             }
         }
     }
