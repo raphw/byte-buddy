@@ -34,6 +34,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Optional;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -168,6 +169,16 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract Property<Boolean> getExtendedParsing();
 
     /**
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    @MaybeNull
+    @InputFiles
+    @Optional
+    public abstract ConfigurableFileCollection getDiscoverySet();
+
+    /**
      * Translates a collection of files to {@link URL}s.
      *
      * @param files The list of files to translate.
@@ -239,7 +250,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     discovery.getMethod("valueOf", String.class).invoke(null, getDiscovery().get().name()),
                     ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()),
                     getAndroidBootClasspath().plus(getByteBuddyClasspath()).getFiles(),
-                    Collections.emptyList(), // TODO
+                    getDiscoverySet().getFiles(),
                     getEntryPoint().get(),
                     classFileVersion,
                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor),

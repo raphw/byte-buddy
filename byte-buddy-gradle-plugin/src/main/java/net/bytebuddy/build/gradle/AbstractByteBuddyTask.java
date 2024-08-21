@@ -417,7 +417,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                              Discovery discovery,
                              ClassFileLocator rootLocator,
                              Iterable<File> artifacts,
-                             Iterable<File> discoveries,
+                             @MaybeNull Iterable<File> discoveries,
                              EntryPoint entryPoint,
                              ClassFileVersion classFileVersion,
                              Plugin.Factory.UsingReflection.ArgumentResolver rootLocationResolver,
@@ -429,8 +429,8 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                              boolean warnOnEmptyTypeSet,
                              Plugin.Engine.Source source,
                              Plugin.Engine.Target target) throws IOException {
-        ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(rootLoader, discoveries);
         Plugin.Engine.Summary summary;
+        ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(rootLoader, discoveries);
         try {
             if (discovery.isDiscover(transformations)) {
                 Set<String> undiscoverable = new HashSet<String>();

@@ -17,8 +17,10 @@ package net.bytebuddy.build.gradle.android;
 
 import groovy.lang.Closure;
 import net.bytebuddy.build.EntryPoint;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +82,12 @@ public class ByteBuddyAndroidTaskExtension {
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
+
+    /**
+     * A set of classes that is used for discovery of plugins.
+     */
+    @MaybeNull
+    private FileCollection discoverySet;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
@@ -271,6 +279,25 @@ public class ByteBuddyAndroidTaskExtension {
     }
 
     /**
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    @MaybeNull
+    public FileCollection getDiscoverySet() {
+        return discoverySet;
+    }
+
+    /**
+     * Defines the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @param discoverySet The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    public void setDiscoverySet(@MaybeNull FileCollection discoverySet) {
+        this.discoverySet = discoverySet;
+    }
+
+    /**
      * Applies this extension's properties.
      *
      * @param task The task to configure.
@@ -285,5 +312,6 @@ public class ByteBuddyAndroidTaskExtension {
         task.getExtendedParsing().convention(isExtendedParsing());
         task.getDiscovery().convention(getDiscovery());
         task.getThreads().convention(getThreads());
+        task.getDiscoverySet().setFrom(getDiscoverySet());
     }
 }
