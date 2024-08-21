@@ -193,7 +193,10 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
      */
     @TaskAction
     public void execute() throws IOException {
-        List<Transformation> transformations = new ArrayList<Transformation>(getTransformations().get());
+        List<Object> transformations = new ArrayList<Object>(getTransformations().get().size());
+        for (Transformation transformation : getTransformations().get()) {
+            transformations.add(transformation.resolve());
+        }
         Set<Plugin.Engine.Source> sources = new LinkedHashSet<Plugin.Engine.Source>();
         Set<File> localClasspath = new HashSet<>();
         for (Directory directory : getLocalClassesDirs().get()) {
@@ -210,11 +213,12 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                 toUrls(getByteBuddyClasspath().getFiles()),
                 new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
         try {
-        Class.forName("net.bytebuddy.build.gradle.AbstractByteBuddyTask").getMethod("apply",
+            Class<?> discovery = Class.forName("net.bytebuddy.build.gradle.Discovery");
+            Class.forName("net.bytebuddy.build.gradle.AbstractByteBuddyTask").getMethod("apply",
                 Logger.class,
                 ClassLoader.class,
                 List.class,
-                Class.forName("net.bytebuddy.build.gradle.Discovery"),
+                discovery,
                 ClassFileLocator.class,
                 Iterable.class,
                 Iterable.class,
@@ -232,7 +236,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     getLogger(),
                     classLoader,
                     transformations,
-                    getDiscovery().get(),
+                    discovery.getMethod("valueOf", String.class).invoke(null, getDiscovery().get().name()),
                     ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()),
                     getAndroidBootClasspath().plus(getByteBuddyClasspath()).getFiles(),
                     Collections.emptyList(), // TODO
@@ -254,7 +258,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             } else if (cause instanceof RuntimeException){
                 throw (RuntimeException) cause;
             } else {
-                throw new GradleException("Unexpected transformation error", exception);
+                throw new GradleException("Unexpected transformation error", cause);
             }
         } catch (Throwable throwable) {
             throw new GradleException("Unexpected transformation error", throwable);

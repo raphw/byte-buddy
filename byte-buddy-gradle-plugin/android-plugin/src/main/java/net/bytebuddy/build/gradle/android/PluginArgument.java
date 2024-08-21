@@ -17,6 +17,7 @@ package net.bytebuddy.build.gradle.android;
 
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -106,12 +107,12 @@ public class PluginArgument implements Serializable {
         this.value = value;
     }
 
-    /**
-     * Resolves this plugin argument to an argument resolver.
-     *
-     * @return An argument resolver that represents this plugin argument.
-     */
-    protected Plugin.Factory.UsingReflection.ArgumentResolver toArgumentResolver() {
-        return new Plugin.Factory.UsingReflection.ArgumentResolver.ForIndex(index, value);
+    protected Object resolve() {
+        try {
+            Class<?> type = Class.forName("net.bytebuddy.build.gradle.PluginArgument");
+            return type.getConstructor(int.class, Object.class).newInstance(index, value);
+        } catch (Exception exception) {
+            throw new GradleException("Could not resolve plugin argument", exception);
+        }
     }
 }
