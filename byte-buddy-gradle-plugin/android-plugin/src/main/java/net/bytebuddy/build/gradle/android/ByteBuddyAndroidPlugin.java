@@ -92,6 +92,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             Class<?> scopedArtifact = Class.forName("com.android.build.api.artifact.ScopedArtifact");
             @SuppressWarnings("unchecked")
             Object project = Enum.valueOf((Class) scope, "ALL");
+            @SuppressWarnings("unchecked")
+            Artifact<FileSystemLocation> location = (Artifact<FileSystemLocation>) Class.forName("com.android.build.api.artifact.ScopedArtifact$CLASSES").getField("INSTANCE").get(null);
             dispatcher = new TransformationDispatcher.ForApk74CompatibleAndroid(
                 Artifacts.class.getMethod("forScope", scope),
                 scopedArtifacts.getMethod("use", TaskProvider.class),
@@ -101,7 +103,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     Function1.class,
                     Function1.class),
                 project,
-                (Artifact<FileSystemLocation>) Class.forName("com.android.build.api.artifact.ScopedArtifact$CLASSES").getField("INSTANCE").get(null));
+                location);
         } catch (Throwable ignored) {
             dispatcher = TransformationDispatcher.ForLegacyAndroid.INSTANCE;
         }
