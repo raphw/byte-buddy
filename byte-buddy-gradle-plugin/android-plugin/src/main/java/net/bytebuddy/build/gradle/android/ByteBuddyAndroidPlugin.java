@@ -49,6 +49,7 @@ import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
@@ -100,7 +101,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     Function1.class,
                     Function1.class),
                 project,
-                (Artifact) Class.forName("com.android.build.api.artifact.ScopedArtifact$CLASSES").getField("INSTANCE").get(null));
+                (Artifact<FileSystemLocation>) Class.forName("com.android.build.api.artifact.ScopedArtifact$CLASSES").getField("INSTANCE").get(null));
         } catch (Throwable ignored) {
             dispatcher = TransformationDispatcher.ForLegacyAndroid.INSTANCE;
         }
@@ -557,7 +558,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             /**
              * The {@code com.android.build.api.artifact.ScopedArtifact$CLASSES#INSTANCE} value.
              */
-            private final Artifact artifact;
+            private final Artifact<FileSystemLocation> artifact;
 
             /**
              * Creates a new dispatcher.
@@ -568,7 +569,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
              * @param scope       The {@code com.android.build.api.variant.ScopedArtifacts$Scope#PROJECT} value.
              * @param artifact    The {@code com.android.build.api.artifact.ScopedArtifact$CLASSES#INSTANCE} value.
              */
-            protected ForApk74CompatibleAndroid(Method forScope, Method use, Method toTransform, Object scope, Artifact artifact) {
+            protected ForApk74CompatibleAndroid(Method forScope, Method use, Method toTransform, Object scope, Artifact<FileSystemLocation> artifact) {
                 this.forScope = forScope;
                 this.use = use;
                 this.toTransform = toTransform;
