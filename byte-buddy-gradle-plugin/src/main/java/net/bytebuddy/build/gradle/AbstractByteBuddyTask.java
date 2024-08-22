@@ -394,13 +394,15 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * Dispatches a Byte Buddy instrumentation Gradle task.
      *
      * @param logger                The logger to use.
+     * @param rootLoader            The class loader that is used for searching types and applying plugins.
      * @param transformations       The transformations to apply.
      * @param discovery             The discovery for plugins to use.
      * @param rootLocator           The root class file locator.
-     * @param artifacts             The artifacts to include
+     * @param artifacts             The artifacts to include.
+     * @param discoverySet          The source set to discover plugins from or {@code null} if no source set is used.
      * @param entryPoint            The entry point to use.
      * @param classFileVersion      The class file version to use.
-     * @param rootLocationResolver  A argument resolver for the root location of this build.
+     * @param rootLocationResolver  An argument resolver for the root location of this build.
      * @param suffix                The suffix to use for rebased methods or an empty string for using a random suffix.
      * @param threads               The number of threads to use while instrumenting.
      * @param extendedParsing       {@code true} if extended parsing should be used.
@@ -417,7 +419,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                              Discovery discovery,
                              ClassFileLocator rootLocator,
                              Iterable<File> artifacts,
-                             @MaybeNull Iterable<File> discoveries,
+                             @MaybeNull Iterable<File> discoverySet,
                              EntryPoint entryPoint,
                              ClassFileVersion classFileVersion,
                              Plugin.Factory.UsingReflection.ArgumentResolver rootLocationResolver,
@@ -430,7 +432,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                              Plugin.Engine.Source source,
                              Plugin.Engine.Target target) throws IOException {
         Plugin.Engine.Summary summary;
-        ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(rootLoader, discoveries);
+        ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(rootLoader, discoverySet);
         try {
             if (discovery.isDiscover(transformations)) {
                 Set<String> undiscoverable = new HashSet<String>();
