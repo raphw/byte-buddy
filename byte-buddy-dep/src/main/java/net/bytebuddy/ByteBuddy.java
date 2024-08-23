@@ -1477,6 +1477,9 @@ public class ByteBuddy {
      * @return A new Byte Buddy instance that applies the supplied class writer factory.
      */
     public ByteBuddy withIgnoredClassReader() {
+        if (classWriterFactory instanceof AsmClassWriter.Factory.Suppressing) {
+            return this;
+        }
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,

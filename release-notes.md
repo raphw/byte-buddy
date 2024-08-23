@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 23. August 2024: version 1.15.0
+
+- Introduce `AsmClassWriter` and `AsmClassReader` abstractions that allow for plugging different implementations of readers and writers.
+- Add configuration extension to the Android Gradle plugin and make it behave like regular Gradle plugin with standard configuration.
+- Throw `TypeNotPresentException` upon discovering undeclared type variables as it was recently fixed on the JVM. 
+
 ### 16. August 2024: version 1.14.19
 
 - Add Maven Mojo for transforming jars and for transforming dependencies folder.
