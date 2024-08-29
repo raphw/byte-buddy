@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. August 2024: version 1.15.1
+
+- Revert default `EntryPoint` for Android Gradle plugin to use `DECORATE` unless explicitly specified due to many generic type errors in Kotlin classes. 
+
 ### 23. August 2024: version 1.15.0
 
 - Introduce `AsmClassWriter` and `AsmClassReader` abstractions that allow for plugging different implementations of readers and writers.
