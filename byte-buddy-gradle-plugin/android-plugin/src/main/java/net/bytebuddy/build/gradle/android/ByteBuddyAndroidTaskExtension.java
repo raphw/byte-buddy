@@ -97,7 +97,7 @@ public class ByteBuddyAndroidTaskExtension {
     public ByteBuddyAndroidTaskExtension(Project project) {
         this.project = project;
         transformations = new ArrayList<Transformation>();
-        entryPoint = EntryPoint.Default.REBASE;
+        entryPoint = new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE);
         suffix = "";
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;

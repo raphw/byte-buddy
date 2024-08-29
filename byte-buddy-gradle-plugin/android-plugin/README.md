@@ -30,7 +30,9 @@ For your compiler plugin to be able of getting recognized as a Byte Buddy compil
 
 ## Special behaviour
 
-As the plugin support relies on Android's build APIs, the instrumentation of Android plugins differs in the following ways.
+This plugin can be used without restrictions for newer versions of Android. However, since Kotlin is used in many Android projects, the default `EntryPoint` is set to decoration without validation. The default would be to define the `EntryPoint` to `REBASE`. Kotlin, until very recent versions, issues erroneous type information which causes parsing errors when types are inflated what often fails the instrumentation. The default might be revised in the future, if this problem becomes less of an issue. To pin the `EntryPoint`, one should set it explicitly.
+
+For older versions of Android, more restrictions apply. Previously, the plugin had to rely on Android's build APIs, the instrumentation of Android plugins differs in the following ways.
 
 - You cannot instrument classes that belong to the [Android SDK](https://developer.android.com/reference/packages) or to the core JVM. However, you can instrument classes that are defined by libraries on Android application projects. However, you can instrument libraries only on Android application projects, not [Android libraries](https://developer.android.com/studio/projects/android-library) projects.
 - You cannot add additional classes during an instrumentation as those cannot be added to a project using Android's current APIs. As a consequence, it is currently only possible to apply decorating transformations.
