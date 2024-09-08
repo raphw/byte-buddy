@@ -13,7 +13,6 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.scope.EnclosingType;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -27,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.*;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
