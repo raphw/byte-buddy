@@ -25,6 +25,7 @@ import org.gradle.api.tasks.compile.AbstractCompile;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * Implements a configuration of a Byte Buddy task.
@@ -59,32 +60,14 @@ public class ByteBuddyTaskConfiguration extends AbstractByteBuddyTaskConfigurati
     protected void configureDirectories(SourceDirectorySet source, AbstractCompile compileTask, ByteBuddyTask byteBuddyTask) {
         try {
             DirectoryProperty directory = (DirectoryProperty) getDestinationDirectorySource.invoke(source);
-            ((DirectoryProperty) getDestinationDirectoryTarget.invoke(compileTask)).set((File) directory.dir("../"
+            ((DirectoryProperty) getDestinationDirectoryTarget.invoke(compileTask)).set(directory.dir("../"
                     + source.getName()
-                    + RAW_FOLDER_SUFFIX).map(ToFileMapper.INSTANCE));
+                    + RAW_FOLDER_SUFFIX));
             byteBuddyTask.getSource().set(directory.dir("../" + source.getName() + RAW_FOLDER_SUFFIX));
             byteBuddyTask.getTarget().set(directory);
             byteBuddyTask.getClassPath().from(compileTask.getClasspath());
         } catch (Exception exception) {
             throw new GradleException("Could not adjust directories for tasks", exception);
-        }
-    }
-
-    /**
-     * Transforms a directory to a file.
-     */
-    protected enum ToFileMapper implements Transformer<File, Directory> {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        /**
-         * {@inheritDoc}
-         */
-        public File transform(Directory directory) {
-            return directory.getAsFile();
         }
     }
 }
