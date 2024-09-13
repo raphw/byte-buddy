@@ -15,17 +15,13 @@
  */
 package net.bytebuddy.build.gradle;
 
-import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.GradleException;
-import org.gradle.api.Transformer;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 
-import java.io.File;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 /**
  * Implements a configuration of a Byte Buddy task.
