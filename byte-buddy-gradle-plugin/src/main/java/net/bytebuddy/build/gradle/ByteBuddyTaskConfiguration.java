@@ -34,32 +34,34 @@ public class ByteBuddyTaskConfiguration extends AbstractByteBuddyTaskConfigurati
     /**
      * The {@code org.gradle.api.file.SourceSetDirectory#getDestinationDirectory} method.
      */
-    private final Method getDestinationDirectory;
+    private final Method getDestinationDirectorySource;
 
     /**
-     * The {@code org.gradle.api.file.SourceSetDirectory#getDestinationDirectory} method.
+     * The {@code org.gradle.api.file.AbstractCompile#getDestinationDirectory} method.
      */
-    private final Method setDestinationDir;
+    private final Method getDestinationDirectoryTarget;
 
     /**
      * Creates a new Byte Buddy task configuration.
      *
-     * @param name                    The name of the task.
-     * @param sourceSet               The source set for which the task chain is being configured.
-     * @param getDestinationDirectory The {@code org.gradle.api.file.SourceSetDirectory#getDestinationDirectory} method.
-     * @param setDestinationDir       The {@code org.gradle.api.tasks.compile.AbstractCompile#setDestinationDir} method.
+     * @param name                          The name of the task.
+     * @param sourceSet                     The source set for which the task chain is being configured.
+     * @param getDestinationDirectorySource The {@code org.gradle.api.file.SourceSetDirectory#getDestinationDirectory} method.
+     * @param getDestinationDirectoryTarget The {@code org.gradle.api.file.AbstractCompile#getDestinationDirectory} method.
      */
-    public ByteBuddyTaskConfiguration(String name, SourceSet sourceSet, Method getDestinationDirectory, Method setDestinationDir) {
+    public ByteBuddyTaskConfiguration(String name, SourceSet sourceSet, Method getDestinationDirectorySource, Method getDestinationDirectoryTarget) {
         super(name, sourceSet);
-        this.getDestinationDirectory = getDestinationDirectory;
-        this.setDestinationDir = setDestinationDir;
+        this.getDestinationDirectorySource = getDestinationDirectorySource;
+        this.getDestinationDirectoryTarget = getDestinationDirectoryTarget;
     }
 
     @Override
     protected void configureDirectories(SourceDirectorySet source, AbstractCompile compileTask, ByteBuddyTask byteBuddyTask) {
         try {
-            DirectoryProperty directory = (DirectoryProperty) getDestinationDirectory.invoke(source);
-            setDestinationDir.invoke(compileTask, directory.dir("../" + source.getName() + RAW_FOLDER_SUFFIX).map(ToFileMapper.INSTANCE));
+            DirectoryProperty directory = (DirectoryProperty) getDestinationDirectorySource.invoke(source);
+            ((DirectoryProperty) getDestinationDirectoryTarget.invoke(compileTask)).set((File) directory.dir("../"
+                    + source.getName()
+                    + RAW_FOLDER_SUFFIX).map(ToFileMapper.INSTANCE));
             byteBuddyTask.getSource().set(directory.dir("../" + source.getName() + RAW_FOLDER_SUFFIX));
             byteBuddyTask.getTarget().set(directory);
             byteBuddyTask.getClassPath().from(compileTask.getClasspath());
