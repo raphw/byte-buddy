@@ -1068,10 +1068,11 @@ public interface ClassFileLocator extends Closeable {
         private final File folder;
 
         /**
-         * Indicates the existing multi-release jar folders that are available for the current JVM.
+         * Contains the existing multi-release jar folders that are available for the
+         * current JVM version in decreasing order.
          */
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
-        private final int[] multiRelease;
+        private final int[] version;
 
         /**
          * Creates a new class file locator for a folder structure of class files.
@@ -1083,21 +1084,21 @@ public interface ClassFileLocator extends Closeable {
             this.folder = folder;
             int current = ClassFileVersion.ofThisVm().getJavaVersion();
             if (current < 9) {
-                multiRelease = new int[0];
+                version = new int[0];
             } else {
                 File manifest = new File(folder, "META-INF" + File.separatorChar + "MANIFEST.MF");
-                boolean mr;
+                boolean multiRelease;
                 if (manifest.exists()) {
                     InputStream inputStream = new FileInputStream(manifest);
                     try {
-                        mr = Boolean.parseBoolean(new Manifest(inputStream).getMainAttributes().getValue("Multi-Release"));
+                        multiRelease = Boolean.parseBoolean(new Manifest(inputStream).getMainAttributes().getValue("Multi-Release"));
                     } finally {
                         inputStream.close();
                     }
                 } else {
-                    mr = false;
+                    multiRelease = false;
                 }
-                if (mr) {
+                if (multiRelease) {
                     File[] file = new File(folder, "META-INF" + File.separatorChar + "versions").listFiles();
                     if (file != null) {
                         SortedSet<Integer> versions = new TreeSet<Integer>();
@@ -1111,16 +1112,16 @@ public interface ClassFileLocator extends Closeable {
                                 /* do nothing */
                             }
                         }
-                        multiRelease = new int[versions.size()];
+                        version = new int[versions.size()];
                         Iterator<Integer> iterator = versions.iterator();
                         for (int index = 0; index < versions.size(); index++) {
-                            multiRelease[versions.size() - index - 1] = iterator.next();
+                            version[versions.size() - index - 1] = iterator.next();
                         }
                     } else {
-                        multiRelease = new int[0];
+                        version = new int[0];
                     }
                 } else {
-                    multiRelease = new int[0];
+                    version = new int[0];
                 }
             }
         }
@@ -1130,10 +1131,10 @@ public interface ClassFileLocator extends Closeable {
          */
         public Resolution locate(String name) throws IOException {
             String path = name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION;
-            for (int index = 0; index < multiRelease.length + 1; index++) {
-                File file = new File(folder, index == multiRelease.length ? path : "META-INF"
+            for (int index = 0; index < version.length + 1; index++) {
+                File file = new File(folder, index == version.length ? path : "META-INF"
                         + File.separatorChar + "versions"
-                        + File.separatorChar + multiRelease[index]
+                        + File.separatorChar + version[index]
                         + File.separatorChar + path);
                 if (file.exists()) {
                     InputStream inputStream = new FileInputStream(file);
