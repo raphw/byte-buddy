@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.PathSensitive;
@@ -25,22 +26,23 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
+import java.util.Queue;
 
 /**
- * A Byte Buddy task implementation that does not use modern Gradle APIs.
+ * A Byte Buddy task implementation that instruments multiple jars within a folder.
  */
-public class ByteBuddyDirTask extends AbstractByteBuddyTask {
+public class ByteBuddyJarsTask extends AbstractByteBuddyTask {
 
     /**
-     * The source dir.
+     * The source directory containing the jars.
      */
     private File source;
 
     /**
-     * The target dir.
+     * The target directory to write the instrumented jars to.
      */
     private File target;
 
@@ -56,18 +58,18 @@ public class ByteBuddyDirTask extends AbstractByteBuddyTask {
     private Iterable<File> discoverySet;
 
     /**
-     * Creates a new simple Byte Buddy task.
+     * Creates a new task for instrumenting multiple jars.
      */
     @Inject
     @SuppressWarnings("this-escape")
-    public ByteBuddyDirTask() {
-        new ByteBuddyDirTaskExtension(null).configure(this);
+    public ByteBuddyJarsTask() {
+        new ByteBuddyJarsTaskExtension(null).configure(this);
     }
 
     /**
-     * Returns the task's source dir.
+     * Returns the source directory containing the jars.
      *
-     * @return The task's source dir.
+     * @return The source directory containing the jars.
      */
     @InputDirectory
     @PathSensitive(PathSensitivity.RELATIVE)
@@ -76,18 +78,18 @@ public class ByteBuddyDirTask extends AbstractByteBuddyTask {
     }
 
     /**
-     * Sets the task's source dir.
+     * Sets the source directory containing the jars.
      *
-     * @param source The task's source dir.
+     * @param source Returns the source directory containing the jars.
      */
     public void setSource(File source) {
         this.source = source;
     }
 
     /**
-     * Returns the task's target dir.
+     * Returns the target directory to write the instrumented jars to.
      *
-     * @return The task's target dir.
+     * @return The target directory to write the instrumented jars to.
      */
     @OutputDirectory
     public File getTarget() {
@@ -95,9 +97,9 @@ public class ByteBuddyDirTask extends AbstractByteBuddyTask {
     }
 
     /**
-     * Sets the task's target dir.
+     * Sets the target directory to write the instrumented jars to.
      *
-     * @param target The task's target dir.
+     * @param target The target directory to write the instrumented jars to.
      */
     public void setTarget(File target) {
         this.target = target;
@@ -173,15 +175,14 @@ public class ByteBuddyDirTask extends AbstractByteBuddyTask {
     @TaskAction
     public void apply() throws IOException {
         if (!getSource().equals(getTarget()) && deleteRecursively(getTarget())) {
-            getLogger().debug("Deleted target dir {}", getTarget());
+            getLogger().debug("Deleted target directory {}", getTarget());
         }
-        ArrayList<File> files = new ArrayList<File>(Collections.singleton(getSource()));
-        File candidate;
-        do {
-            candidate = files.remove(0);
+        Queue<File> queue = QueueFactory.make(Collections.singletonList(getSource()));
+        while (!queue.isEmpty()) {
+            File candidate = queue.remove();
             File[] file = candidate.listFiles();
             if (file != null) {
-                files.addAll(Arrays.asList(file));
+                queue.addAll(Arrays.asList(file));
             } else {
                 Path relative = getSource().toPath().relativize(candidate.toPath());
                 File targetCandidate = getTarget().toPath().resolve(relative).toFile();
@@ -189,6 +190,6 @@ public class ByteBuddyDirTask extends AbstractByteBuddyTask {
                 getLogger().debug("Created file " + targetCandidate + ": " + targetCandidate.createNewFile());
                 doApply(new Plugin.Engine.Source.ForJarFile(candidate), new Plugin.Engine.Target.ForJarFile(targetCandidate));
             }
-        } while (!files.isEmpty());
+        }
     }
 }

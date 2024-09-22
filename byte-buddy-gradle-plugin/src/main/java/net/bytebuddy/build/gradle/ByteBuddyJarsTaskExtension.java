@@ -26,9 +26,9 @@ import javax.inject.Inject;
 import java.io.File;
 
 /**
- * A Byte Buddy dir task extension.
+ * A Byte Buddy jars task extension.
  */
-public class ByteBuddyDirTaskExtension extends AbstractByteBuddyTaskExtension<ByteBuddyDirTask> {
+public class ByteBuddyJarsTaskExtension extends AbstractByteBuddyTaskExtension<ByteBuddyJarsTask> {
 
     /**
      * A set of classes that is used for discovery of plugins.
@@ -42,7 +42,7 @@ public class ByteBuddyDirTaskExtension extends AbstractByteBuddyTaskExtension<By
      * @param project The current Gradle project.
      */
     @Inject
-    public ByteBuddyDirTaskExtension(@UnknownNull Project project) {
+    public ByteBuddyJarsTaskExtension(@UnknownNull Project project) {
         super(project);
     }
 
@@ -73,13 +73,13 @@ public class ByteBuddyDirTaskExtension extends AbstractByteBuddyTaskExtension<By
     }
 
     @Override
-    protected void doConfigure(ByteBuddyDirTask task) {
+    protected void doConfigure(ByteBuddyJarsTask task) {
         task.setDiscoverySet(discoverySet);
     }
 
     @Override
-    protected Class<ByteBuddyDirTask> toType() {
-        return ByteBuddyDirTask.class;
+    protected Class<ByteBuddyJarsTask> toType() {
+        return ByteBuddyJarsTask.class;
     }
 
     @Override
