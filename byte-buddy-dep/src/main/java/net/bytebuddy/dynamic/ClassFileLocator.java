@@ -1105,7 +1105,7 @@ public interface ClassFileLocator extends Closeable {
                         for (int index = 0; index < file.length; index++) {
                             try {
                                 int version = Integer.parseInt(file[index].getName());
-                                if (version <= current) {
+                                if (version <= current && version > 7) {
                                     versions.add(version);
                                 }
                             } catch (NumberFormatException ignored) {
