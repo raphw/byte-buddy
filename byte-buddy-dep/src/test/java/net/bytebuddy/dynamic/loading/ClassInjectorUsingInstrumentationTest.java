@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Collections;
@@ -26,14 +27,14 @@ public class ClassInjectorUsingInstrumentationTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File folder;
 
     @Before
     public void setUp() throws Exception {
-        File file = File.createTempFile(FOO, BAR);
-        assertThat(file.delete(), is(true));
-        folder = new File(file.getParentFile(), RandomString.make());
-        assertThat(folder.mkdir(), is(true));
+        folder = temporaryFolder.newFolder();
     }
 
     @Test

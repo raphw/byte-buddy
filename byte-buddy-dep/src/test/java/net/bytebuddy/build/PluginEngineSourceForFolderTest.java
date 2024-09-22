@@ -1,9 +1,10 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.utility.StreamDrainer;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,18 +20,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PluginEngineSourceForFolderTest {
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File folder;
 
     @Before
     public void setUp() throws Exception {
-        folder = File.createTempFile("foo", "bar");
-        assertThat(folder.delete(), is(true));
-        assertThat(folder.mkdir(), is(true));
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        assertThat(folder.delete(), is(true));
+        folder = temporaryFolder.newFolder();
     }
 
     @Test

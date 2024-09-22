@@ -1081,7 +1081,7 @@ public interface ClassFileLocator extends Closeable {
          */
         public ForFolder(File folder) throws IOException {
             this.folder = folder;
-            int current = ClassFileVersion.ofThisVm().getMajorVersion();
+            int current = ClassFileVersion.ofThisVm().getJavaVersion();
             if (current < 9) {
                 multiRelease = new int[0];
             } else {

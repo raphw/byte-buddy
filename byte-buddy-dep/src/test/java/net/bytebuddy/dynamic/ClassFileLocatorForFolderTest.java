@@ -5,6 +5,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,19 +25,14 @@ public class ClassFileLocatorForFolderTest {
     @Rule
     public JavaVersionRule javaVersionRule = new JavaVersionRule();
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File folder;
 
     @Before
     public void setUp() throws Exception {
-        File file = File.createTempFile(FOO, BAR);
-        assertThat(file.delete(), is(true));
-        folder = new File(file.getParentFile(), FOO + new Random().nextInt());
-        assertThat(folder.mkdir(), is(true));
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        assertThat(folder.delete(), is(true));
+        folder = temporaryFolder.newFolder();
     }
 
     @Test
@@ -56,8 +52,6 @@ public class ClassFileLocatorForFolderTest {
         ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
-        assertThat(file.delete(), is(true));
-        assertThat(packageFolder.delete(), is(true));
     }
 
     @Test
@@ -77,22 +71,17 @@ public class ClassFileLocatorForFolderTest {
     public void testSuccessfulVersionLocation() throws Exception {
         File metaInf = new File(folder, "META-INF");
         assertThat(metaInf.mkdir(), is(true));
-        File manifestMf = new File(metaInf, "MANIFEST.MF");
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
         manifest.getMainAttributes().putValue("Multi-Release", "true");
-        OutputStream outputStream = new FileOutputStream(manifestMf);
+        OutputStream outputStream = new FileOutputStream(new File(metaInf, "MANIFEST.MF"));
         try {
             manifest.write(outputStream);
         } finally {
             outputStream.close();
         }
-        File versions = new File(metaInf, "versions");
-        assertThat(versions.mkdir(), is(true));
-        File version = new File(versions, "9");
-        assertThat(version.mkdir(), is(true));
-        File packageFolder = new File(version, FOO);
-        assertThat(packageFolder.mkdir(), is(true));
+        File packageFolder = new File(metaInf, "versions/9/" + FOO);
+        assertThat(packageFolder.mkdirs(), is(true));
         File file = new File(packageFolder, BAR + ".class");
         assertThat(file.createNewFile(), is(true));
         outputStream = new FileOutputStream(file);
@@ -106,11 +95,5 @@ public class ClassFileLocatorForFolderTest {
         ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
-        assertThat(file.delete(), is(true));
-        assertThat(packageFolder.delete(), is(true));
-        assertThat(version.delete(), is(true));
-        assertThat(versions.delete(), is(true));
-        assertThat(manifestMf.delete(), is(true));
-        assertThat(metaInf.delete(), is(true));
     }
 }

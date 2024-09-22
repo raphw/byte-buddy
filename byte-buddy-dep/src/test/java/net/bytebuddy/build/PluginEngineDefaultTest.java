@@ -10,7 +10,9 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.ArgumentMatchers;
@@ -47,6 +49,9 @@ public class PluginEngineDefaultTest {
                 {new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(1), false}
         });
     }
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private final Plugin.Engine.Dispatcher.Factory dispatcherFactory;
 
@@ -317,7 +322,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testImplicitFileInput() throws Exception {
-        File file = File.createTempFile("foo", "bar");
+        File file = temporaryFolder.newFile();
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
         try {
             outputStream.putNextEntry(new JarEntry("dummy"));
@@ -342,9 +347,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testImplicitFolderInput() throws Exception {
-        File file = File.createTempFile("foo", "bar");
-        assertThat(file.delete(), is(true));
-        assertThat(file.mkdir(), is(true));
+        File file = temporaryFolder.newFolder();
         Plugin.Engine engine = spy(new Plugin.Engine.Default());
         doAnswer(new Answer<Plugin.Engine.Summary>() {
             public Plugin.Engine.Summary answer(InvocationOnMock invocationOnMock) {
@@ -376,8 +379,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testMain() throws Exception {
-        File source = File.createTempFile("foo", "bar"), target = File.createTempFile("qux", "baz");
-        assertThat(target.delete(), is(true));
+        File source = temporaryFolder.newFile(), target = temporaryFolder.newFile();
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(source));
         try {
             outputStream.putNextEntry(new JarEntry("dummy"));

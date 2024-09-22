@@ -2,9 +2,10 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.StreamDrainer;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -25,16 +26,14 @@ public class PluginEngineTargetForJarFileTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File file;
 
     @Before
     public void setUp() throws Exception {
-        file = File.createTempFile("foo", "bar");
-        assertThat(file.delete(), is(true));
-    }
-
-    @After
-    public void tearDown() throws Exception {
+        file = temporaryFolder.newFile();
         assertThat(file.delete(), is(true));
     }
 

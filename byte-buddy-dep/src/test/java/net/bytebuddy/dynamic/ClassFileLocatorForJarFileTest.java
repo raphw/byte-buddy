@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.ClassVisitor;
 
 import java.io.File;
@@ -28,16 +29,14 @@ public class ClassFileLocatorForJarFileTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File file;
 
     @Before
     public void setUp() throws Exception {
-        file = File.createTempFile(FOO, BAR);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        assertThat(file.delete(), is(true));
+        file = temporaryFolder.newFile();
     }
 
     @Test

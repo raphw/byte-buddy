@@ -25,6 +25,7 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.*;
 
 import java.io.File;
@@ -51,6 +52,9 @@ public class TypeWriterDefaultTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test(expected = IllegalStateException.class)
     public void testConstructorOnInterfaceAssertion() throws Exception {
@@ -610,10 +614,7 @@ public class TypeWriterDefaultTest {
     public void testClassDump() throws Exception {
         TypeDescription instrumentedType = mock(TypeDescription.class);
         byte[] binaryRepresentation = new byte[]{1, 2, 3};
-        File file = File.createTempFile(FOO, BAR);
-        assertThat(file.delete(), is(true));
-        file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
-        assertThat(file.mkdir(), is(true));
+        File file = temporaryFolder.newFolder();
         when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
         new TypeWriter.Default.ClassDumpAction.Dispatcher.Enabled(file.getAbsolutePath(), 123).dump(instrumentedType, false, binaryRepresentation);
         File[] child = file.listFiles();
@@ -628,10 +629,7 @@ public class TypeWriterDefaultTest {
     public void testClassDumpOriginal() throws Exception {
         TypeDescription instrumentedType = mock(TypeDescription.class);
         byte[] binaryRepresentation = new byte[]{1, 2, 3};
-        File file = File.createTempFile(FOO, BAR);
-        assertThat(file.delete(), is(true));
-        file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
-        assertThat(file.mkdir(), is(true));
+        File file = temporaryFolder.newFolder();
         when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
         new TypeWriter.Default.ClassDumpAction.Dispatcher.Enabled(file.getAbsolutePath(), 123).dump(instrumentedType, true, binaryRepresentation);
         File[] child = file.listFiles();

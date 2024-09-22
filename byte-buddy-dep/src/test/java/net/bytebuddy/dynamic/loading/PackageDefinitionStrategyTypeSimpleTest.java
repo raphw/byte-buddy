@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.URI;
@@ -23,6 +24,9 @@ public class PackageDefinitionStrategyTypeSimpleTest {
 
     @Rule
     public MethodRule integrationRule = new IntegrationRule();
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private PackageDefinitionStrategy.Definition definition;
 
@@ -88,7 +92,7 @@ public class PackageDefinitionStrategyTypeSimpleTest {
 
     @Test
     public void testNonSealedIsCompatibleToSealed() throws Exception {
-        File file = File.createTempFile(FOO, BAR);
+        File file = temporaryFolder.newFile();
         try {
             Manifest manifest = new Manifest();
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -105,7 +109,7 @@ public class PackageDefinitionStrategyTypeSimpleTest {
 
     @Test
     public void testSealedIsCompatibleToSealed() throws Exception {
-        File file = File.createTempFile(FOO, BAR);
+        File file = temporaryFolder.newFile();
         try {
             Manifest manifest = new Manifest();
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");

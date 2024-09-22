@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.URL;
@@ -32,14 +33,14 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     @Rule
     public MethodRule classInjectionAvailableRule = new ClassReflectionInjectionAvailableRule();
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File file;
 
     @Before
     public void setUp() throws Exception {
-        file = File.createTempFile(FOO, BAR);
-        assertThat(file.delete(), is(true));
-        file = new File(file.getParentFile(), RandomString.make());
-        assertThat(file.mkdir(), is(true));
+        file = temporaryFolder.newFolder();
     }
 
     @Test
