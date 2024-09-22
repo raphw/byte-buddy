@@ -16,6 +16,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -43,6 +44,7 @@ import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -808,7 +810,7 @@ public interface ClassFileLocator extends Closeable {
          */
         public static ClassFileLocator ofClassPath(String classPath) throws IOException {
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
-            for (String element : Pattern.compile(System.getProperty("path.separator"), Pattern.LITERAL).split(classPath)) {
+            for (String element : Pattern.compile(File.pathSeparator, Pattern.LITERAL).split(classPath)) {
                 File file = new File(element);
                 if (file.isDirectory()) {
                     classFileLocators.add(new ForFolder(file));
@@ -1066,29 +1068,83 @@ public interface ClassFileLocator extends Closeable {
         private final File folder;
 
         /**
+         * Indicates the existing multi-release jar folders that are available for the current JVM.
+         */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
+        private final int[] multiRelease;
+
+        /**
          * Creates a new class file locator for a folder structure of class files.
          *
          * @param folder The base folder of the package structure.
+         * @throws IOException If an I/O exception occurs.
          */
-        public ForFolder(File folder) {
+        public ForFolder(File folder) throws IOException {
             this.folder = folder;
+            int current = ClassFileVersion.ofThisVm().getMajorVersion();
+            if (current < 9) {
+                multiRelease = new int[0];
+            } else {
+                File manifest = new File(folder, "META-INF" + File.separatorChar + "MANIFEST.MF");
+                boolean mr;
+                if (manifest.exists()) {
+                    InputStream inputStream = new FileInputStream(manifest);
+                    try {
+                        mr = Boolean.parseBoolean(new Manifest(inputStream).getMainAttributes().getValue("Multi-Release"));
+                    } finally {
+                        inputStream.close();
+                    }
+                } else {
+                    mr = false;
+                }
+                if (mr) {
+                    File[] file = new File(folder, "META-INF" + File.separatorChar + "versions").listFiles();
+                    if (file != null) {
+                        SortedSet<Integer> versions = new TreeSet<Integer>();
+                        for (int index = 0; index < file.length; index++) {
+                            try {
+                                int version = Integer.parseInt(file[index].getName());
+                                if (version <= current) {
+                                    versions.add(version);
+                                }
+                            } catch (NumberFormatException ignored) {
+                                /* do nothing */
+                            }
+                        }
+                        multiRelease = new int[versions.size()];
+                        Iterator<Integer> iterator = versions.iterator();
+                        for (int index = 0; index < versions.size(); index++) {
+                            multiRelease[versions.size() - index - 1] = iterator.next();
+                        }
+                    } else {
+                        multiRelease = new int[0];
+                    }
+                } else {
+                    multiRelease = new int[0];
+                }
+            }
         }
 
         /**
          * {@inheritDoc}
          */
         public Resolution locate(String name) throws IOException {
-            File file = new File(folder, name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
-            if (file.exists()) {
-                InputStream inputStream = new FileInputStream(file);
-                try {
-                    return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
-                } finally {
-                    inputStream.close();
+            String path = name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION;
+            for (int index = 0; index < multiRelease.length + 1; index++) {
+                File file = new File(folder, index == multiRelease.length ? path : "META-INF"
+                        + File.separatorChar + "versions"
+                        + File.separatorChar + multiRelease[index]
+                        + File.separatorChar + path);
+                if (file.exists()) {
+                    InputStream inputStream = new FileInputStream(file);
+                    try {
+                        return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
+                    } finally {
+                        inputStream.close();
+                    }
                 }
-            } else {
-                return new Resolution.Illegal(name);
             }
+            return new Resolution.Illegal(name);
         }
 
         /**

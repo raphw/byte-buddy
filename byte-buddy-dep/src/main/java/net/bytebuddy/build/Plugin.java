@@ -2254,9 +2254,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * Returns a class file locator for the represented source. If the class file locator needs to be closed, it is the responsibility
                  * of this origin to close the locator or its underlying resources.
                  *
-                 * @return A class file locator for locating class files of this instance..
+                 * @return A class file locator for locating class files of this instance.
+                 * @throws IOException If an I/O exception occurs.
                  */
-                ClassFileLocator getClassFileLocator();
+                ClassFileLocator getClassFileLocator() throws IOException;
 
                 /**
                  * An origin implementation for a jar file.
@@ -2403,7 +2404,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() {
+                    public ClassFileLocator getClassFileLocator() throws IOException {
                         return delegate.getClassFileLocator();
                     }
 
@@ -2815,7 +2816,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() {
+                    public ClassFileLocator getClassFileLocator() throws IOException {
                         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(origins.size());
                         for (Source.Origin origin : origins) {
                             classFileLocators.add(origin.getClassFileLocator());
@@ -3080,7 +3081,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public ClassFileLocator getClassFileLocator() {
+                public ClassFileLocator getClassFileLocator() throws IOException {
                     return new ClassFileLocator.ForFolder(folder);
                 }
 
