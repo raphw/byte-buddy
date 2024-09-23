@@ -3426,7 +3426,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             }
 
             /**
-             * A sink that stores all elements in a memory map.
+             * A sink that stores all elements in a memory map. In case of multi-release jars, this memory
+             * storage aims to retain the non-versioned class file.
              */
             @HashCodeAndEqualsPlugin.Enhance
             class InMemory implements Target, Sink {
@@ -3482,7 +3483,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        storage.putIfAbsent(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                        String name = entry.getKey().getInternalName() + CLASS_FILE_EXTENSION;
+                        if (!storage.containsKey(name)) {
+                            storage.put(name, entry.getValue());
+                        }
                     }
                 }
 
