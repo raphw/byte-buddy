@@ -3207,7 +3207,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public Origin read() throws IOException {
-                    return new Origin.ForJarFile(new JarFile(file));
+                    return new Origin.ForJarFile(new JarFile(file, false));
                 }
             }
 
