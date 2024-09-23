@@ -25,7 +25,6 @@ import org.gradle.api.tasks.PathSensitivity;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Queue;
