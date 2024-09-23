@@ -1152,6 +1152,7 @@ public interface ClassFileLocator extends Closeable {
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
         private final int[] version;
 
+
         /**
          * Creates a new class file locator for a folder structure of class files.
          *
@@ -1159,9 +1160,19 @@ public interface ClassFileLocator extends Closeable {
          * @throws IOException If an I/O exception occurs.
          */
         public ForFolder(File folder) throws IOException {
+            this(folder, ClassFileVersion.JAVA_V8);
+        }
+
+        /**
+         * Creates a new class file locator for a folder structure of class files.
+         *
+         * @param folder           The base folder of the package structure.
+         * @param classFileVersion The class file version to consider for multi-release JAR files.
+         * @throws IOException If an I/O exception occurs.
+         */
+        public ForFolder(File folder, ClassFileVersion classFileVersion) throws IOException {
             this.folder = folder;
-            int current = ClassFileVersion.ofThisVm().getJavaVersion();
-            if (current < 9) {
+            if (classFileVersion.getJavaVersion() < 9) {
                 version = new int[0];
             } else {
                 File manifest = new File(folder, "META-INF" + File.separatorChar + "MANIFEST.MF");
@@ -1183,7 +1194,7 @@ public interface ClassFileLocator extends Closeable {
                         for (int index = 0; index < file.length; index++) {
                             try {
                                 int version = Integer.parseInt(file[index].getName());
-                                if (version <= current && version > 7) {
+                                if (version <= classFileVersion.getJavaVersion() && version > 7) {
                                     versions.add(version);
                                 }
                             } catch (NumberFormatException ignored) {

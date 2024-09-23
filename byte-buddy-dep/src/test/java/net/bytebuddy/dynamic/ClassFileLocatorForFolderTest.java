@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,7 +10,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.Random;
 import java.util.jar.Manifest;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -67,7 +66,6 @@ public class ClassFileLocatorForFolderTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(9)
     public void testSuccessfulVersionLocation() throws Exception {
         File metaInf = new File(folder, "META-INF");
         assertThat(metaInf.mkdir(), is(true));
@@ -91,7 +89,7 @@ public class ClassFileLocatorForFolderTest {
         } finally {
             outputStream.close();
         }
-        ClassFileLocator classFileLocator = new ClassFileLocator.ForFolder(folder);
+        ClassFileLocator classFileLocator = new ClassFileLocator.ForFolder(folder, ClassFileVersion.JAVA_V9);
         ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
