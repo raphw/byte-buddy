@@ -3673,7 +3673,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 void materialize(Target.Sink sink,
                                  List<TypeDescription> transformed,
                                  Map<TypeDescription,
-                                         List<Throwable>> failed,
+                                 List<Throwable>> failed,
                                  List<String> unresolved) throws IOException;
 
                 /**
@@ -3701,7 +3701,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                                    List<Throwable>> failed,
+                                            List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.store(dynamicType.getAllTypes());
                         transformed.add(dynamicType.getTypeDescription());
@@ -3778,7 +3778,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                                    List<Throwable>> failed,
+                                            List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.retain(element);
                         failed.put(typeDescription, errored);
@@ -3817,7 +3817,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                                    List<Throwable>> failed,
+                                            List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.retain(element);
                         unresolved.add(typeName);
