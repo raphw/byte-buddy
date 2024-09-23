@@ -3741,6 +3741,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 class ForTransformedElement implements Materializable {
 
                     /**
+                     * The multi-release Java version number or {@code 0}.
+                     */
+                    private final int version;
+
+                    /**
                      * The type that has been transformed.
                      */
                     private final DynamicType dynamicType;
@@ -3748,9 +3753,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * Creates a new materializable for a successfully transformed type.
                      *
+                     * @param version     The multi-release Java version number or {@code 0}.
                      * @param dynamicType The type that has been transformed.
                      */
-                    protected ForTransformedElement(DynamicType dynamicType) {
+                    protected ForTransformedElement(int version, DynamicType dynamicType) {
+                        this.version = version;
                         this.dynamicType = dynamicType;
                     }
 
@@ -3762,7 +3769,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                             Map<TypeDescription,
                                                     List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
-                        sink.store(dynamicType.getAllTypes());
+                        if (version == 0) {
+                            sink.store(dynamicType.getAllTypes());
+                        } else {
+                            sink.store(version, dynamicType.getAllTypes());
+                        }
                         transformed.add(dynamicType.getTypeDescription());
                     }
                 }
@@ -4760,6 +4771,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                                 name.substring(name.startsWith(META_INF_VERSIONS)
                                                         ? name.indexOf('/', META_INF_VERSIONS.length()) + 1
                                                         : 0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
+                                                name.startsWith(META_INF_VERSIONS)
+                                                        ? Integer.parseInt(name.substring(META_INF_VERSIONS.length(), name.indexOf('/', META_INF_VERSIONS.length())))
+                                                        : 0,
                                                 classFileLocator,
                                                 typePool,
                                                 listener,
@@ -4825,6 +4839,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 private final String typeName;
 
                 /**
+                 * The multi-release Java version number or {@code 0}.
+                 */
+                private final int version;
+
+                /**
                  * The class file locator to use.
                  */
                 private final ClassFileLocator classFileLocator;
@@ -4854,6 +4873,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  *
                  * @param element          The processed element.
                  * @param typeName         The name of the processed type.
+                 * @param version          The multi-release Java version number or {@code 0}.
                  * @param classFileLocator The class file locator to use.
                  * @param typePool         The type pool to use.
                  * @param listener         The listener to notify.
@@ -4862,6 +4882,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 private Preprocessor(Source.Element element,
                                      String typeName,
+                                     int version,
                                      ClassFileLocator classFileLocator,
                                      TypePool typePool,
                                      Listener listener,
@@ -4869,6 +4890,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                      List<WithPreprocessor> preprocessors) {
                     this.element = element;
                     this.typeName = typeName;
+                    this.version = version;
                     this.classFileLocator = classFileLocator;
                     this.typePool = typePool;
                     this.listener = listener;
@@ -4889,7 +4911,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                 for (WithPreprocessor preprocessor : preprocessors) {
                                     preprocessor.onPreprocess(typeDescription, classFileLocator);
                                 }
-                                return new Resolved(typeDescription);
+                                return new Resolved(version, typeDescription);
                             } else {
                                 return new Ignored(typeDescription);
                             }
@@ -4914,6 +4936,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 private class Resolved implements Callable<Dispatcher.Materializable> {
 
                     /**
+                     * The multi-release Java version number or {@code 0}.
+                     */
+                    private final int version;
+
+                    /**
                      * A description of the resolved type.
                      */
                     private final TypeDescription typeDescription;
@@ -4921,9 +4948,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * Creates a new resolved materializable.
                      *
+                     * @param version         The multi-release Java version number or {@code 0}.
                      * @param typeDescription A description of the resolved type.
                      */
-                    private Resolved(TypeDescription typeDescription) {
+                    private Resolved(int version, TypeDescription typeDescription) {
+                        this.version = version;
                         this.typeDescription = typeDescription;
                     }
 
@@ -4962,7 +4991,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                             listener.onLiveInitializer(typeDescription, entry.getKey());
                                         }
                                     }
-                                    return new Dispatcher.Materializable.ForTransformedElement(dynamicType);
+                                    return new Dispatcher.Materializable.ForTransformedElement(version, dynamicType);
                                 } catch (Throwable throwable) {
                                     errored.add(throwable);
                                     listener.onError(typeDescription, errored);
