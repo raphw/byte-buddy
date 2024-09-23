@@ -43,7 +43,6 @@ import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -761,28 +760,66 @@ public interface ClassFileLocator extends Closeable {
         private static final List<String> RUNTIME_LOCATIONS = Arrays.asList("lib/rt.jar", "../lib/rt.jar", "../Classes/classes.jar");
 
         /**
+         * A proxy for creating jar files.
+         */
+        private static final JarFile JAR_FILE = doPrivileged(JavaDispatcher.of(JarFile.class));
+
+        /**
+         * A proxy for creating version representations.
+         */
+        private static final Version VERSION = doPrivileged(JavaDispatcher.of(Version.class));
+
+        /**
          * The jar file to read from.
          */
-        private final JarFile jarFile;
+        private final java.util.jar.JarFile jarFile;
 
         /**
          * Creates a new class file locator for the given jar file.
          *
          * @param jarFile The jar file to read from.
          */
-        public ForJarFile(JarFile jarFile) {
+        public ForJarFile(java.util.jar.JarFile jarFile) {
             this.jarFile = jarFile;
         }
 
         /**
-         * Creates a new class file locator for the given jar file.
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
+        }
+
+        /**
+         * Creates a new class file locator for the given jar file. Multi-release jars are not considered.
          *
          * @param file The jar file to read from.
          * @return A class file locator for the jar file.
          * @throws IOException If an I/O exception is thrown.
          */
         public static ClassFileLocator of(File file) throws IOException {
-            return new ForJarFile(new JarFile(file));
+            return new ForJarFile(new java.util.jar.JarFile(file));
+        }
+
+        /**
+         * Creates a new class file locator for the given jar file.
+         *
+         * @param file             The jar file to read from.
+         * @param classFileVersion The class file version to consider as the latest version within multi-release jars.
+         * @return A class file locator for the jar file.
+         * @throws IOException If an I/O exception is thrown.
+         */
+        public static ClassFileLocator of(File file, ClassFileVersion classFileVersion) throws IOException {
+            java.util.jar.JarFile jarFile = JAR_FILE.make(file,
+                    false,
+                    ZipFile.OPEN_READ,
+                    VERSION.parse(Integer.toString(classFileVersion.getJavaVersion())));
+            return new ForJarFile(jarFile == null ? new java.util.jar.JarFile(file, false) : jarFile);
         }
 
         /**
@@ -865,6 +902,47 @@ public interface ClassFileLocator extends Closeable {
          */
         public void close() throws IOException {
             jarFile.close();
+        }
+
+        /**
+         * A proxy for {@link java.util.jar.JarFile}.
+         */
+        @JavaDispatcher.Proxied("java.util.jar.JarFile")
+        protected interface JarFile {
+
+            /**
+             * Creates a JAR file with support for multi-release jar entries.
+             *
+             * @param file    The JAR file.
+             * @param verify  {@code true} if the jar should be verified.
+             * @param mode    The reading mode.
+             * @param version The version to consider.
+             * @return A JAR file representation or {@code null} if this is not supported.
+             */
+            @MaybeNull
+            @JavaDispatcher.Defaults
+            java.util.jar.JarFile make(File file,
+                                       boolean verify,
+                                       int mode,
+                                       @MaybeNull @JavaDispatcher.Proxied("java.lang.Runtime$Version") Object version);
+        }
+
+        /**
+         * A proxy for {@code java.lang.Runtime$Version}.
+         */
+        @JavaDispatcher.Proxied("java.lang.Runtime$Version")
+        protected interface Version {
+
+            /**
+             * Parses a version string.
+             *
+             * @param version The version string to parse.
+             * @return The created version representation or {@code null} if this is not supported by the current VM.
+             */
+            @MaybeNull
+            @JavaDispatcher.IsStatic
+            @JavaDispatcher.Defaults
+            Object parse(String version);
         }
     }
 
