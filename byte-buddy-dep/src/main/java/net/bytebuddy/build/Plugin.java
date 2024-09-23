@@ -4365,6 +4365,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         class Default extends AbstractBase {
 
             /**
+             * The prefix folder for {@code META-INF/versions/} which contains multi-release files.
+             */
+            private static final String META_INF_VERSIONS = "META-INF/versions/";
+
+            /**
              * The Byte Buddy instance to use.
              */
             private final ByteBuddy byteBuddy;
@@ -4698,7 +4703,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                     }
                                     if (name.endsWith(CLASS_FILE_EXTENSION) && !name.endsWith(PACKAGE_INFO) && !name.equals(MODULE_INFO)) {
                                         dispatcher.accept(new Preprocessor(element,
-                                                name.substring(0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
+                                                name.substring(name.startsWith(META_INF_VERSIONS)
+                                                        ? name.indexOf('/', META_INF_VERSIONS.length()) + 1
+                                                        : 0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
                                                 classFileLocator,
                                                 typePool,
                                                 listener,
