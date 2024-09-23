@@ -778,6 +778,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         String PLUGIN_FILE = "META-INF/net.bytebuddy/build.plugins";
 
         /**
+         * The prefix folder for {@code META-INF/versions/} which contains multi-release files.
+         */
+        String META_INF_VERSIONS = "META-INF/versions/";
+
+        /**
          * Defines a new Byte Buddy instance for usage for type creation.
          *
          * @param byteBuddy The Byte Buddy instance to use.
@@ -3287,6 +3292,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 void store(Map<TypeDescription, byte[]> binaryRepresentations) throws IOException;
 
                 /**
+                 * Stores the supplied binary representation of types in this sink.
+                 *
+                 * @param version               The version of the multi-release jar file.
+                 * @param binaryRepresentations The binary representations to store.
+                 * @throws IOException If an I/O error occurs.
+                 */
+                void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException;
+
+                /**
                  * Retains the supplied element in its original form.
                  *
                  * @param element The element to retain.
@@ -3319,6 +3333,17 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void store(Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                         for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
                             outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
+                            outputStream.write(entry.getValue());
+                            outputStream.closeEntry();
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
+                        for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                            outputStream.putNextEntry(new JarEntry(META_INF_VERSIONS + version + "/" + entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
                             outputStream.write(entry.getValue());
                             outputStream.closeEntry();
                         }
@@ -3375,6 +3400,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void store(Map<TypeDescription, byte[]> binaryRepresentations) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                     /* do nothing */
                 }
 
@@ -3442,6 +3474,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public void store(Map<TypeDescription, byte[]> binaryRepresentations) {
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
                         storage.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
+                    for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                        storage.putIfAbsent(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
                     }
                 }
 
@@ -3525,6 +3566,28 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
 
                 /**
+                 * Stores binary representations to a folder.
+                 *
+                 * @param folder                The base folder.
+                 * @param binaryRepresentations The binary representations to store.
+                 * @throws IOException If an I/O exception occurs.
+                 */
+                private static void doStore(File folder, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
+                    for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                        File target = new File(folder, entry.getKey().getInternalName() + CLASS_FILE_EXTENSION);
+                        if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
+                            throw new IOException("Could not create directory: " + target.getParent());
+                        }
+                        OutputStream outputStream = new FileOutputStream(target);
+                        try {
+                            outputStream.write(entry.getValue());
+                        } finally {
+                            outputStream.close();
+                        }
+                    }
+                }
+
+                /**
                  * {@inheritDoc}
                  */
                 public Sink write(@MaybeNull Manifest manifest) throws IOException {
@@ -3547,18 +3610,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void store(Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
-                    for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        File target = new File(folder, entry.getKey().getInternalName() + CLASS_FILE_EXTENSION);
-                        if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
-                            throw new IOException("Could not create directory: " + target.getParent());
-                        }
-                        OutputStream outputStream = new FileOutputStream(target);
-                        try {
-                            outputStream.write(entry.getValue());
-                        } finally {
-                            outputStream.close();
-                        }
-                    }
+                    doStore(folder, binaryRepresentations);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
+                    doStore(new File(folder, META_INF_VERSIONS + version), binaryRepresentations);
                 }
 
                 /**
@@ -3673,7 +3732,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 void materialize(Target.Sink sink,
                                  List<TypeDescription> transformed,
                                  Map<TypeDescription,
-                                 List<Throwable>> failed,
+                                         List<Throwable>> failed,
                                  List<String> unresolved) throws IOException;
 
                 /**
@@ -3701,7 +3760,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.store(dynamicType.getAllTypes());
                         transformed.add(dynamicType.getTypeDescription());
@@ -3778,7 +3837,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.retain(element);
                         failed.put(typeDescription, errored);
@@ -3817,7 +3876,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.retain(element);
                         unresolved.add(typeName);
@@ -4363,11 +4422,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Default extends AbstractBase {
-
-            /**
-             * The prefix folder for {@code META-INF/versions/} which contains multi-release files.
-             */
-            private static final String META_INF_VERSIONS = "META-INF/versions/";
 
             /**
              * The Byte Buddy instance to use.
