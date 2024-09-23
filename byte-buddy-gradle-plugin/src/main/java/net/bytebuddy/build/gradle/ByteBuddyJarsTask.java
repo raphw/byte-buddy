@@ -173,21 +173,26 @@ public class ByteBuddyJarsTask extends AbstractByteBuddyTask {
      */
     @TaskAction
     public void apply() throws IOException {
-        if (!getSource().equals(getTarget()) && deleteRecursively(getTarget())) {
+        File source = getSource().getAbsoluteFile(), target = getTarget().getAbsoluteFile();
+        if (!source.equals(getTarget()) && deleteRecursively(getTarget())) {
             getLogger().debug("Deleted target directory {}", getTarget());
         }
-        Queue<File> queue = QueueFactory.make(Collections.singletonList(getSource()));
+        Queue<File> queue = QueueFactory.make(Collections.singletonList(source));
         while (!queue.isEmpty()) {
             File candidate = queue.remove();
             File[] file = candidate.listFiles();
             if (file != null) {
                 queue.addAll(Arrays.asList(file));
             } else {
-                Path relative = getSource().toPath().relativize(candidate.toPath());
-                File targetCandidate = getTarget().toPath().resolve(relative).toFile();
-                getLogger().debug("Created dir " + targetCandidate.getParent() + ": " + targetCandidate.getParentFile().mkdirs());
-                getLogger().debug("Created file " + targetCandidate + ": " + targetCandidate.createNewFile());
-                doApply(new Plugin.Engine.Source.ForJarFile(candidate), new Plugin.Engine.Target.ForJarFile(targetCandidate));
+                if (!candidate.getAbsoluteFile().toString().startsWith(source.toString())) {
+                    throw new IllegalStateException(candidate + " is not a subdirectory of " + source);
+                }
+                File resolved = new File(target, candidate.toString().substring(source.toString().length()));
+                if (resolved.getParentFile().mkdirs()) {
+                    getLogger().debug("Created host directory for {}", resolved);
+                }
+                getLogger().debug("Transforming {} to {}", candidate, resolved);
+                doApply(new Plugin.Engine.Source.ForJarFile(candidate), new Plugin.Engine.Target.ForJarFile(resolved));
             }
         }
     }
