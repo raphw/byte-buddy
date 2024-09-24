@@ -987,6 +987,7 @@ public interface ClassFileLocator extends Closeable {
          * {@inheritDoc}
          */
         @MaybeNull
+        @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "Null value indicates failed lookup.")
         protected byte[] doLocate(String path) throws IOException {
             ZipEntry zipEntry = jarFile.getEntry(path);
             if (zipEntry == null) {
@@ -1286,6 +1287,7 @@ public interface ClassFileLocator extends Closeable {
          * {@inheritDoc}
          */
         @MaybeNull
+        @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "Null value indicates failed lookup.")
         protected byte[] doLocate(String path) throws IOException {
             File file = new File(folder, path);
             if (file.exists()) {
