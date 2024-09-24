@@ -56,8 +56,8 @@ public class PluginEngineSourceCompoundTest {
     public void setUp() throws Exception {
         when(left.read()).thenReturn(leftOrigin);
         when(right.read()).thenReturn(rightOrigin);
-        when(leftOrigin.getClassFileLocator()).thenReturn(leftLocator);
-        when(rightOrigin.getClassFileLocator()).thenReturn(rightLocator);
+        when(leftOrigin.toClassFileLocator(null)).thenReturn(leftLocator);
+        when(rightOrigin.toClassFileLocator(null)).thenReturn(rightLocator);
         when(leftLocator.locate(Mockito.any(String.class))).thenReturn(new ClassFileLocator.Resolution.Illegal(FOO));
         when(rightLocator.locate(Mockito.any(String.class))).thenReturn(new ClassFileLocator.Resolution.Illegal(FOO));
         when(leftOrigin.iterator()).then(new Answer<Iterator<Plugin.Engine.Source.Element>>() {
@@ -81,7 +81,7 @@ public class PluginEngineSourceCompoundTest {
 
     @Test
     public void testClassFileLocator() throws Exception {
-        assertThat(new Plugin.Engine.Source.Compound(Arrays.asList(left, right)).read().getClassFileLocator().locate(FOO).isResolved(), is(false));
+        assertThat(new Plugin.Engine.Source.Compound(Arrays.asList(left, right)).read().toClassFileLocator(null).locate(FOO).isResolved(), is(false));
         verify(leftLocator).locate(FOO);
         verify(rightLocator).locate(FOO);
     }

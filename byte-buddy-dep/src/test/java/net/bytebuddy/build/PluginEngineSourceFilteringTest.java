@@ -80,8 +80,8 @@ public class PluginEngineSourceFilteringTest {
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
 
         when(source.read()).thenReturn(origin);
-        when(origin.getClassFileLocator()).thenReturn(classFileLocator);
+        when(origin.toClassFileLocator(null)).thenReturn(classFileLocator);
 
-        assertThat(new Plugin.Engine.Source.Filtering(source, matcher).read().getClassFileLocator(), is(classFileLocator));
+        assertThat(new Plugin.Engine.Source.Filtering(source, matcher).read().toClassFileLocator(null), is(classFileLocator));
     }
 }

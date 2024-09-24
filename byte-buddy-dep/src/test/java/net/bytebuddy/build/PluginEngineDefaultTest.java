@@ -254,7 +254,7 @@ public class PluginEngineDefaultTest {
                 Sample.class.getName().replace('.', '/') + ".class",
                 ClassFileLocator.ForClassLoader.read(Sample.class))) {
             @Override
-            public ClassFileLocator getClassFileLocator() {
+            public ClassFileLocator toClassFileLocator() {
                 return ClassFileLocator.NoOp.INSTANCE;
             }
         };

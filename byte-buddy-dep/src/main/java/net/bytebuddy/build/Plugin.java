@@ -2256,13 +2256,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 Manifest getManifest() throws IOException;
 
                 /**
-                 * Returns a class file locator for the represented source. If the class file locator needs to be closed, it is the responsibility
-                 * of this origin to close the locator or its underlying resources.
+                 * Creates a class file locator for the represented source. If the class file locator needs to be closed,
+                 * it is the responsibility of this origin to close the locator or its underlying resources.
                  *
+                 * @param classFileVersion The class file version to consider for multi-release jars or {@code null}
+                 *                         if multi-release jars should not be considered.
                  * @return A class file locator for locating class files of this instance.
                  * @throws IOException If an I/O exception occurs.
                  */
-                ClassFileLocator getClassFileLocator() throws IOException;
+                ClassFileLocator toClassFileLocator(@MaybeNull ClassFileVersion classFileVersion) throws IOException;
 
                 /**
                  * An origin implementation for a jar file.
@@ -2294,8 +2296,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() {
-                        return new ClassFileLocator.ForJarFile(file);
+                    public ClassFileLocator toClassFileLocator(@MaybeNull ClassFileVersion classFileVersion) throws IOException {
+                        return classFileVersion == null
+                                ? new ClassFileLocator.ForJarFile(file)
+                                : ClassFileLocator.ForJarFile.of(file, classFileVersion);
                     }
 
                     /**
@@ -2409,8 +2413,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() throws IOException {
-                        return delegate.getClassFileLocator();
+                    public ClassFileLocator toClassFileLocator(@MaybeNull ClassFileVersion classFileVersion) throws IOException {
+                        return delegate.toClassFileLocator(classFileVersion);
                     }
 
                     /**
@@ -2715,7 +2719,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public ClassFileLocator getClassFileLocator() {
+                public ClassFileLocator toClassFileLocator(@MaybeNull ClassFileVersion classFileVersion) {
                     return ClassFileLocator.NoOp.INSTANCE;
                 }
 
@@ -2821,10 +2825,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() throws IOException {
+                    public ClassFileLocator toClassFileLocator(@MaybeNull ClassFileVersion classFileVersion) throws IOException {
                         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(origins.size());
                         for (Source.Origin origin : origins) {
-                            classFileLocators.add(origin.getClassFileLocator());
+                            classFileLocators.add(origin.toClassFileLocator(classFileVersion));
                         }
                         return new ClassFileLocator.Compound(classFileLocators);
                     }
@@ -2980,7 +2984,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public ClassFileLocator getClassFileLocator() {
+                public ClassFileLocator toClassFileLocator(@MaybeNull ClassFileVersion classFileVersion) {
                     return ClassFileLocator.Simple.ofResources(storage);
                 }
 
@@ -3086,8 +3090,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public ClassFileLocator getClassFileLocator() {
-                    return new ClassFileLocator.ForFolder(folder);
+                public ClassFileLocator toClassFileLocator(@MaybeNull ClassFileVersion classFileVersion) throws IOException {
+                    return classFileVersion == null
+                            ? new ClassFileLocator.ForFolder(folder)
+                            : ClassFileLocator.ForFolder.of(folder, classFileVersion);
                 }
 
                 /**
@@ -4749,8 +4755,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         }
                     }
                     Source.Origin origin = source.read();
-                    try {
-                        ClassFileLocator classFileLocator = new ClassFileLocator.Compound(origin.getClassFileLocator(), this.classFileLocator);
+                    try { // TODO: class file locator.
+                        ClassFileLocator classFileLocator = new ClassFileLocator.Compound(origin.toClassFileLocator(null), this.classFileLocator);
                         TypePool typePool = poolStrategy.typePool(classFileLocator);
                         Manifest manifest = origin.getManifest();
                         listener.onManifest(manifest);

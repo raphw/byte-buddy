@@ -1,7 +1,6 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.utility.StreamDrainer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,9 +40,9 @@ public class PluginEngineSourceForJarFileTest {
         Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.ForJarFile(this.file).read();
         try {
             assertThat(origin.getManifest(), nullValue(Manifest.class));
-            assertThat(origin.getClassFileLocator().locate("Foo").isResolved(), is(true));
-            assertThat(origin.getClassFileLocator().locate("Foo").resolve(), is(new byte[]{1, 2, 3}));
-            assertThat(origin.getClassFileLocator().locate("Bar").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate("Foo").isResolved(), is(true));
+            assertThat(origin.toClassFileLocator(null).locate("Foo").resolve(), is(new byte[]{1, 2, 3}));
+            assertThat(origin.toClassFileLocator(null).locate("Bar").isResolved(), is(false));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
             Plugin.Engine.Source.Element element = iterator.next();
@@ -75,9 +74,9 @@ public class PluginEngineSourceForJarFileTest {
         Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.ForJarFile(this.file).read();
         try {
             assertThat(origin.getManifest(), nullValue(Manifest.class));
-            assertThat(origin.getClassFileLocator().locate("bar.Foo").isResolved(), is(true));
-            assertThat(origin.getClassFileLocator().locate("bar.Foo").resolve(), is(new byte[]{1, 2, 3}));
-            assertThat(origin.getClassFileLocator().locate("Bar").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate("bar.Foo").isResolved(), is(true));
+            assertThat(origin.toClassFileLocator(null).locate("bar.Foo").resolve(), is(new byte[]{1, 2, 3}));
+            assertThat(origin.toClassFileLocator(null).locate("Bar").isResolved(), is(false));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
             Plugin.Engine.Source.Element element = iterator.next();
