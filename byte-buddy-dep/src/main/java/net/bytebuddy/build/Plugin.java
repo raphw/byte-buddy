@@ -3442,16 +3442,19 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             }
 
             /**
-             * A sink that stores all elements in a memory map. In case of multi-release jars, this memory
-             * storage aims to retain the non-versioned class file.
+             * A sink that stores all elements in a memory map.
              */
-            @HashCodeAndEqualsPlugin.Enhance
             class InMemory implements Target, Sink {
+
+                @MaybeNull
+                private final ClassFileVersion classFileVersion;
 
                 /**
                  * The map for storing all elements being received.
                  */
                 private final Map<String, byte[]> storage;
+
+                private final Map<String, Integer> versions;
 
                 /**
                  * Creates a new in-memory storage.
@@ -3463,10 +3466,35 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * Creates a new in-memory storage.
                  *
+                 * @param classFileVersion The class file version to consider as the maximum version when accepting
+                 *                         multi-release classes or {@code null} if multi-release versions should
+                 *                         be discarded.
+                 */
+                public InMemory(@MaybeNull ClassFileVersion classFileVersion) {
+                    this(classFileVersion, new HashMap<String, byte[]>());
+                }
+
+                /**
+                 * Creates a new in-memory storage.
+                 *
                  * @param storage The map for storing all elements being received.
                  */
                 public InMemory(Map<String, byte[]> storage) {
+                    this(null, storage);
+                }
+
+                /**
+                 * Creates a new in-memory storage.
+                 *
+                 * @param classFileVersion The class file version to consider as the maximum version when accepting
+                 *                         multi-release classes or {@code null} if multi-release versions should
+                 *                         be discarded.
+                 * @param storage          The map for storing all elements being received.
+                 */
+                public InMemory(@MaybeNull ClassFileVersion classFileVersion, Map<String, byte[]> storage) {
+                    this.classFileVersion = classFileVersion;
                     this.storage = storage;
+                    versions = new HashMap<String, Integer>();
                 }
 
                 /**
@@ -3490,7 +3518,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void store(Map<TypeDescription, byte[]> binaryRepresentations) {
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        storage.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                        String name = entry.getKey().getInternalName() + CLASS_FILE_EXTENSION;
+                        if (!storage.containsKey(name)) {
+                            storage.put(name, entry.getValue());
+                        }
                     }
                 }
 
@@ -3498,10 +3529,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
-                    for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        String name = entry.getKey().getInternalName() + CLASS_FILE_EXTENSION;
-                        if (!storage.containsKey(name)) {
-                            storage.put(name, entry.getValue());
+                    if (classFileVersion != null && version <= classFileVersion.getJavaVersion()) {
+                        for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                            String name = entry.getKey().getInternalName() + CLASS_FILE_EXTENSION;
+                            Integer current = versions.get(name);
+                            if (current == null || current < version) {
+                                versions.put(name, version);
+                                storage.put(name, entry.getValue());
+                            }
                         }
                     }
                 }
