@@ -218,6 +218,37 @@ public class PluginEngineDefaultTest {
     }
 
     @Test
+    public void testSimpleTransformationMultiRelease() throws Exception {
+        Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
+        Plugin plugin = eager
+                ? new SimplePlugin()
+                : new PreprocessingPlugin(new SimplePlugin());
+        Plugin.Engine.Source source = new Plugin.Engine.Source.InMemory(Collections.singletonMap(
+            "META-INF/versions/11/" + Sample.class.getName().replace('.', '/') + Plugin.Engine.CLASS_FILE_EXTENSION,
+            ClassFileLocator.ForClassLoader.read(Sample.class)
+        ));
+        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory(ClassFileVersion.JAVA_V11);
+        Plugin.Engine.Summary summary = new Plugin.Engine.Default()
+                .with(listener)
+                .with(ClassFileVersion.JAVA_V11)
+                .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
+                .apply(source, target, new Plugin.Factory.Simple(plugin));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
+        Class<?> type = classLoader.loadClass(Sample.class.getName());
+        assertThat(type.getDeclaredField(FOO).getType(), is((Object) Void.class));
+        assertThat(summary.getTransformed(), hasItems(TypeDescription.ForLoadedType.of(Sample.class)));
+        assertThat(summary.getFailed().size(), is(0));
+        assertThat(summary.getUnresolved().size(), is(0));
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
+        verify(listener).onDiscovery(Sample.class.getName());
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), plugin);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
+        verify(listener).onComplete(TypeDescription.ForLoadedType.of(Sample.class));
+        verifyNoMoreInteractions(listener);
+    }
+
+    @Test
     public void testLiveInitializer() throws Exception {
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
         Plugin plugin = new LiveInitializerPlugin();
