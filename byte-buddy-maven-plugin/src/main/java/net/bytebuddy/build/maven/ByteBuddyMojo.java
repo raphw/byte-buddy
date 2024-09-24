@@ -52,16 +52,10 @@ import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.zip.ZipFile;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
@@ -77,26 +71,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * The file extension for Java class files.
      */
     private static final String JAVA_CLASS_EXTENSION = ".class";
-
-    /**
-     * A dispatcher for creating a {@link JarFile}.
-     */
-    private static final JarFileFactory JAR_FILE_FACTORY;
-
-    /*
-     * Creates a factory for creating a jar file.
-     */
-    static {
-        JarFileFactory jarFileFactory;
-        try {
-            Method runtimeVersion = JarFile.class.getMethod("runtimeVersion");
-            Constructor<JarFile> constructor = JarFile.class.getConstructor(File.class, boolean.class, int.class, runtimeVersion.getReturnType());
-            jarFileFactory = new JarFileFactory.ForMultiReleaseVm(constructor, runtimeVersion);
-        } catch (Exception ignored) {
-            jarFileFactory = JarFileFactory.ForLegacyVm.INSTANCE;
-        }
-        JAR_FILE_FACTORY = jarFileFactory;
-    }
 
     /**
      * The Maven project.
@@ -283,28 +257,32 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         List<String> elements = resolveClassPathElements(coordinates);
         if (discovery.isDiscover(transformers)) {
             try {
-                Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources(Plugin.Engine.Default.PLUGIN_FILE);
-                while (plugins.hasMoreElements()) {
-                    discover(plugins.nextElement().openStream(), undiscoverable, transformers, null);
+                for (String name : Plugin.Engine.Default.scan(ByteBuddyMojo.class.getClassLoader())) {
+                    if (undiscoverable.add(name)) {
+                        transformers.add(new Transformer.ForDiscoveredPlugin(name));
+                        getLog().debug("Registered discovered plugin: " + name);
+                    } else {
+                        getLog().info("Skipping discovered plugin " + name + " which was previously discovered or registered");
+                    }
                 }
                 if (classPathDiscovery) {
+                    List<URL> urls = new ArrayList<>(elements.size());
                     for (String element : elements) {
-                        File artifact = new File(element);
-                        if (artifact.isFile()) {
-                            JarFile file = JAR_FILE_FACTORY.make(artifact);
-                            try {
-                                JarEntry entry = file.getJarEntry(Plugin.Engine.Default.PLUGIN_FILE);
-                                if (entry != null) {
-                                    discover(file.getInputStream(entry), undiscoverable, transformers, elements);
-                                }
-                            } finally {
-                                file.close();
+                        urls.add(new File(element).toURI().toURL());
+                    }
+                    ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]));
+                    try {
+                        for (String name : Plugin.Engine.Default.scan(classLoader)) {
+                            if (undiscoverable.add(name)) {
+                                transformers.add(new Transformer.ForDiscoveredPlugin.FromClassLoader(name, elements));
+                                getLog().debug("Registered discovered plugin: " + name);
+                            } else {
+                                getLog().info("Skipping discovered plugin " + name + " which was previously discovered or registered");
                             }
-                        } else {
-                            File file = new File(artifact, Plugin.Engine.Default.PLUGIN_FILE);
-                            if (file.exists()) {
-                                discover(new FileInputStream(file), undiscoverable, transformers, elements);
-                            }
+                        }
+                    } finally {
+                        if (classLoader instanceof Closeable) {
+                            ((Closeable) classLoader).close();
                         }
                     }
                 }
@@ -965,90 +943,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                 new Plugin.Engine.Target.ForJarFile(new File(target, aFile.getName())),
                                 aFile,
                                 false);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * A factory for creating {@link JarFile}.
-     */
-    protected interface JarFileFactory {
-
-        /**
-         * Creates a {@link JarFile}.
-         *
-         * @param file The file to represent as a {@link JarFile}.
-         * @return Returns a {@link JarFile}.
-         * @throws IOException If an I/O exception occurs.
-         */
-        JarFile make(File file) throws IOException;
-
-        /**
-         * A dispatcher for a legacy VM that does not support multi-release jars.
-         */
-        enum ForLegacyVm implements JarFileFactory {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public JarFile make(File file) throws IOException {
-                return new JarFile(file, false, ZipFile.OPEN_READ);
-            }
-        }
-
-        /**
-         * A factory for creating a {@link JarFile} which resolves multi-release properties.
-         */
-        class ForMultiReleaseVm implements JarFileFactory {
-
-            /**
-             * The {@code JarFile#JarFile(File, boolean, int, Runtime.Version)} constructor.
-             */
-            private final Constructor<JarFile> constructor;
-
-            /**
-             * The {@code JarFile#runtimeVersion()} method.
-             */
-            private final Method runtimeVersion;
-
-            /**
-             * Creates a jar file factory that is multi-release capable.
-             *
-             * @param constructor    The {@code JarFile#JarFile(File, boolean, int, Runtime.Version)} constructor.
-             * @param runtimeVersion The {@code JarFile#runtimeVersion()} method.
-             */
-            protected ForMultiReleaseVm(Constructor<JarFile> constructor, Method runtimeVersion) {
-                this.constructor = constructor;
-                this.runtimeVersion = runtimeVersion;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public JarFile make(File file) throws IOException {
-                try {
-                    return constructor.newInstance(file, false, ZipFile.OPEN_READ, runtimeVersion.invoke(null));
-                } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException(exception);
-                } catch (InstantiationException exception) {
-                    throw new IllegalStateException(exception);
-                } catch (InvocationTargetException exception) {
-                    Throwable cause = exception.getCause();
-                    if (cause instanceof RuntimeException) {
-                        throw (RuntimeException) cause;
-                    } else if (cause instanceof Error) {
-                        throw (Error) cause;
-                    } else if (cause instanceof IOException) {
-                        throw (IOException) cause;
-                    } else {
-                        throw new RuntimeException(exception);
                     }
                 }
             }
