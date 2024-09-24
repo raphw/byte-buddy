@@ -968,13 +968,14 @@ public interface ClassFileLocator extends Closeable {
          * @throws IOException If an I/O exception occurs.
          */
         public static ClassFileLocator ofClassPath(String classPath) throws IOException {
+            ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm();
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
             for (String element : Pattern.compile(File.pathSeparator, Pattern.LITERAL).split(classPath)) {
                 File file = new File(element);
                 if (file.isDirectory()) {
-                    classFileLocators.add(new ForFolder(file));
+                    classFileLocators.add(ForFolder.of(file, classFileVersion));
                 } else if (file.isFile()) {
-                    classFileLocators.add(of(file));
+                    classFileLocators.add(of(file, classFileVersion));
                 }
             }
             return new Compound(classFileLocators);
@@ -1095,12 +1096,13 @@ public interface ClassFileLocator extends Closeable {
             if (module == null) {
                 return NoOp.INSTANCE;
             }
+            ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm();
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(module.length);
             for (File aModule : module) {
                 if (aModule.isFile()) {
                     classFileLocators.add(of(aModule));
                 } else if (aModule.isDirectory()) { // Relevant for locally built OpenJDK.
-                    classFileLocators.add(new ForFolder(aModule));
+                    classFileLocators.add(ForFolder.of(aModule, classFileVersion));
                 }
             }
             return new Compound(classFileLocators);
@@ -1155,6 +1157,7 @@ public interface ClassFileLocator extends Closeable {
          * @throws IOException If an I/O exception occurs.
          */
         public static ClassFileLocator ofModulePath(String modulePath, String baseFolder) throws IOException {
+            ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm();
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
             for (String element : Pattern.compile(System.getProperty("path.separator"), Pattern.LITERAL).split(modulePath)) {
                 File file = new File(baseFolder, element);
@@ -1163,11 +1166,11 @@ public interface ClassFileLocator extends Closeable {
                     if (module != null) {
                         for (File aModule : module) {
                             if (aModule.isDirectory()) {
-                                classFileLocators.add(new ForFolder(aModule));
+                                classFileLocators.add(ForFolder.of(aModule, classFileVersion));
                             } else if (aModule.isFile()) {
                                 classFileLocators.add(aModule.getName().endsWith(JMOD_FILE_EXTENSION)
                                         ? of(aModule)
-                                        : ForJarFile.of(aModule));
+                                        : ForJarFile.of(aModule, classFileVersion));
                             }
                         }
                     }
