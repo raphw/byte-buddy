@@ -481,8 +481,8 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             classFileLocators.add(rootLocator);
             for (File artifact : artifacts) {
                 classFileLocators.add(artifact.isFile()
-                        ? ClassFileLocator.ForJarFile.of(artifact)
-                        : new ClassFileLocator.ForFolder(artifact));
+                        ? ClassFileLocator.ForJarFile.of(artifact, classFileVersion)
+                        : ClassFileLocator.ForFolder.of(artifact, classFileVersion));
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             try {
@@ -493,6 +493,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                                 ? Plugin.Engine.PoolStrategy.Default.EXTENDED
                                 : Plugin.Engine.PoolStrategy.Default.FAST)
                         .with(classFileLocator)
+                        .with(classFileVersion)
                         .with(new TransformationLogger(logger))
                         .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, failOnLiveInitializer
                                 ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS

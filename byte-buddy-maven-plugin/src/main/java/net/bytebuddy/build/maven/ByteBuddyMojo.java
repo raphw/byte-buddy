@@ -405,11 +405,25 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             String managed = coordinates.get(new Coordinate(project.getGroupId(), project.getArtifactId()));
             EntryPoint entryPoint = (initialization == null ? new Initialization() : initialization).getEntryPoint(classLoaderResolver, project.getGroupId(), project.getArtifactId(), managed == null ? project.getVersion() : managed, project.getPackaging());
             getLog().info("Resolved entry point: " + entryPoint);
+            String javaVersionString = findJavaVersionString(project, "release");
+            if (javaVersionString == null) {
+                javaVersionString = findJavaVersionString(project, "target");
+            }
+            ClassFileVersion classFileVersion;
+            if (javaVersionString == null) {
+                classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5);
+                getLog().warn("Could not locate Java target version, build is JDK dependant: " + classFileVersion.getMajorVersion());
+            } else {
+                classFileVersion = ClassFileVersion.ofJavaVersionString(javaVersionString);
+                getLog().debug("Java version detected: " + javaVersionString);
+            }
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
             classFileLocators.add(ClassFileLocator.ForClassLoader.ofPlatformLoader());
             for (String element : classPath) {
                 File artifact = new File(element);
-                classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
+                classFileLocators.add(artifact.isFile()
+                        ? ClassFileLocator.ForJarFile.of(artifact, classFileVersion)
+                        : ClassFileLocator.ForFolder.of(artifact, classFileVersion));
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             Plugin.Engine.Summary summary;
@@ -417,18 +431,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 getLog().info("Processing class files located in in: " + file);
                 Plugin.Engine pluginEngine;
                 try {
-                    String javaVersionString = findJavaVersionString(project, "release");
-                    if (javaVersionString == null) {
-                        javaVersionString = findJavaVersionString(project, "target");
-                    }
-                    ClassFileVersion classFileVersion;
-                    if (javaVersionString == null) {
-                        classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5);
-                        getLog().warn("Could not locate Java target version, build is JDK dependant: " + classFileVersion.getMajorVersion());
-                    } else {
-                        classFileVersion = ClassFileVersion.ofJavaVersionString(javaVersionString);
-                        getLog().debug("Java version detected: " + javaVersionString);
-                    }
                     pluginEngine = Plugin.Engine.Default.of(entryPoint,
                             classFileVersion,
                             suffix == null || suffix.length() == 0 ? MethodNameTransformer.Suffixing.withRandomSuffix() : new MethodNameTransformer.Suffixing(suffix));
@@ -439,6 +441,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     summary = pluginEngine
                             .with(extendedParsing ? Plugin.Engine.PoolStrategy.Default.EXTENDED : Plugin.Engine.PoolStrategy.Default.FAST)
                             .with(classFileLocator)
+                            .with(classFileVersion)
                             .with(new TransformationLogger(getLog()))
                             .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED,
                                     failOnLiveInitializer ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS : Plugin.Engine.Listener.NoOp.INSTANCE,
