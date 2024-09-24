@@ -2409,7 +2409,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() {
+                    public ClassFileLocator getClassFileLocator() throws IOException {
                         return delegate.getClassFileLocator();
                     }
 
@@ -2821,7 +2821,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() {
+                    public ClassFileLocator getClassFileLocator() throws IOException {
                         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(origins.size());
                         for (Source.Origin origin : origins) {
                             classFileLocators.add(origin.getClassFileLocator());
