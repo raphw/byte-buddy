@@ -2260,9 +2260,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * of this origin to close the locator or its underlying resources.
                  *
                  * @return A class file locator for locating class files of this instance.
-                 * @throws IOException If an I/O exception occurs.
                  */
-                ClassFileLocator getClassFileLocator() throws IOException;
+                ClassFileLocator getClassFileLocator();
 
                 /**
                  * An origin implementation for a jar file.
@@ -2409,7 +2408,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() throws IOException {
+                    public ClassFileLocator getClassFileLocator() {
                         return delegate.getClassFileLocator();
                     }
 
@@ -2821,7 +2820,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public ClassFileLocator getClassFileLocator() throws IOException {
+                    public ClassFileLocator getClassFileLocator() {
                         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(origins.size());
                         for (Source.Origin origin : origins) {
                             classFileLocators.add(origin.getClassFileLocator());
@@ -3086,7 +3085,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public ClassFileLocator getClassFileLocator() throws IOException {
+                public ClassFileLocator getClassFileLocator() {
                     return new ClassFileLocator.ForFolder(folder);
                 }
 

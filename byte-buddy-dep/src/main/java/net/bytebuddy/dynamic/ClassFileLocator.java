@@ -43,6 +43,8 @@ import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -185,6 +187,70 @@ public interface ClassFileLocator extends Closeable {
         public void close() {
             /* do nothing */
         }
+    }
+
+    /**
+     * A class file locator that is aware of multi-release JAR file semantics.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    abstract class MultiReleaseAware implements ClassFileLocator {
+
+        /**
+         * The path prefix of a multi-release folder.
+         */
+        private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
+
+        /**
+         * The property name of a multi-release JAR file.
+         */
+        private static final String MULTI_RELEASE_ATTRIBUTE = "Multi-Release";
+
+        /**
+         * Indicates that no multi-release versions exist.
+         */
+        protected static final int[] NO_MULTI_RELEASE = new int[0];
+
+        /**
+         * Contains the existing multi-release jar folders that are available for the
+         * current JVM version in decreasing order.
+         */
+        private final int[] version;
+
+        /**
+         * Creates a multi-release aware class file locator.
+         *
+         * @param version Contains the existing multi-release jar folders that are available for the
+         *                current JVM version in decreasing order.
+         */
+        protected MultiReleaseAware(int[] version) {
+            this.version = version;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Resolution locate(String name) throws IOException {
+            String path = name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION;
+            for (int index = 0; index < version.length + 1; index++) {
+                byte[] binaryRepresentation = doLocate(index == version.length
+                        ? path
+                        : MULTI_RELEASE_PREFIX + version[index] + "/" + path);
+                if (binaryRepresentation != null) {
+                    return new Resolution.Explicit(binaryRepresentation);
+                }
+            }
+            return new Resolution.Illegal(name);
+        }
+
+        /**
+         * Resolves a possible multi-release entry, if it exists.
+         *
+         * @param path The path of the class file.
+         * @return The class file's binary representation or {@code null} if it does not exist.
+         * @throws IOException If an I/O exception occurs.
+         */
+        @MaybeNull
+        protected abstract byte[] doLocate(String path) throws IOException;
     }
 
     /**
@@ -752,7 +818,7 @@ public interface ClassFileLocator extends Closeable {
      * A class file locator that locates classes within a Java <i>jar</i> file.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class ForJarFile implements ClassFileLocator {
+    class ForJarFile extends MultiReleaseAware {
 
         /**
          * A list of potential locations of the runtime jar for different platforms.
@@ -760,39 +826,38 @@ public interface ClassFileLocator extends Closeable {
         private static final List<String> RUNTIME_LOCATIONS = Arrays.asList("lib/rt.jar", "../lib/rt.jar", "../Classes/classes.jar");
 
         /**
-         * A proxy for creating jar files.
-         */
-        private static final JarFile JAR_FILE = doPrivileged(JavaDispatcher.of(JarFile.class));
-
-        /**
-         * A proxy for creating version representations.
-         */
-        private static final Version VERSION = doPrivileged(JavaDispatcher.of(Version.class));
-
-        /**
          * The jar file to read from.
          */
-        private final java.util.jar.JarFile jarFile;
+        private final JarFile jarFile;
+
+        /**
+         * Indicates if the jar file should be closed upon closing this class file locator.
+         */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
+        private final boolean close;
+
+        /**
+         * Creates a new class file locator for the given jar file. The jar file will not be closed
+         * upon closing this class file locator.
+         *
+         * @param jarFile The jar file to read from.
+         */
+        public ForJarFile(JarFile jarFile) {
+            this(NO_MULTI_RELEASE, jarFile, false);
+        }
 
         /**
          * Creates a new class file locator for the given jar file.
          *
+         * @param version Contains the existing multi-release jar folders that are available for the
+         *                current JVM version in decreasing order.
          * @param jarFile The jar file to read from.
+         * @param close   Indicates if the jar file should be closed upon closing this class file locator.
          */
-        public ForJarFile(java.util.jar.JarFile jarFile) {
+        protected ForJarFile(int[] version, JarFile jarFile, boolean close) {
+            super(version);
             this.jarFile = jarFile;
-        }
-
-        /**
-         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
-         *
-         * @param action The action to execute from a privileged context.
-         * @param <T>    The type of the action's resolved value.
-         * @return The action's resolved value.
-         */
-        @AccessControllerPlugin.Enhance
-        private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            this.close = close;
         }
 
         /**
@@ -803,23 +868,80 @@ public interface ClassFileLocator extends Closeable {
          * @throws IOException If an I/O exception is thrown.
          */
         public static ClassFileLocator of(File file) throws IOException {
-            return new ForJarFile(new java.util.jar.JarFile(file));
+            return new ForJarFile(MultiReleaseAware.NO_MULTI_RELEASE, new JarFile(file, false, ZipFile.OPEN_READ), true);
         }
 
         /**
-         * Creates a new class file locator for the given jar file.
+         * Creates a new class file locator for the given jar file. Multi-release jar files
+         * are resolved as if executed on a JVM of the supplied version.
          *
          * @param file             The jar file to read from.
-         * @param classFileVersion The class file version to consider as the latest version within multi-release jars.
+         * @param classFileVersion The class file version to consider when resolving class files in multi-release jars.
          * @return A class file locator for the jar file.
          * @throws IOException If an I/O exception is thrown.
          */
         public static ClassFileLocator of(File file, ClassFileVersion classFileVersion) throws IOException {
-            java.util.jar.JarFile jarFile = JAR_FILE.make(file,
-                    false,
-                    ZipFile.OPEN_READ,
-                    VERSION.parse(Integer.toString(classFileVersion.getJavaVersion())));
-            return new ForJarFile(jarFile == null ? new java.util.jar.JarFile(file, false) : jarFile);
+            return of(new JarFile(file, false, ZipFile.OPEN_READ), classFileVersion, true);
+        }
+
+        /**
+         * Creates a new class file locator for the given jar file. Multi-release jar files
+         * are resolved as if executed on a JVM of the supplied version. The jar file will not be closed
+         * upon closing this class file locator.
+         *
+         * @param jarFile          The jar file to read from.
+         * @param classFileVersion The class file version to consider when resolving class files in multi-release jars.
+         * @return A class file locator for the jar file.
+         * @throws IOException If an I/O exception is thrown.
+         */
+        public static ClassFileLocator of(JarFile jarFile, ClassFileVersion classFileVersion) throws IOException {
+            return of(jarFile, classFileVersion, false);
+        }
+
+        /**
+         * Creates a new class file locator for the given jar file. Multi-release jar files
+         * are resolved as if executed on a JVM of the supplied version.
+         *
+         * @param jarFile          The jar file to read from.
+         * @param classFileVersion The class file version to consider when resolving class files in multi-release jars.
+         * @param close            Indicates if the jar file should be closed upon closing this class file locator.
+         * @return A class file locator for the jar file.
+         * @throws IOException If an I/O exception is thrown.
+         */
+        private static ClassFileLocator of(JarFile jarFile, ClassFileVersion classFileVersion, boolean close) throws IOException {
+            if (classFileVersion.getJavaVersion() < 9) {
+                return new ForJarFile(jarFile);
+            } else {
+                Manifest manifest = jarFile.getManifest();
+                int[] version;
+                if (Boolean.parseBoolean(manifest.getMainAttributes().getValue(MultiReleaseAware.MULTI_RELEASE_ATTRIBUTE))) {
+                    SortedSet<Integer> versions = new TreeSet<Integer>();
+                    Enumeration<JarEntry> enumeration = jarFile.entries();
+                    while (enumeration.hasMoreElements()) {
+                        String name = enumeration.nextElement().getName();
+                        if (name.endsWith(CLASS_FILE_EXTENSION) && name.startsWith(MultiReleaseAware.MULTI_RELEASE_PREFIX)) {
+                            try {
+                                int candidate = Integer.parseInt(name.substring(
+                                        MultiReleaseAware.MULTI_RELEASE_PREFIX.length(),
+                                        name.indexOf('/', MultiReleaseAware.MULTI_RELEASE_PREFIX.length())));
+                                if (candidate > 7 && candidate <= classFileVersion.getJavaVersion()) {
+                                    versions.add(candidate);
+                                }
+                            } catch (NumberFormatException ignored) {
+                                /* do nothing */
+                            }
+                        }
+                    }
+                    version = new int[versions.size()];
+                    Iterator<Integer> iterator = versions.iterator();
+                    for (int index = 0; index < versions.size(); index++) {
+                        version[versions.size() - index - 1] = iterator.next();
+                    }
+                } else {
+                    version = MultiReleaseAware.NO_MULTI_RELEASE;
+                }
+                return new ForJarFile(version, jarFile, close);
+            }
         }
 
         /**
@@ -883,14 +1005,15 @@ public interface ClassFileLocator extends Closeable {
         /**
          * {@inheritDoc}
          */
-        public Resolution locate(String name) throws IOException {
-            ZipEntry zipEntry = jarFile.getEntry(name.replace('.', '/') + CLASS_FILE_EXTENSION);
+        @MaybeNull
+        protected byte[] doLocate(String path) throws IOException {
+            ZipEntry zipEntry = jarFile.getEntry(path);
             if (zipEntry == null) {
-                return new Resolution.Illegal(name);
+                return null;
             } else {
                 InputStream inputStream = jarFile.getInputStream(zipEntry);
                 try {
-                    return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
+                    return StreamDrainer.DEFAULT.drain(inputStream);
                 } finally {
                     inputStream.close();
                 }
@@ -901,48 +1024,9 @@ public interface ClassFileLocator extends Closeable {
          * {@inheritDoc}
          */
         public void close() throws IOException {
-            jarFile.close();
-        }
-
-        /**
-         * A proxy for {@link java.util.jar.JarFile}.
-         */
-        @JavaDispatcher.Proxied("java.util.jar.JarFile")
-        protected interface JarFile {
-
-            /**
-             * Creates a JAR file with support for multi-release jar entries.
-             *
-             * @param file    The JAR file.
-             * @param verify  {@code true} if the jar should be verified.
-             * @param mode    The reading mode.
-             * @param version The version to consider.
-             * @return A JAR file representation or {@code null} if this is not supported.
-             */
-            @MaybeNull
-            @JavaDispatcher.Defaults
-            java.util.jar.JarFile make(File file,
-                                       boolean verify,
-                                       int mode,
-                                       @MaybeNull @JavaDispatcher.Proxied("java.lang.Runtime$Version") Object version);
-        }
-
-        /**
-         * A proxy for {@code java.lang.Runtime$Version}.
-         */
-        @JavaDispatcher.Proxied("java.lang.Runtime$Version")
-        protected interface Version {
-
-            /**
-             * Parses a version string.
-             *
-             * @param version The version string to parse.
-             * @return The created version representation or {@code null} if this is not supported by the current VM.
-             */
-            @MaybeNull
-            @JavaDispatcher.IsStatic
-            @JavaDispatcher.Defaults
-            Object parse(String version);
+            if (close) {
+                jarFile.close();
+            }
         }
     }
 
@@ -1138,7 +1222,7 @@ public interface ClassFileLocator extends Closeable {
      * within their package folder.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class ForFolder implements ClassFileLocator {
+    class ForFolder extends MultiReleaseAware {
 
         /**
          * The base folder of the package structure.
@@ -1146,31 +1230,24 @@ public interface ClassFileLocator extends Closeable {
         private final File folder;
 
         /**
-         * Contains the existing multi-release jar folders that are available for the
-         * current JVM version in decreasing order.
-         */
-        private final int[] version;
-
-
-        /**
          * Creates a new class file locator for a folder structure of class files.
          *
          * @param folder The base folder of the package structure.
          */
         public ForFolder(File folder) {
-            this(folder, new int[0]);
+            this(NO_MULTI_RELEASE, folder);
         }
 
         /**
          * Creates a new class file locator for a folder structure of class files.
          *
-         * @param folder  The base folder of the package structure.
          * @param version Contains the existing multi-release jar folders that are available for the
          *                current JVM version in decreasing order.
+         * @param folder  The base folder of the package structure.
          */
-        protected ForFolder(File folder, int[] version) {
+        protected ForFolder(int[] version, File folder) {
+            super(version);
             this.folder = folder;
-            this.version = version;
         }
 
         /**
@@ -1183,9 +1260,9 @@ public interface ClassFileLocator extends Closeable {
          */
         public static ClassFileLocator of(File folder, ClassFileVersion classFileVersion) throws IOException {
             if (classFileVersion.getJavaVersion() < 9) {
-                return new ForFolder(folder, new int[0]);
+                return new ForFolder(NO_MULTI_RELEASE, folder);
             } else {
-                File manifest = new File(folder, "META-INF" + File.separatorChar + "MANIFEST.MF");
+                File manifest = new File(folder, JarFile.MANIFEST_NAME);
                 boolean multiRelease;
                 if (manifest.exists()) {
                     InputStream inputStream = new FileInputStream(manifest);
@@ -1199,13 +1276,13 @@ public interface ClassFileLocator extends Closeable {
                 }
                 int[] version;
                 if (multiRelease) {
-                    File[] file = new File(folder, "META-INF" + File.separatorChar + "versions").listFiles();
+                    File[] file = new File(folder, MultiReleaseAware.MULTI_RELEASE_PREFIX).listFiles();
                     if (file != null) {
                         SortedSet<Integer> versions = new TreeSet<Integer>();
                         for (int index = 0; index < file.length; index++) {
                             try {
                                 int candidate = Integer.parseInt(file[index].getName());
-                                if (candidate <= classFileVersion.getJavaVersion() && candidate > 7) {
+                                if (candidate > 7 && candidate <= classFileVersion.getJavaVersion()) {
                                     versions.add(candidate);
                                 }
                             } catch (NumberFormatException ignored) {
@@ -1218,35 +1295,31 @@ public interface ClassFileLocator extends Closeable {
                             version[versions.size() - index - 1] = iterator.next();
                         }
                     } else {
-                        version = new int[0];
+                        version = NO_MULTI_RELEASE;
                     }
                 } else {
-                    version = new int[0];
+                    version = NO_MULTI_RELEASE;
                 }
-                return new ForFolder(folder, version);
+                return new ForFolder(version, folder);
             }
         }
 
         /**
          * {@inheritDoc}
          */
-        public Resolution locate(String name) throws IOException {
-            String path = name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION;
-            for (int index = 0; index < version.length + 1; index++) {
-                File file = new File(folder, index == version.length ? path : "META-INF"
-                        + File.separatorChar + "versions"
-                        + File.separatorChar + version[index]
-                        + File.separatorChar + path);
-                if (file.exists()) {
-                    InputStream inputStream = new FileInputStream(file);
-                    try {
-                        return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
-                    } finally {
-                        inputStream.close();
-                    }
+        @MaybeNull
+        protected byte[] doLocate(String path) throws IOException {
+            File file = new File(folder, path);
+            if (file.exists()) {
+                InputStream inputStream = new FileInputStream(file);
+                try {
+                    return StreamDrainer.DEFAULT.drain(inputStream);
+                } finally {
+                    inputStream.close();
                 }
+            } else {
+                return null;
             }
-            return new Resolution.Illegal(name);
         }
 
         /**

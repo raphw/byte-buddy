@@ -66,7 +66,7 @@ public class ClassFileLocatorForFolderTest {
     }
 
     @Test
-    public void testSuccessfulVersionLocation() throws Exception {
+    public void testMultiReleaseVersionLocation() throws Exception {
         File metaInf = new File(folder, "META-INF");
         assertThat(metaInf.mkdir(), is(true));
         Manifest manifest = new Manifest();
@@ -78,7 +78,7 @@ public class ClassFileLocatorForFolderTest {
         } finally {
             outputStream.close();
         }
-        File packageFolder = new File(metaInf, "versions/9/" + FOO);
+        File packageFolder = new File(metaInf, "versions/11/" + FOO);
         assertThat(packageFolder.mkdirs(), is(true));
         File file = new File(packageFolder, BAR + ".class");
         assertThat(file.createNewFile(), is(true));
@@ -89,9 +89,11 @@ public class ClassFileLocatorForFolderTest {
         } finally {
             outputStream.close();
         }
-        ClassFileLocator classFileLocator = ClassFileLocator.ForFolder.of(folder, ClassFileVersion.JAVA_V9);
+        ClassFileLocator classFileLocator = ClassFileLocator.ForFolder.of(folder, ClassFileVersion.JAVA_V11);
         ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
+        ClassFileLocator unresolved = ClassFileLocator.ForFolder.of(folder, ClassFileVersion.JAVA_V9);
+        assertThat(unresolved.locate(FOO + "." + BAR).isResolved(), is(false));
     }
 }
