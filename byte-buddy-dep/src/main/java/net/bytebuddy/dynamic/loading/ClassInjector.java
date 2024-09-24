@@ -53,6 +53,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.zip.ZipFile;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -2476,7 +2477,7 @@ public interface ClassInjector {
                     } finally {
                         jarOutputStream.close();
                     }
-                    JarFile jarFile = new JarFile(file, false);
+                    JarFile jarFile = new JarFile(file, false, ZipFile.OPEN_READ);
                     try {
                         target.inject(instrumentation, jarFile);
                     } finally {
