@@ -89,7 +89,7 @@ public class ClassFileLocatorForFolderTest {
         } finally {
             outputStream.close();
         }
-        ClassFileLocator classFileLocator = new ClassFileLocator.ForFolder(folder, ClassFileVersion.JAVA_V9);
+        ClassFileLocator classFileLocator = ClassFileLocator.ForFolder.of(folder, ClassFileVersion.JAVA_V9);
         ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
