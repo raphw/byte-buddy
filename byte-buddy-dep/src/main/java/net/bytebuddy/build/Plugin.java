@@ -2260,8 +2260,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * of this origin to close the locator or its underlying resources.
                  *
                  * @return A class file locator for locating class files of this instance.
+                 * @throws IOException If an I/O exception occurs.
                  */
-                ClassFileLocator getClassFileLocator();
+                ClassFileLocator getClassFileLocator() throws IOException;
 
                 /**
                  * An origin implementation for a jar file.
