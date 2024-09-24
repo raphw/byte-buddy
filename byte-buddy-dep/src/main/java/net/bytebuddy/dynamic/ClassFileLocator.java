@@ -232,9 +232,7 @@ public interface ClassFileLocator extends Closeable {
         public Resolution locate(String name) throws IOException {
             String path = name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION;
             for (int index = 0; index < version.length + 1; index++) {
-                byte[] binaryRepresentation = doLocate(index == version.length
-                        ? path
-                        : MULTI_RELEASE_PREFIX + version[index] + "/" + path);
+                byte[] binaryRepresentation = doLocate(index == version.length ? path : MULTI_RELEASE_PREFIX + version[index] + "/" + path);
                 if (binaryRepresentation != null) {
                     return new Resolution.Explicit(binaryRepresentation);
                 }
@@ -329,9 +327,7 @@ public interface ClassFileLocator extends Closeable {
          */
         public Resolution locate(String name) {
             byte[] binaryRepresentation = classFiles.get(name);
-            return binaryRepresentation == null
-                    ? new Resolution.Illegal(name)
-                    : new Resolution.Explicit(binaryRepresentation);
+            return binaryRepresentation == null ? new Resolution.Illegal(name) : new Resolution.Explicit(binaryRepresentation);
         }
 
         /**
@@ -420,9 +416,7 @@ public interface ClassFileLocator extends Closeable {
          * @return A corresponding source locator.
          */
         public static ClassFileLocator of(@MaybeNull ClassLoader classLoader) {
-            return new ForClassLoader(classLoader == null
-                    ? BOOT_LOADER_PROXY
-                    : classLoader);
+            return new ForClassLoader(classLoader == null ? BOOT_LOADER_PROXY : classLoader);
         }
 
         /**
@@ -435,9 +429,7 @@ public interface ClassFileLocator extends Closeable {
         public static byte[] read(Class<?> type) {
             try {
                 ClassLoader classLoader = type.getClassLoader();
-                return locate(classLoader == null
-                        ? BOOT_LOADER_PROXY
-                        : classLoader, TypeDescription.ForLoadedType.getName(type)).resolve();
+                return locate(classLoader == null ? BOOT_LOADER_PROXY : classLoader, TypeDescription.ForLoadedType.getName(type)).resolve();
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
             }
@@ -586,9 +578,7 @@ public interface ClassFileLocator extends Closeable {
              * @return A corresponding source locator.
              */
             public static ClassFileLocator of(@MaybeNull ClassLoader classLoader) {
-                return classLoader == null || classLoader == ClassLoader.getSystemClassLoader() || classLoader == ClassLoader.getSystemClassLoader().getParent()
-                        ? ForClassLoader.of(classLoader)
-                        : new WeaklyReferenced(classLoader);
+                return classLoader == null || classLoader == ClassLoader.getSystemClassLoader() || classLoader == ClassLoader.getSystemClassLoader().getParent() ? ForClassLoader.of(classLoader) : new WeaklyReferenced(classLoader);
             }
 
             /**
@@ -596,9 +586,7 @@ public interface ClassFileLocator extends Closeable {
              */
             public Resolution locate(String name) throws IOException {
                 ClassLoader classLoader = get();
-                return classLoader == null
-                        ? new Resolution.Illegal(name)
-                        : ForClassLoader.locate(classLoader, name);
+                return classLoader == null ? new Resolution.Illegal(name) : ForClassLoader.locate(classLoader, name);
             }
 
             /**
@@ -690,9 +678,7 @@ public interface ClassFileLocator extends Closeable {
          * @return An appropriate class file locator.
          */
         public static ClassFileLocator of(JavaModule module) {
-            return module.isNamed()
-                    ? new ForModule(module)
-                    : ForClassLoader.of(module.getClassLoader());
+            return module.isNamed() ? new ForModule(module) : ForClassLoader.of(module.getClassLoader());
         }
 
         /**
@@ -766,9 +752,7 @@ public interface ClassFileLocator extends Closeable {
              */
             public static ClassFileLocator of(JavaModule module) {
                 if (module.isNamed()) {
-                    return module.getClassLoader() == null || module.getClassLoader() == ClassLoader.getSystemClassLoader() || module.getClassLoader() == ClassLoader.getSystemClassLoader().getParent()
-                            ? new ForModule(module)
-                            : new WeaklyReferenced(module.unwrap());
+                    return module.getClassLoader() == null || module.getClassLoader() == ClassLoader.getSystemClassLoader() || module.getClassLoader() == ClassLoader.getSystemClassLoader().getParent() ? new ForModule(module) : new WeaklyReferenced(module.unwrap());
                 } else {
                     return ForClassLoader.WeaklyReferenced.of(module.getClassLoader());
                 }
@@ -779,9 +763,7 @@ public interface ClassFileLocator extends Closeable {
              */
             public Resolution locate(String name) throws IOException {
                 Object module = get();
-                return module == null
-                        ? new Resolution.Illegal(name)
-                        : ForModule.locate(JavaModule.of(module), name);
+                return module == null ? new Resolution.Illegal(name) : ForModule.locate(JavaModule.of(module), name);
             }
 
             /**
@@ -921,9 +903,7 @@ public interface ClassFileLocator extends Closeable {
                         String name = enumeration.nextElement().getName();
                         if (name.endsWith(CLASS_FILE_EXTENSION) && name.startsWith(MultiReleaseAware.MULTI_RELEASE_PREFIX)) {
                             try {
-                                int candidate = Integer.parseInt(name.substring(
-                                        MultiReleaseAware.MULTI_RELEASE_PREFIX.length(),
-                                        name.indexOf('/', MultiReleaseAware.MULTI_RELEASE_PREFIX.length())));
+                                int candidate = Integer.parseInt(name.substring(MultiReleaseAware.MULTI_RELEASE_PREFIX.length(), name.indexOf('/', MultiReleaseAware.MULTI_RELEASE_PREFIX.length())));
                                 if (candidate > 7 && candidate <= classFileVersion.getJavaVersion()) {
                                     versions.add(candidate);
                                 }
@@ -1121,9 +1101,7 @@ public interface ClassFileLocator extends Closeable {
          */
         public static ClassFileLocator ofModulePath() throws IOException {
             String modulePath = System.getProperty("jdk.module.path");
-            return modulePath == null
-                    ? NoOp.INSTANCE
-                    : ofModulePath(modulePath);
+            return modulePath == null ? NoOp.INSTANCE : ofModulePath(modulePath);
         }
 
         /**
@@ -1168,16 +1146,12 @@ public interface ClassFileLocator extends Closeable {
                             if (aModule.isDirectory()) {
                                 classFileLocators.add(ForFolder.of(aModule, classFileVersion));
                             } else if (aModule.isFile()) {
-                                classFileLocators.add(aModule.getName().endsWith(JMOD_FILE_EXTENSION)
-                                        ? of(aModule)
-                                        : ForJarFile.of(aModule, classFileVersion));
+                                classFileLocators.add(aModule.getName().endsWith(JMOD_FILE_EXTENSION) ? of(aModule) : ForJarFile.of(aModule, classFileVersion));
                             }
                         }
                     }
                 } else if (file.isFile()) {
-                    classFileLocators.add(file.getName().endsWith(JMOD_FILE_EXTENSION)
-                            ? of(file)
-                            : ForJarFile.of(file));
+                    classFileLocators.add(file.getName().endsWith(JMOD_FILE_EXTENSION) ? of(file) : ForJarFile.of(file));
                 }
             }
             return new Compound(classFileLocators);
@@ -1259,6 +1233,7 @@ public interface ClassFileLocator extends Closeable {
          *
          * @param folder           The base folder of the package structure.
          * @param classFileVersion The class file version to consider for multi-release JAR files.
+         * @return An appropriate class file locator.
          * @throws IOException If an I/O exception occurs.
          */
         public static ClassFileLocator of(File folder, ClassFileVersion classFileVersion) throws IOException {
@@ -1532,9 +1507,7 @@ public interface ClassFileLocator extends Closeable {
                 try {
                     DISPATCHER.retransformClasses(instrumentation, new Class<?>[]{classLoadingDelegate.locate(name)});
                     byte[] binaryRepresentation = classFileTransformer.getBinaryRepresentation();
-                    return binaryRepresentation == null
-                            ? new Resolution.Illegal(name)
-                            : new Resolution.Explicit(binaryRepresentation);
+                    return binaryRepresentation == null ? new Resolution.Illegal(name) : new Resolution.Explicit(binaryRepresentation);
                 } finally {
                     instrumentation.removeTransformer(classFileTransformer);
                 }
@@ -1639,9 +1612,7 @@ public interface ClassFileLocator extends Closeable {
                  * @return The class loading delegate for the provided class loader.
                  */
                 public static ClassLoadingDelegate of(@MaybeNull ClassLoader classLoader) {
-                    return ForDelegatingClassLoader.isDelegating(classLoader)
-                            ? new ForDelegatingClassLoader(classLoader)
-                            : new Default(classLoader == null ? BOOT_LOADER_PROXY : classLoader);
+                    return ForDelegatingClassLoader.isDelegating(classLoader) ? new ForDelegatingClassLoader(classLoader) : new Default(classLoader == null ? BOOT_LOADER_PROXY : classLoader);
                 }
 
                 /**
@@ -1656,9 +1627,7 @@ public interface ClassFileLocator extends Closeable {
                  */
                 @MaybeNull
                 public ClassLoader getClassLoader() {
-                    return classLoader == BOOT_LOADER_PROXY
-                            ? ClassLoadingStrategy.BOOTSTRAP_LOADER
-                            : classLoader;
+                    return classLoader == BOOT_LOADER_PROXY ? ClassLoadingStrategy.BOOTSTRAP_LOADER : classLoader;
                 }
 
                 /**
@@ -1746,9 +1715,7 @@ public interface ClassFileLocator extends Closeable {
                         return super.locate(name);
                     }
                     Class<?> type = classes.get(ONLY);
-                    return TypeDescription.ForLoadedType.getName(type).equals(name)
-                            ? type
-                            : super.locate(name);
+                    return TypeDescription.ForLoadedType.getName(type).equals(name) ? type : super.locate(name);
                 }
 
                 /**
@@ -1949,9 +1916,7 @@ public interface ClassFileLocator extends Closeable {
                  */
                 public Class<?> locate(String name) throws ClassNotFoundException {
                     Class<?> type = types.get(name);
-                    return type == null
-                            ? fallbackDelegate.locate(name)
-                            : type;
+                    return type == null ? fallbackDelegate.locate(name) : type;
                 }
 
                 /**
@@ -2009,11 +1974,7 @@ public interface ClassFileLocator extends Closeable {
              */
             @MaybeNull
             @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not modified by class contract.")
-            public byte[] transform(@MaybeNull ClassLoader classLoader,
-                                    @MaybeNull String internalName,
-                                    @MaybeNull Class<?> redefinedType,
-                                    ProtectionDomain protectionDomain,
-                                    byte[] binaryRepresentation) {
+            public byte[] transform(@MaybeNull ClassLoader classLoader, @MaybeNull String internalName, @MaybeNull Class<?> redefinedType, ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
                 if (internalName != null && isChildOf(this.classLoader).matches(classLoader) && typeName.equals(internalName.replace('/', '.'))) {
                     this.binaryRepresentation = binaryRepresentation.clone();
                 }
@@ -2059,12 +2020,8 @@ public interface ClassFileLocator extends Closeable {
          */
         public Resolution locate(String name) throws IOException {
             int packageIndex = name.lastIndexOf('.');
-            ClassFileLocator classFileLocator = classFileLocators.get(packageIndex == -1
-                    ? NamedElement.EMPTY_NAME
-                    : name.substring(0, packageIndex));
-            return classFileLocator == null
-                    ? new Resolution.Illegal(name)
-                    : classFileLocator.locate(name);
+            ClassFileLocator classFileLocator = classFileLocators.get(packageIndex == -1 ? NamedElement.EMPTY_NAME : name.substring(0, packageIndex));
+            return classFileLocator == null ? new Resolution.Illegal(name) : classFileLocator.locate(name);
         }
 
         /**
