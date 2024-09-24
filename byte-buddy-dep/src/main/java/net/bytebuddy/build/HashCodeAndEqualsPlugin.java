@@ -150,7 +150,8 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
                             ? ElementMatchers.<FieldDescription>none()
                             : ElementMatchers.<FieldDescription>isSynthetic())
                     .withIgnoredFields(new ValueMatcher(ValueHandling.Sort.IGNORE))
-                    .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY))));
+                    .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY)))
+                    .withIdentityFields(isAnnotatedWith(Identity.class)));
         }
         if (typeDescription.getDeclaredMethods().filter(isEquals()).isEmpty()) {
             EqualsMethod equalsMethod = enhance.getValue(ENHANCE_INVOKE_SUPER).load(Enhance.class.getClassLoader()).resolve(Enhance.InvokeSuper.class)
@@ -160,6 +161,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
                             : ElementMatchers.<FieldDescription>isSynthetic())
                     .withIgnoredFields(new ValueMatcher(ValueHandling.Sort.IGNORE))
                     .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY)))
+                    .withIdentityFields(isAnnotatedWith(Identity.class))
                     .withFieldOrder(AnnotationOrderComparator.INSTANCE);
             if (enhance.getValue(ENHANCE_SIMPLE_COMPARISON_FIRST).resolve(Boolean.class)) {
                 equalsMethod = equalsMethod
@@ -463,6 +465,17 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
          * @return The value for the sort order where fields with higher values are checked for equality first.
          */
         int value();
+    }
+
+    /**
+     * Indicates that a field should be compared by identity. Hash codes are then determined by
+     * {@link System#identityHashCode(Object)}. Fields that are compared by identity are implicitly null-safe.
+     */
+    @Documented
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Identity {
+        /* empty */
     }
 
     /**

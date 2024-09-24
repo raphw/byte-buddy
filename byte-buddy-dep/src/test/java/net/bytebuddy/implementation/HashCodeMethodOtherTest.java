@@ -49,6 +49,23 @@ public class HashCodeMethodOtherTest {
     }
 
     @Test
+    public void testIdentityField() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isHashCode())
+                .intercept(HashCodeMethod.usingOffset(0).withIdentityFields(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.getClass().getDeclaredField(FOO).set(instance, FOO);
+        assertThat(instance.hashCode(), is(System.identityHashCode(FOO)));
+    }
+
+    @Test
     public void testSuperMethod() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
                 .subclass(HashCodeBase.class)
