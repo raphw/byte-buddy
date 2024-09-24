@@ -632,8 +632,8 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             for (File file : discoverySet) {
                 try {
                     urls.add(file.toURI().toURL());
-                } catch (MalformedURLException e) {
-                    throw new IllegalStateException(e);
+                } catch (MalformedURLException exception) {
+                    throw new IllegalStateException(exception);
                 }
             }
             return urls.isEmpty()
