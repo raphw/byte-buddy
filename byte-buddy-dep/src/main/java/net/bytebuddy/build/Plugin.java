@@ -816,6 +816,16 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         Engine with(ClassFileLocator classFileLocator);
 
         /**
+         * Uses the supplied {@link ClassFileVersion} as a base for resolving multi-release jars, or {@code null}
+         * if multi-release jars should not be resolved but be treated as regular jar files. This property might
+         * not be applied if the underlying location mechanism does not supply manual resource resolution.
+         *
+         * @param classFileVersion The class file version to use or {@code null}.
+         * @return A new plugin engine that is equal to this engine but with the supplied class file verion being used.
+         */
+        Engine with(@MaybeNull ClassFileVersion classFileVersion);
+
+        /**
          * Appends the supplied listener to this engine.
          *
          * @param listener The listener to append.
@@ -4465,6 +4475,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             private final ClassFileLocator classFileLocator;
 
             /**
+             * The class file version to use for multi-release jars, or {@code null}.
+             */
+            @MaybeNull
+            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+            private final ClassFileVersion classFileVersion;
+
+            /**
              * The listener to use.
              */
             private final Listener listener;
@@ -4511,6 +4528,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         PoolStrategy.Default.FAST,
                         ClassFileLocator.NoOp.INSTANCE,
+                        null,
                         Listener.NoOp.INSTANCE,
                         new ErrorHandler.Compound(ErrorHandler.Failing.FAIL_FAST,
                                 ErrorHandler.Enforcing.ALL_TYPES_RESOLVED,
@@ -4526,6 +4544,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * @param typeStrategy       The type strategy to use.
              * @param poolStrategy       The pool strategy to use.
              * @param classFileLocator   The class file locator to use.
+             * @param classFileVersion   The class file version to use for multi-release jars, or {@code null}.
              * @param listener           The listener to use.
              * @param errorHandler       The error handler to use.
              * @param dispatcherFactory  The dispatcher factory to use.
@@ -4535,6 +4554,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                               TypeStrategy typeStrategy,
                               PoolStrategy poolStrategy,
                               ClassFileLocator classFileLocator,
+                              @MaybeNull ClassFileVersion classFileVersion,
                               Listener listener,
                               ErrorHandler errorHandler,
                               Dispatcher.Factory dispatcherFactory,
@@ -4543,6 +4563,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 this.typeStrategy = typeStrategy;
                 this.poolStrategy = poolStrategy;
                 this.classFileLocator = classFileLocator;
+                this.classFileVersion = classFileVersion;
                 this.listener = listener;
                 this.errorHandler = errorHandler;
                 this.dispatcherFactory = dispatcherFactory;
@@ -4613,6 +4634,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         listener,
                         errorHandler,
                         dispatcherFactory,
@@ -4627,6 +4649,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         listener,
                         errorHandler,
                         dispatcherFactory,
@@ -4641,6 +4664,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         listener,
                         errorHandler,
                         dispatcherFactory,
@@ -4655,6 +4679,22 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         new ClassFileLocator.Compound(this.classFileLocator, classFileLocator),
+                        classFileVersion,
+                        listener,
+                        errorHandler,
+                        dispatcherFactory,
+                        ignoredTypeMatcher);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Engine with(@MaybeNull ClassFileVersion classFileVersion) {
+                return new Default(byteBuddy,
+                        typeStrategy,
+                        poolStrategy,
+                        classFileLocator,
+                        classFileVersion,
                         listener,
                         errorHandler,
                         dispatcherFactory,
@@ -4669,6 +4709,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         new Listener.Compound(this.listener, listener),
                         errorHandler,
                         dispatcherFactory,
@@ -4683,6 +4724,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         listener,
                         Listener.NoOp.INSTANCE,
                         dispatcherFactory,
@@ -4697,6 +4739,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         listener,
                         new ErrorHandler.Compound(errorHandlers),
                         dispatcherFactory,
@@ -4711,6 +4754,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         listener,
                         errorHandler,
                         dispatcherFactory,
@@ -4725,6 +4769,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         typeStrategy,
                         poolStrategy,
                         classFileLocator,
+                        classFileVersion,
                         listener,
                         errorHandler,
                         dispatcherFactory,
@@ -4755,8 +4800,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         }
                     }
                     Source.Origin origin = source.read();
-                    try { // TODO: class file locator.
-                        ClassFileLocator classFileLocator = new ClassFileLocator.Compound(origin.toClassFileLocator(null), this.classFileLocator);
+                    try {
+                        ClassFileLocator classFileLocator = new ClassFileLocator.Compound(origin.toClassFileLocator(classFileVersion), this.classFileLocator);
                         TypePool typePool = poolStrategy.typePool(classFileLocator);
                         Manifest manifest = origin.getManifest();
                         listener.onManifest(manifest);

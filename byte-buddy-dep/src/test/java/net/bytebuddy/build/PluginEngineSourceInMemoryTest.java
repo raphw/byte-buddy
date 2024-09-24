@@ -20,9 +20,9 @@ public class PluginEngineSourceInMemoryTest {
     public void testNoManifest() throws Exception {
         Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.InMemory(Collections.singletonMap("foo/Bar.class", new byte[]{1, 2, 3})).read();
         try {
-            assertThat(origin.toClassFileLocator().locate("foo.Bar").isResolved(), is(true));
-            assertThat(origin.toClassFileLocator().locate("foo.Bar").resolve(), is(new byte[]{1, 2, 3}));
-            assertThat(origin.toClassFileLocator().locate("qux.Baz").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate("foo.Bar").isResolved(), is(true));
+            assertThat(origin.toClassFileLocator(null).locate("foo.Bar").resolve(), is(new byte[]{1, 2, 3}));
+            assertThat(origin.toClassFileLocator(null).locate("qux.Baz").isResolved(), is(false));
             assertThat(origin.getManifest(), nullValue(Manifest.class));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
