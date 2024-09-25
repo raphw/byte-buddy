@@ -51,7 +51,9 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -450,34 +452,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return summary;
         } finally {
             classLoaderResolver.close();
-        }
-    }
-
-    /**
-     * Discovers plugins from an input stream representing a <i>META-INF/net.bytebuddy/build.plugins</i> file.
-     *
-     * @param inputStream    The input stream to read from.
-     * @param undiscoverable A set of undiscoverable plugins.
-     * @param transformers   The list of transformers to add discovered plugins to.
-     * @param classPath      The class path elements to add if a plugin is loaded from the class path or {@code null} if the plugin is discovered as a dependency
-     * @throws IOException If an I/O exception occurs.
-     */
-    private void discover(InputStream inputStream, Set<String> undiscoverable, List<Transformer> transformers, @MaybeNull List<String> classPath) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-        try {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (undiscoverable.add(line)) {
-                    transformers.add(classPath == null
-                            ? new Transformer.ForDiscoveredPlugin(line)
-                            : new Transformer.ForDiscoveredPlugin.FromClassLoader(line, classPath));
-                    getLog().debug("Registered discovered plugin: " + line);
-                } else {
-                    getLog().info("Skipping discovered plugin " + line + " which was previously discovered or registered");
-                }
-            }
-        } finally {
-            reader.close();
         }
     }
 
