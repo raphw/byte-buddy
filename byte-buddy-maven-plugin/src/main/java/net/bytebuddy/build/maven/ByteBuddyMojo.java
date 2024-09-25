@@ -266,7 +266,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     }
                 }
                 if (classPathDiscovery) {
-                    List<URL> urls = new ArrayList<>(elements.size());
+                    List<URL> urls = new ArrayList<URL>(elements.size());
                     for (String element : elements) {
                         urls.add(new File(element).toURI().toURL());
                     }
