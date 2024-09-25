@@ -227,14 +227,14 @@ public class PluginEngineDefaultTest {
             "META-INF/versions/11/" + Sample.class.getName().replace('.', '/') + Plugin.Engine.CLASS_FILE_EXTENSION,
             ClassFileLocator.ForClassLoader.read(Sample.class)
         ));
-        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory(ClassFileVersion.JAVA_V11);
+        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .with(ClassFileVersion.JAVA_V11)
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
                 .with(dispatcherFactory)
                 .apply(source, target, new Plugin.Factory.Simple(plugin));
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap(ClassFileVersion.JAVA_V11));
         Class<?> type = classLoader.loadClass(Sample.class.getName());
         assertThat(type.getDeclaredField(FOO).getType(), is((Object) Void.class));
         assertThat(summary.getTransformed(), hasItems(TypeDescription.ForLoadedType.of(Sample.class)));

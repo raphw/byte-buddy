@@ -3325,104 +3325,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 void retain(Source.Element element) throws IOException;
 
                 /**
-                 * A sink that stores resulting classes in memory.
-                 */
-                class InMemory implements Sink {
-
-                    /**
-                     * The class file version to consider as the maximum version when accepting
-                     * multi-release classes or {@code null} if multi-release versions should
-                     * be discarded.
-                     */
-                    @MaybeNull
-                    private final ClassFileVersion classFileVersion;
-
-                    /**
-                     * The map for storing all elements being received.
-                     */
-                    private final Map<String, byte[]> storage;
-
-                    /**
-                     * A map of type names to the latest observed version if a multi-release version was reported.
-                     */
-                    private final Map<String, Integer> versions;
-
-                    /**
-                     * Creates an in-memory sink.
-                     *
-                     * @param classFileVersion The class file version to consider as the maximum version when accepting
-                     *                         multi-release classes or {@code null} if multi-release versions should
-                     *                         be discarded.
-                     * @param storage          The map for storing all elements being received.
-                     */
-                    public InMemory(@MaybeNull ClassFileVersion classFileVersion, Map<String, byte[]> storage) {
-                        this.classFileVersion = classFileVersion;
-                        this.storage = storage;
-                        versions = new HashMap<String, Integer>();
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void store(Map<TypeDescription, byte[]> binaryRepresentations) {
-                        for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                            String name = entry.getKey().getInternalName() + CLASS_FILE_EXTENSION;
-                            if (!storage.containsKey(name)) {
-                                storage.put(name, entry.getValue());
-                            }
-                        }
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
-                        if (classFileVersion != null && version <= classFileVersion.getJavaVersion()) {
-                            for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                                String name = entry.getKey().getInternalName() + CLASS_FILE_EXTENSION;
-                                Integer current = versions.get(name);
-                                if (current == null || current < version) {
-                                    versions.put(name, version);
-                                    storage.put(name, entry.getValue());
-                                }
-                            }
-                        }
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void retain(Source.Element element) throws IOException {
-                        String name = element.getName();
-                        if (!name.endsWith("/")) {
-                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                            try {
-                                InputStream inputStream = element.getInputStream();
-                                try {
-                                    byte[] buffer = new byte[1024];
-                                    int length;
-                                    while ((length = inputStream.read(buffer)) != -1) {
-                                        outputStream.write(buffer, 0, length);
-                                    }
-                                } finally {
-                                    inputStream.close();
-                                }
-                            } finally {
-                                outputStream.close();
-                            }
-                            storage.put(element.getName(), outputStream.toByteArray());
-                        }
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void close() {
-                        /* do nothing */
-                    }
-                }
-
-                /**
                  * Implements a sink for a jar file.
                  */
                 class ForJarOutputStream implements Sink {
@@ -3543,17 +3445,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * A sink that stores all elements in a memory map.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class InMemory implements Target {
-
-                /**
-                 * The class file version to consider as the maximum version when accepting
-                 * multi-release classes or {@code null} if multi-release versions should
-                 * be discarded.
-                 */
-                @MaybeNull
-                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
-                private final ClassFileVersion classFileVersion;
-
+            class InMemory implements Target, Sink {
                 /**
                  * The map for storing all elements being received.
                  */
@@ -3569,33 +3461,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * Creates a new in-memory storage.
                  *
-                 * @param classFileVersion The class file version to consider as the maximum version when accepting
-                 *                         multi-release classes or {@code null} if multi-release versions should
-                 *                         be discarded.
-                 */
-                public InMemory(@MaybeNull ClassFileVersion classFileVersion) {
-                    this(classFileVersion, new HashMap<String, byte[]>());
-                }
-
-                /**
-                 * Creates a new in-memory storage.
-                 *
                  * @param storage The map for storing all elements being received.
                  */
                 public InMemory(Map<String, byte[]> storage) {
-                    this(null, storage);
-                }
-
-                /**
-                 * Creates a new in-memory storage.
-                 *
-                 * @param classFileVersion The class file version to consider as the maximum version when accepting
-                 *                         multi-release classes or {@code null} if multi-release versions should
-                 *                         be discarded.
-                 * @param storage          The map for storing all elements being received.
-                 */
-                public InMemory(@MaybeNull ClassFileVersion classFileVersion, Map<String, byte[]> storage) {
-                    this.classFileVersion = classFileVersion;
                     this.storage = storage;
                 }
 
@@ -3612,7 +3480,57 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         }
                         storage.put(JarFile.MANIFEST_NAME, outputStream.toByteArray());
                     }
-                    return new Sink.InMemory(classFileVersion, storage);
+                    return this;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void store(Map<TypeDescription, byte[]> binaryRepresentations) {
+                    for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                        storage.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
+                    for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                        storage.put(META_INF_VERSIONS + version + "/" + entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void retain(Source.Element element) throws IOException {
+                    String name = element.getName();
+                    if (!name.endsWith("/")) {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        try {
+                            InputStream inputStream = element.getInputStream();
+                            try {
+                                byte[] buffer = new byte[1024];
+                                int length;
+                                while ((length = inputStream.read(buffer)) != -1) {
+                                    outputStream.write(buffer, 0, length);
+                                }
+                            } finally {
+                                inputStream.close();
+                            }
+                        } finally {
+                            outputStream.close();
+                        }
+                        storage.put(element.getName(), outputStream.toByteArray());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() {
+                    /* do nothing */
                 }
 
                 /**
@@ -3632,10 +3550,50 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public Map<String, byte[]> toTypeMap() {
                     Map<String, byte[]> binaryRepresentations = new HashMap<String, byte[]>();
                     for (Map.Entry<String, byte[]> entry : storage.entrySet()) {
-                        if (entry.getKey().endsWith(CLASS_FILE_EXTENSION)) {
+                        if (entry.getKey().endsWith(CLASS_FILE_EXTENSION) && !entry.getKey().startsWith(META_INF_VERSIONS)) {
                             binaryRepresentations.put(entry.getKey()
                                     .substring(0, entry.getKey().length() - CLASS_FILE_EXTENSION.length())
                                     .replace('/', '.'), entry.getValue());
+                        }
+                    }
+                    return binaryRepresentations;
+                }
+
+                /**
+                 * Returns the in-memory storage as a type-map where all non-class files are discarded.
+                 *
+                 * @param classFileVersion The class file version to consider when encountering multi-release class files.
+                 * @return The in-memory storage as a type map.
+                 */
+                public Map<String, byte[]> toTypeMap(ClassFileVersion classFileVersion) {
+                    Map<String, byte[]> binaryRepresentations = new HashMap<String, byte[]>();
+                    Map<String, Integer> versions = new HashMap<String, Integer>();
+                    for (Map.Entry<String, byte[]> entry : storage.entrySet()) {
+                        if (entry.getKey().endsWith(CLASS_FILE_EXTENSION)) {
+                            String suffix;
+                            int version;
+                            if (entry.getKey().startsWith(META_INF_VERSIONS)) {
+                                suffix = entry.getKey().substring(entry.getKey().indexOf('/', META_INF_VERSIONS.length()) + 1);
+                                try {
+                                    int candidate = Integer.parseInt(entry.getKey().substring(META_INF_VERSIONS.length(), entry.getKey().indexOf('/', META_INF_VERSIONS.length())));
+                                    if (candidate < 7 || candidate > classFileVersion.getJavaVersion()) {
+                                        continue;
+                                    }
+                                    version = candidate;
+                                } catch (NumberFormatException ignored) {
+                                    continue;
+                                }
+                            } else {
+                                suffix = entry.getKey();
+                                version = 0;
+                            }
+                            Integer current = versions.get(suffix);
+                            if (current == null || current < version) {
+                                versions.put(suffix, version);
+                                binaryRepresentations.put(suffix
+                                        .substring(0, suffix.length() - CLASS_FILE_EXTENSION.length())
+                                        .replace('/', '.'), entry.getValue());
+                            }
                         }
                     }
                     return binaryRepresentations;

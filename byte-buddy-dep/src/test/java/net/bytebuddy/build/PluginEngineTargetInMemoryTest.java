@@ -71,28 +71,21 @@ public class PluginEngineTargetInMemoryTest {
 
     @Test
     public void testMultiVersion() throws Exception {
-        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory(ClassFileVersion.JAVA_V11);
+        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         sink.store(Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
         sink.store(11, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{4, 5, 6}));
         sink.store(17, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{7, 8, 9}));
         sink.close();
-        assertThat(target.getStorage().size(), is(1));
-        assertThat(target.getStorage().get(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{4, 5, 6}));
-        assertThat(target.toTypeMap().size(), is(1));
-        assertThat(target.toTypeMap().get(TypeDescription.ForLoadedType.of(Object.class).getName()), is(new byte[]{4, 5, 6}));
-    }
-
-    @Test
-    public void testNoMultiVersion() throws Exception {
-        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
-        sink.store(Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
-        sink.store(11, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{4, 5, 6}));
-        sink.close();
-        assertThat(target.getStorage().size(), is(1));
+        assertThat(target.getStorage().size(), is(3));
         assertThat(target.getStorage().get(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{1, 2, 3}));
+        assertThat(target.getStorage().get(Plugin.Engine.META_INF_VERSIONS + "11/" + TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{4, 5, 6}));
+        assertThat(target.getStorage().get(Plugin.Engine.META_INF_VERSIONS + "17/" + TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{7, 8, 9}));
         assertThat(target.toTypeMap().size(), is(1));
         assertThat(target.toTypeMap().get(TypeDescription.ForLoadedType.of(Object.class).getName()), is(new byte[]{1, 2, 3}));
+        assertThat(target.toTypeMap(ClassFileVersion.JAVA_V11).size(), is(1));
+        assertThat(target.toTypeMap(ClassFileVersion.JAVA_V11).get(TypeDescription.ForLoadedType.of(Object.class).getName()), is(new byte[]{4, 5, 6}));
+        assertThat(target.toTypeMap(ClassFileVersion.JAVA_V17).size(), is(1));
+        assertThat(target.toTypeMap(ClassFileVersion.JAVA_V17).get(TypeDescription.ForLoadedType.of(Object.class).getName()), is(new byte[]{7, 8, 9}));
     }
 }
