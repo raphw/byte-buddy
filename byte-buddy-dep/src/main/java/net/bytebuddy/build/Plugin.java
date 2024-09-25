@@ -28,6 +28,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
+import net.bytebuddy.utility.StreamDrainer;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
@@ -2959,7 +2960,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * Represents a collection of types as an in-memory source.
                  *
-                 * @param types The types to represent.
+                 * @param types          The types to represent.
                  * @param versionedTypes A versioned mapping of types to represent.
                  * @return A source representing the supplied types.
                  */
@@ -4884,16 +4885,20 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                     while (name.startsWith("/")) {
                                         name = name.substring(1);
                                     }
-                                    if (name.endsWith(ClassFileLocator.CLASS_FILE_EXTENSION) && !name.endsWith(PACKAGE_INFO) && !name.equals(MODULE_INFO)) {
+                                    if (name.endsWith(ClassFileLocator.CLASS_FILE_EXTENSION)
+                                            && (!name.startsWith("META-INF") && name.startsWith(ClassFileLocator.META_INF_VERSIONS))
+                                            && !name.endsWith(PACKAGE_INFO)
+                                            && !name.endsWith(MODULE_INFO)) {
                                         try {
+                                            String typeName = name.substring(name.startsWith(ClassFileLocator.META_INF_VERSIONS)
+                                                    ? name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()) + 1
+                                                    : 0, name.length() - ClassFileLocator.CLASS_FILE_EXTENSION.length()).replace('/', '.');
                                             dispatcher.accept(new Preprocessor(element,
-                                                    name.substring(name.startsWith(ClassFileLocator.META_INF_VERSIONS)
-                                                            ? name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()) + 1
-                                                            : 0, name.length() - ClassFileLocator.CLASS_FILE_EXTENSION.length()).replace('/', '.'),
+                                                    typeName,
                                                     name.startsWith(ClassFileLocator.META_INF_VERSIONS)
                                                             ? Integer.parseInt(name.substring(ClassFileLocator.META_INF_VERSIONS.length(), name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length())))
                                                             : 0,
-                                                    classFileLocator,
+                                                    new SourceEntryPrependingClassFileLocator(typeName, element, classFileLocator),
                                                     typePool,
                                                     listener,
                                                     plugins,
@@ -4943,6 +4948,65 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     throw (RuntimeException) rethrown;
                 } else {
                     throw new IllegalStateException(rethrown);
+                }
+            }
+
+            /**
+             * A class file locator that shadows a given {@link Source.Element}'s type with the explicit element.
+             * This avoids that caching yields the wrong class file in case of multi-release jars.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class SourceEntryPrependingClassFileLocator implements ClassFileLocator {
+
+                /**
+                 * The name of the represented type.
+                 */
+                private final String name;
+
+                /**
+                 * The corresponding source element.
+                 */
+                private final Source.Element element;
+
+                /**
+                 * The actual class file locator to query for all other types.
+                 */
+                private final ClassFileLocator delegate;
+
+                /**
+                 * Creates a class file locator that prepends a {@link Source.Element}.
+                 *
+                 * @param name     The name of the represented type.
+                 * @param element  The corresponding source element.
+                 * @param delegate The actual class file locator to query for all other types.
+                 */
+                protected SourceEntryPrependingClassFileLocator(String name, Source.Element element, ClassFileLocator delegate) {
+                    this.name = name;
+                    this.element = element;
+                    this.delegate = delegate;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Resolution locate(String name) throws IOException {
+                    if (name.endsWith(this.name)) {
+                        InputStream inputStream = element.getInputStream();
+                        try {
+                            return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
+                        } finally {
+                            inputStream.close();
+                        }
+                    } else {
+                        return delegate.locate(name);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() throws IOException {
+                    delegate.close();
                 }
             }
 
