@@ -231,6 +231,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * {@inheritDoc}
      */
+    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "The security manager is not normally used within Maven.")
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (project == null || repositorySystem == null || discovery == null) {
             throw new MojoExecutionException("Plugin is not initialized correctly");
@@ -1225,7 +1226,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "The security manager is not normally used within Maven")
+                @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "The security manager is not normally used within Maven.")
                 protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver, Map<Coordinate, String> coordinates, String groupId, String artifactId, String version, String packaging) {
                     URL[] url = new URL[classPath.size()];
                     for (int index = 0; index < classPath.size(); index++) {
