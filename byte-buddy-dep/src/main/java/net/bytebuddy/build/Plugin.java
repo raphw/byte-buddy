@@ -2947,7 +2947,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
 
                 /**
-                 * Represents a collection of types as a in-memory source.
+                 * Represents a collection of types as an in-memory source.
                  *
                  * @param type The types to represent.
                  * @return A source representing the supplied types.
@@ -2957,17 +2957,36 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
 
                 /**
-                 * Represents a collection of types as a in-memory source.
+                 * Represents a collection of types as an in-memory source.
                  *
                  * @param types The types to represent.
                  * @return A source representing the supplied types.
                  */
                 public static Source ofTypes(Collection<? extends Class<?>> types) {
+                    return ofTypes(types, Collections.<ClassFileVersion, Collection<Class<?>>>emptyMap());
+                }
+
+                /**
+                 * Represents a collection of types as an in-memory source.
+                 *
+                 * @param types The types to represent.
+                 * @param versionedTypes A versioned mapping of types to represent.
+                 * @return A source representing the supplied types.
+                 */
+                public static Source ofTypes(Collection<? extends Class<?>> types, Map<ClassFileVersion, Collection<Class<?>>> versionedTypes) {
+                    Map<ClassFileVersion, Map<TypeDescription, byte[]>> versionedBinaryRepresentations = new HashMap<ClassFileVersion, Map<TypeDescription, byte[]>>();
+                    for (Map.Entry<ClassFileVersion, Collection<Class<?>>> entry : versionedTypes.entrySet()) {
+                        Map<TypeDescription, byte[]> binaryRepresentations = new HashMap<TypeDescription, byte[]>();
+                        for (Class<?> type : entry.getValue()) {
+                            binaryRepresentations.put(TypeDescription.ForLoadedType.of(type), ClassFileLocator.ForClassLoader.read(type));
+                        }
+                        versionedBinaryRepresentations.put(entry.getKey(), binaryRepresentations);
+                    }
                     Map<TypeDescription, byte[]> binaryRepresentations = new HashMap<TypeDescription, byte[]>();
                     for (Class<?> type : types) {
                         binaryRepresentations.put(TypeDescription.ForLoadedType.of(type), ClassFileLocator.ForClassLoader.read(type));
                     }
-                    return ofTypes(binaryRepresentations);
+                    return ofTypes(binaryRepresentations, versionedBinaryRepresentations);
                 }
 
                 /**
@@ -2977,9 +2996,28 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @return A source representing the supplied types.
                  */
                 public static Source ofTypes(Map<TypeDescription, byte[]> binaryRepresentations) {
+                    return ofTypes(binaryRepresentations, Collections.<ClassFileVersion, Map<TypeDescription, byte[]>>emptyMap());
+                }
+
+                /**
+                 * Represents a map of type names to their binary representation as an in-memory source.
+                 *
+                 * @param binaryRepresentations          A mapping of type names to their binary representation.
+                 * @param versionedBinaryRepresentations A versioned mapping of type names to their binary representation.
+                 * @return A source representing the supplied types.
+                 */
+                public static Source ofTypes(
+                        Map<TypeDescription, byte[]> binaryRepresentations,
+                        Map<ClassFileVersion, Map<TypeDescription, byte[]>> versionedBinaryRepresentations
+                ) {
                     Map<String, byte[]> storage = new HashMap<String, byte[]>();
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
                         storage.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                    }
+                    for (Map.Entry<ClassFileVersion, Map<TypeDescription, byte[]>> versioned : versionedBinaryRepresentations.entrySet()) {
+                        for (Map.Entry<TypeDescription, byte[]> entry : versioned.getValue().entrySet()) {
+                            storage.put(META_INF_VERSIONS + versioned.getKey().getJavaVersion() + "/" + entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                        }
                     }
                     return new InMemory(storage);
                 }
@@ -4857,18 +4895,23 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                         name = name.substring(1);
                                     }
                                     if (name.endsWith(CLASS_FILE_EXTENSION) && !name.endsWith(PACKAGE_INFO) && !name.equals(MODULE_INFO)) {
-                                        dispatcher.accept(new Preprocessor(element,
-                                                name.substring(name.startsWith(META_INF_VERSIONS)
-                                                        ? name.indexOf('/', META_INF_VERSIONS.length()) + 1
-                                                        : 0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
-                                                name.startsWith(META_INF_VERSIONS)
-                                                        ? Integer.parseInt(name.substring(META_INF_VERSIONS.length(), name.indexOf('/', META_INF_VERSIONS.length())))
-                                                        : 0,
-                                                classFileLocator,
-                                                typePool,
-                                                listener,
-                                                plugins,
-                                                preprocessors), preprocessors.isEmpty());
+                                        try {
+                                            dispatcher.accept(new Preprocessor(element,
+                                                    name.substring(name.startsWith(META_INF_VERSIONS)
+                                                            ? name.indexOf('/', META_INF_VERSIONS.length()) + 1
+                                                            : 0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
+                                                    name.startsWith(META_INF_VERSIONS)
+                                                            ? Integer.parseInt(name.substring(META_INF_VERSIONS.length(), name.indexOf('/', META_INF_VERSIONS.length())))
+                                                            : 0,
+                                                    classFileLocator,
+                                                    typePool,
+                                                    listener,
+                                                    plugins,
+                                                    preprocessors), preprocessors.isEmpty());
+                                        } catch (NumberFormatException ignored) {
+                                            listener.onResource(name);
+                                            sink.retain(element);
+                                        }
                                     } else if (!name.equals(JarFile.MANIFEST_NAME)) {
                                         listener.onResource(name);
                                         sink.retain(element);

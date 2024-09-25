@@ -223,10 +223,9 @@ public class PluginEngineDefaultTest {
         Plugin plugin = eager
                 ? new SimplePlugin()
                 : new PreprocessingPlugin(new SimplePlugin());
-        Plugin.Engine.Source source = new Plugin.Engine.Source.InMemory(Collections.singletonMap(
-            "META-INF/versions/11/" + Sample.class.getName().replace('.', '/') + Plugin.Engine.CLASS_FILE_EXTENSION,
-            ClassFileLocator.ForClassLoader.read(Sample.class)
-        ));
+        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Collections.emptyList(), Collections.singletonMap(
+            ClassFileVersion.JAVA_V11,
+            Collections.singletonList(Sample.class)));
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)

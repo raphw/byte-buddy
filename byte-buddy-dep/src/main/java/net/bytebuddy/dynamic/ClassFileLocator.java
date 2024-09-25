@@ -896,7 +896,7 @@ public interface ClassFileLocator extends Closeable {
             } else {
                 Manifest manifest = jarFile.getManifest();
                 int[] version;
-                if (Boolean.parseBoolean(manifest.getMainAttributes().getValue(MultiReleaseAware.MULTI_RELEASE_ATTRIBUTE))) {
+                if (manifest != null && Boolean.parseBoolean(manifest.getMainAttributes().getValue(MultiReleaseAware.MULTI_RELEASE_ATTRIBUTE))) {
                     SortedSet<Integer> versions = new TreeSet<Integer>();
                     Enumeration<JarEntry> enumeration = jarFile.entries();
                     while (enumeration.hasMoreElements()) {
