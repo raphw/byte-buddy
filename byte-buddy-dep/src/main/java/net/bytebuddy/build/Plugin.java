@@ -3007,7 +3007,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     }
                     for (Map.Entry<ClassFileVersion, Map<TypeDescription, byte[]>> versioned : versionedBinaryRepresentations.entrySet()) {
                         for (Map.Entry<TypeDescription, byte[]> entry : versioned.getValue().entrySet()) {
-                            storage.put(ClassFileLocator.META_INF_VERSIONS + versioned.getKey().getJavaVersion() + "/" + entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION, entry.getValue());
+                            storage.put(ClassFileLocator.META_INF_VERSIONS
+                                    + versioned.getKey().getJavaVersion()
+                                    + "/"
+                                    + entry.getKey().getInternalName()
+                                    + ClassFileLocator.CLASS_FILE_EXTENSION, entry.getValue());
                         }
                     }
                     return new InMemory(storage);
@@ -3339,7 +3343,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * Stores the supplied binary representation of types in this sink.
                  *
-                 * @param version               The version of the multi-release jar file.
+                 * @param version               The version of the multi-release jar file, which should at least be {@code 8} as previous
+                 *                              versions are not recognized by regular class loaders.
                  * @param binaryRepresentations The binary representations to store.
                  * @throws IOException If an I/O error occurs.
                  */
@@ -4890,19 +4895,28 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                             && !name.endsWith(PACKAGE_INFO)
                                             && !name.endsWith(MODULE_INFO)) {
                                         try {
-                                            String typeName = name.substring(name.startsWith(ClassFileLocator.META_INF_VERSIONS)
-                                                    ? name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()) + 1
-                                                    : 0, name.length() - ClassFileLocator.CLASS_FILE_EXTENSION.length()).replace('/', '.');
-                                            dispatcher.accept(new Preprocessor(element,
-                                                    typeName,
-                                                    name.startsWith(ClassFileLocator.META_INF_VERSIONS)
-                                                            ? Integer.parseInt(name.substring(ClassFileLocator.META_INF_VERSIONS.length(), name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length())))
-                                                            : 0,
-                                                    new SourceEntryPrependingClassFileLocator(typeName, element, classFileLocator),
-                                                    typePool,
-                                                    listener,
-                                                    plugins,
-                                                    preprocessors), preprocessors.isEmpty());
+                                            int version = name.startsWith(ClassFileLocator.META_INF_VERSIONS)
+                                                    ? Math.max(7, Integer.parseInt(name.substring(ClassFileLocator.META_INF_VERSIONS.length(), name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()))))
+                                                    : 0;
+                                            if (version == 0 || version > 7
+                                                    && classFileVersion != null
+                                                    && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V9)
+                                                    && version <= classFileVersion.getJavaVersion()) {
+                                                String typeName = name.substring(name.startsWith(ClassFileLocator.META_INF_VERSIONS)
+                                                        ? name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()) + 1
+                                                        : 0, name.length() - ClassFileLocator.CLASS_FILE_EXTENSION.length()).replace('/', '.');
+                                                dispatcher.accept(new Preprocessor(element,
+                                                        typeName,
+                                                        version,
+                                                        new SourceEntryPrependingClassFileLocator(typeName, element, classFileLocator),
+                                                        typePool,
+                                                        listener,
+                                                        plugins,
+                                                        preprocessors), preprocessors.isEmpty());
+                                            } else {
+                                                listener.onResource(name);
+                                                sink.retain(element);
+                                            }
                                         } catch (NumberFormatException ignored) {
                                             listener.onResource(name);
                                             sink.retain(element);
