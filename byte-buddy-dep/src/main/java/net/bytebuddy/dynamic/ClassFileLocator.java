@@ -230,7 +230,7 @@ public interface ClassFileLocator extends Closeable {
          * {@inheritDoc}
          */
         public Resolution locate(String name) throws IOException {
-            String path = name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION;
+            String path = name.replace('.', '/') + CLASS_FILE_EXTENSION;
             for (int index = 0; index < version.length + 1; index++) {
                 byte[] binaryRepresentation = doLocate(index == version.length ? path : META_INF_VERSIONS + version[index] + "/" + path);
                 if (binaryRepresentation != null) {
