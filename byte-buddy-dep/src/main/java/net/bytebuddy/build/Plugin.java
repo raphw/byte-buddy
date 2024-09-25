@@ -4886,7 +4886,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                         name = name.substring(1);
                                     }
                                     if (name.endsWith(ClassFileLocator.CLASS_FILE_EXTENSION)
-                                            && (!name.startsWith("META-INF") && name.startsWith(ClassFileLocator.META_INF_VERSIONS))
+                                            && (!name.startsWith("META-INF") || name.startsWith(ClassFileLocator.META_INF_VERSIONS))
                                             && !name.endsWith(PACKAGE_INFO)
                                             && !name.endsWith(MODULE_INFO)) {
                                         try {
