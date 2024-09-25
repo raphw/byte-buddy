@@ -2953,7 +2953,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @return A source representing the supplied types.
                  */
                 public static Source ofTypes(Collection<? extends Class<?>> types) {
-                    return ofTypes(types, Collections.<ClassFileVersion, Collection<Class<?>>>emptyMap());
+                    return ofTypes(types, Collections.<ClassFileVersion, Collection<? extends Class<?>>>emptyMap());
                 }
 
                 /**
@@ -2963,9 +2963,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @param versionedTypes A versioned mapping of types to represent.
                  * @return A source representing the supplied types.
                  */
-                public static Source ofTypes(Collection<? extends Class<?>> types, Map<ClassFileVersion, Collection<Class<?>>> versionedTypes) {
+                public static Source ofTypes(Collection<? extends Class<?>> types, Map<ClassFileVersion, Collection<? extends Class<?>>> versionedTypes) {
                     Map<ClassFileVersion, Map<TypeDescription, byte[]>> versionedBinaryRepresentations = new HashMap<ClassFileVersion, Map<TypeDescription, byte[]>>();
-                    for (Map.Entry<ClassFileVersion, Collection<Class<?>>> entry : versionedTypes.entrySet()) {
+                    for (Map.Entry<ClassFileVersion, Collection<? extends Class<?>>> entry : versionedTypes.entrySet()) {
                         Map<TypeDescription, byte[]> binaryRepresentations = new HashMap<TypeDescription, byte[]>();
                         for (Class<?> type : entry.getValue()) {
                             binaryRepresentations.put(TypeDescription.ForLoadedType.of(type), ClassFileLocator.ForClassLoader.read(type));
