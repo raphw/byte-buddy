@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 
 public class DynamicTypeDefaultTest {
 
-    private static final String CLASS_FILE_EXTENSION = ".class";
+    private static final String CLASS_FILE_EXTENSION = ClassFileLocator.CLASS_FILE_EXTENSION;
 
     private static final String FOOBAR = "foo/bar", QUXBAZ = "qux/baz", BARBAZ = "bar/baz", FOO = "foo", BAR = "bar";
 

@@ -1,6 +1,7 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Before;
@@ -45,7 +46,7 @@ public class PluginEngineTargetForFolderTest {
         } finally {
             sink.close();
         }
-        File file = new File(folder, TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class");
+        File file = new File(folder, TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(file.isFile(), is(true));
         InputStream inputStream = new FileInputStream(file);
         try {

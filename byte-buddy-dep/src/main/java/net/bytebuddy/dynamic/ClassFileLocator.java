@@ -63,6 +63,11 @@ public interface ClassFileLocator extends Closeable {
     String CLASS_FILE_EXTENSION = ".class";
 
     /**
+     * The prefix folder for {@code META-INF/versions/} which contains multi-release files.
+     */
+    String META_INF_VERSIONS = "META-INF/versions/";
+
+    /**
      * Locates the class file for a given type and returns the binary data of the class file.
      *
      * @param name The name of the type to locate a class file representation for.
@@ -196,11 +201,6 @@ public interface ClassFileLocator extends Closeable {
     abstract class MultiReleaseAware implements ClassFileLocator {
 
         /**
-         * The path prefix of a multi-release folder.
-         */
-        private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
-
-        /**
          * The property name of a multi-release JAR file.
          */
         private static final String MULTI_RELEASE_ATTRIBUTE = "Multi-Release";
@@ -232,7 +232,7 @@ public interface ClassFileLocator extends Closeable {
         public Resolution locate(String name) throws IOException {
             String path = name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION;
             for (int index = 0; index < version.length + 1; index++) {
-                byte[] binaryRepresentation = doLocate(index == version.length ? path : MULTI_RELEASE_PREFIX + version[index] + "/" + path);
+                byte[] binaryRepresentation = doLocate(index == version.length ? path : META_INF_VERSIONS + version[index] + "/" + path);
                 if (binaryRepresentation != null) {
                     return new Resolution.Explicit(binaryRepresentation);
                 }
@@ -901,9 +901,9 @@ public interface ClassFileLocator extends Closeable {
                     Enumeration<JarEntry> enumeration = jarFile.entries();
                     while (enumeration.hasMoreElements()) {
                         String name = enumeration.nextElement().getName();
-                        if (name.endsWith(CLASS_FILE_EXTENSION) && name.startsWith(MultiReleaseAware.MULTI_RELEASE_PREFIX)) {
+                        if (name.endsWith(CLASS_FILE_EXTENSION) && name.startsWith(META_INF_VERSIONS)) {
                             try {
-                                int candidate = Integer.parseInt(name.substring(MultiReleaseAware.MULTI_RELEASE_PREFIX.length(), name.indexOf('/', MultiReleaseAware.MULTI_RELEASE_PREFIX.length())));
+                                int candidate = Integer.parseInt(name.substring(META_INF_VERSIONS.length(), name.indexOf('/', META_INF_VERSIONS.length())));
                                 if (candidate > 7 && candidate <= classFileVersion.getJavaVersion()) {
                                     versions.add(candidate);
                                 }
@@ -1255,7 +1255,7 @@ public interface ClassFileLocator extends Closeable {
                 }
                 int[] version;
                 if (multiRelease) {
-                    File[] file = new File(folder, MultiReleaseAware.MULTI_RELEASE_PREFIX).listFiles();
+                    File[] file = new File(folder, META_INF_VERSIONS).listFiles();
                     if (file != null) {
                         SortedSet<Integer> versions = new TreeSet<Integer>();
                         for (int index = 0; index < file.length; index++) {

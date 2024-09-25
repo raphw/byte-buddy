@@ -33,9 +33,7 @@ import static org.mockito.Mockito.when;
 @RunWith(Parameterized.class)
 public class ByteArrayClassLoaderTest {
 
-    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
-
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", CLASS_FILE = ".class";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", CLASS_FILE = ClassFileLocator.CLASS_FILE_EXTENSION;
 
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
@@ -75,7 +73,7 @@ public class ByteArrayClassLoaderTest {
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 false,
                 ClassFileLocator.ForClassLoader.readToNames(Foo.class),
-                DEFAULT_PROTECTION_DOMAIN,
+                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 persistenceHandler,
                 packageDefinitionStrategy,
                 classFilePostProcessor);

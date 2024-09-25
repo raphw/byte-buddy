@@ -38,7 +38,7 @@ public class ClassFileLocatorForFolderTest {
     public void testSuccessfulLocation() throws Exception {
         File packageFolder = new File(folder, FOO);
         assertThat(packageFolder.mkdir(), is(true));
-        File file = new File(packageFolder, BAR + ".class");
+        File file = new File(packageFolder, BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(file.createNewFile(), is(true));
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         try {
@@ -80,7 +80,7 @@ public class ClassFileLocatorForFolderTest {
         }
         File packageFolder = new File(metaInf, "versions/11/" + FOO);
         assertThat(packageFolder.mkdirs(), is(true));
-        File file = new File(packageFolder, BAR + ".class");
+        File file = new File(packageFolder, BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(file.createNewFile(), is(true));
         outputStream = new FileOutputStream(file);
         try {

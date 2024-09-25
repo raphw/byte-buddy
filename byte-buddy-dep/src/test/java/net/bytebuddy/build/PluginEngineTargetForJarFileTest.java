@@ -1,6 +1,7 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,7 +51,7 @@ public class PluginEngineTargetForJarFileTest {
         try {
             assertThat(inputStream.getManifest(), nullValue(Manifest.class));
             JarEntry entry = inputStream.getNextJarEntry();
-            assertThat(entry.getName(), is(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"));
+            assertThat(entry.getName(), is(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION));
             assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[]{1, 2, 3}));
             assertThat(inputStream.getNextJarEntry(), nullValue(JarEntry.class));
         } finally {

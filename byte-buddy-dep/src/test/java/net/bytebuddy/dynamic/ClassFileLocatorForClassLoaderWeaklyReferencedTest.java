@@ -36,11 +36,11 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     @Test
     public void testLocatable() throws Exception {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
-        when(classLoader.getResourceAsStream(FOOBAR + ".class")).thenReturn(inputStream);
+        when(classLoader.getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION)).thenReturn(inputStream);
         ClassFileLocator.Resolution resolution = new ClassFileLocator.ForClassLoader.WeaklyReferenced(classLoader).locate(FOOBAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{1, 2, 3}));
-        verify(classLoader).getResourceAsStream(FOOBAR + ".class");
+        verify(classLoader).getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         verifyNoMoreInteractions(classLoader);
     }
 
@@ -48,7 +48,7 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     public void testNonLocatable() throws Exception {
         ClassFileLocator.Resolution resolution = new ClassFileLocator.ForClassLoader.WeaklyReferenced(classLoader).locate(FOOBAR);
         assertThat(resolution.isResolved(), is(false));
-        verify(classLoader).getResourceAsStream(FOOBAR + ".class");
+        verify(classLoader).getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         verifyNoMoreInteractions(classLoader);
         resolution.resolve();
         fail();

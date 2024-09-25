@@ -2,6 +2,7 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -25,7 +26,7 @@ public class PluginEngineTargetInMemoryTest {
         sink.store(Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
         sink.close();
         assertThat(target.getStorage().size(), is(1));
-        assertThat(target.getStorage().get(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{1, 2, 3}));
+        assertThat(target.getStorage().get(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION), is(new byte[]{1, 2, 3}));
         assertThat(target.toTypeMap().size(), is(1));
         assertThat(target.toTypeMap().get(TypeDescription.ForLoadedType.of(Object.class).getName()), is(new byte[]{1, 2, 3}));
     }
@@ -78,9 +79,9 @@ public class PluginEngineTargetInMemoryTest {
         sink.store(17, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{7, 8, 9}));
         sink.close();
         assertThat(target.getStorage().size(), is(3));
-        assertThat(target.getStorage().get(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{1, 2, 3}));
-        assertThat(target.getStorage().get(Plugin.Engine.META_INF_VERSIONS + "11/" + TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{4, 5, 6}));
-        assertThat(target.getStorage().get(Plugin.Engine.META_INF_VERSIONS + "17/" + TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"), is(new byte[]{7, 8, 9}));
+        assertThat(target.getStorage().get(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION), is(new byte[]{1, 2, 3}));
+        assertThat(target.getStorage().get(ClassFileLocator.META_INF_VERSIONS + "11/" + TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION), is(new byte[]{4, 5, 6}));
+        assertThat(target.getStorage().get(ClassFileLocator.META_INF_VERSIONS + "17/" + TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION), is(new byte[]{7, 8, 9}));
         assertThat(target.toTypeMap().size(), is(1));
         assertThat(target.toTypeMap().get(TypeDescription.ForLoadedType.of(Object.class).getName()), is(new byte[]{1, 2, 3}));
         assertThat(target.toTypeMap(ClassFileVersion.JAVA_V11).size(), is(1));

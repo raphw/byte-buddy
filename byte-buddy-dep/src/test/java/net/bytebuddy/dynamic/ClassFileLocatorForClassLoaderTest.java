@@ -41,12 +41,12 @@ public class ClassFileLocatorForClassLoaderTest {
     @Test
     public void testLocatable() throws Exception {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
-        when(classLoader.getResourceAsStream(FOOBAR + ".class")).thenReturn(inputStream);
+        when(classLoader.getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION)).thenReturn(inputStream);
         ClassFileLocator.Resolution resolution = new ClassFileLocator.ForClassLoader(classLoader)
                 .locate(FOOBAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{1, 2, 3}));
-        verify(classLoader).getResourceAsStream(FOOBAR + ".class");
+        verify(classLoader).getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         verifyNoMoreInteractions(classLoader);
     }
 
@@ -55,7 +55,7 @@ public class ClassFileLocatorForClassLoaderTest {
         ClassFileLocator.Resolution resolution = new ClassFileLocator.ForClassLoader(classLoader)
                 .locate(FOOBAR);
         assertThat(resolution.isResolved(), is(false));
-        verify(classLoader).getResourceAsStream(FOOBAR + ".class");
+        verify(classLoader).getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         verifyNoMoreInteractions(classLoader);
         resolution.resolve();
         fail();
@@ -66,8 +66,8 @@ public class ClassFileLocatorForClassLoaderTest {
         byte[] binaryRepresentation = ClassFileLocator.ForClassLoader.read(Object.class);
         JavaModule module = JavaModule.ofType(Object.class);
         InputStream inputStream = module == null
-                ? Object.class.getResourceAsStream(Object.class.getSimpleName() + ".class")
-                : module.getResourceAsStream(Object.class.getName().replace('.', '/') + ".class");
+                ? Object.class.getResourceAsStream(Object.class.getSimpleName() + ClassFileLocator.CLASS_FILE_EXTENSION)
+                : module.getResourceAsStream(Object.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(binaryRepresentation, is(StreamDrainer.DEFAULT.drain(inputStream)));
         } finally {
@@ -78,7 +78,7 @@ public class ClassFileLocatorForClassLoaderTest {
     @Test
     public void testReadTypeNonBootstrapClassLoader() throws Exception {
         byte[] binaryRepresentation = ClassFileLocator.ForClassLoader.read(Foo.class);
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(binaryRepresentation, is(StreamDrainer.DEFAULT.drain(inputStream)));
         } finally {
@@ -99,14 +99,14 @@ public class ClassFileLocatorForClassLoaderTest {
         assertThat(binaryRepresentations.size(), is(2));
         JavaModule module = JavaModule.ofType(Object.class);
         InputStream objectStream = module == null
-                ? Object.class.getResourceAsStream(Object.class.getSimpleName() + ".class")
-                : module.getResourceAsStream(Object.class.getName().replace('.', '/') + ".class");
+                ? Object.class.getResourceAsStream(Object.class.getSimpleName() + ClassFileLocator.CLASS_FILE_EXTENSION)
+                : module.getResourceAsStream(Object.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(binaryRepresentations.get(Object.class), is(StreamDrainer.DEFAULT.drain(objectStream)));
         } finally {
             objectStream.close();
         }
-        InputStream fooStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
+        InputStream fooStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(binaryRepresentations.get(Foo.class), is(StreamDrainer.DEFAULT.drain(fooStream)));
         } finally {
@@ -120,14 +120,14 @@ public class ClassFileLocatorForClassLoaderTest {
         assertThat(binaryRepresentations.size(), is(2));
         JavaModule module = JavaModule.ofType(Object.class);
         InputStream objectStream = module == null
-                ? Object.class.getResourceAsStream(Object.class.getSimpleName() + ".class")
-                : module.getResourceAsStream(Object.class.getName().replace('.', '/') + ".class");
+                ? Object.class.getResourceAsStream(Object.class.getSimpleName() + ClassFileLocator.CLASS_FILE_EXTENSION)
+                : module.getResourceAsStream(Object.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(binaryRepresentations.get(Object.class.getName()), is(StreamDrainer.DEFAULT.drain(objectStream)));
         } finally {
             objectStream.close();
         }
-        InputStream fooStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
+        InputStream fooStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(binaryRepresentations.get(Foo.class.getName()), is(StreamDrainer.DEFAULT.drain(fooStream)));
         } finally {

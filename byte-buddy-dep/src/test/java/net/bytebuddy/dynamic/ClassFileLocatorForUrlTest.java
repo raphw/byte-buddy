@@ -43,7 +43,7 @@ public class ClassFileLocatorForUrlTest {
     public void testSuccessfulLocation() throws Exception {
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
         try {
-            JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ".class");
+            JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
             jarOutputStream.putNextEntry(jarEntry);
             jarOutputStream.write(VALUE);
             jarOutputStream.write(VALUE * 2);

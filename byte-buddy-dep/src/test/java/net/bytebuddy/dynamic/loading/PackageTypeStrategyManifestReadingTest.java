@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
@@ -209,7 +210,7 @@ public class PackageTypeStrategyManifestReadingTest {
     @IntegrationRule.Enforce
     public void testSealBaseLocatorForTypeResourceUrlFileUrl() throws Exception {
         URL url = URI.create("file:/foo").toURL();
-        when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
+        when(classLoader.getResource(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION)).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(url));
         verifyNoMoreInteractions(sealBaseLocator);
@@ -219,7 +220,7 @@ public class PackageTypeStrategyManifestReadingTest {
     @IntegrationRule.Enforce
     public void testSealBaseLocatorForTypeResourceUrlJarUrl() throws Exception {
         URL url = URI.create("jar:file:/foo.jar!/bar").toURL();
-        when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
+        when(classLoader.getResource(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION)).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(URI.create("file:/foo.jar").toURL()));
         verifyNoMoreInteractions(sealBaseLocator);
@@ -230,7 +231,7 @@ public class PackageTypeStrategyManifestReadingTest {
     @JavaVersionRule.Enforce(9)
     public void testSealBaseLocatorForTypeResourceUrlJavaRuntimeImageUrl() throws Exception {
         URL url = URI.create("jrt:/foo/bar").toURL();
-        when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
+        when(classLoader.getResource(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION)).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(URI.create("jrt:/foo").toURL()));
         verifyNoMoreInteractions(sealBaseLocator);
@@ -241,7 +242,7 @@ public class PackageTypeStrategyManifestReadingTest {
     @JavaVersionRule.Enforce(9)
     public void testSealBaseLocatorForTypeResourceUrlJavaRuntimeImageUrlRawModule() throws Exception {
         URL url = URI.create("jrt:/foo").toURL();
-        when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
+        when(classLoader.getResource(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION)).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(URI.create("jrt:/foo").toURL()));
         verifyNoMoreInteractions(sealBaseLocator);

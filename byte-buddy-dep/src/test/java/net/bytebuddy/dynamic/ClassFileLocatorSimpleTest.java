@@ -49,7 +49,7 @@ public class ClassFileLocatorSimpleTest {
     @Test
     public void testOfResources() throws Exception {
         ClassFileLocator.Resolution resolution = ClassFileLocator.Simple
-                .ofResources(Collections.singletonMap(FOO + "/" + BAR + ".class", QUX))
+                .ofResources(Collections.singletonMap(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION, QUX))
                 .locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(QUX));

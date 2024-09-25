@@ -41,7 +41,7 @@ public class ClassFileLocatorForModuleFileTest {
     public void testSuccessfulLocation() throws Exception {
         ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(file));
         try {
-            ZipEntry zipEntry = new ZipEntry("classes/" + FOO + "/" + BAR + ".class");
+            ZipEntry zipEntry = new ZipEntry("classes/" + FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
             zipOutputStream.putNextEntry(zipEntry);
             zipOutputStream.write(VALUE);
             zipOutputStream.write(VALUE * 2);

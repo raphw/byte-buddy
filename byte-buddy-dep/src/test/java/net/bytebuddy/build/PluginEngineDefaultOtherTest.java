@@ -61,7 +61,7 @@ public class PluginEngineDefaultOtherTest {
                     PluginEngineDefaultOtherTest.class,
                     TypeWithDependency.class,
                     TypeWithoutDependency.class}) {
-                outputStream.putNextEntry(new JarEntry(type.getName().replace(".", "/") + ".class"));
+                outputStream.putNextEntry(new JarEntry(type.getName().replace(".", "/") + ClassFileLocator.CLASS_FILE_EXTENSION));
                 outputStream.write(ClassFileLocator.ForClassLoader.read(type));
                 outputStream.closeEntry();
             }

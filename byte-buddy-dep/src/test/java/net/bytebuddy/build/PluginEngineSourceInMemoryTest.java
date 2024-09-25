@@ -47,7 +47,7 @@ public class PluginEngineSourceInMemoryTest {
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
             Plugin.Engine.Source.Element element = iterator.next();
-            assertThat(element.getName(), is(Foo.class.getName().replace('.', '/') + ".class"));
+            assertThat(element.getName(), is(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION));
             assertThat(element.resolveAs(Object.class), nullValue(Object.class));
             assertThat(StreamDrainer.DEFAULT.drain(element.getInputStream()), is(ClassFileLocator.ForClassLoader.read(Foo.class)));
             assertThat(iterator.hasNext(), is(false));

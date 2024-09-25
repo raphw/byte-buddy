@@ -281,7 +281,7 @@ public class PluginEngineDefaultTest {
                 ? new SimplePlugin()
                 : new PreprocessingPlugin(new SimplePlugin());
         Plugin.Engine.Source source = new Plugin.Engine.Source.InMemory(Collections.singletonMap(
-                Sample.class.getName().replace('.', '/') + ".class",
+                Sample.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION,
                 ClassFileLocator.ForClassLoader.read(Sample.class))) {
             @Override
             public ClassFileLocator toClassFileLocator(ClassFileVersion classFileVersion) {

@@ -44,7 +44,7 @@ public class ClassFileLocatorForJarFileTest {
     public void testSuccessfulLocation() throws Exception {
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
         try {
-            JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ".class");
+            JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
             jarOutputStream.putNextEntry(jarEntry);
             jarOutputStream.write(VALUE);
             jarOutputStream.write(VALUE * 2);
@@ -129,7 +129,7 @@ public class ClassFileLocatorForJarFileTest {
         manifest.getMainAttributes().putValue("Multi-Release", "true");
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
         try {
-            jarOutputStream.putNextEntry(new JarEntry("META-INF/versions/11/" + FOO + "/" + BAR + ".class"));
+            jarOutputStream.putNextEntry(new JarEntry("META-INF/versions/11/" + FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION));
             jarOutputStream.write(VALUE);
             jarOutputStream.write(VALUE * 2);
             jarOutputStream.closeEntry();

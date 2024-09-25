@@ -758,29 +758,19 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
     interface Engine {
 
         /**
-         * The class file extension.
-         */
-        String CLASS_FILE_EXTENSION = ".class";
-
-        /**
          * The module info class file.
          */
-        String MODULE_INFO = "module-info" + CLASS_FILE_EXTENSION;
+        String MODULE_INFO = "module-info" + ClassFileLocator.CLASS_FILE_EXTENSION;
 
         /**
          * The package info class file.
          */
-        String PACKAGE_INFO = "package-info" + CLASS_FILE_EXTENSION;
+        String PACKAGE_INFO = "package-info" + ClassFileLocator.CLASS_FILE_EXTENSION;
 
         /**
          * The name of the file that contains declares Byte Buddy plugins for discovery.
          */
         String PLUGIN_FILE = "META-INF/net.bytebuddy/build.plugins";
-
-        /**
-         * The prefix folder for {@code META-INF/versions/} which contains multi-release files.
-         */
-        String META_INF_VERSIONS = "META-INF/versions/";
 
         /**
          * Defines a new Byte Buddy instance for usage for type creation.
@@ -3012,11 +3002,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 ) {
                     Map<String, byte[]> storage = new HashMap<String, byte[]>();
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        storage.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                        storage.put(entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION, entry.getValue());
                     }
                     for (Map.Entry<ClassFileVersion, Map<TypeDescription, byte[]>> versioned : versionedBinaryRepresentations.entrySet()) {
                         for (Map.Entry<TypeDescription, byte[]> entry : versioned.getValue().entrySet()) {
-                            storage.put(META_INF_VERSIONS + versioned.getKey().getJavaVersion() + "/" + entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                            storage.put(ClassFileLocator.META_INF_VERSIONS + versioned.getKey().getJavaVersion() + "/" + entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION, entry.getValue());
                         }
                     }
                     return new InMemory(storage);
@@ -3386,7 +3376,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      */
                     public void store(Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                         for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                            outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
+                            outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION));
                             outputStream.write(entry.getValue());
                             outputStream.closeEntry();
                         }
@@ -3397,7 +3387,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      */
                     public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                         for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                            outputStream.putNextEntry(new JarEntry(META_INF_VERSIONS + version + "/" + entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
+                            outputStream.putNextEntry(new JarEntry(ClassFileLocator.META_INF_VERSIONS + version + "/" + entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION));
                             outputStream.write(entry.getValue());
                             outputStream.closeEntry();
                         }
@@ -3526,7 +3516,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void store(Map<TypeDescription, byte[]> binaryRepresentations) {
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        storage.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                        storage.put(entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION, entry.getValue());
                     }
                 }
 
@@ -3535,7 +3525,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        storage.put(META_INF_VERSIONS + version + "/" + entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
+                        storage.put(ClassFileLocator.META_INF_VERSIONS + version + "/" + entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION, entry.getValue());
                     }
                 }
 
@@ -3588,9 +3578,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public Map<String, byte[]> toTypeMap() {
                     Map<String, byte[]> binaryRepresentations = new HashMap<String, byte[]>();
                     for (Map.Entry<String, byte[]> entry : storage.entrySet()) {
-                        if (entry.getKey().endsWith(CLASS_FILE_EXTENSION) && !entry.getKey().startsWith(META_INF_VERSIONS)) {
+                        if (entry.getKey().endsWith(ClassFileLocator.CLASS_FILE_EXTENSION) && !entry.getKey().startsWith(ClassFileLocator.META_INF_VERSIONS)) {
                             binaryRepresentations.put(entry.getKey()
-                                    .substring(0, entry.getKey().length() - CLASS_FILE_EXTENSION.length())
+                                    .substring(0, entry.getKey().length() - ClassFileLocator.CLASS_FILE_EXTENSION.length())
                                     .replace('/', '.'), entry.getValue());
                         }
                     }
@@ -3607,13 +3597,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     Map<String, byte[]> binaryRepresentations = new HashMap<String, byte[]>();
                     Map<String, Integer> versions = new HashMap<String, Integer>();
                     for (Map.Entry<String, byte[]> entry : storage.entrySet()) {
-                        if (entry.getKey().endsWith(CLASS_FILE_EXTENSION)) {
+                        if (entry.getKey().endsWith(ClassFileLocator.CLASS_FILE_EXTENSION)) {
                             String suffix;
                             int version;
-                            if (entry.getKey().startsWith(META_INF_VERSIONS)) {
-                                suffix = entry.getKey().substring(entry.getKey().indexOf('/', META_INF_VERSIONS.length()) + 1);
+                            if (entry.getKey().startsWith(ClassFileLocator.META_INF_VERSIONS)) {
+                                suffix = entry.getKey().substring(entry.getKey().indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()) + 1);
                                 try {
-                                    int candidate = Integer.parseInt(entry.getKey().substring(META_INF_VERSIONS.length(), entry.getKey().indexOf('/', META_INF_VERSIONS.length())));
+                                    int candidate = Integer.parseInt(entry.getKey().substring(ClassFileLocator.META_INF_VERSIONS.length(), entry.getKey().indexOf('/', ClassFileLocator.META_INF_VERSIONS.length())));
                                     if (candidate < 7 || candidate > classFileVersion.getJavaVersion()) {
                                         continue;
                                     }
@@ -3629,7 +3619,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                             if (current == null || current < version) {
                                 versions.put(suffix, version);
                                 binaryRepresentations.put(suffix
-                                        .substring(0, suffix.length() - CLASS_FILE_EXTENSION.length())
+                                        .substring(0, suffix.length() - ClassFileLocator.CLASS_FILE_EXTENSION.length())
                                         .replace('/', '.'), entry.getValue());
                             }
                         }
@@ -3667,7 +3657,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 private static void doStore(File folder, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        File target = new File(folder, entry.getKey().getInternalName() + CLASS_FILE_EXTENSION);
+                        File target = new File(folder, entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION);
                         if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
                         }
@@ -3710,7 +3700,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void store(int version, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
-                    doStore(new File(folder, META_INF_VERSIONS + version), binaryRepresentations);
+                    doStore(new File(folder, ClassFileLocator.META_INF_VERSIONS + version), binaryRepresentations);
                 }
 
                 /**
@@ -4894,14 +4884,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                     while (name.startsWith("/")) {
                                         name = name.substring(1);
                                     }
-                                    if (name.endsWith(CLASS_FILE_EXTENSION) && !name.endsWith(PACKAGE_INFO) && !name.equals(MODULE_INFO)) {
+                                    if (name.endsWith(ClassFileLocator.CLASS_FILE_EXTENSION) && !name.endsWith(PACKAGE_INFO) && !name.equals(MODULE_INFO)) {
                                         try {
                                             dispatcher.accept(new Preprocessor(element,
-                                                    name.substring(name.startsWith(META_INF_VERSIONS)
-                                                            ? name.indexOf('/', META_INF_VERSIONS.length()) + 1
-                                                            : 0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
-                                                    name.startsWith(META_INF_VERSIONS)
-                                                            ? Integer.parseInt(name.substring(META_INF_VERSIONS.length(), name.indexOf('/', META_INF_VERSIONS.length())))
+                                                    name.substring(name.startsWith(ClassFileLocator.META_INF_VERSIONS)
+                                                            ? name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()) + 1
+                                                            : 0, name.length() - ClassFileLocator.CLASS_FILE_EXTENSION.length()).replace('/', '.'),
+                                                    name.startsWith(ClassFileLocator.META_INF_VERSIONS)
+                                                            ? Integer.parseInt(name.substring(ClassFileLocator.META_INF_VERSIONS.length(), name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length())))
                                                             : 0,
                                                     classFileLocator,
                                                     typePool,
