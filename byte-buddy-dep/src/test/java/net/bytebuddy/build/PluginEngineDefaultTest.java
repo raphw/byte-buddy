@@ -223,7 +223,7 @@ public class PluginEngineDefaultTest {
         Plugin plugin = eager
                 ? new SimplePlugin()
                 : new PreprocessingPlugin(new SimplePlugin());
-        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Collections.emptyList(), Collections.singletonMap(
+        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Collections.<Class<?>>emptyList(), Collections.<ClassFileVersion, Collection<Class<?>>>singletonMap(
             ClassFileVersion.JAVA_V11,
             Collections.singletonList(Sample.class)));
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
