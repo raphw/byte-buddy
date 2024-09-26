@@ -3542,9 +3542,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              */
             @HashCodeAndEqualsPlugin.Enhance
             class InMemory implements Target, Sink {
+
                 /**
                  * The map for storing all elements being received.
                  */
+                @HashCodeAndEqualsPlugin.Identity
                 private final Map<String, byte[]> storage;
 
                 /**

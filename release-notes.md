@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. September 2024: version 1.15.3
+
+- Treat multi-release class files that are newer than the supported version as regular resources.
+- Allow overriding the multi-release class file version from Maven and Gradle plugin.
+- Correctly resolve multi-release class files in Android.
+
 ### 25. September 2024: version 1.15.2
 
 - Add support for multi-release JAR files in `ClassFileLocator`s and `Plugin.Engine.Default`.
