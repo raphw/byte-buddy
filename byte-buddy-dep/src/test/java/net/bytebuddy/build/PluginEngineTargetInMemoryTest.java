@@ -75,8 +75,8 @@ public class PluginEngineTargetInMemoryTest {
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         sink.store(Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
-        sink.store(11, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{4, 5, 6}));
-        sink.store(17, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{7, 8, 9}));
+        sink.store(ClassFileVersion.JAVA_V11, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{4, 5, 6}));
+        sink.store(ClassFileVersion.JAVA_V17, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{7, 8, 9}));
         sink.close();
         assertThat(target.getStorage().size(), is(3));
         assertThat(target.getStorage().get(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION), is(new byte[]{1, 2, 3}));
