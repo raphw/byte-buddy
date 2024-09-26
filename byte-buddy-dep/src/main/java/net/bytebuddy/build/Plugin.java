@@ -3348,7 +3348,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public boolean matches(@NeverNull Element target) {
+                    public boolean matches(@MaybeNull Element target) {
+                        if (target == null) {
+                            return true;
+                        }
                         String name = target.getName();
                         if (name.startsWith("/")) {
                             name = name.substring(1);
