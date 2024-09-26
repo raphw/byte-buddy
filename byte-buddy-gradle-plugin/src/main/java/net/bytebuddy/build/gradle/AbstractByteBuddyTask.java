@@ -105,6 +105,13 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     private ClassFileVersion classFileVersion;
 
     /**
+     * The class file version to use for resolving multi-release jar files or {@code null} if
+     * {@link #classFileVersion} or the implicit version should be used.
+     */
+    @MaybeNull
+    private ClassFileVersion multiReleaseClassFileVersion;
+
+    /**
      * Creates a new abstract Byte Buddy task.
      */
     protected AbstractByteBuddyTask() {
@@ -323,6 +330,28 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
+     * Returns the class file version to use for resolving multi-release jar files or {@code null} if the
+     * explicit or implicit class file version of this task should be used.
+     *
+     * @return The class file version to use for resolving multi-release jar files.
+     */
+    @MaybeNull
+    @Input
+    @Optional
+    public ClassFileVersion getMultiReleaseClassFileVersion() {
+        return multiReleaseClassFileVersion;
+    }
+
+    /**
+     * Sets the class file version to use for resolving multi-release jar files.
+     *
+     * @param multiReleaseClassFileVersion The class file version to use for resolving multi-release jar files.
+     */
+    public void setMultiReleaseClassFileVersion(@MaybeNull ClassFileVersion multiReleaseClassFileVersion) {
+        this.multiReleaseClassFileVersion = multiReleaseClassFileVersion;
+    }
+
+    /**
      * Returns the source file or folder.
      *
      * @return The source file or folder.
@@ -379,6 +408,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                 discoverySet(),
                 getEntryPoint(),
                 classFileVersion,
+                multiReleaseClassFileVersion == null ? classFileVersion : multiReleaseClassFileVersion,
                 Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, source()),
                 getSuffix(),
                 getThreads(),
@@ -393,24 +423,25 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     /**
      * Dispatches a Byte Buddy instrumentation Gradle task.
      *
-     * @param logger                The logger to use.
-     * @param rootLoader            The class loader that is used for searching types and applying plugins.
-     * @param transformations       The transformations to apply.
-     * @param discovery             The discovery for plugins to use.
-     * @param rootLocator           The root class file locator.
-     * @param artifacts             The artifacts to include.
-     * @param discoverySet          The source set to discover plugins from or {@code null} if no source set is used.
-     * @param entryPoint            The entry point to use.
-     * @param classFileVersion      The class file version to use.
-     * @param rootLocationResolver  An argument resolver for the root location of this build.
-     * @param suffix                The suffix to use for rebased methods or an empty string for using a random suffix.
-     * @param threads               The number of threads to use while instrumenting.
-     * @param extendedParsing       {@code true} if extended parsing should be used.
-     * @param failFast              {@code true} if the build should fail fast.
-     * @param failOnLiveInitializer {@code true} if the build should fail upon discovering a live initializer.
-     * @param warnOnEmptyTypeSet    {@code true} if a warning should be logged if no types are instrumented.
-     * @param source                The source to use for instrumenting.
-     * @param target                The target to use for instrumenting.
+     * @param logger                       The logger to use.
+     * @param rootLoader                   The class loader that is used for searching types and applying plugins.
+     * @param transformations              The transformations to apply.
+     * @param discovery                    The discovery for plugins to use.
+     * @param rootLocator                  The root class file locator.
+     * @param artifacts                    The artifacts to include.
+     * @param discoverySet                 The source set to discover plugins from or {@code null} if no source set is used.
+     * @param entryPoint                   The entry point to use.
+     * @param classFileVersion             The class file version to use.
+     * @param multiReleaseClassFileVersion The class file version to use for resolving multi-release jars.
+     * @param rootLocationResolver         An argument resolver for the root location of this build.
+     * @param suffix                       The suffix to use for rebased methods or an empty string for using a random suffix.
+     * @param threads                      The number of threads to use while instrumenting.
+     * @param extendedParsing              {@code true} if extended parsing should be used.
+     * @param failFast                     {@code true} if the build should fail fast.
+     * @param failOnLiveInitializer        {@code true} if the build should fail upon discovering a live initializer.
+     * @param warnOnEmptyTypeSet           {@code true} if a warning should be logged if no types are instrumented.
+     * @param source                       The source to use for instrumenting.
+     * @param target                       The target to use for instrumenting.
      * @throws IOException If an I/O error occurs.
      */
     public static void apply(Logger logger,
@@ -422,6 +453,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                              @MaybeNull Iterable<File> discoverySet,
                              EntryPoint entryPoint,
                              ClassFileVersion classFileVersion,
+                             ClassFileVersion multiReleaseClassFileVersion,
                              Plugin.Factory.UsingReflection.ArgumentResolver rootLocationResolver,
                              String suffix,
                              int threads,
@@ -481,8 +513,8 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             classFileLocators.add(rootLocator);
             for (File artifact : artifacts) {
                 classFileLocators.add(artifact.isFile()
-                        ? ClassFileLocator.ForJarFile.of(artifact, classFileVersion)
-                        : ClassFileLocator.ForFolder.of(artifact, classFileVersion));
+                        ? ClassFileLocator.ForJarFile.of(artifact, multiReleaseClassFileVersion)
+                        : ClassFileLocator.ForFolder.of(artifact, multiReleaseClassFileVersion));
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             try {
@@ -493,7 +525,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                                 ? Plugin.Engine.PoolStrategy.Default.EXTENDED
                                 : Plugin.Engine.PoolStrategy.Default.FAST)
                         .with(classFileLocator)
-                        .with(classFileVersion)
+                        .with(multiReleaseClassFileVersion)
                         .with(new TransformationLogger(logger))
                         .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, failOnLiveInitializer
                                 ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS

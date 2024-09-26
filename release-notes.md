@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 25. September 2024: version 1.15.2
+
+- Add support for multi-release JAR files in `ClassFileLocator`s and `Plugin.Engine.Default`.
+- Add Gradle task for transforming multiple jar files with `ByteBuddyJarsTask`.
+- Avoid validation of `JarFile` when extracting individual entries.
+- Rework discovery in `ByteBuddyMojo`.
+
 ### 29. August 2024: version 1.15.1
 
 - Revert default `EntryPoint` for Android Gradle plugin to use `DECORATE` unless explicitly specified due to many generic type errors in Kotlin classes. 

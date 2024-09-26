@@ -231,6 +231,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public int staleMilliseconds;
 
     /**
+     * Defines the version to use for resolving multi-release jar files. If not set, the Java compile version is used.
+     */
+    @MaybeNull
+    @Parameter
+    public Integer multiReleaseVersion;
+
+    /**
      * {@inheritDoc}
      */
     @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "The security manager is not normally used within Maven.")
@@ -398,13 +405,16 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 classFileVersion = ClassFileVersion.ofJavaVersionString(javaVersionString);
                 getLog().debug("Java version detected: " + javaVersionString);
             }
+            ClassFileVersion multiReleaseClassFileVersion = multiReleaseVersion == null
+                    ? classFileVersion
+                    : ClassFileVersion.ofJavaVersion(multiReleaseVersion);
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
             classFileLocators.add(ClassFileLocator.ForClassLoader.ofPlatformLoader());
             for (String element : classPath) {
                 File artifact = new File(element);
                 classFileLocators.add(artifact.isFile()
-                        ? ClassFileLocator.ForJarFile.of(artifact, classFileVersion)
-                        : ClassFileLocator.ForFolder.of(artifact, classFileVersion));
+                        ? ClassFileLocator.ForJarFile.of(artifact, multiReleaseClassFileVersion)
+                        : ClassFileLocator.ForFolder.of(artifact, multiReleaseClassFileVersion));
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             Plugin.Engine.Summary summary;
@@ -422,7 +432,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     summary = pluginEngine
                             .with(extendedParsing ? Plugin.Engine.PoolStrategy.Default.EXTENDED : Plugin.Engine.PoolStrategy.Default.FAST)
                             .with(classFileLocator)
-                            .with(classFileVersion)
+                            .with(multiReleaseClassFileVersion)
                             .with(new TransformationLogger(getLog()))
                             .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED,
                                     failOnLiveInitializer ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS : Plugin.Engine.Listener.NoOp.INSTANCE,

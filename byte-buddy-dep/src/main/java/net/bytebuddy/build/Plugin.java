@@ -809,10 +809,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * Uses the supplied {@link ClassFileVersion} as a base for resolving multi-release jars, or {@code null}
          * if multi-release jars should not be resolved but be treated as regular jar files. This property might
-         * not be applied if the underlying location mechanism does not supply manual resource resolution.
+         * not be applied if the underlying location mechanism does not supply manual resource resolution. Note that
+         * classes that are of newer class file versions than the specified version are not resolved and simply copied.
          *
-         * @param classFileVersion The class file version to use or {@code null}.
-         * @return A new plugin engine that is equal to this engine but with the supplied class file verion being used.
+         * @param classFileVersion The class file version to use or {@code null} if multi-release jars should be ignored.
+         * @return A new plugin engine that is equal to this engine but with the supplied class file version being used.
          */
         Engine with(@MaybeNull ClassFileVersion classFileVersion);
 
@@ -2421,15 +2422,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public void close() throws IOException {
-                        delegate.close();
+                    public Iterator<Element> iterator() {
+                        return new FilteringIterator(delegate.iterator(), matcher);
                     }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public Iterator<Element> iterator() {
-                        return new FilteringIterator(delegate.iterator(), matcher);
+                    public void close() throws IOException {
+                        delegate.close();
                     }
 
                     /**
@@ -3305,10 +3306,64 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
 
                 /**
+                 * Wraps a source to exclude elements that are above the specified Java version.
+                 *
+                 * @param delegate         The delegate source.
+                 * @param classFileVersion The latest multi-release Java version to retain from the source.
+                 * @return A source that applies an appropriate filter.
+                 */
+                public static Source dropMultiReleaseClassFilesAbove(Source delegate, ClassFileVersion classFileVersion) {
+                    return new Filtering(delegate, new MultiReleaseVersionMatcher(classFileVersion), true);
+                }
+
+                /**
                  * {@inheritDoc}
                  */
                 public Origin read() throws IOException {
                     return new Origin.Filtering(delegate.read(), matcher, manifest);
+                }
+
+                /**
+                 * An element matcher that filters multi-release files above a given version.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class MultiReleaseVersionMatcher implements ElementMatcher<Element> {
+
+                    /**
+                     * The latest version to consider.
+                     */
+                    private final ClassFileVersion classFileVersion;
+
+                    /**
+                     * Creates a multi-release version matcher.
+                     *
+                     * @param classFileVersion The latest class file version to consider.
+                     */
+                    protected MultiReleaseVersionMatcher(ClassFileVersion classFileVersion) {
+                        this.classFileVersion = classFileVersion;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public boolean matches(Element target) {
+                        String name = target.getName();
+                        if (name.startsWith("/")) {
+                            name = name.substring(1);
+                        }
+                        if (name.startsWith(ClassFileLocator.META_INF_VERSIONS)) {
+                            int version;
+                            try {
+                                version = Integer.parseInt(name.substring(
+                                        ClassFileLocator.META_INF_VERSIONS.length(),
+                                        name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length())));
+                            } catch (NumberFormatException ignored) {
+                                return true;
+                            }
+                            return version <= classFileVersion.getJavaVersion();
+                        }
+                        return true;
+                    }
                 }
             }
         }

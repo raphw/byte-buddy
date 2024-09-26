@@ -119,6 +119,13 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private ClassFileVersion classFileVersion;
 
     /**
+     * The class file version to use for resolving multi-release jar files or {@code null} if
+     * {@link #classFileVersion} or the implicit version should be used.
+     */
+    @MaybeNull
+    private ClassFileVersion multiReleaseClassFileVersion;
+
+    /**
      * Creates a new abstract Byte Buddy task extension.
      *
      * @param project The current Gradle project.
@@ -411,6 +418,26 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
+     * Returns the class file version to use for resolving multi-release jar files or {@code null} if the
+     * explicit or implicit class file version of this task should be used.
+     *
+     * @return The class file version to use for resolving multi-release jar files.
+     */
+    @MaybeNull
+    public ClassFileVersion getMultiReleaseClassFileVersion() {
+        return multiReleaseClassFileVersion;
+    }
+
+    /**
+     * Sets the class file version to use for resolving multi-release jar files.
+     *
+     * @param multiReleaseClassFileVersion The class file version to use for resolving multi-release jar files.
+     */
+    public void setMultiReleaseClassFileVersion(@MaybeNull ClassFileVersion multiReleaseClassFileVersion) {
+        this.multiReleaseClassFileVersion = multiReleaseClassFileVersion;
+    }
+
+    /**
      * Resolves default properties and considers the contextual Java version.
      *
      * @param version The Java version to resolve as a fallback if no explicit version is set.
@@ -451,6 +478,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         task.setDiscovery(getDiscovery());
         task.setThreads(getThreads());
         task.setClassFileVersion(getClassFileVersion());
+        task.setMultiReleaseClassFileVersion(getMultiReleaseClassFileVersion());
         doConfigure(task);
     }
 
