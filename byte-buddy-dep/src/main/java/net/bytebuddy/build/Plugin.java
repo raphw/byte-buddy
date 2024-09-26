@@ -31,6 +31,7 @@ import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.StreamDrainer;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 
 import java.io.*;
 import java.lang.annotation.*;
@@ -3346,7 +3347,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    public boolean matches(Element target) {
+                    public boolean matches(@UnknownNull Element target) {
                         String name = target.getName();
                         if (name.startsWith("/")) {
                             name = name.substring(1);
