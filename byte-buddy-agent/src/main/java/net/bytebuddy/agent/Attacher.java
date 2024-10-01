@@ -23,7 +23,9 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * A Java program that attaches a Java agent to an external process.
+ * 
+ 
+ A Java program that attaches a Java agent to an external process.
  */
 public class Attacher {
 
