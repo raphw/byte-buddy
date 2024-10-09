@@ -160,6 +160,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V23 = new ClassFileVersion(Opcodes.V23);
 
     /**
+     * The class file version of Java 24.
+     */
+    public static final ClassFileVersion JAVA_V24 = new ClassFileVersion(Opcodes.V24);
+
+    /**
      * An array of class file versions in their sorting order.
      */
     private static final ClassFileVersion[] CLASS_FILE_VERSIONS = new ClassFileVersion[] {ClassFileVersion.JAVA_V1,
@@ -184,7 +189,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             ClassFileVersion.JAVA_V20,
             ClassFileVersion.JAVA_V21,
             ClassFileVersion.JAVA_V22,
-            ClassFileVersion.JAVA_V23};
+            ClassFileVersion.JAVA_V23,
+            ClassFileVersion.JAVA_V24};
 
     /**
      * A version locator for the executing JVM.
@@ -278,7 +284,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The latest officially supported Java version.
      */
     public static ClassFileVersion latest() {
-        return ClassFileVersion.JAVA_V23;
+        return ClassFileVersion.JAVA_V24;
     }
 
     /**
@@ -297,7 +303,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * by parsing the {@code java.version} property which is provided by {@link java.lang.System#getProperty(String)}. If the system
      * property is not available, the {@code fallback} version is returned.
      *
-     * @param fallback The version to fallback to if locating a class file version is not possible.
+     * @param fallback The version to fall back to if locating a class file version is not possible.
      * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
