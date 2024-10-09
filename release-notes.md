@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. October 2024: version 1.15.4
+
+- Add non-experimental support for Java 24.
+
 ### 26. September 2024: version 1.15.3
 
 - Treat multi-release class files that are newer than the supported version as regular resources.

@@ -23,7 +23,7 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Build project
-        run: ./mvnw verify -Pjava23
+        run: ./mvnw verify -Pjava24
         continue-on-error: false
   hotspot-supported:
     name: Any (supported)
@@ -68,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ 9, 10, 12, 13, 14, 15, 16, 18, 19, 20, 22 ]
+        java: [ 9, 10, 12, 13, 14, 15, 16, 18, 19, 20, 22, 23 ]
     runs-on: ubuntu-24.04
     needs: [ extended ]
     steps:
