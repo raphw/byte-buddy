@@ -12,7 +12,7 @@ permissions: read-all
 jobs:
   hotspot-ea:
     name: HotSpot (EA)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [ extended ]
     continue-on-error: true
     steps:
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, macos-12, windows-2022 ]
+        os: [ ubuntu-24.04, macos-14, windows-2022 ]
         java: [ 8, 11, 17, 21 ]
     runs-on: ${{ matrix.os }}
     needs: [ extended ]
@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, macos-12, windows-2022 ]
+        os: [ ubuntu-24.04, macos-14, windows-2022 ]
         java: [ 8, 11 ]
     runs-on: ${{ matrix.os }}
     needs: [ extended ]
@@ -69,7 +69,7 @@ jobs:
       fail-fast: false
       matrix:
         java: [ 9, 10, 12, 13, 14, 15, 16, 18, 19, 20, 22 ]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [ extended ]
     steps:
       - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
@@ -86,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, windows-2022 ]
+        os: [ ubuntu-24.04, windows-2022 ]
         java: [ 8 ]
     runs-on: ${{ matrix.os }}
     needs: [ extended ]
@@ -106,7 +106,7 @@ jobs:
       fail-fast: false
       matrix:
         java: [ 6, 7 ]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [ extended ]
     steps:
       - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
@@ -124,7 +124,7 @@ jobs:
         run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava${{ matrix.java }}
   extended:
     name: Extended build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.event_name == 'push'
     steps:
       - uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # V2.8.1
@@ -158,7 +158,7 @@ jobs:
         run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pextras -Pchecks -Panalysis -Pintegration -Pchecksum-enforce
   release:
     name: Release new version
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [ extended, hotspot-ea, hotspot-supported, j9-supported, hotspot-unsupported, hotspot-32, hotspot-legacy ]
     if: github.event_name == 'push' && startsWith(github.event.head_commit.message, '[release]')
     permissions:
