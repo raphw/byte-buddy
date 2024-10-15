@@ -95,7 +95,6 @@ public class EqualsMethodOtherTest {
                 .defineField(FOO, Object.class, Visibility.PUBLIC)
                 .method(isEquals())
                 .intercept(EqualsMethod.isolated().withIdentityFields(named(FOO)))
-                .visit(DebuggingWrapper.makeDefault(true))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
