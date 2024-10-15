@@ -227,5 +227,32 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>java8MultiRelease</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${version.plugin.compiler}</version>
+                        <executions>
+                            <execution>
+                                <id>java8MultiRelease</id>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.outputDirectory}/META-INF/versions/8</outputDirectory>
+                                    <target>1.8</target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>
