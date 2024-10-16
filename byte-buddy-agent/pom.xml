@@ -228,7 +228,7 @@
             </build>
         </profile>
         <profile>
-            <id>java8MultiRelease</id>
+            <id>multi-release</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
@@ -240,7 +240,7 @@
                         <version>${version.plugin.compiler}</version>
                         <executions>
                             <execution>
-                                <id>java8MultiRelease</id>
+                                <id>java8-multi-release</id>
                                 <goals>
                                     <goal>compile</goal>
                                 </goals>
