@@ -292,6 +292,17 @@ version conflicts.
 
 Please note the [security policy](https://github.com/raphw/byte-buddy/blob/master/SECURITY.md) of this project.
 
+Byte Buddy supports execution on all JVM versions from version five and onwards in a single jar. This is done to ease 
+the development of Java agents which often require to support older, or unknown, applications which are not actively 
+updated. To allow for this while also supporting modern Java and features like CDS or class validation with stack 
+map frames, the main jars for Byte Buddy ship as multi-release jars that contain class files in version five and eight. 
+As a result, the jar size of Byte Buddy is higher as one would expect. Jar file size is not normally a problem, as
+the majority of Byte Buddy's classes will never be loaded. Yet, file size might be an issue when distributing Java 
+agents. As agents already need to be bundled as a single jar, it is therefore recommended to remove either the basic 
+Java five version, or the multi-release Java eight version of the contained class files, to reduce this issue. This 
+is supported by most build plugins for this purpose, such as the
+[Maven Shade plugin](https://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html#filters).
+
 License and development
 -----------------------
 
