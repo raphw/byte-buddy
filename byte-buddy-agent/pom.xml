@@ -245,7 +245,7 @@
                                     <goal>compile</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.outputDirectory}/META-INF/versions/8</outputDirectory>
+                                    <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
                                     <target>1.8</target>
                                 </configuration>
                             </execution>
