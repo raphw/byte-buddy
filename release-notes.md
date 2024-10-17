@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. October 2024: version 1.15.5
+
+- Publish Byte Buddy and Byte Buddy agent artifacts as multi-release jars to support CDS and faster validation.
+
 ### 9. October 2024: version 1.15.4
 
 - Add non-experimental support for Java 24.
