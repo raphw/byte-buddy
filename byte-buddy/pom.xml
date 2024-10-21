@@ -412,5 +412,49 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>multi-release</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>codes.rafael.bytecodeupdate</groupId>
+                        <artifactId>bytecode-update-maven-plugin</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.ow2.asm</groupId>
+                                <artifactId>asm-commons</artifactId>
+                                <version>${version.asm}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>multi-release</id>
+                                <goals>
+                                    <goal>update-bytecode</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
+                                    <oldPackage>${shade.source}</oldPackage>
+                                    <newPackage>${shade.target}</newPackage>
+                                    <artifacts>
+                                        <artifact>org\.ow2\.asm:.*</artifact>
+                                    </artifacts>
+                                    <includes>
+                                        <include>org/objectweb/asm/[a-zA-Z\.]+</include>
+                                        <include>org/objectweb/asm/signature/[a-zA-Z\.]+</include>
+                                        <include>org/objectweb/asm/commons/.*Remapper.*</include>
+                                        <include>org/objectweb/asm/commons/ModuleHashesAttribute.class</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>

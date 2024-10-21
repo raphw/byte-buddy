@@ -370,7 +370,7 @@
                         <version>${version.plugin.compiler}</version>
                         <executions>
                             <execution>
-                                <id>java8-multi-release</id>
+                                <id>multi-release</id>
                                 <goals>
                                     <goal>compile</goal>
                                 </goals>
