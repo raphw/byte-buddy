@@ -28,7 +28,6 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
-import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
@@ -42,7 +41,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.Serializable;
-import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -396,6 +394,9 @@ public class TypeProxy implements AuxiliaryType {
          */
         private final TypeDescription proxiedType;
 
+        /**
+         * The constructor to invoke to create the proxy.
+         */
         private final MethodDescription.InDefinedShape constructor;
 
         /**
@@ -417,6 +418,7 @@ public class TypeProxy implements AuxiliaryType {
          * Creates a new stack operation for creating a type proxy by calling one of its constructors.
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
+         * @param constructor           The constructor to invoke to create the proxy.
          * @param implementationTarget  The implementation target this type proxy is created for.
          * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
          * @param serializableProxy     Determines if the proxy should be serializable.
