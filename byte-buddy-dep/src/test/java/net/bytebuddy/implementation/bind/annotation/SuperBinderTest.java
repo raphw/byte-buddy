@@ -1,5 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -31,7 +33,10 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         when(genericTargetType.asErasure()).thenReturn(targetType);
         when(annotation.strategy()).thenReturn(Super.Instantiation.CONSTRUCTOR);
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
+        doReturn(Super.ConstructorResolver.Default.class).when(annotation).constructorResolver();
         when(targetType.asErasure()).thenReturn(targetType);
+        when(targetType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(
+                new MethodDescription.ForLoadedConstructor(Object.class.getConstructor())));
     }
 
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Super> getSimpleBinder() {

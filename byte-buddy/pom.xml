@@ -422,7 +422,7 @@
                     <plugin>
                         <groupId>codes.rafael.bytecodeupdate</groupId>
                         <artifactId>bytecode-update-maven-plugin</artifactId>
-                        <version>1.0-SNAPSHOT</version>
+                        <version>${version.plugin.bytecode-update}</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.ow2.asm</groupId>

@@ -107,6 +107,7 @@
         <version.plugin.license>3.0</version.plugin.license>
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
         <version.plugin.antrun>3.1.0</version.plugin.antrun>
+        <version.plugin.bytecode-update>1.0</version.plugin.bytecode-update>
         <version.checkstyle>9.3</version.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>

@@ -28,6 +28,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
+import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
@@ -395,15 +396,12 @@ public class TypeProxy implements AuxiliaryType {
          */
         private final TypeDescription proxiedType;
 
+        private final MethodDescription.InDefinedShape constructor;
+
         /**
          * The implementation target this type proxy is created for.
          */
         private final Implementation.Target implementationTarget;
-
-        /**
-         * The parameter types of the constructor that should be called.
-         */
-        private final List<TypeDescription> constructorParameters;
 
         /**
          * {@code true} if any finalizers should be ignored for the delegation.
@@ -420,18 +418,17 @@ public class TypeProxy implements AuxiliaryType {
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
          * @param implementationTarget  The implementation target this type proxy is created for.
-         * @param constructorParameters The parameter types of the constructor that should be called.
          * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
          * @param serializableProxy     Determines if the proxy should be serializable.
          */
         public ForSuperMethodByConstructor(TypeDescription proxiedType,
+                                           MethodDescription.InDefinedShape constructor,
                                            Implementation.Target implementationTarget,
-                                           List<TypeDescription> constructorParameters,
                                            boolean ignoreFinalizer,
                                            boolean serializableProxy) {
             this.proxiedType = proxiedType;
+            this.constructor = constructor;
             this.implementationTarget = implementationTarget;
-            this.constructorParameters = constructorParameters;
             this.ignoreFinalizer = ignoreFinalizer;
             this.serializableProxy = serializableProxy;
         }
@@ -440,22 +437,23 @@ public class TypeProxy implements AuxiliaryType {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            TypeDescription proxyType = implementationContext
-                    .register(new TypeProxy(proxiedType,
-                            implementationTarget,
-                            InvocationFactory.Default.SUPER_METHOD,
-                            ignoreFinalizer,
-                            serializableProxy));
-            StackManipulation[] constructorValue = new StackManipulation[constructorParameters.size()];
+            TypeDescription proxyType = implementationContext.register(new TypeProxy(proxiedType,
+                        implementationTarget,
+                        InvocationFactory.Default.SUPER_METHOD,
+                        ignoreFinalizer,
+                        serializableProxy));
+            StackManipulation[] constructorValue = new StackManipulation[constructor.getParameters().size()];
             int index = 0;
-            for (TypeDescription parameterType : constructorParameters) {
+            for (TypeDescription parameterType : constructor.getParameters().asTypeList().asErasures()) {
                 constructorValue[index++] = DefaultValue.of(parameterType);
             }
             return new Compound(
                     TypeCreation.of(proxyType),
                     Duplication.SINGLE,
                     new Compound(constructorValue),
-                    MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
+                    MethodInvocation.invoke(proxyType.getDeclaredMethods()
+                            .filter(isConstructor().and(takesArguments(constructor.getParameters().asTypeList().asErasures())))
+                            .getOnly()),
                     Duplication.SINGLE,
                     MethodVariableAccess.loadThis(),
                     FieldAccess.forField(proxyType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).write()

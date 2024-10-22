@@ -222,8 +222,8 @@ public class TypeProxyCreationTest {
                 .thenReturn(new StackManipulation.Size(0, 0));
         when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         StackManipulation stackManipulation = new TypeProxy.ForSuperMethodByConstructor(foo,
+                new MethodDescription.ForLoadedConstructor(Foo.class.getConstructor(Void.class)),
                 implementationTarget,
-                Collections.singletonList((TypeDescription) TypeDescription.ForLoadedType.of(Void.class)),
                 true,
                 false);
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
