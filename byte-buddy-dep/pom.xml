@@ -374,6 +374,7 @@
                                 <goals>
                                     <goal>compile</goal>
                                 </goals>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
                                     <target>1.8</target>

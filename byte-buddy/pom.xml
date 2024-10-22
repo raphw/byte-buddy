@@ -436,6 +436,7 @@
                                 <goals>
                                     <goal>update-bytecode</goal>
                                 </goals>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
                                     <oldPackage>${shade.source}</oldPackage>
