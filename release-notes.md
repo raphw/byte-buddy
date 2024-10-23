@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 23. October 2024: version 1.15.7
+
+- Additional release after time out during previous Gradle plugin release.
+
 ### 21. October 2024: version 1.15.6
 
 - Add ConstructorResolver to Super annotation for MethodDelegation to allow for dynamic constructor resolution.
