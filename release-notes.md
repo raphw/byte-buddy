@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. October 2024: version 1.15.6
+
+- Add ConstructorResolver to Super annotation for MethodDelegation to allow for dynamic constructor resolution.
+- Add Java 8 versions of shaded ASM to allow for faster class file validation and CDS support.
+
 ### 17. October 2024: version 1.15.5
 
 - Publish Byte Buddy and Byte Buddy agent artifacts as multi-release jars to support CDS and faster validation.
