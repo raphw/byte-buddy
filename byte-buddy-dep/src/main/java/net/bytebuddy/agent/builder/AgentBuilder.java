@@ -84,12 +84,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.io.File;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintStream;
-import java.io.Serializable;
+import java.io.*;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -3049,6 +3044,11 @@ public interface AgentBuilder {
             private final List<Entry> entries;
 
             /**
+             * The names of auxiliary types to inject.
+             */
+            private final List<String> auxiliaries;
+
+            /**
              * Creates a new advice transformer with a default setup.
              */
             public ForAdvice() {
@@ -3067,7 +3067,8 @@ public interface AgentBuilder {
                         ClassFileLocator.NoOp.INSTANCE,
                         PoolStrategy.Default.FAST,
                         LocationStrategy.ForClassLoader.STRONG,
-                        Collections.<Entry>emptyList());
+                        Collections.<Entry>emptyList(),
+                        Collections.<String>emptyList());
             }
 
             /**
@@ -3080,6 +3081,7 @@ public interface AgentBuilder {
              * @param poolStrategy     The pool strategy to use for looking up an advice.
              * @param locationStrategy The location strategy to use for class loaders when resolving advice classes.
              * @param entries          The advice entries to apply.
+             * @param auxiliaries      The names of auxiliary types to inject.
              */
             protected ForAdvice(Advice.WithCustomMapping advice,
                                 Advice.ExceptionHandler exceptionHandler,
@@ -3087,7 +3089,8 @@ public interface AgentBuilder {
                                 ClassFileLocator classFileLocator,
                                 PoolStrategy poolStrategy,
                                 LocationStrategy locationStrategy,
-                                List<Entry> entries) {
+                                List<Entry> entries,
+                                List<String> auxiliaries) {
                 this.advice = advice;
                 this.exceptionHandler = exceptionHandler;
                 this.assigner = assigner;
@@ -3095,6 +3098,7 @@ public interface AgentBuilder {
                 this.poolStrategy = poolStrategy;
                 this.locationStrategy = locationStrategy;
                 this.entries = entries;
+                this.auxiliaries = auxiliaries;
             }
 
             /**
@@ -3107,6 +3111,13 @@ public interface AgentBuilder {
                                                     @MaybeNull ProtectionDomain protectionDomain) {
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
+                for (String name : auxiliaries) {
+                    try {
+                        builder = builder.require(typePool.describe(name).resolve(), classFileLocator.locate(name).resolve());
+                    } catch (Exception exception) {
+                        throw new IllegalStateException("Failed to resolve auxiliary type " + name, exception);
+                    }
+                }
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
                     asmVisitorWrapper = asmVisitorWrapper.invokable(entry.getMatcher().resolve(typeDescription), wrap(typeDescription,
@@ -3149,6 +3160,7 @@ public interface AgentBuilder {
              * @param poolStrategy     The pool strategy to use for looking up an advice.
              * @param locationStrategy The location strategy to use for class loaders when resolving advice classes.
              * @param entries          The advice entries to apply.
+             * @param auxiliaries      The names of auxiliary types to inject.
              * @return An appropriate advice transformer.
              */
             protected ForAdvice make(Advice.WithCustomMapping advice,
@@ -3157,8 +3169,9 @@ public interface AgentBuilder {
                                      ClassFileLocator classFileLocator,
                                      PoolStrategy poolStrategy,
                                      LocationStrategy locationStrategy,
-                                     List<Entry> entries) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                                     List<Entry> entries,
+                                     List<String> auxiliaries) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3168,7 +3181,7 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the supplied pool strategy.
              */
             public ForAdvice with(PoolStrategy poolStrategy) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3179,7 +3192,7 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the supplied location strategy.
              */
             public ForAdvice with(LocationStrategy locationStrategy) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3190,7 +3203,7 @@ public interface AgentBuilder {
              * @see Advice#withExceptionHandler(StackManipulation)
              */
             public ForAdvice withExceptionHandler(Advice.ExceptionHandler exceptionHandler) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3201,7 +3214,7 @@ public interface AgentBuilder {
              * @see Advice#withAssigner(Assigner)
              */
             public ForAdvice with(Assigner assigner) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3244,7 +3257,8 @@ public interface AgentBuilder {
                         new ClassFileLocator.Compound(CompoundList.of(classFileLocator, classFileLocators)),
                         poolStrategy,
                         locationStrategy,
-                        entries);
+                        entries,
+                        auxiliaries);
             }
 
             /**
@@ -3272,7 +3286,8 @@ public interface AgentBuilder {
                         classFileLocator,
                         poolStrategy,
                         locationStrategy,
-                        CompoundList.of(entries, new Entry.ForUnifiedAdvice(matcher, name)));
+                        CompoundList.of(entries, new Entry.ForUnifiedAdvice(matcher, name)),
+                        auxiliaries);
             }
 
             /**
@@ -3302,7 +3317,35 @@ public interface AgentBuilder {
                         classFileLocator,
                         poolStrategy,
                         locationStrategy,
-                        CompoundList.of(entries, new Entry.ForSplitAdvice(matcher, enter, exit)));
+                        CompoundList.of(entries, new Entry.ForSplitAdvice(matcher, enter, exit)),
+                        auxiliaries);
+            }
+
+            /**
+             * Adds the given auxiliary types for injection.
+             *
+             * @param auxiliary The names of the auxiliary types to inject.
+             * @return A new instance of this advice transformer that resolves and adds the specified auxiliary types.
+             */
+            public ForAdvice auxiliary(String... auxiliary) {
+                return auxiliary(Arrays.asList(auxiliary));
+            }
+
+            /**
+             * Adds the given auxiliary types for injection.
+             *
+             * @param auxiliaries The names of the auxiliary types to inject.
+             * @return A new instance of this advice transformer that resolves and adds the specified auxiliary types.
+             */
+            public ForAdvice auxiliary(List<String> auxiliaries) {
+                return make(advice,
+                        exceptionHandler,
+                        assigner,
+                        classFileLocator,
+                        poolStrategy,
+                        locationStrategy,
+                        entries,
+                        CompoundList.of(this.auxiliaries, auxiliaries));
             }
 
             /**
