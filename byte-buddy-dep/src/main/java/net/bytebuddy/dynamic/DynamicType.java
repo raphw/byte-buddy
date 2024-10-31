@@ -87,6 +87,13 @@ public interface DynamicType extends ClassFileLocator {
     byte[] getBytes();
 
     /**
+     * Returns a set of all types that are represented by this dynamic type.
+     *
+     * @return A set of all represented types.
+     */
+    Set<TypeDescription> getTypeDescriptions();
+
+    /**
      * <p>
      * Returns a map of all auxiliary types that are required for making use of the main type.
      * </p>
@@ -6121,6 +6128,18 @@ public interface DynamicType extends ClassFileLocator {
          */
         public void close() {
             /* do nothing */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Set<TypeDescription> getTypeDescriptions() {
+            Set<TypeDescription> types = new LinkedHashSet<TypeDescription>();
+            types.add(typeDescription);
+            for (DynamicType auxiliaryType : auxiliaryTypes) {
+                types.addAll(auxiliaryType.getTypeDescriptions());
+            }
+            return types;
         }
 
         /**

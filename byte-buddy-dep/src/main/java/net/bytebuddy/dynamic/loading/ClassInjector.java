@@ -97,6 +97,8 @@ public interface ClassInjector {
      */
     Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator);
 
+    Map<TypeDescription, Class<?>> inject(List<? extends DynamicType> dynamicTypes);
+
     /**
      * Injects the given types into the represented class loader.
      *
@@ -121,13 +123,30 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
+        public Map<TypeDescription, Class<?>> inject(List<? extends DynamicType> dynamicTypes) {
+            Map<String, TypeDescription> types = new LinkedHashMap<String, TypeDescription>();
+            for (DynamicType dynamicType : dynamicTypes) {
+                for (TypeDescription typeDescription : dynamicType.getTypeDescriptions()) {
+                    types.put(typeDescription.getName(), typeDescription);
+                }
+            }
+            Map<TypeDescription, Class<?>> result = new HashMap<TypeDescription, Class<?>>();
+            for (Map.Entry<String, Class<?>> entry : inject(types.keySet(), new ClassFileLocator.Compound(dynamicTypes)).entrySet()) {
+                result.put(types.get(entry.getKey()), entry.getValue());
+            }
+            return result;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             Map<String, byte[]> binaryRepresentations = new LinkedHashMap<String, byte[]>();
             for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
                 binaryRepresentations.put(entry.getKey().getName(), entry.getValue());
             }
             Map<String, Class<?>> loadedTypes = injectRaw(binaryRepresentations);
-            Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
+            Map<TypeDescription, Class<?>> result = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : types.keySet()) {
                 result.put(typeDescription, loadedTypes.get(typeDescription.getName()));
             }
