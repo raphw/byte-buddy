@@ -3914,9 +3914,8 @@ public interface AgentBuilder {
                                  @MaybeNull ClassLoader classLoader,
                                  @MaybeNull ProtectionDomain protectionDomain,
                                  InjectionStrategy injectionStrategy) {
-                Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
-                Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
+                Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions(), independentTypes = new LinkedHashSet<TypeDescription>(auxiliaryTypes);
+                for (TypeDescription auxiliaryType : auxiliaryTypes) {
                     if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)) {
                         independentTypes.remove(auxiliaryType);
                     }
@@ -3924,7 +3923,7 @@ public interface AgentBuilder {
                 if (!independentTypes.isEmpty()) {
                     ClassInjector classInjector = injectionStrategy.resolve(classLoader, protectionDomain);
                     Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes, dynamicType).entrySet()) {
                         loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                     }
                 }
@@ -4014,9 +4013,14 @@ public interface AgentBuilder {
                     private final TypeDescription instrumentedType;
 
                     /**
-                     * The auxiliary types mapped to their class file representation.
+                     * The auxiliary types to inject.
                      */
-                    private final Map<TypeDescription, byte[]> rawAuxiliaryTypes;
+                    private final Set<TypeDescription> auxiliaryTypes;
+
+                    /**
+                     * The class file locator to use.
+                     */
+                    private final ClassFileLocator classFileLocator;
 
                     /**
                      * The instrumented types and auxiliary types mapped to their loaded type initializers.
@@ -4033,16 +4037,19 @@ public interface AgentBuilder {
                      * Creates a new injection initializer.
                      *
                      * @param instrumentedType       The instrumented type.
-                     * @param rawAuxiliaryTypes      The auxiliary types mapped to their class file representation.
+                     * @param rawAuxiliaryTypes      The auxiliary types to inject.
+                     * @param classFileLocator       The class file locator to use.
                      * @param loadedTypeInitializers The instrumented types and auxiliary types mapped to their loaded type initializers.
                      * @param classInjector          The class injector to use.
                      */
                     protected InjectingInitializer(TypeDescription instrumentedType,
-                                                   Map<TypeDescription, byte[]> rawAuxiliaryTypes,
+                                                   Set<TypeDescription> auxiliaryTypes,
+                                                   ClassFileLocator classFileLocator,
                                                    Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers,
                                                    ClassInjector classInjector) {
                         this.instrumentedType = instrumentedType;
-                        this.rawAuxiliaryTypes = rawAuxiliaryTypes;
+                        this.auxiliaryTypes = auxiliaryTypes;
+                        this.classFileLocator = classFileLocator;
                         this.loadedTypeInitializers = loadedTypeInitializers;
                         this.classInjector = classInjector;
                     }
@@ -4051,7 +4058,7 @@ public interface AgentBuilder {
                      * {@inheritDoc}
                      */
                     public void onLoad(Class<?> type) {
-                        for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(rawAuxiliaryTypes).entrySet()) {
+                        for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(auxiliaryTypes, classFileLocator).entrySet()) {
                             loadedTypeInitializers.get(auxiliary.getKey()).onLoad(auxiliary.getValue());
                         }
                         loadedTypeInitializers.get(instrumentedType).onLoad(type);
@@ -4116,28 +4123,28 @@ public interface AgentBuilder {
                                          @MaybeNull ClassLoader classLoader,
                                          @MaybeNull ProtectionDomain protectionDomain,
                                          InjectionStrategy injectionStrategy) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions();
                         LoadedTypeInitializer loadedTypeInitializer;
                         if (!auxiliaryTypes.isEmpty()) {
                             TypeDescription instrumentedType = dynamicType.getTypeDescription();
                             ClassInjector classInjector = injectionStrategy.resolve(classLoader, protectionDomain);
-                            Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                            Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                            for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
+                            Set<TypeDescription> independentTypes = new LinkedHashSet<TypeDescription>(auxiliaryTypes);
+                            Set<TypeDescription> dependentTypes = new LinkedHashSet<TypeDescription>(auxiliaryTypes);
+                            for (TypeDescription auxiliaryType : auxiliaryTypes) {
                                 (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)
                                         ? dependentTypes
                                         : independentTypes).remove(auxiliaryType);
                             }
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (!independentTypes.isEmpty()) {
-                                for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                                for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes, dynamicType).entrySet()) {
                                     loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                                 }
                             }
                             Map<TypeDescription, LoadedTypeInitializer> lazyInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(loadedTypeInitializers);
-                            loadedTypeInitializers.keySet().removeAll(independentTypes.keySet());
+                            loadedTypeInitializers.keySet().removeAll(independentTypes);
                             loadedTypeInitializer = lazyInitializers.size() > 1 // there exist auxiliary types that need lazy loading
-                                    ? new Dispatcher.InjectingInitializer(instrumentedType, dependentTypes, lazyInitializers, classInjector)
+                                    ? new Dispatcher.InjectingInitializer(instrumentedType, dependentTypes, dynamicType, lazyInitializers, classInjector)
                                     : lazyInitializers.get(instrumentedType);
                         } else {
                             loadedTypeInitializer = dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription());
@@ -4195,10 +4202,10 @@ public interface AgentBuilder {
                                          @MaybeNull ClassLoader classLoader,
                                          @MaybeNull ProtectionDomain protectionDomain,
                                          InjectionStrategy injectionStrategy) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions();
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
-                                : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectionStrategy.resolve(classLoader, protectionDomain));
+                                : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType, dynamicType.getLoadedTypeInitializers(), injectionStrategy.resolve(classLoader, protectionDomain));
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
                 }
