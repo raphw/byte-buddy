@@ -318,10 +318,18 @@ public class DynamicTypeDefaultTest {
     }
 
     @Test
-    public void testIterationOrder() throws Exception {
+    public void testIterationOrderAll() throws Exception {
         Iterator<TypeDescription> types = dynamicType.getAllTypes().keySet().iterator();
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(typeDescription));
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(auxiliaryTypeDescription));
+        assertThat(types.hasNext(), is(false));
+    }
+
+    @Test
+    public void testIterationOrderAuxiliary() throws Exception {
+        Iterator<TypeDescription> types = dynamicType.getAuxiliaryTypes().keySet().iterator();
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(auxiliaryTypeDescription));
         assertThat(types.hasNext(), is(false));
