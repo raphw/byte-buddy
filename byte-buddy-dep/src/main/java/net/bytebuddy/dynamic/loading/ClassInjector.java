@@ -91,11 +91,20 @@ public interface ClassInjector {
     /**
      * Injects the given types into the represented class loader.
      *
+     * @param types            The types to load via injection.
+     * @param classFileLocator The class file locator to use for resolving binary representations.
+     * @return The loaded types that were passed as arguments.
+     */
+    Map<TypeDescription, Class<?>> inject(Set<? extends TypeDescription> types, ClassFileLocator classFileLocator);
+
+    /**
+     * Injects the given types into the represented class loader.
+     *
      * @param names            The names of the types to load via injection.
      * @param classFileLocator The class file locator to use for resolving binary representations.
      * @return The loaded types that were passed as arguments.
      */
-    Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator);
+    Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator);
 
     /**
      * Injects the given types into the represented class loader.
@@ -106,9 +115,9 @@ public interface ClassInjector {
     Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types);
 
     /**
-     * Injects the given types into the represented class loader using a mapping from name to binary representation.
+     * Injects the given types into the represented class loader.
      *
-     * @param types The types to load via injection.
+     * @param types The names of the type to load via injection.
      * @return The loaded types that were passed as arguments.
      */
     Map<String, Class<?>> injectRaw(Map<String, byte[]> types);
@@ -117,6 +126,22 @@ public interface ClassInjector {
      * An abstract base implementation of a class injector.
      */
     abstract class AbstractBase implements ClassInjector {
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<TypeDescription, Class<?>> inject(Set<? extends TypeDescription> types, ClassFileLocator classFileLocator) {
+            Set<String> names = new LinkedHashSet<String>();
+            for (TypeDescription type : types) {
+                names.add(type.getName());
+            }
+            Map<String, Class<?>> loadedTypes = injectRaw(names, classFileLocator);
+            Map<TypeDescription, Class<?>> result = new HashMap<TypeDescription, Class<?>>();
+            for (TypeDescription type : types) {
+                result.put(type, loadedTypes.get(type.getName()));
+            }
+            return result;
+        }
 
         /**
          * {@inheritDoc}
@@ -138,7 +163,7 @@ public interface ClassInjector {
          * {@inheritDoc}
          */
         public Map<String, Class<?>> injectRaw(Map<String, byte[]> types) {
-            return inject(types.keySet(), new ClassFileLocator.Simple(types));
+            return injectRaw(types.keySet(), new ClassFileLocator.Simple(types));
         }
     }
 
@@ -254,7 +279,7 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             Dispatcher dispatcher = DISPATCHER.initialize();
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             for (String name : names) {
@@ -1645,7 +1670,7 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             PackageDescription target = TypeDescription.ForLoadedType.of(lookupType()).getPackage();
             if (target == null) {
                 throw new IllegalArgumentException("Cannot inject array or primitive type");
@@ -1832,7 +1857,7 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             Dispatcher dispatcher = this.dispatcher.initialize();
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             synchronized (classLoader == null
@@ -2486,7 +2511,7 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             File file = new File(folder, JAR + randomString.nextString() + "." + JAR);
             try {
                 if (!file.createNewFile()) {
@@ -2756,7 +2781,7 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             synchronized (classLoader == null
                     ? BOOTSTRAP_LOADER_LOCK
