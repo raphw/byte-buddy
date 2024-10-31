@@ -328,6 +328,24 @@ public class DynamicTypeDefaultTest {
     }
 
     @Test
+    public void testIterationOrderAllDescriptions() throws Exception {
+        Iterator<TypeDescription> types = dynamicType.getAllTypeDescriptions().iterator();
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(typeDescription));
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(auxiliaryTypeDescription));
+        assertThat(types.hasNext(), is(false));
+    }
+
+    @Test
+    public void testIterationOrderAuxiliaryDescriptions() throws Exception {
+        Iterator<TypeDescription> types = dynamicType.getAuxiliaryTypeDescriptions().iterator();
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(auxiliaryTypeDescription));
+        assertThat(types.hasNext(), is(false));
+    }
+
+    @Test
     public void testClassFileLocator() throws Exception {
         assertThat(dynamicType.locate(FOOBAR.replace('/', '.')).isResolved(), is(true));
         assertThat(dynamicType.locate(QUXBAZ.replace('/', '.')).isResolved(), is(true));

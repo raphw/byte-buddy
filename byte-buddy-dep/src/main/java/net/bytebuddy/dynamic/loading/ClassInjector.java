@@ -97,8 +97,6 @@ public interface ClassInjector {
      */
     Map<String, Class<?>> inject(Set<String> names, ClassFileLocator classFileLocator);
 
-    Map<TypeDescription, Class<?>> inject(List<? extends DynamicType> dynamicTypes);
-
     /**
      * Injects the given types into the represented class loader.
      *
@@ -119,23 +117,6 @@ public interface ClassInjector {
      * An abstract base implementation of a class injector.
      */
     abstract class AbstractBase implements ClassInjector {
-
-        /**
-         * {@inheritDoc}
-         */
-        public Map<TypeDescription, Class<?>> inject(List<? extends DynamicType> dynamicTypes) {
-            Map<String, TypeDescription> types = new LinkedHashMap<String, TypeDescription>();
-            for (DynamicType dynamicType : dynamicTypes) {
-                for (TypeDescription typeDescription : dynamicType.getTypeDescriptions()) {
-                    types.put(typeDescription.getName(), typeDescription);
-                }
-            }
-            Map<TypeDescription, Class<?>> result = new HashMap<TypeDescription, Class<?>>();
-            for (Map.Entry<String, Class<?>> entry : inject(types.keySet(), new ClassFileLocator.Compound(dynamicTypes)).entrySet()) {
-                result.put(types.get(entry.getKey()), entry.getValue());
-            }
-            return result;
-        }
 
         /**
          * {@inheritDoc}
