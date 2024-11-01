@@ -125,6 +125,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.jar.Manifest;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.hasMethodName;
@@ -3111,12 +3112,8 @@ public interface AgentBuilder {
                                                     @MaybeNull ProtectionDomain protectionDomain) {
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
-                for (String name : auxiliaries) {
-                    try {
-                        builder = builder.require(typePool.describe(name).resolve(), classFileLocator.locate(name).resolve());
-                    } catch (Exception exception) {
-                        throw new IllegalStateException("Failed to resolve auxiliary type " + name, exception);
-                    }
+                for (String auxiliary : auxiliaries) {
+                    builder = builder.require(new LazyDynamicType(typePool.describe(auxiliary).resolve(), classFileLocator));
                 }
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
@@ -3448,6 +3445,66 @@ public interface AgentBuilder {
                     protected Advice resolve(Advice.WithCustomMapping advice, TypePool typePool, ClassFileLocator classFileLocator) {
                         return advice.to(typePool.describe(enter).resolve(), typePool.describe(exit).resolve(), classFileLocator);
                     }
+                }
+            }
+
+            /**
+             * A lazy dynamic type that only loads a class file representation on demand.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class LazyDynamicType extends DynamicType.AbstractBase {
+
+                /**
+                 * A description of the class to inject.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * The class file locator to use.
+                 */
+                private final ClassFileLocator classFileLocator;
+
+                /**
+                 * Creates a lazy dynamic type.
+                 *
+                 * @param typeDescription A description of the class to inject.
+                 * @param classFileLocator The class file locator to use.
+                 */
+                protected LazyDynamicType(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+                    this.typeDescription = typeDescription;
+                    this.classFileLocator = classFileLocator;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription getTypeDescription() {
+                    return typeDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public byte[] getBytes() {
+                    try {
+                        return classFileLocator.locate(typeDescription.getName()).resolve();
+                    } catch (IOException exception) {
+                        throw new IllegalStateException("Failed to resolve class file for " + typeDescription, exception);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public List<? extends DynamicType> getAuxiliaries() {
+                    return Collections.<DynamicType>emptyList();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public LoadedTypeInitializer getLoadedTypeInitializer() {
+                    return LoadedTypeInitializer.NoOp.INSTANCE;
                 }
             }
         }
@@ -4037,7 +4094,7 @@ public interface AgentBuilder {
                      * Creates a new injection initializer.
                      *
                      * @param instrumentedType       The instrumented type.
-                     * @param rawAuxiliaryTypes      The auxiliary types to inject.
+                     * @param auxiliaryTypes         The auxiliary types to inject.
                      * @param classFileLocator       The class file locator to use.
                      * @param loadedTypeInitializers The instrumented types and auxiliary types mapped to their loaded type initializers.
                      * @param classInjector          The class injector to use.
@@ -4259,10 +4316,10 @@ public interface AgentBuilder {
                                          @MaybeNull ClassLoader classLoader,
                                          @MaybeNull ProtectionDomain protectionDomain,
                                          InjectionStrategy injectionStrategy) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (!auxiliaryTypes.isEmpty()) {
-                            for (Map.Entry<TypeDescription, Class<?>> entry : injectionStrategy.resolve(classLoader, protectionDomain).inject(auxiliaryTypes).entrySet()) {
+                            for (Map.Entry<TypeDescription, Class<?>> entry : injectionStrategy.resolve(classLoader, protectionDomain).inject(auxiliaryTypes, dynamicType).entrySet()) {
                                 loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                             }
                         }

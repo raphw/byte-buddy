@@ -144,7 +144,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testTypeInitializersAliveAuxiliary() throws Exception {
-        when(auxiliaryLoadedTypeInitializer.isAlive()).thenReturn(true);
+        when(auxiliaryType.hasAliveLoadedTypeInitializers()).thenReturn(true);
         assertThat(dynamicType.hasAliveLoadedTypeInitializers(), is(true));
     }
 
@@ -337,6 +337,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testIterationOrderAllDescriptions() throws Exception {
+        when(auxiliaryType.getAllTypeDescriptions()).thenReturn(Collections.singleton(auxiliaryTypeDescription));
         Iterator<TypeDescription> types = dynamicType.getAllTypeDescriptions().iterator();
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(typeDescription));
@@ -347,6 +348,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testIterationOrderAuxiliaryDescriptions() throws Exception {
+        when(auxiliaryType.getAllTypeDescriptions()).thenReturn(Collections.singleton(auxiliaryTypeDescription));
         Iterator<TypeDescription> types = dynamicType.getAuxiliaryTypeDescriptions().iterator();
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(auxiliaryTypeDescription));
