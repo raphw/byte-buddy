@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. November 2024: version 1.15.8
+
+- Extend `ClassInjector` API to support lazy resolution of class files.
+- Extend `DynamicType` API to support lazy resolution of auxiliary types.
+- Extend `AgentBuilder.Transformer.ForAdvice` to support injection of new classes by their name.
+
 ### 23. October 2024: version 1.15.7
 
 - Additional release after time out during previous Gradle plugin release.
