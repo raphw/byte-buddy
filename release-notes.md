@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. November 2024: version 1.15.9
+
+- Additional release after time out during previous Gradle plugin release.
+
 ### 1. November 2024: version 1.15.8
 
 - Extend `ClassInjector` API to support lazy resolution of class files.
