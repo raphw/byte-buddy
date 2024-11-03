@@ -445,10 +445,10 @@
                                         <artifact>org\.ow2\.asm:.*</artifact>
                                     </artifacts>
                                     <includes>
-                                        <include>org/objectweb/asm/[a-zA-Z\.]+</include>
-                                        <include>org/objectweb/asm/signature/[a-zA-Z\.]+</include>
+                                        <include>org/objectweb/asm/[a-zA-Z0-9$\.]+</include>
+                                        <include>org/objectweb/asm/signature/[a-zA-Z0-9$\.]+</include>
                                         <include>org/objectweb/asm/commons/.*Remapper.*</include>
-                                        <include>org/objectweb/asm/commons/ModuleHashesAttribute.class</include>
+                                        <include>org/objectweb/asm/commons/ModuleHashesAttribute[a-zA-Z0-9$\.]]*.class</include>
                                     </includes>
                                 </configuration>
                             </execution>
