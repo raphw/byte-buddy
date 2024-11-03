@@ -1,7 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
-### 1. November 2024: version 1.15.9
+### 4. November 2024: version 1.15.10
+
+- Fix Java 8 patterns for multi-release jars to avoid that inner classes are excluded.
+
+### 3. November 2024: version 1.15.9
 
 - Additional release after time out during previous Gradle plugin release.
 
