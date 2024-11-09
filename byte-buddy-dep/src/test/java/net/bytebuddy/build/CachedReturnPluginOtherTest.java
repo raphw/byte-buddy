@@ -1,6 +1,7 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -40,6 +41,11 @@ public class CachedReturnPluginOtherTest {
         new CachedReturnPlugin().apply(new ByteBuddy().redefine(ParameterCache.class),
                 TypeDescription.ForLoadedType.of(ParameterCache.class),
                 ClassFileLocator.ForClassLoader.of(ParameterCache.class.getClassLoader()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAdviceResolverVoid() {
+        CachedReturnPlugin.AdviceResolver.of(TypeDescription.ForLoadedType.of(void.class));
     }
 
     private static class VoidCache {

@@ -16,22 +16,33 @@
 package net.bytebuddy.build;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldPersistence;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.SyntheticState;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.RandomString;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.*;
-import java.util.HashMap;
-import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -50,11 +61,6 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
      * An infix between a field and the random suffix if no field name is chosen.
      */
     private static final String NAME_INFIX = "_";
-
-    /**
-     * The infix symbol for advice classes.
-     */
-    private static final String ADVICE_INFIX = "$Advice$";
 
     /**
      * A description of the {@link Enhance#value()} method.
@@ -76,21 +82,6 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
     private final RandomString randomString;
 
     /**
-     * The class file locator to use.
-     */
-    private final ClassFileLocator classFileLocator;
-
-    /**
-     * A map of advice types mapped by their argument type. All advice types are precompiled using Java 6 to allow
-     * for releasing Byte Buddy with a Java 5 byte code level where compiled classes do not contain stack map frames.
-     * Byte Buddy filters stack map frames when applying advice in newer version but it cannot add stack map frames
-     * without explicit frame computation which is expensive which is why precompilation was used. To avoid loading
-     * Java classes in incompatible versions, all advice types are resolved using a type pool.
-     */
-    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
-    private final Map<TypeDescription, TypeDescription> adviceByType;
-
-    /**
      * Creates a plugin for caching method return values. If a field name exists before applying this plugin, an exception is raised.
      */
     public CachedReturnPlugin() {
@@ -106,24 +97,6 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
         super(declaresMethod(isAnnotatedWith(Enhance.class)));
         this.ignoreExistingFields = ignoreExistingFields;
         randomString = new RandomString();
-        classFileLocator = ClassFileLocator.ForClassLoader.of(CachedReturnPlugin.class.getClassLoader());
-        TypePool typePool = TypePool.Default.of(classFileLocator);
-        adviceByType = new HashMap<TypeDescription, TypeDescription>();
-        for (Class<?> type : new Class<?>[]{
-                boolean.class,
-                byte.class,
-                short.class,
-                char.class,
-                int.class,
-                long.class,
-                float.class,
-                double.class,
-                Object.class
-        }) {
-            adviceByType.put(TypeDescription.ForLoadedType.ForLoadedType.of(type), typePool.describe(CachedReturnPlugin.class.getName()
-                    + ADVICE_INFIX
-                    + type.getSimpleName()).resolve());
-        }
     }
 
     /**
@@ -161,12 +134,9 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
                             : Ownership.MEMBER, methodDescription.isStatic()
                             ? FieldPersistence.PLAIN
                             : FieldPersistence.TRANSIENT, Visibility.PRIVATE, SyntheticState.SYNTHETIC)
-                    .visit(Advice.withCustomMapping()
-                            .bind(CacheField.class, new CacheFieldOffsetMapping(name))
-                            .to(adviceByType.get(methodDescription.getReturnType().isPrimitive()
-                                    ? methodDescription.getReturnType().asErasure()
-                                    : TypeDescription.ForLoadedType.of(Object.class)), this.classFileLocator)
-                            .on(is(methodDescription)));
+                    .visit(AdviceResolver
+                            .of(methodDescription.getReturnType())
+                            .toAdvice(name).on(is(methodDescription)));
         }
         return builder;
     }
@@ -203,6 +173,215 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
     @Retention(RetentionPolicy.RUNTIME)
     protected @interface CacheField {
         /* empty */
+    }
+
+    /**
+     * A resolver for {@link Advice} that caches a method's return type.
+     */
+    protected enum AdviceResolver {
+
+        /**
+         * A resolver for a {@code boolean} type.
+         */
+        BOOLEAN(boolean.class, Opcodes.ILOAD, Opcodes.ISTORE, Opcodes.NOP, Opcodes.IFNE),
+
+        /**
+         * A resolver for a {@code byte} type.
+         */
+        BYTE(byte.class, Opcodes.ILOAD, Opcodes.ISTORE, Opcodes.NOP, Opcodes.IFNE),
+
+        /**
+         * A resolver for a {@code short} type.
+         */
+        SHORT(short.class, Opcodes.ILOAD, Opcodes.ISTORE, Opcodes.NOP, Opcodes.IFNE),
+
+        /**
+         * A resolver for a {@code char} type.
+         */
+        CHARACTER(char.class, Opcodes.ILOAD, Opcodes.ISTORE, Opcodes.NOP, Opcodes.IFNE),
+
+        /**
+         * A resolver for a {@code int} type.
+         */
+        INTEGER(int.class, Opcodes.ILOAD, Opcodes.ISTORE, Opcodes.NOP, Opcodes.IFNE),
+
+        /**
+         * A resolver for a {@code long} type.
+         */
+        LONG(long.class, Opcodes.LLOAD, Opcodes.LSTORE, Opcodes.L2I, Opcodes.IFNE),
+
+        /**
+         * A resolver for a {@code float} type.
+         */
+        FLOAT(float.class, Opcodes.FLOAD, Opcodes.FSTORE, Opcodes.F2I, Opcodes.IFNE),
+
+        /**
+         * A resolver for a {@code double} type.
+         */
+        DOUBLE(double.class, Opcodes.DLOAD, Opcodes.DSTORE, Opcodes.D2I, Opcodes.IFNE),
+
+        /**
+         * A resolver for a reference type.
+         */
+        REFERENCE(Object.class, Opcodes.ALOAD, Opcodes.ASTORE, Opcodes.NOP, Opcodes.IFNONNULL);
+
+        /**
+         * The created dynamic type to use for advice.
+         */
+        private final DynamicType.Loaded<?> dynamicType;
+
+        /**
+         * Creates an advice resolver.
+         *
+         * @param type    The type of the return type.
+         * @param load    The byte code that loads a value onto the stack from the local variable array.
+         * @param store   The byte code that stores a value to the local variable array.
+         * @param convert An instruction to convert the cached value to a value that is applied on the branch instruction.
+         * @param branch  A jump instruction that checks if the cached value is already set.
+         */
+        AdviceResolver(Class<?> type, int load, int store, int convert, int branch) {
+            dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V6)
+                    .with(TypeValidation.DISABLED)
+                    .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                    .name(CachedReturnPlugin.class.getName() + "$Advice$" + this)
+                    .defineMethod("enter", type, Ownership.STATIC)
+                    .withParameter(type)
+                    .annotateParameter(AnnotationDescription.Builder.ofType(CachedReturnPlugin.CacheField.class).build())
+                    .intercept(new Implementation.Simple(
+                            MethodVariableAccess.of(TypeDescription.ForLoadedType.of(type)).loadFrom(0),
+                            MethodReturn.of(TypeDescription.ForLoadedType.of(type))
+                    ))
+                    .annotateMethod(AnnotationDescription.Builder.ofType(Advice.OnMethodEnter.class)
+                            .define("skipOn", Advice.OnNonDefaultValue.class)
+                            .build())
+                    .defineMethod("exit", void.class, Ownership.STATIC)
+                    .withParameter(type)
+                    .annotateParameter(AnnotationDescription.Builder.ofType(Advice.Return.class)
+                            .define("readOnly", false)
+                            .define("typing", Assigner.Typing.DYNAMIC)
+                            .build())
+                    .withParameter(type)
+                    .annotateParameter(AnnotationDescription.Builder.ofType(CachedReturnPlugin.CacheField.class).build())
+                    .intercept(new Implementation.Simple(new ExitAdviceByteCodeAppender(load, store, convert, branch, StackSize.of(type).getSize())))
+                    .annotateMethod(AnnotationDescription.Builder.ofType(Advice.OnMethodExit.class).build())
+                    .make()
+                    .load(null);
+            dynamicType.getLoaded().getMethods();
+        }
+
+        /**
+         * Creates an advice resolver for a given type definition.
+         *
+         * @param typeDefinition The type definition for which advice is to be created.
+         * @return An appropriate advice resolver.
+         */
+        protected static AdviceResolver of(TypeDefinition typeDefinition) {
+            if (typeDefinition.represents(boolean.class)) {
+                return BOOLEAN;
+            } else if (typeDefinition.represents(byte.class)) {
+                return BYTE;
+            } else if (typeDefinition.represents(short.class)) {
+                return SHORT;
+            } else if (typeDefinition.represents(char.class)) {
+                return CHARACTER;
+            } else if (typeDefinition.represents(int.class)) {
+                return INTEGER;
+            } else if (typeDefinition.represents(long.class)) {
+                return LONG;
+            } else if (typeDefinition.represents(float.class)) {
+                return FLOAT;
+            } else if (typeDefinition.represents(double.class)) {
+                return DOUBLE;
+            } else if (typeDefinition.isPrimitive()) {
+                throw new IllegalArgumentException("Unexpected advice type: " + typeDefinition);
+            } else {
+                return REFERENCE;
+            }
+        }
+
+        /**
+         * Resolve advice for a given field name.
+         *
+         * @param name The name of the field to resolve the advice for.
+         * @return An appropriate advice.
+         */
+        protected Advice toAdvice(String name) {
+            return Advice.withCustomMapping()
+                    .bind(CacheField.class, new CacheFieldOffsetMapping(name))
+                    .to(dynamicType.getTypeDescription(), dynamicType);
+        }
+
+        /**
+         * A byte code appender for the exit advice.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class ExitAdviceByteCodeAppender implements ByteCodeAppender {
+
+            /**
+             * The byte code that loads a value onto the stack from the local variable array.
+             */
+            private final int load;
+
+            /**
+             * The byte code that stores a value to the local variable array.
+             */
+            private final int store;
+
+            /**
+             * An instruction to convert the cached value to a value that is applied on the branch instruction.
+             */
+            private final int convert;
+
+            /**
+             * A jump instruction that checks if the cached value is already set.
+             */
+            private final int branch;
+
+            /**
+             * The size of the created type on the operand stack.
+             */
+            private final int size;
+
+            /**
+             * Creates a byte code appender for exit advice on a cached return plugin.
+             *
+             * @param load    The byte code that loads a value onto the stack from the local variable array.
+             * @param store   The byte code that stores a value to the local variable array.
+             * @param convert An instruction to convert the cached value to a value that is applied on the branch instruction.
+             * @param branch  A jump instruction that checks if the cached value is already set.
+             * @param size    The size of the created type on the operand stack.
+             */
+            protected ExitAdviceByteCodeAppender(int load, int store, int convert, int branch, int size) {
+                this.load = load;
+                this.store = store;
+                this.convert = convert;
+                this.branch = branch;
+                this.size = size;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                Label complete = new Label(), uncached = new Label();
+                methodVisitor.visitVarInsn(load, 0);
+                if (convert != Opcodes.NOP) {
+                    methodVisitor.visitInsn(convert);
+                }
+                methodVisitor.visitJumpInsn(branch, uncached);
+                methodVisitor.visitVarInsn(load, size);
+                methodVisitor.visitVarInsn(store, 0);
+                methodVisitor.visitJumpInsn(Opcodes.GOTO, complete);
+                methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                methodVisitor.visitLabel(uncached);
+                methodVisitor.visitVarInsn(load, 0);
+                methodVisitor.visitVarInsn(store, size);
+                methodVisitor.visitLabel(complete);
+                methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                methodVisitor.visitInsn(Opcodes.RETURN);
+                return new Size(size * 2, instrumentedMethod.getStackSize());
+            }
+        }
     }
 
     /**

@@ -382,6 +382,29 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>${version.plugin.resources}</version>
+                        <executions>
+                            <execution>
+                                <id>copy-advice-templates</id>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <phase>prepare-package</phase>
+                                <configuration>
+                                    <outputDirectory>${basedir}/target/destination-folder</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/main/precompiled-6</directory>
+                                            <filtering>false</filtering>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -594,18 +617,6 @@
                         <version>${version.plugin.buildhelper}</version>
                         <executions>
                             <execution>
-                                <id>java-6-precompile</id>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                    <goal>add-source</goal>
-                                </goals>
-                                <configuration>
-                                    <sources>
-                                        <source>src/main/java-6</source>
-                                    </sources>
-                                </configuration>
-                            </execution>
-                            <execution>
                                 <id>java-6-precompile-test</id>
                                 <phase>generate-sources</phase>
                                 <goals>
@@ -624,20 +635,6 @@
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>${version.plugin.antrun}</version>
                         <executions>
-                            <execution>
-                                <id>java-6-precompile-copy</id>
-                                <phase>process-classes</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <copy todir="${project.basedir}/src/main/precompiled-6">
-                                            <fileset dir="${project.build.outputDirectory}" includes="net/bytebuddy/build/CachedReturnPlugin$Advice$*.class" />
-                                        </copy>
-                                    </target>
-                                </configuration>
-                            </execution>
                             <execution>
                                 <id>java-6-precompile-test-copy</id>
                                 <phase>process-test-classes</phase>
@@ -666,11 +663,6 @@
                 </property>
             </activation>
             <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/precompiled-6</directory>
-                    </resource>
-                </resources>
                 <testResources>
                     <testResource>
                         <directory>src/test/precompiled-6</directory>
