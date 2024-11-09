@@ -228,7 +228,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
         /**
          * The created dynamic type to use for advice.
          */
-        private final DynamicType.Loaded<?> dynamicType;
+        private final DynamicType dynamicType;
 
         /**
          * Creates an advice resolver.
@@ -264,9 +264,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
                     .annotateParameter(AnnotationDescription.Builder.ofType(CachedReturnPlugin.CacheField.class).build())
                     .intercept(new Implementation.Simple(new ExitAdviceByteCodeAppender(load, store, convert, branch, StackSize.of(type).getSize())))
                     .annotateMethod(AnnotationDescription.Builder.ofType(Advice.OnMethodExit.class).build())
-                    .make()
-                    .load(null);
-            dynamicType.getLoaded().getMethods();
+                    .make();
         }
 
         /**
