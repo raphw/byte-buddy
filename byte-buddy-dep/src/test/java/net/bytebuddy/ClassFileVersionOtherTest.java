@@ -89,6 +89,16 @@ public class ClassFileVersionOtherTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void testNegativeVersion() throws Exception {
+        ClassFileVersion.ofJavaVersion(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOneDotTooNew() throws Exception {
+        ClassFileVersion.ofJavaVersionString("1.9");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testIllegalClassFile() throws Exception {
         ClassFileVersion.ofClassFile(new byte[0]);
     }

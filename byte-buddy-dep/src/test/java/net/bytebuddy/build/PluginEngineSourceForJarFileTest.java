@@ -1,9 +1,10 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.utility.StreamDrainer;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,16 +17,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PluginEngineSourceForJarFileTest {
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File file;
 
     @Before
     public void setUp() throws Exception {
-        file = File.createTempFile("foo", "bar");
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        assertThat(file.delete(), is(true));
+        file = temporaryFolder.newFile();
     }
 
     @Test
@@ -41,9 +40,9 @@ public class PluginEngineSourceForJarFileTest {
         Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.ForJarFile(this.file).read();
         try {
             assertThat(origin.getManifest(), nullValue(Manifest.class));
-            assertThat(origin.getClassFileLocator().locate("Foo").isResolved(), is(true));
-            assertThat(origin.getClassFileLocator().locate("Foo").resolve(), is(new byte[]{1, 2, 3}));
-            assertThat(origin.getClassFileLocator().locate("Bar").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate("Foo").isResolved(), is(true));
+            assertThat(origin.toClassFileLocator(null).locate("Foo").resolve(), is(new byte[]{1, 2, 3}));
+            assertThat(origin.toClassFileLocator(null).locate("Bar").isResolved(), is(false));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
             Plugin.Engine.Source.Element element = iterator.next();
@@ -75,9 +74,9 @@ public class PluginEngineSourceForJarFileTest {
         Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.ForJarFile(this.file).read();
         try {
             assertThat(origin.getManifest(), nullValue(Manifest.class));
-            assertThat(origin.getClassFileLocator().locate("bar.Foo").isResolved(), is(true));
-            assertThat(origin.getClassFileLocator().locate("bar.Foo").resolve(), is(new byte[]{1, 2, 3}));
-            assertThat(origin.getClassFileLocator().locate("Bar").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate("bar.Foo").isResolved(), is(true));
+            assertThat(origin.toClassFileLocator(null).locate("bar.Foo").resolve(), is(new byte[]{1, 2, 3}));
+            assertThat(origin.toClassFileLocator(null).locate("Bar").isResolved(), is(false));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
             Plugin.Engine.Source.Element element = iterator.next();

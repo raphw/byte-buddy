@@ -1,10 +1,12 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.StreamDrainer;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -25,16 +27,14 @@ public class PluginEngineTargetForJarFileTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File file;
 
     @Before
     public void setUp() throws Exception {
-        file = File.createTempFile("foo", "bar");
-        assertThat(file.delete(), is(true));
-    }
-
-    @After
-    public void tearDown() throws Exception {
+        file = temporaryFolder.newFile();
         assertThat(file.delete(), is(true));
     }
 
@@ -51,7 +51,7 @@ public class PluginEngineTargetForJarFileTest {
         try {
             assertThat(inputStream.getManifest(), nullValue(Manifest.class));
             JarEntry entry = inputStream.getNextJarEntry();
-            assertThat(entry.getName(), is(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"));
+            assertThat(entry.getName(), is(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION));
             assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[]{1, 2, 3}));
             assertThat(inputStream.getNextJarEntry(), nullValue(JarEntry.class));
         } finally {

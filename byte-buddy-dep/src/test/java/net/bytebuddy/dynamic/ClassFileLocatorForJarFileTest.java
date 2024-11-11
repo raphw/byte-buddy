@@ -1,12 +1,13 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.ClassVisitor;
 
 import java.io.File;
@@ -14,6 +15,7 @@ import java.io.FileOutputStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,23 +30,21 @@ public class ClassFileLocatorForJarFileTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File file;
 
     @Before
     public void setUp() throws Exception {
-        file = File.createTempFile(FOO, BAR);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        assertThat(file.delete(), is(true));
+        file = temporaryFolder.newFile();
     }
 
     @Test
     public void testSuccessfulLocation() throws Exception {
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
         try {
-            JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ".class");
+            JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
             jarOutputStream.putNextEntry(jarEntry);
             jarOutputStream.write(VALUE);
             jarOutputStream.write(VALUE * 2);
@@ -108,10 +108,40 @@ public class ClassFileLocatorForJarFileTest {
     }
 
     @Test
-    public void testClose() throws Exception {
+    public void testNoClose() throws Exception {
         JarFile jarFile = mock(JarFile.class);
         new ClassFileLocator.ForJarFile(jarFile).close();
+        verifyNoMoreInteractions(jarFile);
+    }
+
+    @Test
+    public void testClose() throws Exception {
+        JarFile jarFile = mock(JarFile.class);
+        new ClassFileLocator.ForJarFile(new int[0], jarFile, true).close();
         verify(jarFile).close();
         verifyNoMoreInteractions(jarFile);
+    }
+
+    @Test
+    public void testMultiReleaseVersionLocation() throws Exception {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
+        manifest.getMainAttributes().putValue("Multi-Release", "true");
+        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
+        try {
+            jarOutputStream.putNextEntry(new JarEntry("META-INF/versions/11/" + FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION));
+            jarOutputStream.write(VALUE);
+            jarOutputStream.write(VALUE * 2);
+            jarOutputStream.closeEntry();
+        } finally {
+            jarOutputStream.close();
+        }
+        ClassFileLocator classFileLocator = ClassFileLocator.ForJarFile.of(file, ClassFileVersion.JAVA_V11);
+        ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
+        assertThat(resolution.isResolved(), is(true));
+        assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
+        ClassFileLocator unresolved = ClassFileLocator.ForJarFile.of(file, ClassFileVersion.JAVA_V9);
+        assertThat(unresolved.locate(FOO + "." + BAR).isResolved(), is(false));
+        classFileLocator.close();
     }
 }

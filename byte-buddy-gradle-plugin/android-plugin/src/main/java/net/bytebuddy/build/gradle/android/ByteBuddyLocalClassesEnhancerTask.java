@@ -19,50 +19,41 @@ import com.android.build.gradle.BaseExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AndroidDescriptor;
-import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.Directory;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFile;
-import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.file.*;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipException;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipException;
 
 /**
  * Transformation task for instrumenting the project's local and dependencies' classes.
  */
 public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
+
+    @Nested
+    public abstract ListProperty<Transformation> getTransformations();
 
     /**
      * Returns the boot class path of Android.
@@ -89,13 +80,20 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract Property<JavaVersion> getJavaTargetCompatibilityVersion();
 
     /**
+     * Determines the discovery for finding plugins on the class path.
+     *
+     * @return The discovery for finding plugins on the class path.
+     */
+    @Input
+    public abstract Property<Discovery> getDiscovery();
+
+    /**
      * Returns the entry point to use for instrumentations. If not set, the instrumented classes
      * will be rebased without type validation.
      *
      * @return The entry point to use for instrumentations.
      */
     @Input
-    @Optional
     public abstract Property<EntryPoint> getEntryPoint();
 
     /**
@@ -123,6 +121,64 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract RegularFileProperty getOutputFile();
 
     /**
+     * Returns {@code true} if a warning should be issued for an empty type set.
+     *
+     * @return {@code true} if a warning should be issued for an empty type set.
+     */
+    @Internal
+    public abstract Property<Boolean> getWarnOnEmptyTypeSet();
+
+    /**
+     * Returns {@code true} if this task should fail fast.
+     *
+     * @return {@code true} if this task should fail fast.
+     */
+    @Internal
+    public abstract Property<Boolean> getFailFast();
+
+    /**
+     * Returns {@code true} if the transformation should fail if a live initializer is used.
+     *
+     * @return {@code true} if the transformation should fail if a live initializer is used.
+     */
+    @Internal
+    public abstract Property<Boolean> getFailOnLiveInitializer();
+
+    /**
+     * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
+     *
+     * @return The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
+     */
+    @Internal
+    public abstract Property<Integer> getThreads();
+
+    /**
+     * Returns the suffix to use for rebased methods or the empty string if a random suffix should be used.
+     *
+     * @return The suffix to use for rebased methods or the empty string if a random suffix should be used.
+     */
+    @Input
+    public abstract Property<String> getSuffix();
+
+    /**
+     * Returns {@code true} if extended parsing should be used.
+     *
+     * @return {@code true} if extended parsing should be used.
+     */
+    @Input
+    public abstract Property<Boolean> getExtendedParsing();
+
+    /**
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    @MaybeNull
+    @InputFiles
+    @Optional
+    public abstract ConfigurableFileCollection getDiscoverySet();
+
+    /**
      * Translates a collection of files to {@link URL}s.
      *
      * @param files The list of files to translate.
@@ -143,85 +199,86 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
 
     /**
      * Executes the plugin for transforming all project's classes.
+     *
+     * @throws IOException If an I/O exception occurs.
      */
     @TaskAction
-    public void execute() {
+    public void execute() throws IOException {
+        List<Object> transformations = new ArrayList<Object>(getTransformations().get().size());
+        for (Transformation transformation : getTransformations().get()) {
+            transformations.add(transformation.resolve());
+        }
+        Set<Plugin.Engine.Source> sources = new LinkedHashSet<Plugin.Engine.Source>();
+        Set<File> localClasspath = new HashSet<>();
+        for (Directory directory : getLocalClassesDirs().get()) {
+            File file = directory.getAsFile();
+            localClasspath.add(file);
+            sources.add(new Plugin.Engine.Source.ForFolder(file));
+        }
+        for (RegularFile jarFile : getInputJars().get()) {
+            sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
+        }
+        ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion().get().toString());
+        AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(localClasspath);
+        ClassLoader classLoader = new URLClassLoader(
+                toUrls(getByteBuddyClasspath().getFiles()),
+                new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
         try {
-            ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion().get().toString());
-            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
-            for (File file : getAndroidBootClasspath().plus(getByteBuddyClasspath()).getFiles()) {
-                classFileLocators.add(file.isFile()
-                        ? ClassFileLocator.ForJarFile.of(file)
-                        : new ClassFileLocator.ForFolder(file));
+            Class<?> discovery = Class.forName("net.bytebuddy.build.gradle.Discovery");
+            Class.forName("net.bytebuddy.build.gradle.AbstractByteBuddyTask").getMethod("apply",
+                Logger.class,
+                ClassLoader.class,
+                List.class,
+                discovery,
+                ClassFileLocator.class,
+                Iterable.class,
+                Iterable.class,
+                EntryPoint.class,
+                ClassFileVersion.class,
+                ClassFileVersion.class,
+                Plugin.Factory.UsingReflection.ArgumentResolver.class,
+                String.class,
+                int.class,
+                boolean.class,
+                boolean.class,
+                boolean.class,
+                boolean.class,
+                Plugin.Engine.Source.class,
+                Plugin.Engine.Target.class).invoke(null,
+                    getLogger(),
+                    classLoader,
+                    transformations,
+                    discovery.getMethod("valueOf", String.class).invoke(null, getDiscovery().get().name()),
+                    ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()),
+                    getAndroidBootClasspath().plus(getByteBuddyClasspath()).getFiles(),
+                    getDiscoverySet().getFiles(),
+                    getEntryPoint().get(),
+                    classFileVersion,
+                    classFileVersion,
+                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor),
+                    getSuffix().get(),
+                    getThreads().get(),
+                    getExtendedParsing().get(),
+                    getFailFast().get(),
+                    getFailOnLiveInitializer().get(),
+                    getWarnOnEmptyTypeSet().get(),
+                    new Plugin.Engine.Source.Compound(sources),
+                    new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()));
+        } catch (InvocationTargetException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            } else if (cause instanceof RuntimeException){
+                throw (RuntimeException) cause;
+            } else {
+                throw new GradleException("Unexpected transformation error", cause);
             }
-            classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
-            ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
-            try {
-                Set<Plugin.Engine.Source> sources = new LinkedHashSet<Plugin.Engine.Source>();
-                Set<File> localClasspath = new HashSet<>();
-                for (Directory directory : getLocalClassesDirs().get()) {
-                    File file = directory.getAsFile();
-                    localClasspath.add(file);
-                    sources.add(new Plugin.Engine.Source.ForFolder(file));
-                }
-                AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(localClasspath);
-                for (RegularFile jarFile : getInputJars().get()) {
-                    sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
-                }
-                ClassLoader classLoader = new URLClassLoader(
-                        toUrls(getByteBuddyClasspath().getFiles()),
-                        new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
-                try {
-                    List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
-                    BuildLogger buildLogger;
-                    try {
-                        buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
-                                .getConstructor(Logger.class)
-                                .newInstance(getLogger());
-                    } catch (Exception exception) {
-                        throw new GradleException("Failed to resolve Gradle build logger", exception);
-                    }
-                    for (String name : Plugin.Engine.Default.scan(classLoader)) {
-                        try {
-                            @SuppressWarnings("unchecked")
-                            Class<? extends Plugin> type = (Class<? extends Plugin>) Class.forName(name, false, classLoader);
-                            if (!Plugin.class.isAssignableFrom(type)) {
-                                throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
-                            }
-                            factories.add(new Plugin.Factory.UsingReflection(type)
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getLogger()))
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, getLogger()))
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
-                        } catch (Throwable throwable) {
-                            throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
-                        }
-                    }
-                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(getEntryPoint().getOrElse(new EntryPoint.Unvalidated(EntryPoint.Default.REBASE)),
-                                    classFileVersion,
-                                    MethodNameTransformer.Suffixing.withRandomSuffix())
-                            .with(classFileLocator)
-                            .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
-                    if (!summary.getFailed().isEmpty()) {
-                        throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
-                    } else if (summary.getTransformed().isEmpty()) {
-                        getLogger().info("No types were transformed during plugin execution");
-                    } else {
-                        getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
-                    }
-                } finally {
-                    if (classLoader instanceof Closeable) {
-                        ((Closeable) classLoader).close();
-                    }
-                    if (classLoader.getParent() instanceof Closeable) {
-                        ((Closeable) classLoader.getParent()).close();
-                    }
-                }
-            } finally {
-                classFileLocator.close();
+        } catch (Throwable throwable) {
+            throw new GradleException("Unexpected transformation error", throwable);
+        } finally {
+            if (classLoader instanceof Closeable) {
+                ((Closeable) classLoader).close();
             }
-        } catch (IOException exception) {
-            throw new GradleException("Failed to transform classes", exception);
         }
     }
 
@@ -234,19 +291,28 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
          * The current variant's Byte Buddy configuration.
          */
         private final FileCollection byteBuddyConfiguration;
-        /**
-         * The android gradle extension.
-         */
 
+        /**
+         * The Android gradle extension.
+         */
         private final BaseExtension androidExtension;
 
         /**
-         * @param byteBuddyConfiguration The current variant Byte Buddy configuration.
-         * @param androidExtension       The android gradle extension.
+         * The Byte Buddy task extension.
          */
-        public ConfigurationAction(FileCollection byteBuddyConfiguration, BaseExtension androidExtension) {
+        private final ByteBuddyAndroidTaskExtension byteBuddyExtension;
+
+        /**
+         * @param byteBuddyConfiguration The current variant Byte Buddy configuration.
+         * @param androidExtension       The Android gradle extension.
+         * @param byteBuddyExtension     The Byte Buddy task extension.
+         */
+        public ConfigurationAction(FileCollection byteBuddyConfiguration,
+                                   BaseExtension androidExtension,
+                                   ByteBuddyAndroidTaskExtension byteBuddyExtension) {
             this.byteBuddyConfiguration = byteBuddyConfiguration;
             this.androidExtension = androidExtension;
+            this.byteBuddyExtension = byteBuddyExtension;
         }
 
         @Override
@@ -254,6 +320,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
             task.getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
+            byteBuddyExtension.configure(task);
         }
     }
 

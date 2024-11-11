@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
@@ -27,9 +28,11 @@ import static org.mockito.Mockito.*;
 
 public class DynamicTypeDefaultTest {
 
-    private static final String CLASS_FILE_EXTENSION = ".class";
+    private static final String CLASS_FILE_EXTENSION = ClassFileLocator.CLASS_FILE_EXTENSION;
 
-    private static final String FOOBAR = "foo/bar", QUXBAZ = "qux/baz", BARBAZ = "bar/baz", FOO = "foo", BAR = "bar", TEMP = "tmp";
+    private static final String FOOBAR = "foo/bar", QUXBAZ = "qux/baz", BARBAZ = "bar/baz", FOO = "foo", BAR = "bar";
+
+    private static final byte[] BINARY_FIRST = new byte[]{1, 2, 3}, BINARY_SECOND = new byte[]{4, 5, 6}, BINARY_THIRD = new byte[]{7, 8, 9};
 
     @Rule
     public MethodRule mockitoRule = MockitoJUnit.rule().silent();
@@ -37,7 +40,8 @@ public class DynamicTypeDefaultTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private static final byte[] BINARY_FIRST = new byte[]{1, 2, 3}, BINARY_SECOND = new byte[]{4, 5, 6}, BINARY_THIRD = new byte[]{7, 8, 9};
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Mock
     private LoadedTypeInitializer mainLoadedTypeInitializer, auxiliaryLoadedTypeInitializer;
@@ -64,17 +68,6 @@ public class DynamicTypeDefaultTest {
             fileInputStream.close();
         }
         assertThat(file.delete(), is(true));
-    }
-
-    private static File makeTemporaryFolder() throws IOException {
-        File file = File.createTempFile(TEMP, TEMP);
-        try {
-            File folder = new File(file.getParentFile(), TEMP + RandomString.make());
-            assertThat(folder.mkdir(), is(true));
-            return folder;
-        } finally {
-            assertThat(file.delete(), is(true));
-        }
     }
 
     private static void assertJarFile(File file, Manifest manifest, Map<String, byte[]> expectedEntries) throws IOException {
@@ -151,7 +144,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testTypeInitializersAliveAuxiliary() throws Exception {
-        when(auxiliaryLoadedTypeInitializer.isAlive()).thenReturn(true);
+        when(auxiliaryType.hasAliveLoadedTypeInitializers()).thenReturn(true);
         assertThat(dynamicType.hasAliveLoadedTypeInitializers(), is(true));
     }
 
@@ -164,7 +157,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testFileSaving() throws Exception {
-        File folder = makeTemporaryFolder();
+        File folder = temporaryFolder.newFolder();
         boolean folderDeletion, fileDeletion;
         try {
             Map<TypeDescription, File> files = dynamicType.saveIn(folder);
@@ -181,7 +174,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testJarCreation() throws Exception {
-        File file = File.createTempFile(FOO, TEMP);
+        File file = temporaryFolder.newFile();
         assertThat(file.delete(), is(true));
         boolean fileDeletion;
         try {
@@ -203,7 +196,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testJarWithExplicitManifestCreation() throws Exception {
-        File file = File.createTempFile(FOO, TEMP);
+        File file = temporaryFolder.newFile();
         assertThat(file.delete(), is(true));
         boolean fileDeletion;
         try {
@@ -225,7 +218,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testJarTargetInjection() throws Exception {
-        File sourceFile = File.createTempFile(BAR, TEMP);
+        File sourceFile = temporaryFolder.newFile();
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(sourceFile), manifest);
@@ -239,7 +232,7 @@ public class DynamicTypeDefaultTest {
         } finally {
             jarOutputStream.close();
         }
-        File file = File.createTempFile(FOO, TEMP);
+        File file = temporaryFolder.newFile();
         assertThat(file.delete(), is(true));
         boolean fileDeletion;
         try {
@@ -260,7 +253,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testJarSelfInjection() throws Exception {
-        File file = File.createTempFile(BAR, TEMP);
+        File file = temporaryFolder.newFile();
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
@@ -293,7 +286,7 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testJarSelfInjectionWithDuplicateSpecification() throws Exception {
-        File file = File.createTempFile(BAR, TEMP);
+        File file = temporaryFolder.newFile();
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
@@ -325,10 +318,38 @@ public class DynamicTypeDefaultTest {
     }
 
     @Test
-    public void testIterationOrder() throws Exception {
+    public void testIterationOrderAll() throws Exception {
         Iterator<TypeDescription> types = dynamicType.getAllTypes().keySet().iterator();
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(typeDescription));
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(auxiliaryTypeDescription));
+        assertThat(types.hasNext(), is(false));
+    }
+
+    @Test
+    public void testIterationOrderAuxiliary() throws Exception {
+        Iterator<TypeDescription> types = dynamicType.getAuxiliaryTypes().keySet().iterator();
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(auxiliaryTypeDescription));
+        assertThat(types.hasNext(), is(false));
+    }
+
+    @Test
+    public void testIterationOrderAllDescriptions() throws Exception {
+        when(auxiliaryType.getAllTypeDescriptions()).thenReturn(Collections.singleton(auxiliaryTypeDescription));
+        Iterator<TypeDescription> types = dynamicType.getAllTypeDescriptions().iterator();
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(typeDescription));
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(auxiliaryTypeDescription));
+        assertThat(types.hasNext(), is(false));
+    }
+
+    @Test
+    public void testIterationOrderAuxiliaryDescriptions() throws Exception {
+        when(auxiliaryType.getAllTypeDescriptions()).thenReturn(Collections.singleton(auxiliaryTypeDescription));
+        Iterator<TypeDescription> types = dynamicType.getAuxiliaryTypeDescriptions().iterator();
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(auxiliaryTypeDescription));
         assertThat(types.hasNext(), is(false));

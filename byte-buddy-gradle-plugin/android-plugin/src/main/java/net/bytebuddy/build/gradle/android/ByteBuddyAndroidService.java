@@ -99,6 +99,10 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 return;
             }
             try {
+                ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getParameters()
+                        .getJavaTargetCompatibilityVersion()
+                        .get()
+                        .toString());
                 List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
                 classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
                 for (File artifact : parameters.getRuntimeClasspath()
@@ -106,13 +110,9 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         .plus(parameters.getByteBuddyClasspath())
                         .getFiles()) {
                     classFileLocators.add(artifact.isFile()
-                            ? ClassFileLocator.ForJarFile.of(artifact)
-                            : new ClassFileLocator.ForFolder(artifact));
+                            ? ClassFileLocator.ForJarFile.of(artifact, classFileVersion)
+                            : ClassFileLocator.ForFolder.of(artifact, classFileVersion));
                 }
-                ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getParameters()
-                        .getJavaTargetCompatibilityVersion()
-                        .get()
-                        .toString());
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
                 TypePool typePool = Plugin.Engine.PoolStrategy.Default.FAST.typePool(classFileLocator);
                 ClassLoader classLoader = new URLClassLoader(

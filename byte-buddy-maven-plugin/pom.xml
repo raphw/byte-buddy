@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.15.0-SNAPSHOT</version>
+        <version>1.15.11-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-maven-plugin</artifactId>
@@ -23,7 +23,7 @@
         <version.slf4j>1.7.36</version.slf4j>
         <version.maven.plexus-archiver>4.8.0</version.maven.plexus-archiver>
         <version.maven.plexus-util>3.4.2</version.maven.plexus-util>
-        <version.commons-io>2.11.0</version.commons-io>
+        <version.commons-io>2.14.0</version.commons-io>
         <version.commons-compress>1.26.0</version.commons-compress>
         <version.guava>32.1.2-jre</version.guava>
         <japicmp.skip>true</japicmp.skip>

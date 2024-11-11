@@ -13,7 +13,7 @@ public class PluginEngineSourceEmptyTest {
 
     @Test
     public void testNonOperational() throws Exception {
-        assertThat(Plugin.Engine.Source.Empty.INSTANCE.getClassFileLocator(), is((ClassFileLocator) ClassFileLocator.NoOp.INSTANCE));
+        assertThat(Plugin.Engine.Source.Empty.INSTANCE.toClassFileLocator(null), is((ClassFileLocator) ClassFileLocator.NoOp.INSTANCE));
         assertThat(Plugin.Engine.Source.Empty.INSTANCE.getManifest(), nullValue(Manifest.class));
         assertThat(Plugin.Engine.Source.Empty.INSTANCE.iterator().hasNext(), is(false));
     }

@@ -8852,6 +8852,7 @@ public interface TypePool {
                                     typePath,
                                     receiverTypeAnnotationTokens);
                             break;
+                        case TypeReference.CLASS_EXTENDS: // Emitted by mistake by javac for type variables in Java 9-11.
                         case TypeReference.FIELD: // Emitted by mistake by javac for records in Java 14.
                             return null;
                         default:

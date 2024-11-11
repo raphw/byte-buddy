@@ -20,9 +20,9 @@ public class PluginEngineSourceInMemoryTest {
     public void testNoManifest() throws Exception {
         Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.InMemory(Collections.singletonMap("foo/Bar.class", new byte[]{1, 2, 3})).read();
         try {
-            assertThat(origin.getClassFileLocator().locate("foo.Bar").isResolved(), is(true));
-            assertThat(origin.getClassFileLocator().locate("foo.Bar").resolve(), is(new byte[]{1, 2, 3}));
-            assertThat(origin.getClassFileLocator().locate("qux.Baz").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate("foo.Bar").isResolved(), is(true));
+            assertThat(origin.toClassFileLocator(null).locate("foo.Bar").resolve(), is(new byte[]{1, 2, 3}));
+            assertThat(origin.toClassFileLocator(null).locate("qux.Baz").isResolved(), is(false));
             assertThat(origin.getManifest(), nullValue(Manifest.class));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
@@ -40,14 +40,14 @@ public class PluginEngineSourceInMemoryTest {
     public void testOfTypes() throws Exception {
         Plugin.Engine.Source.Origin origin = Plugin.Engine.Source.InMemory.ofTypes(Foo.class).read();
         try {
-            assertThat(origin.getClassFileLocator().locate(Foo.class.getName()).isResolved(), is(true));
-            assertThat(origin.getClassFileLocator().locate(Foo.class.getName()).resolve(), is(ClassFileLocator.ForClassLoader.read(Foo.class)));
-            assertThat(origin.getClassFileLocator().locate("qux.Baz").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate(Foo.class.getName()).isResolved(), is(true));
+            assertThat(origin.toClassFileLocator(null).locate(Foo.class.getName()).resolve(), is(ClassFileLocator.ForClassLoader.read(Foo.class)));
+            assertThat(origin.toClassFileLocator(null).locate("qux.Baz").isResolved(), is(false));
             assertThat(origin.getManifest(), nullValue(Manifest.class));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
             assertThat(iterator.hasNext(), is(true));
             Plugin.Engine.Source.Element element = iterator.next();
-            assertThat(element.getName(), is(Foo.class.getName().replace('.', '/') + ".class"));
+            assertThat(element.getName(), is(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION));
             assertThat(element.resolveAs(Object.class), nullValue(Object.class));
             assertThat(StreamDrainer.DEFAULT.drain(element.getInputStream()), is(ClassFileLocator.ForClassLoader.read(Foo.class)));
             assertThat(iterator.hasNext(), is(false));
@@ -64,7 +64,7 @@ public class PluginEngineSourceInMemoryTest {
         manifest.write(outputStream);
         Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.InMemory(Collections.singletonMap(JarFile.MANIFEST_NAME, outputStream.toByteArray())).read();
         try {
-            assertThat(origin.getClassFileLocator().locate("foo.Bar").isResolved(), is(false));
+            assertThat(origin.toClassFileLocator(null).locate("foo.Bar").isResolved(), is(false));
             assertThat(origin.getManifest(), notNullValue(Manifest.class));
             assertThat(origin.getManifest().getMainAttributes().getValue(Attributes.Name.MANIFEST_VERSION), is((Object) "1.0"));
         } finally {

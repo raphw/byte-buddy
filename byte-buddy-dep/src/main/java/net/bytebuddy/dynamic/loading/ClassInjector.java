@@ -25,6 +25,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -53,6 +54,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.zip.ZipFile;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -89,23 +91,57 @@ public interface ClassInjector {
     /**
      * Injects the given types into the represented class loader.
      *
+     * @param types            The types to load via injection.
+     * @param classFileLocator The class file locator to use for resolving binary representations.
+     * @return The loaded types that were passed as arguments.
+     */
+    Map<TypeDescription, Class<?>> inject(Set<? extends TypeDescription> types, ClassFileLocator classFileLocator);
+
+    /**
+     * Injects the given types into the represented class loader.
+     *
+     * @param names            The names of the types to load via injection.
+     * @param classFileLocator The class file locator to use for resolving binary representations.
+     * @return The loaded types that were passed as arguments.
+     */
+    Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator);
+
+    /**
+     * Injects the given types into the represented class loader.
+     *
      * @param types The types to load via injection.
      * @return The loaded types that were passed as arguments.
      */
     Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types);
 
     /**
-     * Injects the given types into the represented class loader using a mapping from name to binary representation.
+     * Injects the given types into the represented class loader.
      *
-     * @param types The types to load via injection.
+     * @param types The names of the type to load via injection.
      * @return The loaded types that were passed as arguments.
      */
-    Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types);
+    Map<String, Class<?>> injectRaw(Map<String, byte[]> types);
 
     /**
      * An abstract base implementation of a class injector.
      */
     abstract class AbstractBase implements ClassInjector {
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<TypeDescription, Class<?>> inject(Set<? extends TypeDescription> types, ClassFileLocator classFileLocator) {
+            Set<String> names = new LinkedHashSet<String>();
+            for (TypeDescription type : types) {
+                names.add(type.getName());
+            }
+            Map<String, Class<?>> loadedTypes = injectRaw(names, classFileLocator);
+            Map<TypeDescription, Class<?>> result = new HashMap<TypeDescription, Class<?>>();
+            for (TypeDescription type : types) {
+                result.put(type, loadedTypes.get(type.getName()));
+            }
+            return result;
+        }
 
         /**
          * {@inheritDoc}
@@ -116,11 +152,18 @@ public interface ClassInjector {
                 binaryRepresentations.put(entry.getKey().getName(), entry.getValue());
             }
             Map<String, Class<?>> loadedTypes = injectRaw(binaryRepresentations);
-            Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
+            Map<TypeDescription, Class<?>> result = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : types.keySet()) {
                 result.put(typeDescription, loadedTypes.get(typeDescription.getName()));
             }
             return result;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Class<?>> injectRaw(Map<String, byte[]> types) {
+            return injectRaw(types.keySet(), new ClassFileLocator.Simple(types));
         }
     }
 
@@ -236,17 +279,17 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             Dispatcher dispatcher = DISPATCHER.initialize();
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
-            for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
-                synchronized (dispatcher.getClassLoadingLock(classLoader, entry.getKey())) {
-                    Class<?> type = dispatcher.findClass(classLoader, entry.getKey());
+            for (String name : names) {
+                synchronized (dispatcher.getClassLoadingLock(classLoader, name)) {
+                    Class<?> type = dispatcher.findClass(classLoader, name);
                     if (type == null) {
-                        int packageIndex = entry.getKey().lastIndexOf('.');
+                        int packageIndex = name.lastIndexOf('.');
                         if (packageIndex != -1) {
-                            String packageName = entry.getKey().substring(0, packageIndex);
-                            PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, entry.getKey());
+                            String packageName = name.substring(0, packageIndex);
+                            PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, name);
                             if (definition.isDefined()) {
                                 Package definedPackage = dispatcher.getDefinedPackage(classLoader, packageName);
                                 if (definedPackage == null) {
@@ -281,11 +324,15 @@ public interface ClassInjector {
                                 }
                             }
                         }
-                        type = dispatcher.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain);
+                        try {
+                            type = dispatcher.defineClass(classLoader, name, classFileLocator.locate(name).resolve(), protectionDomain);
+                        } catch (IOException exception) {
+                            throw new IllegalStateException("Could not resolve type description for " + name, exception);
+                        }
                     } else if (forbidExisting) {
                         throw new IllegalStateException("Cannot inject already loaded type: " + type);
                     }
-                    result.put(entry.getKey(), type);
+                    result.put(name, type);
                 }
             }
             return result;
@@ -1623,19 +1670,19 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             PackageDescription target = TypeDescription.ForLoadedType.of(lookupType()).getPackage();
             if (target == null) {
                 throw new IllegalArgumentException("Cannot inject array or primitive type");
             }
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
-            for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
-                int index = entry.getKey().lastIndexOf('.');
-                if (!target.getName().equals(index == -1 ? "" : entry.getKey().substring(0, index))) {
-                    throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
+            for (String name : names) {
+                int index = name.lastIndexOf('.');
+                if (!target.getName().equals(index == -1 ? "" : name.substring(0, index))) {
+                    throw new IllegalArgumentException(name + " must be defined in the same package as " + lookup);
                 }
                 try {
-                    result.put(entry.getKey(), METHOD_HANDLES_LOOKUP.defineClass(lookup, entry.getValue()));
+                    result.put(name, METHOD_HANDLES_LOOKUP.defineClass(lookup, classFileLocator.locate(name).resolve()));
                 } catch (Exception exception) {
                     throw new IllegalStateException(exception);
                 }
@@ -1810,27 +1857,31 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             Dispatcher dispatcher = this.dispatcher.initialize();
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             synchronized (classLoader == null
                     ? BOOTSTRAP_LOADER_LOCK
                     : classLoader) {
-                for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                for (String name : names) {
                     try {
-                        result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
+                        result.put(name, Class.forName(name, false, classLoader));
                     } catch (ClassNotFoundException ignored) {
                         try {
-                            result.put(entry.getKey(), dispatcher.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain));
-                        } catch (RuntimeException exception) { // The bootstrap loader lock might be replicated throughout multiple class loaders.
+                            result.put(name, dispatcher.defineClass(classLoader, name, classFileLocator.locate(name).resolve(), protectionDomain));
+                        } catch (
+                                RuntimeException exception) { // The bootstrap loader lock might be replicated throughout multiple class loaders.
                             try {
-                                result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
+                                result.put(name, Class.forName(name, false, classLoader));
                             } catch (ClassNotFoundException ignored2) {
                                 throw exception;
                             }
-                        } catch (Error error) { // The bootstrap loader lock might be replicated throughout multiple class loaders.
+                        } catch (IOException exception) {
+                            throw new IllegalStateException("Failed to resolve binary representation of " + name, exception);
+                        } catch (
+                                Error error) { // The bootstrap loader lock might be replicated throughout multiple class loaders.
                             try {
-                                result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
+                                result.put(name, Class.forName(name, false, classLoader));
                             } catch (ClassNotFoundException ignored2) {
                                 throw error;
                             }
@@ -2460,7 +2511,7 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             File file = new File(folder, JAR + randomString.nextString() + "." + JAR);
             try {
                 if (!file.createNewFile()) {
@@ -2469,21 +2520,21 @@ public interface ClassInjector {
                 try {
                     JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
                     try {
-                        for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
-                            jarOutputStream.putNextEntry(new JarEntry(entry.getKey().replace('.', '/') + CLASS_FILE_EXTENSION));
-                            jarOutputStream.write(entry.getValue());
+                        for (String name : names) {
+                            jarOutputStream.putNextEntry(new JarEntry(name.replace('.', '/') + CLASS_FILE_EXTENSION));
+                            jarOutputStream.write(classFileLocator.locate(name).resolve());
                         }
                     } finally {
                         jarOutputStream.close();
                     }
-                    JarFile jarFile = new JarFile(file, false);
+                    JarFile jarFile = new JarFile(file, false, ZipFile.OPEN_READ);
                     try {
                         target.inject(instrumentation, jarFile);
                     } finally {
                         jarFile.close();
                     }
                     Map<String, Class<?>> result = new HashMap<String, Class<?>>();
-                    for (String name : types.keySet()) {
+                    for (String name : names) {
                         result.put(name, Class.forName(name, false, target.getClassLoader()));
                     }
                     return result;
@@ -2730,16 +2781,20 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+        public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             synchronized (classLoader == null
                     ? BOOTSTRAP_LOADER_LOCK
                     : classLoader) {
-                for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                for (String name : names) {
                     try {
-                        result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
+                        result.put(name, Class.forName(name, false, classLoader));
                     } catch (ClassNotFoundException ignored) {
-                        result.put(entry.getKey(), DISPATCHER.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain));
+                        try {
+                            result.put(name, DISPATCHER.defineClass(classLoader, name, classFileLocator.locate(name).resolve(), protectionDomain));
+                        } catch (IOException exception) {
+                            throw new IllegalStateException("Failed to resolve binary representation of " + name, exception);
+                        }
                     }
                 }
             }

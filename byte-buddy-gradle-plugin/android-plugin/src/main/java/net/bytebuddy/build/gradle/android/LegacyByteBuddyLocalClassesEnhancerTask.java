@@ -130,8 +130,8 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
             for (File file : getRuntimeClasspath().plus(getAndroidBootClasspath()).plus(getByteBuddyClasspath()).getFiles()) {
                 classFileLocators.add(file.isFile()
-                        ? ClassFileLocator.ForJarFile.of(file)
-                        : new ClassFileLocator.ForFolder(file));
+                        ? ClassFileLocator.ForJarFile.of(file, classFileVersion)
+                        : ClassFileLocator.ForFolder.of(file, classFileVersion));
             }
             classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
@@ -173,6 +173,7 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
                                     classFileVersion,
                                     MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
+                            .with(classFileVersion)
                             .apply(new Plugin.Engine.Source.Compound(sources), new Plugin.Engine.Target.ForFolder(getOutputDir().get().getAsFile()), factories);
                     if (!summary.getFailed().isEmpty()) {
                         throw new IllegalStateException(summary.getFailed() + " local type transformations have failed");
@@ -206,15 +207,15 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
          * The current variant's Byte Buddy configuration.
          */
         private final FileCollection byteBuddyConfiguration;
+
         /**
          * The android gradle extension.
          */
-
         private final BaseExtension androidExtension;
+
         /**
          * The current variant's runtime classpath.
          */
-
         private final FileCollection runtimeClasspath;
 
         /**

@@ -1,13 +1,14 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.StreamDrainer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.*;
 import java.util.Collections;
@@ -26,18 +27,14 @@ public class PluginEngineTargetForFolderTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     private File folder;
 
     @Before
     public void setUp() throws Exception {
-        folder = File.createTempFile("foo", "bar");
-        assertThat(folder.delete(), is(true));
-        assertThat(folder.mkdir(), is(true));
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        assertThat(folder.delete(), is(true));
+        folder = temporaryFolder.newFolder();
     }
 
     @Test
@@ -49,7 +46,7 @@ public class PluginEngineTargetForFolderTest {
         } finally {
             sink.close();
         }
-        File file = new File(folder, TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class");
+        File file = new File(folder, TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(file.isFile(), is(true));
         InputStream inputStream = new FileInputStream(file);
         try {
@@ -92,7 +89,7 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn(FOO + "/" + BAR);
         when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
-        File original = File.createTempFile("qux", "baz");
+        File original = temporaryFolder.newFile();
         try {
             FileOutputStream outputStream = new FileOutputStream(original);
             try {

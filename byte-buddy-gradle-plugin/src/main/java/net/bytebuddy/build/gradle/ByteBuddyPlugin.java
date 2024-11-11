@@ -45,8 +45,9 @@ public class ByteBuddyPlugin implements Plugin<Project> {
         Dispatcher<?, ?> dispatcher;
         try {
             Class.forName("org.gradle.work.InputChanges"); // Make sure that at least Gradle 6 is available.
-            dispatcher = new Dispatcher.ForApi6CapableGradle(SourceDirectorySet.class.getMethod("getDestinationDirectory"),
-                    AbstractCompile.class.getMethod("setDestinationDir", Class.forName("org.gradle.api.provider.Provider")));
+            dispatcher = new Dispatcher.ForApi6CapableGradle(
+                    SourceDirectorySet.class.getMethod("getDestinationDirectory"),
+                    AbstractCompile.class.getMethod("getDestinationDirectory"));
         } catch (Throwable ignored) {
             dispatcher = Dispatcher.ForLegacyGradle.INSTANCE;
         }
@@ -191,22 +192,22 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             /**
              * The {@code org.gradle.api.file.SourceSetDirectory#getDestinationDirectory} method.
              */
-            private final Method getDestinationDirectory;
+            private final Method getDestinationDirectorySource;
 
             /**
-             * The {@code org.gradle.api.tasks.compile.AbstractCompile#setDestinationDir} method.
+             * The {@code org.gradle.api.file.AbstractCompile#getDestinationDirectory} method.
              */
-            private final Method setDestinationDir;
+            private final Method getDestinationDirectoryTarget;
 
             /**
              * Creates a new dispatcher for a Gradle version of at least 6.
              *
-             * @param getDestinationDirectory The {@code org.gradle.api.file.SourceSetDirectory#getDestinationDirectory} method.
-             * @param setDestinationDir       The {@code org.gradle.api.tasks.compile.AbstractCompile#setDestinationDir} method.
+             * @param getDestinationDirectorySource The {@code org.gradle.api.file.SourceSetDirectory#getDestinationDirectory} method.
+             * @param getDestinationDirectoryTarget The {@code org.gradle.api.file.AbstractCompile#getDestinationDirectory} method.
              */
-            protected ForApi6CapableGradle(Method getDestinationDirectory, Method setDestinationDir) {
-                this.getDestinationDirectory = getDestinationDirectory;
-                this.setDestinationDir = setDestinationDir;
+            protected ForApi6CapableGradle(Method getDestinationDirectorySource, Method getDestinationDirectoryTarget) {
+                this.getDestinationDirectorySource = getDestinationDirectorySource;
+                this.getDestinationDirectoryTarget = getDestinationDirectoryTarget;
             }
 
             /**
@@ -227,7 +228,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
              * {@inheritDoc}
              */
             public ByteBuddyTaskConfiguration toAction(String name, SourceSet sourceSet) {
-                return new ByteBuddyTaskConfiguration(name, sourceSet, getDestinationDirectory, setDestinationDir);
+                return new ByteBuddyTaskConfiguration(name, sourceSet, getDestinationDirectorySource, getDestinationDirectoryTarget);
             }
         }
     }

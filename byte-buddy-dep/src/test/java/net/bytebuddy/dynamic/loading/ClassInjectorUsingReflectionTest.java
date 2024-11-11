@@ -243,7 +243,7 @@ public class ClassInjectorUsingReflectionTest {
                 if (name.startsWith("net.bytebuddy.") || name.startsWith("org.objectweb.") || name.startsWith("codes.rafael.asmjdkbridge.")) {
                     InputStream inputStream = ClassInjectorUsingReflectionTest.class.getResourceAsStream("/"
                         + name.replace('.', '/')
-                        + ".class");
+                        + ClassFileLocator.CLASS_FILE_EXTENSION);
                     if (inputStream != null) {
                         try {
                             try {

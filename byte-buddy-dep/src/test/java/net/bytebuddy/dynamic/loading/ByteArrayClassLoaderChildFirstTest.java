@@ -7,6 +7,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.OpenedClassReader;
@@ -38,9 +39,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class ByteArrayClassLoaderChildFirstTest {
 
-    private static final String BAR = "bar", CLASS_FILE = ".class";
-
-    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
+    private static final String BAR = "bar";
 
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
@@ -75,7 +74,7 @@ public class ByteArrayClassLoaderChildFirstTest {
                         .visit(new RenamingWrapper(Bar.class.getName().replace('.', '/'), Foo.class.getName().replace('.', '/')))
                         .make()
                         .getBytes()),
-                DEFAULT_PROTECTION_DOMAIN,
+                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 persistenceHandler,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
     }
@@ -95,7 +94,7 @@ public class ByteArrayClassLoaderChildFirstTest {
 
     @Test
     public void testResourceStreamLookupBeforeLoading() throws Exception {
-        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(inputStream, expectedResourceLookup ? notNullValue(InputStream.class) : nullValue(InputStream.class));
         } finally {
@@ -108,7 +107,7 @@ public class ByteArrayClassLoaderChildFirstTest {
     @Test
     public void testResourceStreamLookupAfterLoading() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         try {
             assertThat(inputStream, expectedResourceLookup ? notNullValue(InputStream.class) : nullValue(InputStream.class));
         } finally {
@@ -120,7 +119,7 @@ public class ByteArrayClassLoaderChildFirstTest {
 
     @Test
     public void testResourceLookupBeforeLoading() throws Exception {
-        assertThat(classLoader.getResource(Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
+        assertThat(classLoader.getResource(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION), expectedResourceLookup
                 ? notNullValue(URL.class)
                 : nullValue(URL.class));
     }
@@ -128,14 +127,14 @@ public class ByteArrayClassLoaderChildFirstTest {
     @Test
     public void testResourceLookupAfterLoading() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        assertThat(classLoader.getResource(Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
+        assertThat(classLoader.getResource(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION), expectedResourceLookup
                 ? notNullValue(URL.class)
                 : nullValue(URL.class));
     }
 
     @Test
     public void testResourcesLookupBeforeLoading() throws Exception {
-        Enumeration<URL> enumeration = classLoader.getResources(Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        Enumeration<URL> enumeration = classLoader.getResources(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(enumeration.hasMoreElements(), is(true));
         assertThat(enumeration.nextElement(), notNullValue(URL.class));
         assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
@@ -148,7 +147,7 @@ public class ByteArrayClassLoaderChildFirstTest {
     @Test
     public void testResourcesLookupAfterLoading() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        Enumeration<URL> enumeration = classLoader.getResources(Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        Enumeration<URL> enumeration = classLoader.getResources(Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(enumeration.hasMoreElements(), is(true));
         assertThat(enumeration.nextElement(), notNullValue(URL.class));
         assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
@@ -160,7 +159,7 @@ public class ByteArrayClassLoaderChildFirstTest {
 
     @Test
     public void testResourceLookupWithPrefixBeforeLoading() throws Exception {
-        assertThat(classLoader.getResource("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
+        assertThat(classLoader.getResource("/" + Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION), expectedResourceLookup
                 ? notNullValue(URL.class)
                 : nullValue(URL.class));
     }
@@ -168,14 +167,14 @@ public class ByteArrayClassLoaderChildFirstTest {
     @Test
     public void testResourceLookupWithPrefixAfterLoading() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        assertThat(classLoader.getResource("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
+        assertThat(classLoader.getResource("/" + Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION), expectedResourceLookup
                 ? notNullValue(URL.class)
                 : nullValue(URL.class));
     }
 
     @Test
     public void testResourcesLookupWithPrefixBeforeLoading() throws Exception {
-        Enumeration<URL> enumeration = classLoader.getResources("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        Enumeration<URL> enumeration = classLoader.getResources("/" + Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
         if (expectedResourceLookup) {
             assertThat(enumeration.nextElement(), notNullValue(URL.class));
@@ -186,7 +185,7 @@ public class ByteArrayClassLoaderChildFirstTest {
     @Test
     public void testResourcesLookupWithPrefixAfterLoading() throws Exception {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
-        Enumeration<URL> enumeration = classLoader.getResources("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        Enumeration<URL> enumeration = classLoader.getResources("/" + Foo.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
         assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
         if (expectedResourceLookup) {
             assertThat(enumeration.nextElement(), notNullValue(URL.class));

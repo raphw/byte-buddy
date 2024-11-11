@@ -10,7 +10,9 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.ArgumentMatchers;
@@ -47,6 +49,9 @@ public class PluginEngineDefaultTest {
                 {new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(1), false}
         });
     }
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private final Plugin.Engine.Dispatcher.Factory dispatcherFactory;
 
@@ -213,6 +218,36 @@ public class PluginEngineDefaultTest {
     }
 
     @Test
+    public void testSimpleTransformationMultiRelease() throws Exception {
+        Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
+        Plugin plugin = eager
+                ? new SimplePlugin()
+                : new PreprocessingPlugin(new SimplePlugin());
+        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Collections.<Class<?>>emptyList(), Collections.<ClassFileVersion, Collection<? extends Class<?>>>singletonMap(
+            ClassFileVersion.JAVA_V11,
+            Collections.singletonList(Sample.class)));
+        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
+        Plugin.Engine.Summary summary = new Plugin.Engine.Default()
+                .with(listener)
+                .with(ClassFileVersion.JAVA_V11)
+                .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
+                .apply(source, target, new Plugin.Factory.Simple(plugin));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap(ClassFileVersion.JAVA_V11));
+        Class<?> type = classLoader.loadClass(Sample.class.getName());
+        assertThat(type.getDeclaredField(FOO).getType(), is((Object) Void.class));
+        assertThat(summary.getTransformed(), hasItems(TypeDescription.ForLoadedType.of(Sample.class)));
+        assertThat(summary.getFailed().size(), is(0));
+        assertThat(summary.getUnresolved().size(), is(0));
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
+        verify(listener).onDiscovery(Sample.class.getName());
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), plugin);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
+        verify(listener).onComplete(TypeDescription.ForLoadedType.of(Sample.class));
+        verifyNoMoreInteractions(listener);
+    }
+
+    @Test
     public void testLiveInitializer() throws Exception {
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
         Plugin plugin = new LiveInitializerPlugin();
@@ -246,10 +281,10 @@ public class PluginEngineDefaultTest {
                 ? new SimplePlugin()
                 : new PreprocessingPlugin(new SimplePlugin());
         Plugin.Engine.Source source = new Plugin.Engine.Source.InMemory(Collections.singletonMap(
-                Sample.class.getName().replace('.', '/') + ".class",
+                Sample.class.getName().replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION,
                 ClassFileLocator.ForClassLoader.read(Sample.class))) {
             @Override
-            public ClassFileLocator getClassFileLocator() {
+            public ClassFileLocator toClassFileLocator(ClassFileVersion classFileVersion) {
                 return ClassFileLocator.NoOp.INSTANCE;
             }
         };
@@ -317,7 +352,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testImplicitFileInput() throws Exception {
-        File file = File.createTempFile("foo", "bar");
+        File file = temporaryFolder.newFile();
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
         try {
             outputStream.putNextEntry(new JarEntry("dummy"));
@@ -342,9 +377,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testImplicitFolderInput() throws Exception {
-        File file = File.createTempFile("foo", "bar");
-        assertThat(file.delete(), is(true));
-        assertThat(file.mkdir(), is(true));
+        File file = temporaryFolder.newFolder();
         Plugin.Engine engine = spy(new Plugin.Engine.Default());
         doAnswer(new Answer<Plugin.Engine.Summary>() {
             public Plugin.Engine.Summary answer(InvocationOnMock invocationOnMock) {
@@ -376,8 +409,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testMain() throws Exception {
-        File source = File.createTempFile("foo", "bar"), target = File.createTempFile("qux", "baz");
-        assertThat(target.delete(), is(true));
+        File source = temporaryFolder.newFile(), target = temporaryFolder.newFile();
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(source));
         try {
             outputStream.putNextEntry(new JarEntry("dummy"));

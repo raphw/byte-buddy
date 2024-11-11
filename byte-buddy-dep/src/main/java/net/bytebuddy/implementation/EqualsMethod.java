@@ -79,6 +79,11 @@ public class EqualsMethod implements Implementation {
     private final ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable;
 
     /**
+     * A matcher to determine that a field should be considered by its identity.
+     */
+    private final ElementMatcher.Junction<? super FieldDescription.InDefinedShape> identity;
+
+    /**
      * The comparator to apply for ordering fields.
      */
     private final Comparator<? super FieldDescription.InDefinedShape> comparator;
@@ -89,7 +94,7 @@ public class EqualsMethod implements Implementation {
      * @param superClassCheck The baseline equality to check.
      */
     protected EqualsMethod(SuperClassCheck superClassCheck) {
-        this(superClassCheck, TypeCompatibilityCheck.EXACT, none(), none(), NaturalOrderComparator.INSTANCE);
+        this(superClassCheck, TypeCompatibilityCheck.EXACT, none(), none(), none(), NaturalOrderComparator.INSTANCE);
     }
 
     /**
@@ -99,17 +104,20 @@ public class EqualsMethod implements Implementation {
      * @param typeCompatibilityCheck The instance type compatibility check.
      * @param ignored                A matcher to filter fields that should not be used for a equality resolution.
      * @param nonNullable            A matcher to determine fields of a reference type that cannot be {@code null}.
+     * @param identity               A matcher to determine that a field should be considered by its identity.
      * @param comparator             The comparator to apply for ordering fields.
      */
     private EqualsMethod(SuperClassCheck superClassCheck,
                          TypeCompatibilityCheck typeCompatibilityCheck,
                          ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored,
                          ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable,
+                         ElementMatcher.Junction<? super FieldDescription.InDefinedShape> identity,
                          Comparator<? super FieldDescription.InDefinedShape> comparator) {
         this.superClassCheck = superClassCheck;
         this.typeCompatibilityCheck = typeCompatibilityCheck;
         this.ignored = ignored;
         this.nonNullable = nonNullable;
+        this.identity = identity;
         this.comparator = comparator;
     }
 
@@ -139,7 +147,7 @@ public class EqualsMethod implements Implementation {
      * @return A new version of this equals method implementation that also ignores any fields matched by the provided matcher.
      */
     public EqualsMethod withIgnoredFields(ElementMatcher<? super FieldDescription.InDefinedShape> ignored) {
-        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, this.ignored.<FieldDescription.InDefinedShape>or(ignored), nonNullable, comparator);
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, this.ignored.<FieldDescription.InDefinedShape>or(ignored), nonNullable, identity, comparator);
     }
 
     /**
@@ -151,7 +159,17 @@ public class EqualsMethod implements Implementation {
      * the provided matcher.
      */
     public EqualsMethod withNonNullableFields(ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
-        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, this.nonNullable.<FieldDescription.InDefinedShape>or(nonNullable), comparator);
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, this.nonNullable.<FieldDescription.InDefinedShape>or(nonNullable), identity, comparator);
+    }
+
+    /**
+     * Returns a new version of this equals method implementation that considers the matched fields by their identity.
+     *
+     * @param identity A matcher to determine that a field should be considered by its identity.
+     * @return A new version of this equals method implementation that also considers the matched fields by their identity.
+     */
+    public EqualsMethod withIdentityFields(ElementMatcher<? super FieldDescription.InDefinedShape> identity) {
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, nonNullable, this.identity.<FieldDescription.InDefinedShape>or(identity), comparator);
     }
 
     /**
@@ -199,7 +217,7 @@ public class EqualsMethod implements Implementation {
      */
     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public EqualsMethod withFieldOrder(Comparator<? super FieldDescription.InDefinedShape> comparator) {
-        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, nonNullable, new CompoundComparator(this.comparator, comparator));
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, nonNullable, identity, new CompoundComparator(this.comparator, comparator));
     }
 
     /**
@@ -210,7 +228,7 @@ public class EqualsMethod implements Implementation {
      * of the instrumented type instead of requiring an exact match.
      */
     public Implementation withSubclassEquality() {
-        return new EqualsMethod(superClassCheck, TypeCompatibilityCheck.SUBCLASS, ignored, nonNullable, comparator);
+        return new EqualsMethod(superClassCheck, TypeCompatibilityCheck.SUBCLASS, ignored, nonNullable, identity, comparator);
     }
 
     /**
@@ -237,7 +255,7 @@ public class EqualsMethod implements Implementation {
                 MethodVariableAccess.REFERENCE.loadFrom(1),
                 ConditionalReturn.onIdentity().returningTrue(),
                 typeCompatibilityCheck.resolve(implementationTarget.getInstrumentedType())
-        ), fields, nonNullable);
+        ), fields, nonNullable, identity);
     }
 
     /**
@@ -733,21 +751,29 @@ public class EqualsMethod implements Implementation {
         private final ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable;
 
         /**
+         * A matcher to determine fields of a reference type that cannot be {@code null}.
+         */
+        private final ElementMatcher<? super FieldDescription.InDefinedShape> identity;
+
+        /**
          * Creates a new appender.
          *
          * @param instrumentedType  The instrumented type.
          * @param baseline          The baseline stack manipulation.
          * @param fieldDescriptions A list of fields to use for the comparison.
          * @param nonNullable       A matcher to determine fields of a reference type that cannot be {@code null}.
+         * @param identity          A matcher to determine that a field should be considered by its identity.
          */
         protected Appender(TypeDescription instrumentedType,
                            StackManipulation baseline,
                            List<FieldDescription.InDefinedShape> fieldDescriptions,
-                           ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
+                           ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable,
+                           ElementMatcher<? super FieldDescription.InDefinedShape> identity) {
             this.instrumentedType = instrumentedType;
             this.baseline = baseline;
             this.fieldDescriptions = fieldDescriptions;
             this.nonNullable = nonNullable;
+            this.identity = identity;
         }
 
         /**
@@ -770,13 +796,17 @@ public class EqualsMethod implements Implementation {
                 stackManipulations.add(MethodVariableAccess.REFERENCE.loadFrom(1));
                 stackManipulations.add(TypeCasting.to(instrumentedType));
                 stackManipulations.add(FieldAccess.forField(fieldDescription).read());
-                NullValueGuard nullValueGuard = fieldDescription.getType().isPrimitive() || fieldDescription.getType().isArray() || nonNullable.matches(fieldDescription)
-                        ? NullValueGuard.NoOp.INSTANCE
-                        : new NullValueGuard.UsingJump(instrumentedMethod);
-                stackManipulations.add(nullValueGuard.before());
-                stackManipulations.add(ValueComparator.of(fieldDescription.getType()));
-                stackManipulations.add(nullValueGuard.after());
-                padding = Math.max(padding, nullValueGuard.getRequiredVariablePadding());
+                if (!fieldDescription.getType().isPrimitive() && identity.matches(fieldDescription)) {
+                    stackManipulations.add(ConditionalReturn.onNonIdentity());
+                } else {
+                    NullValueGuard nullValueGuard = fieldDescription.getType().isPrimitive() || fieldDescription.getType().isArray() || nonNullable.matches(fieldDescription)
+                            ? NullValueGuard.NoOp.INSTANCE
+                            : new NullValueGuard.UsingJump(instrumentedMethod);
+                    stackManipulations.add(nullValueGuard.before());
+                    stackManipulations.add(ValueComparator.of(fieldDescription.getType()));
+                    stackManipulations.add(nullValueGuard.after());
+                    padding = Math.max(padding, nullValueGuard.getRequiredVariablePadding());
+                }
             }
             stackManipulations.add(IntegerConstant.forValue(true));
             stackManipulations.add(MethodReturn.INTEGER);
@@ -789,11 +819,6 @@ public class EqualsMethod implements Implementation {
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class ConditionalReturn extends StackManipulation.AbstractBase {
-
-        /**
-         * An empty array.
-         */
-        private static final Object[] EMPTY = new Object[0];
 
         /**
          * The conditional jump instruction upon which the return is not triggered.

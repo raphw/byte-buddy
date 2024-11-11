@@ -1,6 +1,60 @@
 Byte Buddy release notes
 ------------------------
 
+### 4. November 2024: version 1.15.10
+
+- Fix Java 8 patterns for multi-release jars to avoid that inner classes are excluded.
+
+### 3. November 2024: version 1.15.9
+
+- Additional release after time out during previous Gradle plugin release.
+
+### 1. November 2024: version 1.15.8
+
+- Extend `ClassInjector` API to support lazy resolution of class files.
+- Extend `DynamicType` API to support lazy resolution of auxiliary types.
+- Extend `AgentBuilder.Transformer.ForAdvice` to support injection of new classes by their name.
+
+### 23. October 2024: version 1.15.7
+
+- Additional release after time out during previous Gradle plugin release.
+
+### 21. October 2024: version 1.15.6
+
+- Add ConstructorResolver to Super annotation for MethodDelegation to allow for dynamic constructor resolution.
+- Add Java 8 versions of shaded ASM to allow for faster class file validation and CDS support.
+
+### 17. October 2024: version 1.15.5
+
+- Publish Byte Buddy and Byte Buddy agent artifacts as multi-release jars to support CDS and faster validation.
+
+### 9. October 2024: version 1.15.4
+
+- Add non-experimental support for Java 24.
+
+### 26. September 2024: version 1.15.3
+
+- Treat multi-release class files that are newer than the supported version as regular resources.
+- Allow overriding the multi-release class file version from Maven and Gradle plugin.
+- Correctly resolve multi-release class files in Android.
+
+### 25. September 2024: version 1.15.2
+
+- Add support for multi-release JAR files in `ClassFileLocator`s and `Plugin.Engine.Default`.
+- Add Gradle task for transforming multiple jar files with `ByteBuddyJarsTask`.
+- Avoid validation of `JarFile` when extracting individual entries.
+- Rework discovery in `ByteBuddyMojo`.
+
+### 29. August 2024: version 1.15.1
+
+- Revert default `EntryPoint` for Android Gradle plugin to use `DECORATE` unless explicitly specified due to many generic type errors in Kotlin classes. 
+
+### 23. August 2024: version 1.15.0
+
+- Introduce `AsmClassWriter` and `AsmClassReader` abstractions that allow for plugging different implementations of readers and writers.
+- Add configuration extension to the Android Gradle plugin and make it behave like regular Gradle plugin with standard configuration.
+- Throw `TypeNotPresentException` upon discovering undeclared type variables as it was recently fixed on the JVM. 
+
 ### 16. August 2024: version 1.14.19
 
 - Add Maven Mojo for transforming jars and for transforming dependencies folder.

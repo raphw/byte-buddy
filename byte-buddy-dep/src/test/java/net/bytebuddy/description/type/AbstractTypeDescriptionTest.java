@@ -26,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.*;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -44,8 +43,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptionGenericVariableDefiningTest {
 
@@ -913,6 +911,14 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(parameterDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(parameterDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
         assertThat(parameterDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 84));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testIllegalReferenceOnTypeVariableOnOutdatedJdks() throws Exception {
+        Class<?> type = Class.forName("net.bytebuddy.test.precompiled.v11.ClassExtendsTypeReference");
+        TypeDescription description = describe(type);
+        assertThat(description.getDeclaredMethods().filter(isMethod()).getOnly().getTypeVariables().size(), is(0));
     }
 
     private Class<?> inMethodClass() {

@@ -84,12 +84,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.io.File;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintStream;
-import java.io.Serializable;
+import java.io.*;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -3049,6 +3044,11 @@ public interface AgentBuilder {
             private final List<Entry> entries;
 
             /**
+             * The names of auxiliary types to inject.
+             */
+            private final List<String> auxiliaries;
+
+            /**
              * Creates a new advice transformer with a default setup.
              */
             public ForAdvice() {
@@ -3067,7 +3067,8 @@ public interface AgentBuilder {
                         ClassFileLocator.NoOp.INSTANCE,
                         PoolStrategy.Default.FAST,
                         LocationStrategy.ForClassLoader.STRONG,
-                        Collections.<Entry>emptyList());
+                        Collections.<Entry>emptyList(),
+                        Collections.<String>emptyList());
             }
 
             /**
@@ -3080,6 +3081,7 @@ public interface AgentBuilder {
              * @param poolStrategy     The pool strategy to use for looking up an advice.
              * @param locationStrategy The location strategy to use for class loaders when resolving advice classes.
              * @param entries          The advice entries to apply.
+             * @param auxiliaries      The names of auxiliary types to inject.
              */
             protected ForAdvice(Advice.WithCustomMapping advice,
                                 Advice.ExceptionHandler exceptionHandler,
@@ -3087,7 +3089,8 @@ public interface AgentBuilder {
                                 ClassFileLocator classFileLocator,
                                 PoolStrategy poolStrategy,
                                 LocationStrategy locationStrategy,
-                                List<Entry> entries) {
+                                List<Entry> entries,
+                                List<String> auxiliaries) {
                 this.advice = advice;
                 this.exceptionHandler = exceptionHandler;
                 this.assigner = assigner;
@@ -3095,6 +3098,7 @@ public interface AgentBuilder {
                 this.poolStrategy = poolStrategy;
                 this.locationStrategy = locationStrategy;
                 this.entries = entries;
+                this.auxiliaries = auxiliaries;
             }
 
             /**
@@ -3107,6 +3111,9 @@ public interface AgentBuilder {
                                                     @MaybeNull ProtectionDomain protectionDomain) {
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
+                for (String auxiliary : auxiliaries) {
+                    builder = builder.require(new LazyDynamicType(typePool.describe(auxiliary).resolve(), classFileLocator));
+                }
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
                     asmVisitorWrapper = asmVisitorWrapper.invokable(entry.getMatcher().resolve(typeDescription), wrap(typeDescription,
@@ -3149,6 +3156,7 @@ public interface AgentBuilder {
              * @param poolStrategy     The pool strategy to use for looking up an advice.
              * @param locationStrategy The location strategy to use for class loaders when resolving advice classes.
              * @param entries          The advice entries to apply.
+             * @param auxiliaries      The names of auxiliary types to inject.
              * @return An appropriate advice transformer.
              */
             protected ForAdvice make(Advice.WithCustomMapping advice,
@@ -3157,8 +3165,9 @@ public interface AgentBuilder {
                                      ClassFileLocator classFileLocator,
                                      PoolStrategy poolStrategy,
                                      LocationStrategy locationStrategy,
-                                     List<Entry> entries) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                                     List<Entry> entries,
+                                     List<String> auxiliaries) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3168,7 +3177,7 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the supplied pool strategy.
              */
             public ForAdvice with(PoolStrategy poolStrategy) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3179,7 +3188,7 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the supplied location strategy.
              */
             public ForAdvice with(LocationStrategy locationStrategy) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3190,7 +3199,7 @@ public interface AgentBuilder {
              * @see Advice#withExceptionHandler(StackManipulation)
              */
             public ForAdvice withExceptionHandler(Advice.ExceptionHandler exceptionHandler) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3201,7 +3210,7 @@ public interface AgentBuilder {
              * @see Advice#withAssigner(Assigner)
              */
             public ForAdvice with(Assigner assigner) {
-                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries, auxiliaries);
             }
 
             /**
@@ -3244,7 +3253,8 @@ public interface AgentBuilder {
                         new ClassFileLocator.Compound(CompoundList.of(classFileLocator, classFileLocators)),
                         poolStrategy,
                         locationStrategy,
-                        entries);
+                        entries,
+                        auxiliaries);
             }
 
             /**
@@ -3272,7 +3282,8 @@ public interface AgentBuilder {
                         classFileLocator,
                         poolStrategy,
                         locationStrategy,
-                        CompoundList.of(entries, new Entry.ForUnifiedAdvice(matcher, name)));
+                        CompoundList.of(entries, new Entry.ForUnifiedAdvice(matcher, name)),
+                        auxiliaries);
             }
 
             /**
@@ -3302,7 +3313,35 @@ public interface AgentBuilder {
                         classFileLocator,
                         poolStrategy,
                         locationStrategy,
-                        CompoundList.of(entries, new Entry.ForSplitAdvice(matcher, enter, exit)));
+                        CompoundList.of(entries, new Entry.ForSplitAdvice(matcher, enter, exit)),
+                        auxiliaries);
+            }
+
+            /**
+             * Adds the given auxiliary types for injection.
+             *
+             * @param auxiliary The names of the auxiliary types to inject.
+             * @return A new instance of this advice transformer that resolves and adds the specified auxiliary types.
+             */
+            public ForAdvice auxiliary(String... auxiliary) {
+                return auxiliary(Arrays.asList(auxiliary));
+            }
+
+            /**
+             * Adds the given auxiliary types for injection.
+             *
+             * @param auxiliaries The names of the auxiliary types to inject.
+             * @return A new instance of this advice transformer that resolves and adds the specified auxiliary types.
+             */
+            public ForAdvice auxiliary(List<String> auxiliaries) {
+                return make(advice,
+                        exceptionHandler,
+                        assigner,
+                        classFileLocator,
+                        poolStrategy,
+                        locationStrategy,
+                        entries,
+                        CompoundList.of(this.auxiliaries, auxiliaries));
             }
 
             /**
@@ -3405,6 +3444,66 @@ public interface AgentBuilder {
                     protected Advice resolve(Advice.WithCustomMapping advice, TypePool typePool, ClassFileLocator classFileLocator) {
                         return advice.to(typePool.describe(enter).resolve(), typePool.describe(exit).resolve(), classFileLocator);
                     }
+                }
+            }
+
+            /**
+             * A lazy dynamic type that only loads a class file representation on demand.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class LazyDynamicType extends DynamicType.AbstractBase {
+
+                /**
+                 * A description of the class to inject.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * The class file locator to use.
+                 */
+                private final ClassFileLocator classFileLocator;
+
+                /**
+                 * Creates a lazy dynamic type.
+                 *
+                 * @param typeDescription A description of the class to inject.
+                 * @param classFileLocator The class file locator to use.
+                 */
+                protected LazyDynamicType(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+                    this.typeDescription = typeDescription;
+                    this.classFileLocator = classFileLocator;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription getTypeDescription() {
+                    return typeDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public byte[] getBytes() {
+                    try {
+                        return classFileLocator.locate(typeDescription.getName()).resolve();
+                    } catch (IOException exception) {
+                        throw new IllegalStateException("Failed to resolve class file for " + typeDescription, exception);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public List<? extends DynamicType> getAuxiliaries() {
+                    return Collections.<DynamicType>emptyList();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public LoadedTypeInitializer getLoadedTypeInitializer() {
+                    return LoadedTypeInitializer.NoOp.INSTANCE;
                 }
             }
         }
@@ -3871,9 +3970,8 @@ public interface AgentBuilder {
                                  @MaybeNull ClassLoader classLoader,
                                  @MaybeNull ProtectionDomain protectionDomain,
                                  InjectionStrategy injectionStrategy) {
-                Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
-                Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
+                Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions(), independentTypes = new LinkedHashSet<TypeDescription>(auxiliaryTypes);
+                for (TypeDescription auxiliaryType : auxiliaryTypes) {
                     if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)) {
                         independentTypes.remove(auxiliaryType);
                     }
@@ -3881,7 +3979,7 @@ public interface AgentBuilder {
                 if (!independentTypes.isEmpty()) {
                     ClassInjector classInjector = injectionStrategy.resolve(classLoader, protectionDomain);
                     Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes, dynamicType).entrySet()) {
                         loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                     }
                 }
@@ -3971,9 +4069,14 @@ public interface AgentBuilder {
                     private final TypeDescription instrumentedType;
 
                     /**
-                     * The auxiliary types mapped to their class file representation.
+                     * The auxiliary types to inject.
                      */
-                    private final Map<TypeDescription, byte[]> rawAuxiliaryTypes;
+                    private final Set<TypeDescription> auxiliaryTypes;
+
+                    /**
+                     * The class file locator to use.
+                     */
+                    private final ClassFileLocator classFileLocator;
 
                     /**
                      * The instrumented types and auxiliary types mapped to their loaded type initializers.
@@ -3990,16 +4093,19 @@ public interface AgentBuilder {
                      * Creates a new injection initializer.
                      *
                      * @param instrumentedType       The instrumented type.
-                     * @param rawAuxiliaryTypes      The auxiliary types mapped to their class file representation.
+                     * @param auxiliaryTypes         The auxiliary types to inject.
+                     * @param classFileLocator       The class file locator to use.
                      * @param loadedTypeInitializers The instrumented types and auxiliary types mapped to their loaded type initializers.
                      * @param classInjector          The class injector to use.
                      */
                     protected InjectingInitializer(TypeDescription instrumentedType,
-                                                   Map<TypeDescription, byte[]> rawAuxiliaryTypes,
+                                                   Set<TypeDescription> auxiliaryTypes,
+                                                   ClassFileLocator classFileLocator,
                                                    Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers,
                                                    ClassInjector classInjector) {
                         this.instrumentedType = instrumentedType;
-                        this.rawAuxiliaryTypes = rawAuxiliaryTypes;
+                        this.auxiliaryTypes = auxiliaryTypes;
+                        this.classFileLocator = classFileLocator;
                         this.loadedTypeInitializers = loadedTypeInitializers;
                         this.classInjector = classInjector;
                     }
@@ -4008,7 +4114,7 @@ public interface AgentBuilder {
                      * {@inheritDoc}
                      */
                     public void onLoad(Class<?> type) {
-                        for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(rawAuxiliaryTypes).entrySet()) {
+                        for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(auxiliaryTypes, classFileLocator).entrySet()) {
                             loadedTypeInitializers.get(auxiliary.getKey()).onLoad(auxiliary.getValue());
                         }
                         loadedTypeInitializers.get(instrumentedType).onLoad(type);
@@ -4073,28 +4179,28 @@ public interface AgentBuilder {
                                          @MaybeNull ClassLoader classLoader,
                                          @MaybeNull ProtectionDomain protectionDomain,
                                          InjectionStrategy injectionStrategy) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions();
                         LoadedTypeInitializer loadedTypeInitializer;
                         if (!auxiliaryTypes.isEmpty()) {
                             TypeDescription instrumentedType = dynamicType.getTypeDescription();
                             ClassInjector classInjector = injectionStrategy.resolve(classLoader, protectionDomain);
-                            Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                            Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                            for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
+                            Set<TypeDescription> independentTypes = new LinkedHashSet<TypeDescription>(auxiliaryTypes);
+                            Set<TypeDescription> dependentTypes = new LinkedHashSet<TypeDescription>(auxiliaryTypes);
+                            for (TypeDescription auxiliaryType : auxiliaryTypes) {
                                 (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)
                                         ? dependentTypes
                                         : independentTypes).remove(auxiliaryType);
                             }
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (!independentTypes.isEmpty()) {
-                                for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                                for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes, dynamicType).entrySet()) {
                                     loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                                 }
                             }
                             Map<TypeDescription, LoadedTypeInitializer> lazyInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(loadedTypeInitializers);
-                            loadedTypeInitializers.keySet().removeAll(independentTypes.keySet());
+                            loadedTypeInitializers.keySet().removeAll(independentTypes);
                             loadedTypeInitializer = lazyInitializers.size() > 1 // there exist auxiliary types that need lazy loading
-                                    ? new Dispatcher.InjectingInitializer(instrumentedType, dependentTypes, lazyInitializers, classInjector)
+                                    ? new Dispatcher.InjectingInitializer(instrumentedType, dependentTypes, dynamicType, lazyInitializers, classInjector)
                                     : lazyInitializers.get(instrumentedType);
                         } else {
                             loadedTypeInitializer = dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription());
@@ -4152,10 +4258,10 @@ public interface AgentBuilder {
                                          @MaybeNull ClassLoader classLoader,
                                          @MaybeNull ProtectionDomain protectionDomain,
                                          InjectionStrategy injectionStrategy) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions();
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
-                                : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectionStrategy.resolve(classLoader, protectionDomain));
+                                : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType, dynamicType.getLoadedTypeInitializers(), injectionStrategy.resolve(classLoader, protectionDomain));
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
                 }
@@ -4209,10 +4315,10 @@ public interface AgentBuilder {
                                          @MaybeNull ClassLoader classLoader,
                                          @MaybeNull ProtectionDomain protectionDomain,
                                          InjectionStrategy injectionStrategy) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        Set<TypeDescription> auxiliaryTypes = dynamicType.getAuxiliaryTypeDescriptions();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (!auxiliaryTypes.isEmpty()) {
-                            for (Map.Entry<TypeDescription, Class<?>> entry : injectionStrategy.resolve(classLoader, protectionDomain).inject(auxiliaryTypes).entrySet()) {
+                            for (Map.Entry<TypeDescription, Class<?>> entry : injectionStrategy.resolve(classLoader, protectionDomain).inject(auxiliaryTypes, dynamicType).entrySet()) {
                                 loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                             }
                         }

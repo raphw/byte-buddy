@@ -30,9 +30,11 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import java.lang.annotation.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Parameters that are annotated with this annotation are assigned an instance of an auxiliary proxy type that allows calling
@@ -103,6 +105,16 @@ public @interface Super {
     Class<?>[] constructorParameters() default {};
 
     /**
+     * Specifies a class to resolve a constructor of the proxied type to use for instantiation if
+     * {@link Instantiation#CONSTRUCTOR} is used. Note that the specified class will be loaded and instantiated by
+     * Byte Buddy in order to resolve the constructor. For this, the specified class requires a public
+     * default constructor.
+     *
+     * @return The type of the {@link ConstructorResolver} to use.
+     */
+    Class<? extends ConstructorResolver> constructorResolver() default ConstructorResolver.Default.class;
+
+    /**
      * Determines the type that is implemented by the proxy. When this value is set to its default value
      * {@code void}, the proxy is created as an instance of the parameter's type. When it is set to
      * {@link TargetType}, it is created as an instance of the generated class. Otherwise, the proxy type
@@ -111,6 +123,46 @@ public @interface Super {
      * @return The type of the proxy or an indicator type, i.e. {@code void} or {@link TargetType}.
      */
     Class<?> proxyType() default void.class;
+
+    /**
+     * A constructor resolver is responsible to specify the constructor to be used for creating a proxy.
+     */
+    interface ConstructorResolver {
+
+        /**
+         * Resolves the constructor to be used.
+         *
+         * @param proxiedType           The type being proxied.
+         * @param constructorParameters The types being specified on the annotation.
+         * @return The constructor to invoke with default arguments for instantiation.
+         */
+        MethodDescription.InDefinedShape resolve(TypeDescription proxiedType, List<TypeDescription> constructorParameters);
+
+        /**
+         * A default constructor resolver that attempts to resolve a constructor with the given argument types.
+         */
+        class Default implements ConstructorResolver {
+
+            /**
+             * {@inheritDoc}
+             */
+            public MethodDescription.InDefinedShape resolve(TypeDescription proxiedType, List<TypeDescription> constructorParameters) {
+                if (proxiedType.isInterface()) {
+                    return TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods()
+                            .filter(isConstructor())
+                            .getOnly();
+                }
+                MethodList<MethodDescription.InDefinedShape> candidates = proxiedType.getDeclaredMethods().filter(isConstructor()
+                        .and(not(isPrivate()))
+                        .and(takesArguments(constructorParameters)));
+                if (candidates.size() == 1) {
+                    return candidates.getOnly();
+                } else {
+                    throw new IllegalStateException("Did not discover exactly one constructor on " + proxiedType + " with parameters " + constructorParameters);
+                }
+            }
+        }
+    }
 
     /**
      * Determines the instantiation of the proxy type.
@@ -125,12 +177,32 @@ public @interface Super {
          */
         CONSTRUCTOR {
             @Override
-            protected StackManipulation proxyFor(TypeDescription parameterType,
+            protected StackManipulation proxyFor(TypeDescription proxyType,
                                                  Implementation.Target implementationTarget,
                                                  AnnotationDescription.Loadable<Super> annotation) {
-                return new TypeProxy.ForSuperMethodByConstructor(parameterType,
+                MethodDescription.InDefinedShape constructor;
+                try {
+                    @SuppressWarnings("unchecked")
+                    ConstructorResolver constructorResolver = (ConstructorResolver) annotation.getValue(CONSTRUCTOR_RESOLVER)
+                            .load(ConstructorResolver.class.getClassLoader())
+                            .resolve(Class.class)
+                            .getConstructor()
+                            .newInstance();
+                    constructor = constructorResolver.resolve(
+                            proxyType,
+                            Arrays.asList(annotation.getValue(CONSTRUCTOR_PARAMETERS).resolve(TypeDescription[].class)));
+                } catch (NoSuchMethodException exception) {
+                    throw new IllegalStateException("No default constructor specified by " + annotation.getValue(CONSTRUCTOR_RESOLVER)
+                            .resolve(TypeDescription.class)
+                            .getName(), exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Failed to resolve constructor specified by " + annotation, exception.getTargetException());
+                } catch (Exception exception) {
+                    throw new IllegalStateException("Failed to resolve constructor specified by " + annotation, exception);
+                }
+                return new TypeProxy.ForSuperMethodByConstructor(proxyType,
+                        constructor,
                         implementationTarget,
-                        Arrays.asList(annotation.getValue(CONSTRUCTOR_PARAMETERS).resolve(TypeDescription[].class)),
                         annotation.getValue(IGNORE_FINALIZER).resolve(Boolean.class),
                         annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
             }
@@ -142,10 +214,10 @@ public @interface Super {
          */
         UNSAFE {
             @Override
-            protected StackManipulation proxyFor(TypeDescription parameterType,
+            protected StackManipulation proxyFor(TypeDescription proxyType,
                                                  Implementation.Target implementationTarget,
                                                  AnnotationDescription.Loadable<Super> annotation) {
-                return new TypeProxy.ForSuperMethodByReflectionFactory(parameterType,
+                return new TypeProxy.ForSuperMethodByReflectionFactory(proxyType,
                         implementationTarget,
                         annotation.getValue(IGNORE_FINALIZER).resolve(Boolean.class),
                         annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
@@ -167,6 +239,11 @@ public @interface Super {
          */
         private static final MethodDescription.InDefinedShape CONSTRUCTOR_PARAMETERS;
 
+        /**
+         * A reference to the constructor parameters resolver method.
+         */
+        private static final MethodDescription.InDefinedShape CONSTRUCTOR_RESOLVER;
+
         /*
          * Extracts method references to the annotation methods.
          */
@@ -175,18 +252,19 @@ public @interface Super {
             IGNORE_FINALIZER = annotationProperties.filter(named("ignoreFinalizer")).getOnly();
             SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
             CONSTRUCTOR_PARAMETERS = annotationProperties.filter(named("constructorParameters")).getOnly();
+            CONSTRUCTOR_RESOLVER = annotationProperties.filter(named("constructorResolver")).getOnly();
         }
 
         /**
          * Creates a stack manipulation which loads a {@code super}-call proxy onto the stack.
          *
-         * @param parameterType        The type of the parameter that was annotated with
+         * @param proxyType            The type of the proxy that is bound to the parameter annotated by
          *                             {@link net.bytebuddy.implementation.bind.annotation.Super}
          * @param implementationTarget The implementation target for the currently created type.
          * @param annotation           The annotation that caused this method call.
          * @return A stack manipulation representing this instance's instantiation strategy.
          */
-        protected abstract StackManipulation proxyFor(TypeDescription parameterType,
+        protected abstract StackManipulation proxyFor(TypeDescription proxyType,
                                                       Implementation.Target implementationTarget,
                                                       AnnotationDescription.Loadable<Super> annotation);
     }

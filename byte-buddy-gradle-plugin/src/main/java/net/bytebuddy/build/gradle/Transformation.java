@@ -194,8 +194,8 @@ public class Transformation {
                     throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                 }
                 return type;
-            } catch (ClassNotFoundException e) {
-                throw new GradleException("Cannot locate plugin class " + pluginName + " by its name", e);
+            } catch (ClassNotFoundException exception) {
+                throw new GradleException("Cannot locate plugin class " + pluginName + " by its name", exception);
             }
         } else {
             throw new GradleException("No plugin or plugin name defined for transformation");
@@ -266,8 +266,8 @@ public class Transformation {
                 System.out.println(Plugin.class.getClassLoader());
                 System.out.println(parent);
                 return t;
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException("Failed to wrap plugin type " + type.getName(), e);
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Failed to wrap plugin type " + type.getName(), exception);
             }
         }
 

@@ -10,11 +10,7 @@ import java.lang.instrument.Instrumentation;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class AgentBuilderPatchModeHandlerTest {
 
@@ -35,7 +31,7 @@ public class AgentBuilderPatchModeHandlerTest {
         AgentBuilder.PatchMode.Handler.NoOp.INSTANCE.onBeforeRegistration(instrumentation);
         assertThat(AgentBuilder.PatchMode.Handler.NoOp.INSTANCE.onRegistration(classFileTransformer), is(true));
         AgentBuilder.PatchMode.Handler.NoOp.INSTANCE.onAfterRegistration(instrumentation);
-        verifyZeroInteractions(classFileTransformer);
+        verifyNoMoreInteractions(classFileTransformer);
     }
 
     @Test

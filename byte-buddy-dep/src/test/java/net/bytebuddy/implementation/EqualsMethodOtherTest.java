@@ -7,10 +7,12 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.Comparator;
+import java.util.HashSet;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -83,7 +85,27 @@ public class EqualsMethodOtherTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Object left = loaded.getLoaded().getDeclaredConstructor().newInstance(), right = loaded.getLoaded().getDeclaredConstructor().newInstance();
         left.getClass().getDeclaredField(FOO).set(left, FOO);
-        left.getClass().getDeclaredField(FOO).set(left, BAR);
+        assertThat(left, is(right));
+    }
+
+    @Test
+    public void testIdentityField() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isEquals())
+                .intercept(EqualsMethod.isolated().withIdentityFields(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object left = loaded.getLoaded().getDeclaredConstructor().newInstance(), right = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        Object leftValue = new HashSet<Object>(), rightValue = new HashSet<Object>();
+        left.getClass().getDeclaredField(FOO).set(left, leftValue);
+        right.getClass().getDeclaredField(FOO).set(right, rightValue);
+        assertThat(left, not(right));
+        right.getClass().getDeclaredField(FOO).set(right, leftValue);
         assertThat(left, is(right));
     }
 

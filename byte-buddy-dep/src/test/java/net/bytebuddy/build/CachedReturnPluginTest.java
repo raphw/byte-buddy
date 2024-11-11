@@ -77,26 +77,6 @@ public class CachedReturnPluginTest {
         assertThat(transformed.getMethod(FOO).invoke(instance), is(value));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void testCannotConstructAdvice() throws Exception {
-        Constructor<?> constructor = Class.forName(CachedReturnPlugin.class.getName() + "$Advice$" + adviceArgument.getSimpleName(),
-                true,
-                CachedReturnPlugin.class.getClassLoader()).getDeclaredConstructor();
-        constructor.setAccessible(true);
-        try {
-            constructor.newInstance();
-            fail();
-        } catch (InvocationTargetException exception) {
-            throw (Exception) exception.getTargetException();
-        }
-    }
-
-    @Test
-    public void testJavaVersion() throws Exception {
-        Class<?> type = Class.forName(CachedReturnPlugin.class.getName() + "$Advice$" + adviceArgument.getSimpleName());
-        assertThat(ClassFileVersion.of(type), is(ClassFileVersion.JAVA_V6));
-    }
-
     public static class BooleanSample {
 
         private boolean executed;

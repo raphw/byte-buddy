@@ -87,6 +87,34 @@ public interface DynamicType extends ClassFileLocator {
     byte[] getBytes();
 
     /**
+     * Returns the loaded type initializer of this dynamic type.
+     *
+     * @return The loaded type initializer of this dynamic type.
+     */
+    LoadedTypeInitializer getLoadedTypeInitializer();
+
+    /**
+     * Returns all auxiliary types of this dynamic type.
+     *
+     * @return A list of all auxiliary types of this dynamic type.
+     */
+    List<? extends DynamicType> getAuxiliaries();
+
+    /**
+     * Returns a set of all auxiliary types that are represented by this dynamic type.
+     *
+     * @return A set of all auxiliary types.
+     */
+    Set<TypeDescription> getAuxiliaryTypeDescriptions();
+
+    /**
+     * Returns a set of all types that are represented by this dynamic type.
+     *
+     * @return A set of all represented types.
+     */
+    Set<TypeDescription> getAllTypeDescriptions();
+
+    /**
      * <p>
      * Returns a map of all auxiliary types that are required for making use of the main type.
      * </p>
@@ -6025,11 +6053,8 @@ public interface DynamicType extends ClassFileLocator {
         Map<TypeDescription, Class<?>> getAllLoaded();
     }
 
-    /**
-     * A default implementation of a dynamic type.
-     */
     @HashCodeAndEqualsPlugin.Enhance
-    class Default implements DynamicType {
+    abstract class AbstractBase implements DynamicType {
 
         /**
          * The file name extension for Java class files.
@@ -6042,72 +6067,18 @@ public interface DynamicType extends ClassFileLocator {
         private static final String MANIFEST_VERSION = "1.0";
 
         /**
-         * The size of a writing buffer.
-         */
-        private static final int BUFFER_SIZE = 1024;
-
-        /**
-         * A convenience index for the beginning of an array to improve the readability of the code.
-         */
-        private static final int FROM_BEGINNING = 0;
-
-        /**
-         * A convenience representative of an {@link java.io.InputStream}'s end to improve the readability of the code.
-         */
-        private static final int END_OF_FILE = -1;
-
-        /**
          * A suffix for temporary files.
          */
         private static final String TEMP_SUFFIX = "tmp";
 
         /**
-         * A type description of this dynamic type.
-         */
-        protected final TypeDescription typeDescription;
-
-        /**
-         * The byte array representing this dynamic type.
-         */
-        protected final byte[] binaryRepresentation;
-
-        /**
-         * The loaded type initializer for this dynamic type.
-         */
-        protected final LoadedTypeInitializer loadedTypeInitializer;
-
-        /**
-         * A list of auxiliary types for this dynamic type.
-         */
-        protected final List<? extends DynamicType> auxiliaryTypes;
-
-        /**
-         * Creates a new dynamic type.
-         *
-         * @param typeDescription       A description of this dynamic type.
-         * @param binaryRepresentation  A byte array containing the binary representation of this dynamic type. The array must not be modified.
-         * @param loadedTypeInitializer The loaded type initializer of this dynamic type.
-         * @param auxiliaryTypes        The auxiliary type required for this dynamic type.
-         */
-        @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not modified by class contract.")
-        public Default(TypeDescription typeDescription,
-                       byte[] binaryRepresentation,
-                       LoadedTypeInitializer loadedTypeInitializer,
-                       List<? extends DynamicType> auxiliaryTypes) {
-            this.typeDescription = typeDescription;
-            this.binaryRepresentation = binaryRepresentation;
-            this.loadedTypeInitializer = loadedTypeInitializer;
-            this.auxiliaryTypes = auxiliaryTypes;
-        }
-
-        /**
          * {@inheritDoc}
          */
         public Resolution locate(String name) throws IOException {
-            if (typeDescription.getName().equals(name)) {
-                return new Resolution.Explicit(binaryRepresentation);
+            if (getTypeDescription().getName().equals(name)) {
+                return new Resolution.Explicit(getBytes());
             }
-            for (DynamicType auxiliaryType : auxiliaryTypes) {
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
                 Resolution resolution = auxiliaryType.locate(name);
                 if (resolution.isResolved()) {
                     return resolution;
@@ -6126,8 +6097,24 @@ public interface DynamicType extends ClassFileLocator {
         /**
          * {@inheritDoc}
          */
-        public TypeDescription getTypeDescription() {
-            return typeDescription;
+        public Set<TypeDescription> getAuxiliaryTypeDescriptions() {
+            Set<TypeDescription> types = new LinkedHashSet<TypeDescription>();
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
+                types.addAll(auxiliaryType.getAllTypeDescriptions());
+            }
+            return types;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Set<TypeDescription> getAllTypeDescriptions() {
+            Set<TypeDescription> types = new LinkedHashSet<TypeDescription>();
+            types.add(getTypeDescription());
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
+                types.addAll(auxiliaryType.getAllTypeDescriptions());
+            }
+            return types;
         }
 
         /**
@@ -6135,8 +6122,8 @@ public interface DynamicType extends ClassFileLocator {
          */
         public Map<TypeDescription, byte[]> getAllTypes() {
             Map<TypeDescription, byte[]> allTypes = new LinkedHashMap<TypeDescription, byte[]>();
-            allTypes.put(typeDescription, binaryRepresentation);
-            for (DynamicType auxiliaryType : auxiliaryTypes) {
+            allTypes.put(getTypeDescription(), getBytes());
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
                 allTypes.putAll(auxiliaryType.getAllTypes());
             }
             return allTypes;
@@ -6147,10 +6134,10 @@ public interface DynamicType extends ClassFileLocator {
          */
         public Map<TypeDescription, LoadedTypeInitializer> getLoadedTypeInitializers() {
             Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>();
-            for (DynamicType auxiliaryType : auxiliaryTypes) {
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
                 classLoadingCallbacks.putAll(auxiliaryType.getLoadedTypeInitializers());
             }
-            classLoadingCallbacks.put(typeDescription, loadedTypeInitializer);
+            classLoadingCallbacks.put(getTypeDescription(), getLoadedTypeInitializer());
             return classLoadingCallbacks;
         }
 
@@ -6158,8 +6145,11 @@ public interface DynamicType extends ClassFileLocator {
          * {@inheritDoc}
          */
         public boolean hasAliveLoadedTypeInitializers() {
-            for (LoadedTypeInitializer loadedTypeInitializer : getLoadedTypeInitializers().values()) {
-                if (loadedTypeInitializer.isAlive()) {
+            if (getLoadedTypeInitializer().isAlive()) {
+                return true;
+            }
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
+                if (auxiliaryType.hasAliveLoadedTypeInitializers()) {
                     return true;
                 }
             }
@@ -6169,17 +6159,9 @@ public interface DynamicType extends ClassFileLocator {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not modified by class contract.")
-        public byte[] getBytes() {
-            return binaryRepresentation;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Map<TypeDescription, byte[]> getAuxiliaryTypes() {
             Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
-            for (DynamicType auxiliaryType : this.auxiliaryTypes) {
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
                 auxiliaryTypes.put(auxiliaryType.getTypeDescription(), auxiliaryType.getBytes());
                 auxiliaryTypes.putAll(auxiliaryType.getAuxiliaryTypes());
             }
@@ -6191,18 +6173,18 @@ public interface DynamicType extends ClassFileLocator {
          */
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
             Map<TypeDescription, File> files = new HashMap<TypeDescription, File>();
-            File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
+            File target = new File(folder, getTypeDescription().getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (target.getParentFile() != null && !target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                 throw new IllegalArgumentException("Could not create directory: " + target.getParentFile());
             }
             OutputStream outputStream = new FileOutputStream(target);
             try {
-                outputStream.write(binaryRepresentation);
+                outputStream.write(getBytes());
             } finally {
                 outputStream.close();
             }
-            files.put(typeDescription, target);
-            for (DynamicType auxiliaryType : auxiliaryTypes) {
+            files.put(getTypeDescription(), target);
+            for (DynamicType auxiliaryType : getAuxiliaries()) {
                 files.putAll(auxiliaryType.saveIn(folder));
             }
             return files;
@@ -6249,16 +6231,16 @@ public interface DynamicType extends ClassFileLocator {
                     for (Map.Entry<TypeDescription, byte[]> entry : rawAuxiliaryTypes.entrySet()) {
                         files.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
                     }
-                    files.put(typeDescription.getInternalName() + CLASS_FILE_EXTENSION, binaryRepresentation);
+                    files.put(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION, getBytes());
                     JarEntry jarEntry;
                     while ((jarEntry = inputStream.getNextJarEntry()) != null) {
                         byte[] replacement = files.remove(jarEntry.getName());
                         if (replacement == null) {
                             outputStream.putNextEntry(jarEntry);
-                            byte[] buffer = new byte[BUFFER_SIZE];
+                            byte[] buffer = new byte[1024];
                             int index;
-                            while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                                outputStream.write(buffer, FROM_BEGINNING, index);
+                            while ((index = inputStream.read(buffer)) != -1) {
+                                outputStream.write(buffer, 0, index);
                             }
                         } else {
                             outputStream.putNextEntry(new JarEntry(jarEntry.getName()));
@@ -6304,13 +6286,88 @@ public interface DynamicType extends ClassFileLocator {
                     outputStream.write(entry.getValue());
                     outputStream.closeEntry();
                 }
-                outputStream.putNextEntry(new JarEntry(typeDescription.getInternalName() + CLASS_FILE_EXTENSION));
-                outputStream.write(binaryRepresentation);
+                outputStream.putNextEntry(new JarEntry(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION));
+                outputStream.write(getBytes());
                 outputStream.closeEntry();
             } finally {
                 outputStream.close();
             }
             return file;
+        }
+    }
+
+    /**
+     * A default implementation of a dynamic type.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class Default extends AbstractBase {
+
+        /**
+         * A type description of this dynamic type.
+         */
+        protected final TypeDescription typeDescription;
+
+        /**
+         * The byte array representing this dynamic type.
+         */
+        protected final byte[] binaryRepresentation;
+
+        /**
+         * The loaded type initializer for this dynamic type.
+         */
+        protected final LoadedTypeInitializer loadedTypeInitializer;
+
+        /**
+         * A list of auxiliary types for this dynamic type.
+         */
+        protected final List<? extends DynamicType> auxiliaryTypes;
+
+        /**
+         * Creates a new dynamic type.
+         *
+         * @param typeDescription       A description of this dynamic type.
+         * @param binaryRepresentation  A byte array containing the binary representation of this dynamic type. The array must not be modified.
+         * @param loadedTypeInitializer The loaded type initializer of this dynamic type.
+         * @param auxiliaryTypes        The auxiliary type required for this dynamic type.
+         */
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not modified by class contract.")
+        public Default(TypeDescription typeDescription,
+                       byte[] binaryRepresentation,
+                       LoadedTypeInitializer loadedTypeInitializer,
+                       List<? extends DynamicType> auxiliaryTypes) {
+            this.typeDescription = typeDescription;
+            this.binaryRepresentation = binaryRepresentation;
+            this.loadedTypeInitializer = loadedTypeInitializer;
+            this.auxiliaryTypes = auxiliaryTypes;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeDescription getTypeDescription() {
+            return typeDescription;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not modified by class contract.")
+        public byte[] getBytes() {
+            return binaryRepresentation;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public LoadedTypeInitializer getLoadedTypeInitializer() {
+            return loadedTypeInitializer;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<? extends DynamicType> getAuxiliaries() {
+            return auxiliaryTypes;
         }
 
         /**

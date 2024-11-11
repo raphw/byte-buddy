@@ -137,16 +137,16 @@ public class ObjectFactory {
             public Object newInstance(Project project, Class<?> type, Object... argument) {
                 try {
                     return newInstance.invoke(getObjects.invoke(project), type, argument);
-                } catch (IllegalAccessException e) {
-                    throw new IllegalStateException(e);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause();
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException(exception);
+                } catch (InvocationTargetException exception) {
+                    Throwable cause = exception.getCause();
                     if (cause instanceof RuntimeException) {
                         throw (RuntimeException) cause;
                     } else if (cause instanceof Error) {
                         throw (Error) cause;
                     } else {
-                        throw new RuntimeException(e);
+                        throw new RuntimeException(exception);
                     }
                 }
             }

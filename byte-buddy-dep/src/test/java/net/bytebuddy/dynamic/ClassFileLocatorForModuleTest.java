@@ -54,12 +54,12 @@ public class ClassFileLocatorForModuleTest {
     @Test
     public void testLocatable() throws Exception {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
-        when(module.getResourceAsStream(FOOBAR + ".class")).thenReturn(inputStream);
+        when(module.getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION)).thenReturn(inputStream);
         ClassFileLocator.Resolution resolution = new ClassFileLocator.ForModule(module)
                 .locate(FOOBAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(new byte[]{1, 2, 3}));
-        verify(module).getResourceAsStream(FOOBAR + ".class");
+        verify(module).getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         verifyNoMoreInteractions(module);
     }
 
@@ -68,7 +68,7 @@ public class ClassFileLocatorForModuleTest {
         ClassFileLocator.Resolution resolution = new ClassFileLocator.ForModule(module)
                 .locate(FOOBAR);
         assertThat(resolution.isResolved(), is(false));
-        verify(module).getResourceAsStream(FOOBAR + ".class");
+        verify(module).getResourceAsStream(FOOBAR + ClassFileLocator.CLASS_FILE_EXTENSION);
         verifyNoMoreInteractions(module);
         resolution.resolve();
         fail();

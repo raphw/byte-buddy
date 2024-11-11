@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle;
+package net.bytebuddy.build.gradle.android;
 
 import groovy.lang.Closure;
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Action;
-import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An abstract Byte Buddy task extension.
- *
- * @param <T> The type of the task this extension represents.
+ * A Byte Buddy task extension for Android.
  */
-public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddyTask> {
+public class ByteBuddyAndroidTaskExtension {
 
     /**
      * The current Gradle project.
@@ -85,63 +79,30 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private Discovery discovery;
 
     /**
-     * Determines what tasks are considered when adjusting the task dependency graph to include the Byte Buddy task.
-     * By default, only the altered task's project's task is considered but the adjustment can include subprojects or
-     * the entire project graph. Note that it might not always be legal to resolve such recursive dependencies.
-     */
-    private Adjustment adjustment;
-
-    /**
-     * Determines the reaction upon a failed task dependency resolution.
-     */
-    private Adjustment.ErrorHandler adjustmentErrorHandler;
-
-    /**
-     * The adjustment post processor that is applied after the graph dependencies are is resolved.
-     */
-    private Action<Task> adjustmentPostProcessor;
-
-    /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
 
     /**
-     * If {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     */
-    private boolean lazy;
-
-    /**
-     * The class file version to use for creating auxiliary types or {@code null} if the
-     * version is determined implicitly.
+     * A set of classes that is used for discovery of plugins.
      */
     @MaybeNull
-    private ClassFileVersion classFileVersion;
-
-    /**
-     * The class file version to use for resolving multi-release jar files or {@code null} if
-     * {@link #classFileVersion} or the implicit version should be used.
-     */
-    @MaybeNull
-    private ClassFileVersion multiReleaseClassFileVersion;
+    private FileCollection discoverySet;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
      *
      * @param project The current Gradle project.
      */
-    protected AbstractByteBuddyTaskExtension(@UnknownNull Project project) {
+    public ByteBuddyAndroidTaskExtension(Project project) {
         this.project = project;
         transformations = new ArrayList<Transformation>();
-        entryPoint = EntryPoint.Default.REBASE;
+        entryPoint = new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE);
         suffix = "";
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
         failFast = true;
         discovery = Discovery.EMPTY;
-        adjustment = Adjustment.FULL;
-        adjustmentErrorHandler = Adjustment.ErrorHandler.WARN;
-        adjustmentPostProcessor = Adjustment.NoOpPostProcessor.INSTANCE;
     }
 
     /**
@@ -159,11 +120,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param closure The closure to configure the transformation.
      */
     public void transformation(Closure<Transformation> closure) {
-        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
-        if (transformation == null) {
-            transformation = new Transformation(project);
-        }
-        transformations.add((Transformation) project.configure(transformation, closure));
+        transformations.add((Transformation) project.configure(new Transformation(project), closure));
     }
 
     /**
@@ -172,10 +129,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param action The action to configure the transformation.
      */
     public void transformation(Action<Transformation> action) {
-        Transformation transformation = ObjectFactory.newInstance(project, Transformation.class, project);
-        if (transformation == null) {
-            transformation = new Transformation(project);
-        }
+        Transformation transformation = new Transformation(project);
         action.execute(transformation);
         transformations.add(transformation);
     }
@@ -307,60 +261,6 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
-     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
-     *
-     * @return The adjustment for tasks that might depend on post-processed compile tasks.
-     */
-    public Adjustment getAdjustment() {
-        return adjustment;
-    }
-
-    /**
-     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
-     *
-     * @param adjustment The adjustment for tasks that might depend on post-processed compile tasks.
-     */
-    public void setAdjustment(Adjustment adjustment) {
-        this.adjustment = adjustment;
-    }
-
-    /**
-     * Returns the error handler to be used when a task dependency cannot be resolved.
-     *
-     * @return The error handler to be used when a task dependency cannot be resolved.
-     */
-    public Adjustment.ErrorHandler getAdjustmentErrorHandler() {
-        return adjustmentErrorHandler;
-    }
-
-    /**
-     * Sets the error handler to be used when a task dependency cannot be resolved.
-     *
-     * @param adjustmentErrorHandler The error handler to be used when a task dependency cannot be resolved.
-     */
-    public void setAdjustmentErrorHandler(Adjustment.ErrorHandler adjustmentErrorHandler) {
-        this.adjustmentErrorHandler = adjustmentErrorHandler;
-    }
-
-    /**
-     * Returns the adjustment post processor that is applied after the graph dependencies are is resolved.
-     *
-     * @return The adjustment post processor to apply.
-     */
-    public Action<Task> getAdjustmentPostProcessor() {
-        return adjustmentPostProcessor;
-    }
-
-    /**
-     * Sets the adjustment post processor that is applied after the graph dependencies are resolved.
-     *
-     * @param adjustmentPostProcessor The adjustment post processor to apply.
-     */
-    public void setAdjustmentPostProcessor(Action<Task> adjustmentPostProcessor) {
-        this.adjustmentPostProcessor = adjustmentPostProcessor;
-    }
-
-    /**
      * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      *
      * @return The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -379,115 +279,39 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
-     * Returns {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
      *
-     * @return {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     */
-    public boolean isLazy() {
-        return lazy;
-    }
-
-    /**
-     * If set to {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     *
-     * @param lazy {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
-     */
-    public void setLazy(boolean lazy) {
-        this.lazy = lazy;
-    }
-
-    /**
-     * Returns the class file version to use for creating auxiliary types or {@code null} if the
-     * version is determined implicitly.
-     *
-     * @return The class file version to use for creating auxiliary types.
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
      */
     @MaybeNull
-    public ClassFileVersion getClassFileVersion() {
-        return classFileVersion;
+    public FileCollection getDiscoverySet() {
+        return discoverySet;
     }
 
     /**
-     * Sets the class file version to use for creating auxiliary types or {@code null} if the
-     * version is determined implicitly.
+     * Defines the source set to resolve plugin names from or {@code null} if no such source set is used.
      *
-     * @param classFileVersion The class file version to use for creating auxiliary types.
+     * @param discoverySet The source set to resolve plugin names from or {@code null} if no such source set is used.
      */
-    public void setClassFileVersion(@MaybeNull ClassFileVersion classFileVersion) {
-        this.classFileVersion = classFileVersion;
+    public void setDiscoverySet(@MaybeNull FileCollection discoverySet) {
+        this.discoverySet = discoverySet;
     }
-
-    /**
-     * Returns the class file version to use for resolving multi-release jar files or {@code null} if the
-     * explicit or implicit class file version of this task should be used.
-     *
-     * @return The class file version to use for resolving multi-release jar files.
-     */
-    @MaybeNull
-    public ClassFileVersion getMultiReleaseClassFileVersion() {
-        return multiReleaseClassFileVersion;
-    }
-
-    /**
-     * Sets the class file version to use for resolving multi-release jar files.
-     *
-     * @param multiReleaseClassFileVersion The class file version to use for resolving multi-release jar files.
-     */
-    public void setMultiReleaseClassFileVersion(@MaybeNull ClassFileVersion multiReleaseClassFileVersion) {
-        this.multiReleaseClassFileVersion = multiReleaseClassFileVersion;
-    }
-
-    /**
-     * Resolves default properties and considers the contextual Java version.
-     *
-     * @param version The Java version to resolve as a fallback if no explicit version is set.
-     */
-    protected void resolve(JavaVersion version) {
-        if (classFileVersion == null) {
-            classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(version.getMajorVersion()));
-        }
-    }
-
-    /**
-     * Returns {@code true} if this extension defines an empty discovery.
-     *
-     * @return {@code true} if this extension defines an empty discovery.
-     */
-    protected abstract boolean isEmptyDiscovery();
-
-    /**
-     * Applies any extension-specific properties.
-     *
-     * @param task The task to configure.
-     */
-    protected abstract void doConfigure(T task);
 
     /**
      * Applies this extension's properties.
      *
      * @param task The task to configure.
      */
-    protected void configure(T task) {
-        task.getTransformations().addAll(getTransformations());
-        task.setEntryPoint(getEntryPoint());
-        task.setSuffix(getSuffix());
-        task.setFailOnLiveInitializer(isFailOnLiveInitializer());
-        task.setWarnOnEmptyTypeSet(isWarnOnEmptyTypeSet());
-        task.setFailFast(isFailFast());
-        task.setExtendedParsing(isExtendedParsing());
-        task.setDiscovery(getDiscovery());
-        task.setThreads(getThreads());
-        task.setClassFileVersion(getClassFileVersion());
-        task.setMultiReleaseClassFileVersion(getMultiReleaseClassFileVersion());
-        doConfigure(task);
+    protected void configure(ByteBuddyLocalClassesEnhancerTask task) {
+        task.getTransformations().convention(getTransformations());
+        task.getEntryPoint().convention(getEntryPoint());
+        task.getSuffix().convention(getSuffix());
+        task.getFailOnLiveInitializer().convention(isFailOnLiveInitializer());
+        task.getWarnOnEmptyTypeSet().convention(isWarnOnEmptyTypeSet());
+        task.getFailFast().convention(isFailFast());
+        task.getExtendedParsing().convention(isExtendedParsing());
+        task.getDiscovery().convention(getDiscovery());
+        task.getThreads().convention(getThreads());
+        task.getDiscoverySet().setFrom(getDiscoverySet());
     }
-
-    protected abstract void discoverySet(FileCollection fileCollection);
-
-    /**
-     * Returns the type of the Byte Buddy task.
-     *
-     * @return The type of the Byte Buddy task.
-     */
-    protected abstract Class<? extends T> toType();
 }

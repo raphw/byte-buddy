@@ -49,6 +49,7 @@ import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
@@ -91,6 +92,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             Class<?> scopedArtifact = Class.forName("com.android.build.api.artifact.ScopedArtifact");
             @SuppressWarnings("unchecked")
             Object project = Enum.valueOf((Class) scope, "ALL");
+            @SuppressWarnings("unchecked")
+            Artifact<FileSystemLocation> location = (Artifact<FileSystemLocation>) Class.forName("com.android.build.api.artifact.ScopedArtifact$CLASSES").getField("INSTANCE").get(null);
             dispatcher = new TransformationDispatcher.ForApk74CompatibleAndroid(
                 Artifacts.class.getMethod("forScope", scope),
                 scopedArtifacts.getMethod("use", TaskProvider.class),
@@ -100,7 +103,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     Function1.class,
                     Function1.class),
                 project,
-                (Artifact) Class.forName("com.android.build.api.artifact.ScopedArtifact$CLASSES").getField("INSTANCE").get(null));
+                location);
         } catch (Throwable ignored) {
             dispatcher = TransformationDispatcher.ForLegacyAndroid.INSTANCE;
         }
@@ -117,6 +120,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             throw new IllegalStateException("Byte Buddy requires at least Gradle Plugin version 7.2+, but found " + currentAgpVersion);
         }
         project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfigurationAction());
+        project.getExtensions().add("byteBuddy", new ByteBuddyAndroidTaskExtension(project));
         extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
     }
 
@@ -556,7 +560,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             /**
              * The {@code com.android.build.api.artifact.ScopedArtifact$CLASSES#INSTANCE} value.
              */
-            private final Artifact artifact;
+            private final Artifact<FileSystemLocation> artifact;
 
             /**
              * Creates a new dispatcher.
@@ -567,7 +571,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
              * @param scope       The {@code com.android.build.api.variant.ScopedArtifacts$Scope#PROJECT} value.
              * @param artifact    The {@code com.android.build.api.artifact.ScopedArtifact$CLASSES#INSTANCE} value.
              */
-            protected ForApk74CompatibleAndroid(Method forScope, Method use, Method toTransform, Object scope, Artifact artifact) {
+            protected ForApk74CompatibleAndroid(Method forScope, Method use, Method toTransform, Object scope, Artifact<FileSystemLocation> artifact) {
                 this.forScope = forScope;
                 this.use = use;
                 this.toTransform = toTransform;
@@ -581,7 +585,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
+                            project.getExtensions().getByType(BaseExtension.class),
+                            project.getExtensions().getByType(ByteBuddyAndroidTaskExtension.class)));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,

@@ -16,9 +16,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.util.Comparator;
+import java.util.HashSet;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -66,6 +68,24 @@ public class HashCodeAndEqualsPluginTest {
         Object left = type.getDeclaredConstructor().newInstance(), right = type.getDeclaredConstructor().newInstance();
         type.getDeclaredField(FOO).set(left, FOO);
         type.getDeclaredField(FOO).set(right, BAR);
+        assertThat(left.hashCode(), is(right.hashCode()));
+        assertThat(left, is(right));
+    }
+
+    @Test
+    public void testPluginEnhanceIdentity() throws Exception {
+        Class<?> type = new HashCodeAndEqualsPlugin()
+                .apply(new ByteBuddy().redefine(IdentityFieldSample.class), TypeDescription.ForLoadedType.of(IdentityFieldSample.class), ClassFileLocator.ForClassLoader.of(IdentityFieldSample.class.getClassLoader()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object left = type.getDeclaredConstructor().newInstance(), right = type.getDeclaredConstructor().newInstance();
+        Object leftValue = new HashSet<Object>(), rightValue = new HashSet<Object>();
+        type.getDeclaredField(FOO).set(left, leftValue);
+        type.getDeclaredField(FOO).set(right, rightValue);
+        assertThat(left.hashCode(), not(right.hashCode()));
+        assertThat(left, not(right));
+        type.getDeclaredField(FOO).set(right, leftValue);
         assertThat(left.hashCode(), is(right.hashCode()));
         assertThat(left, is(right));
     }
@@ -278,6 +298,13 @@ public class HashCodeAndEqualsPluginTest {
 
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         public String foo;
+    }
+
+    @HashCodeAndEqualsPlugin.Enhance
+    public static class IdentityFieldSample {
+
+        @HashCodeAndEqualsPlugin.Identity
+        public Object foo;
     }
 
     @HashCodeAndEqualsPlugin.Enhance
