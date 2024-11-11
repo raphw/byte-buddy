@@ -302,7 +302,7 @@ public interface AsmClassWriter {
         }
 
         public SuperClassResolvingJdkClassWriter(int flags, JdkClassReader classReader, TypePool typePool) {
-            super(flags, classReader);
+            super(classReader, flags);
             this.typePool = typePool;
         }
 
