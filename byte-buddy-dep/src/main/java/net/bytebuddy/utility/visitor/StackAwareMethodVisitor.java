@@ -412,11 +412,6 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
-    public void visitLineNumber(int line, Label start) {
-        super.visitLineNumber(line, start);
-    }
-
-    @Override
     public void visitTableSwitchInsn(int minimum, int maximum, Label defaultOption, Label... option) {
         adjustStack(-1);
         List<StackSize> current = new ArrayList<StackSize>(this.current);
