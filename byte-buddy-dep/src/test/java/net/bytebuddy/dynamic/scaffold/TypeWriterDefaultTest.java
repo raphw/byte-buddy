@@ -678,7 +678,7 @@ public class TypeWriterDefaultTest {
 
     @Test
     public void testOldJavaClassFileDeprecation() {
-        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(AsmVisitorWrapper.NO_FLAGS);
+        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(AsmVisitorWrapper.NO_FLAGS);
         classWriter.getVisitor().visit(Opcodes.V1_4, Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "foo/Bar", null, "java/lang/Object", null);
         classWriter.getVisitor().visitField(Opcodes.ACC_DEPRECATED, "qux", "Ljava/lang/Object;", null, null).visitEnd();
         classWriter.getVisitor().visitMethod(Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "baz", "()V", null, null).visitEnd();
@@ -700,7 +700,7 @@ public class TypeWriterDefaultTest {
                 .make()
                 .getBytes();
 
-        AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(binaryRepresentation);
+        AsmClassReader classReader = AsmClassReader.Factory.Default.IMPLICIT.make(binaryRepresentation);
         classReader.accept(new ClassVisitor(OpenedClassReader.ASM_API) {
             @Override
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

@@ -123,7 +123,7 @@ public interface ClassWriterStrategy {
          * {@inheritDoc}
          */
         public AsmClassWriter make(int flags, TypePool typePool) {
-            return new AsmClassWriter.Default(classWriterStrategy.resolve(flags, typePool));
+            return new AsmClassWriter.ForAsm(classWriterStrategy.resolve(flags, typePool));
         }
 
         /**
@@ -131,7 +131,7 @@ public interface ClassWriterStrategy {
          */
         public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
             ClassReader unwrapped = classReader.unwrap(ClassReader.class);
-            return new AsmClassWriter.Default(unwrapped == null
+            return new AsmClassWriter.ForAsm(unwrapped == null
                     ? classWriterStrategy.resolve(flags, typePool)
                     : classWriterStrategy.resolve(flags, typePool, unwrapped));
         }

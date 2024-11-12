@@ -17,12 +17,19 @@ package net.bytebuddy.utility;
 
 import codes.rafael.asmjdkbridge.JdkClassReader;
 import codes.rafael.asmjdkbridge.JdkClassWriter;
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+
+import java.security.PrivilegedAction;
 
 /**
  * A facade for creating a {@link ClassVisitor} that writes a class file.
@@ -85,14 +92,111 @@ public interface AsmClassWriter {
         AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool);
 
         /**
-         * A default class writer factory for ASM's {@link ClassWriter}.
+         * Default implementations for factories of {@link AsmClassWriter}s.
          */
         enum Default implements Factory {
 
             /**
-             * The singleton instance.
+             * Uses a processor as it is configured by {@link OpenedClassReader#PROCESSOR_PROPERTY},
+             * or {@link Default#ASM_FIRST} if no implicit processor is defined.
              */
-            INSTANCE;
+            IMPLICIT {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
+                    return FACTORY.make(flags, classReader, typePool);
+                }
+            },
+
+            /**
+             * A factory for a class reader that uses ASM's internal implementation whenever possible.
+             */
+            ASM_FIRST {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
+                    return ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
+                            ? ASM_ONLY.make(flags, classReader, typePool)
+                            : CLASS_FILE_API_ONLY.make(flags, classReader, typePool);
+                }
+            },
+
+            /**
+             * A factory for a class writer that uses the class file API whenever possible.
+             */
+            CLASS_FILE_API_FIRST {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
+                    return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V24)
+                            ? CLASS_FILE_API_ONLY.make(flags, classReader, typePool)
+                            : ASM_ONLY.make(flags, classReader, typePool);
+                }
+            },
+
+            /**
+             * A factory that will always use ASM's internal implementation.
+             */
+            ASM_ONLY {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
+                    ClassReader unwrapped = classReader.unwrap(ClassReader.class);
+                    return new ForAsm(unwrapped == null
+                            ? new FrameComputingClassWriter(flags, typePool)
+                            : new FrameComputingClassWriter(unwrapped, flags, typePool));
+                }
+            },
+
+            /**
+             * A factory that will always use the Class File API.
+             */
+            CLASS_FILE_API_ONLY {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
+                    JdkClassReader unwrapped = classReader.unwrap(JdkClassReader.class);
+                    return new ForClassFileApi(unwrapped == null
+                            ? new SuperClassResolvingJdkClassWriter(flags, typePool)
+                            : new SuperClassResolvingJdkClassWriter(flags, unwrapped, typePool));
+                }
+            };
+
+            /**
+             * The implicit factory to use for writing class files.
+             */
+            private static final Factory FACTORY;
+
+            /*
+             * Resolves the implicit writer factory, if any.
+             */
+            static {
+                String processor;
+                try {
+                    processor = doPrivileged(new GetSystemPropertyAction(OpenedClassReader.PROCESSOR_PROPERTY));
+                } catch (Throwable ignored) {
+                    processor = null;
+                } // TODO: ASM_FIRST
+                FACTORY = processor == null ? Default.CLASS_FILE_API_ONLY : Default.valueOf(processor);
+            }
+
+            /**
+             * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+             *
+             * @param action The action to execute from a privileged context.
+             * @param <T>    The type of the action's resolved value.
+             * @return The action's resolved value.
+             */
+            @MaybeNull
+            @AccessControllerPlugin.Enhance
+            private static <T> T doPrivileged(PrivilegedAction<T> action) {
+                return action.run();
+            }
 
             /**
              * {@inheritDoc}
@@ -112,59 +216,33 @@ public interface AsmClassWriter {
              * {@inheritDoc}
              */
             public AsmClassWriter make(int flags, TypePool typePool) {
-                return new AsmClassWriter.Default(new FrameComputingClassWriter(flags, typePool));
+                return make(flags, EmptyAsmClassReader.INSTANCE, typePool);
             }
 
             /**
-             * {@inheritDoc}
+             * An empty class reader for ASM that never unwraps an underlying implementation.
              */
-            public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                ClassReader unwrapped = classReader.unwrap(ClassReader.class);
-                return new AsmClassWriter.Default(unwrapped == null
-                        ? new FrameComputingClassWriter(flags, typePool)
-                        : new FrameComputingClassWriter(unwrapped, flags, typePool));
-            }
-        }
+            protected enum EmptyAsmClassReader implements AsmClassReader {
 
-        /**
-         * A factory for a class writer that is based on the Class File API.
-         */
-        enum ForClassFileAPI implements Factory {
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
 
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
+                /**
+                 * {@inheritDoc}
+                 */
+                @AlwaysNull
+                public <T> T unwrap(Class<T> type) {
+                    return null;
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            public AsmClassWriter make(int flags) {
-                return make(flags, TypePool.Empty.INSTANCE);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AsmClassWriter make(int flags, AsmClassReader classReader) {
-                return make(flags, classReader, TypePool.Empty.INSTANCE);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AsmClassWriter make(int flags, TypePool typePool) {
-                return new ForJdk(new SuperClassResolvingJdkClassWriter(flags, typePool));
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                JdkClassReader unwrapped = classReader.unwrap(JdkClassReader.class);
-                return new ForJdk(unwrapped == null
-                        ? new SuperClassResolvingJdkClassWriter(flags, typePool)
-                        : new SuperClassResolvingJdkClassWriter(flags, unwrapped, typePool));
+                /**
+                 * {@inheritDoc}
+                 */
+                public void accept(ClassVisitor classVisitor, int flags) {
+                    throw new UnsupportedOperationException();
+                }
             }
         }
 
@@ -220,9 +298,9 @@ public interface AsmClassWriter {
     }
 
     /**
-     * A default implementation for ASM's {@link ClassWriter}.
+     * Am implementation that uses ASM's internal {@link ClassWriter}.
      */
-    class Default implements AsmClassWriter {
+    class ForAsm implements AsmClassWriter {
 
         /**
          * The represented class writer.
@@ -230,11 +308,11 @@ public interface AsmClassWriter {
         private final ClassWriter classWriter;
 
         /**
-         * Creates a new default class writer based upon ASM's own implementation.
+         * Creates a new class writer based upon ASM's own implementation.
          *
          * @param classWriter The represented class writer.
          */
-        public Default(ClassWriter classWriter) {
+        public ForAsm(ClassWriter classWriter) {
             this.classWriter = classWriter;
         }
 
@@ -256,7 +334,7 @@ public interface AsmClassWriter {
     /**
      * A Class File API-based implementation for a class writer.
      */
-    class ForJdk implements AsmClassWriter {
+    class ForClassFileApi implements AsmClassWriter {
 
         /**
          * The represented class writer.
@@ -268,7 +346,7 @@ public interface AsmClassWriter {
          *
          * @param classWriter The represented class writer.
          */
-        public ForJdk(JdkClassWriter classWriter) {
+        public ForClassFileApi(JdkClassWriter classWriter) {
             this.classWriter = classWriter;
         }
 

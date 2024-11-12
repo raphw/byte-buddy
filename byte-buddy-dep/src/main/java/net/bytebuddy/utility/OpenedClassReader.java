@@ -35,6 +35,11 @@ public class OpenedClassReader implements AsmClassReader.Factory {
     public static final String EXPERIMENTAL_PROPERTY = "net.bytebuddy.experimental";
 
     /**
+     * Indicates what processor Byte Buddy is supposed to use if no processor is configured explicitly.
+     */
+    public static final String PROCESSOR_PROPERTY = "net.bytebuddy.processor";
+
+    /**
      * {@code true} if Byte Buddy is executed in experimental mode.
      */
     public static final boolean EXPERIMENTAL;
@@ -62,14 +67,14 @@ public class OpenedClassReader implements AsmClassReader.Factory {
      * {@inheritDoc}
      */
     public AsmClassReader make(byte[] binaryRepresentation) {
-        return new AsmClassReader.Default(of(binaryRepresentation));
+        return new AsmClassReader.ForAsm(of(binaryRepresentation));
     }
 
     /**
      * {@inheritDoc}
      */
     public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-        return new AsmClassReader.Default(of(binaryRepresentation, experimental));
+        return new AsmClassReader.ForAsm(of(binaryRepresentation, experimental));
     }
 
     /**

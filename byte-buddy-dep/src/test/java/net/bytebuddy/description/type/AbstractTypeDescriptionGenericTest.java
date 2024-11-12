@@ -1995,8 +1995,8 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public static class GenericDisintegrator extends ClassVisitor {
 
         public static Field make() throws IOException, ClassNotFoundException, NoSuchFieldException {
-            AsmClassReader classReader = AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(InconsistentGenerics.class));
-            AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(ClassWriter.COMPUTE_MAXS, classReader);
+            AsmClassReader classReader = AsmClassReader.Factory.Default.IMPLICIT.make(ClassFileLocator.ForClassLoader.read(InconsistentGenerics.class));
+            AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(ClassWriter.COMPUTE_MAXS, classReader);
             classReader.accept(new GenericDisintegrator(classWriter.getVisitor()), AsmVisitorWrapper.NO_FLAGS);
             return new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                     Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.getBinaryRepresentation()),

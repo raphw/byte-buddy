@@ -376,7 +376,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 classFileLocator,
                 Collections.<OffsetMapping.Factory<?>>emptyList(),
                 Delegator.ForRegularInvocation.Factory.INSTANCE,
-                AsmClassReader.Factory.Default.INSTANCE);
+                AsmClassReader.Factory.Default.IMPLICIT);
     }
 
     /**
@@ -470,7 +470,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 classFileLocator,
                 Collections.<OffsetMapping.Factory<?>>emptyList(),
                 Delegator.ForRegularInvocation.Factory.INSTANCE,
-                AsmClassReader.Factory.Default.INSTANCE);
+                AsmClassReader.Factory.Default.IMPLICIT);
     }
 
     /**
@@ -14833,7 +14833,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             this(PostProcessor.NoOp.INSTANCE,
                     Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap(),
                     Delegator.ForRegularInvocation.Factory.INSTANCE,
-                    AsmClassReader.Factory.Default.INSTANCE);
+                    AsmClassReader.Factory.Default.IMPLICIT);
         }
 
         /**

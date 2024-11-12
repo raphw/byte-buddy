@@ -335,8 +335,8 @@ public class ByteBuddy {
                 InstrumentedType.Factory.Default.MODIFIABLE,
                 DEFAULT_TYPE_VALIDATION,
                 VisibilityBridgeStrategy.Default.ALWAYS,
-                AsmClassReader.Factory.Default.INSTANCE,
-                AsmClassWriter.Factory.Default.INSTANCE,
+                AsmClassReader.Factory.Default.IMPLICIT,
+                AsmClassWriter.Factory.Default.IMPLICIT,
                 new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
     }
 

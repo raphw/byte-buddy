@@ -16,10 +16,15 @@
 package net.bytebuddy.utility;
 
 import codes.rafael.asmjdkbridge.JdkClassReader;
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
+
+import java.security.PrivilegedAction;
 
 /**
  * A facade for creating a class reader that accepts {@link ClassVisitor} instances and reader flags.
@@ -67,60 +72,126 @@ public interface AsmClassReader {
         AsmClassReader make(byte[] binaryRepresentation, boolean experimental);
 
         /**
-         * A default implementation that creates a pure ASM {@link ClassReader}.
+         * Default implementations for factories of {@link AsmClassReader}s.
          */
         enum Default implements Factory {
 
             /**
-             * The singleton instance.
+             * Uses a processor as it is configured by {@link OpenedClassReader#PROCESSOR_PROPERTY},
+             * or {@link AsmClassWriter.Factory.Default#ASM_FIRST} if no implicit processor is defined.
              */
-            INSTANCE; // TODO: hybrid choice.
+            IMPLICIT {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                    return FACTORY.make(binaryRepresentation, experimental);
+                }
+            },
+
+            /**
+             * A factory for a class reader that uses ASM's internal implementation whenever possible.
+             */
+            ASM_FIRST {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                    if (experimental) {
+                        return ASM_ONLY.make(binaryRepresentation);
+                    }
+                    ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation);
+                    return classFileVersion.isGreaterThan(ClassFileVersion.latest())
+                            ? ASM_ONLY.make(binaryRepresentation)
+                            : CLASS_FILE_API_ONLY.make(binaryRepresentation);
+                }
+            },
+
+            /**
+             * A factory for a class reader that uses the class file API whenever possible.
+             */
+            CLASS_FILE_API_FIRST {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                    ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation);
+                    return classFileVersion.isAtLeast(ClassFileVersion.JAVA_V24)
+                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation)
+                            : ASM_ONLY.make(binaryRepresentation);
+                }
+            },
+
+            /**
+             * A factory for a class reader that always uses ASM's internal implementation.
+             */
+            ASM_ONLY {
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                    return new ForAsm(OpenedClassReader.of(binaryRepresentation, experimental));
+                }
+            },
+
+            /**
+             * A factory for a class reader that always uses the class file API.
+             */
+            CLASS_FILE_API_ONLY {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                    return new AsmClassReader.ForClassFileApi(new JdkClassReader(binaryRepresentation));
+                }
+            };
+
+            /**
+             * The implicit factory to use for writing class files.
+             */
+            private static final Factory FACTORY;
+
+            /*
+             * Resolves the implicit reader factory, if any.
+             */
+            static {
+                String processor;
+                try {
+                    processor = doPrivileged(new GetSystemPropertyAction(OpenedClassReader.PROCESSOR_PROPERTY));
+                } catch (Throwable ignored) {
+                    processor = null;
+                } // TODO: ASM_FIRST
+                FACTORY = processor == null ? Default.CLASS_FILE_API_ONLY : Default.valueOf(processor);
+            }
+
+            /**
+             * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+             *
+             * @param action The action to execute from a privileged context.
+             * @param <T>    The type of the action's resolved value.
+             * @return The action's resolved value.
+             */
+            @MaybeNull
+            @AccessControllerPlugin.Enhance
+            private static <T> T doPrivileged(PrivilegedAction<T> action) {
+                return action.run();
+            }
 
             /**
              * {@inheritDoc}
              */
             public AsmClassReader make(byte[] binaryRepresentation) {
-                return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation));
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation, experimental));
-            }
-        }
-
-        /**
-         * A factory that supplies a class reader based upon the Class File API.
-         */
-        enum ForClassFileApi implements Factory {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public AsmClassReader make(byte[] binaryRepresentation) {
-                return new ForJdk(new JdkClassReader(binaryRepresentation));
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                return new ForJdk(new JdkClassReader(binaryRepresentation));
+                return make(binaryRepresentation, OpenedClassReader.EXPERIMENTAL);
             }
         }
     }
 
     /**
-     * A class reader for ASM's default {@link ClassReader}.
+     * A class reader for ASM's own {@link ClassReader}.
      */
-    class Default implements AsmClassReader {
+    class ForAsm implements AsmClassReader {
 
         /**
          * Indicates that no custom attributes should be mapped.
@@ -133,11 +204,11 @@ public interface AsmClassReader {
         private final ClassReader classReader;
 
         /**
-         * Creates a new default ASM class reader.
+         * Creates a new ASM class reader that uses ASM's internal implementation.
          *
          * @param classReader The class reader that represents the class file to be read.
          */
-        public Default(ClassReader classReader) {
+        public ForAsm(ClassReader classReader) {
             this.classReader = classReader;
         }
 
@@ -162,7 +233,7 @@ public interface AsmClassReader {
     /**
      * A class reader that is based upon the Class File API.
      */
-    class ForJdk implements AsmClassReader {
+    class ForClassFileApi implements AsmClassReader {
 
         /**
          * The class reader that represents the class file to be read.
@@ -174,7 +245,7 @@ public interface AsmClassReader {
          *
          * @param classReader The class reader that represents the class file to be read.
          */
-        public ForJdk(JdkClassReader classReader) {
+        public ForClassFileApi(JdkClassReader classReader) {
             this.classReader = classReader;
         }
 
