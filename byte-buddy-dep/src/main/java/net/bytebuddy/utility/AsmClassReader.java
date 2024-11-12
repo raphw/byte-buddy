@@ -98,10 +98,9 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation);
-                    return classFileVersion.isGreaterThan(ClassFileVersion.latest())
-                            ? ASM_ONLY.make(binaryRepresentation)
-                            : CLASS_FILE_API_ONLY.make(binaryRepresentation);
+                    return ClassFileVersion.ofClassFile(binaryRepresentation).isGreaterThan(ClassFileVersion.latest())
+                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation)
+                            : ASM_ONLY.make(binaryRepresentation);
                 }
             },
 
@@ -113,8 +112,7 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation);
-                    return classFileVersion.isAtLeast(ClassFileVersion.JAVA_V24)
+                    return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V24)
                             ? CLASS_FILE_API_ONLY.make(binaryRepresentation)
                             : ASM_ONLY.make(binaryRepresentation);
                 }

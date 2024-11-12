@@ -118,8 +118,8 @@ public interface AsmClassWriter {
                  */
                 public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
                     return ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
-                            ? ASM_ONLY.make(flags, classReader, typePool)
-                            : CLASS_FILE_API_ONLY.make(flags, classReader, typePool);
+                            ? CLASS_FILE_API_ONLY.make(flags, classReader, typePool)
+                            : ASM_ONLY.make(flags, classReader, typePool);
                 }
             },
 
