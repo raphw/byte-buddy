@@ -14319,6 +14319,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 Label label = new Label();
                 Size size = dispatcher.apply(methodVisitor, offset, label).aggregate(stackManipulation.apply(methodVisitor, implementationContext));
+                methodVisitor.visitInsn(Opcodes.NOP);
                 methodVisitor.visitLabel(label);
                 stackMapFrameHandler.injectIntermediateFrame(methodVisitor, Collections.<TypeDescription>emptyList());
                 methodVisitor.visitInsn(Opcodes.NOP);
