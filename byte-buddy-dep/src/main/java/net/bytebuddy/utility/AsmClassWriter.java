@@ -112,8 +112,49 @@ public interface AsmClassWriter {
              * {@inheritDoc}
              */
             public AsmClassWriter make(int flags, TypePool typePool) {
+                return new AsmClassWriter.Default(new FrameComputingClassWriter(flags, typePool));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
+                ClassReader unwrapped = classReader.unwrap(ClassReader.class);
+                return new AsmClassWriter.Default(unwrapped == null
+                        ? new FrameComputingClassWriter(flags, typePool)
+                        : new FrameComputingClassWriter(unwrapped, flags, typePool));
+            }
+        }
+
+        /**
+         * A factory for a class writer that is based on the Class File API.
+         */
+        enum ForClassFileAPI implements Factory {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public AsmClassWriter make(int flags) {
+                return make(flags, TypePool.Empty.INSTANCE);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AsmClassWriter make(int flags, AsmClassReader classReader) {
+                return make(flags, classReader, TypePool.Empty.INSTANCE);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AsmClassWriter make(int flags, TypePool typePool) {
                 return new ForJdk(new SuperClassResolvingJdkClassWriter(flags, typePool));
-                //return new AsmClassWriter.Default(new FrameComputingClassWriter(flags, typePool));
             }
 
             /**
@@ -124,10 +165,6 @@ public interface AsmClassWriter {
                 return new ForJdk(unwrapped == null
                         ? new SuperClassResolvingJdkClassWriter(flags, typePool)
                         : new SuperClassResolvingJdkClassWriter(flags, unwrapped, typePool));
-                /*ClassReader unwrapped = classReader.unwrap(ClassReader.class);
-                return new AsmClassWriter.Default(unwrapped == null
-                        ? new FrameComputingClassWriter(flags, typePool)
-                        : new FrameComputingClassWriter(unwrapped, flags, typePool));*/
             }
         }
 
@@ -193,7 +230,7 @@ public interface AsmClassWriter {
         private final ClassWriter classWriter;
 
         /**
-         * Creates a new default class writer.
+         * Creates a new default class writer based upon ASM's own implementation.
          *
          * @param classWriter The represented class writer.
          */
@@ -216,20 +253,37 @@ public interface AsmClassWriter {
         }
     }
 
+    /**
+     * A Class File API-based implementation for a class writer.
+     */
     class ForJdk implements AsmClassWriter {
 
-        private final JdkClassWriter writer;
+        /**
+         * The represented class writer.
+         */
+        private final JdkClassWriter classWriter;
 
-        public ForJdk(JdkClassWriter writer) {
-            this.writer = writer;
+        /**
+         * Creates a new class file API-based class writer.
+         *
+         * @param classWriter The represented class writer.
+         */
+        public ForJdk(JdkClassWriter classWriter) {
+            this.classWriter = classWriter;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public ClassVisitor getVisitor() {
-            return writer;
+            return classWriter;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public byte[] getBinaryRepresentation() {
-            return writer.toByteArray();
+            return classWriter.toByteArray();
         }
     }
 
@@ -292,15 +346,34 @@ public interface AsmClassWriter {
         }
     }
 
+    /**
+     * A JDK class write that resolves super classes using a {@link TypePool}.
+     */
     class SuperClassResolvingJdkClassWriter extends JdkClassWriter {
 
+        /**
+         * The {@link TypePool} to use.
+         */
         private final TypePool typePool;
 
+        /**
+         * Creates a super class resolving JDK class writer.
+         *
+         * @param flags    The writer flags to use.
+         * @param typePool The {@link TypePool} to use.
+         */
         public SuperClassResolvingJdkClassWriter(int flags, TypePool typePool) {
             super(flags);
             this.typePool = typePool;
         }
 
+        /**
+         * Creates a super class resolving JDK class writer.
+         *
+         * @param flags       The writer flags to use.
+         * @param classReader The JDK class reader that represents the transformed type that is written, in its original state.
+         * @param typePool    The {@link TypePool} to use.
+         */
         public SuperClassResolvingJdkClassWriter(int flags, JdkClassReader classReader, TypePool typePool) {
             super(classReader, flags);
             this.typePool = typePool;

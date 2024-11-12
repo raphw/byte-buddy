@@ -74,6 +74,31 @@ public interface AsmClassReader {
             /**
              * The singleton instance.
              */
+            INSTANCE; // TODO: hybrid choice.
+
+            /**
+             * {@inheritDoc}
+             */
+            public AsmClassReader make(byte[] binaryRepresentation) {
+                return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation, experimental));
+            }
+        }
+
+        /**
+         * A factory that supplies a class reader based upon the Class File API.
+         */
+        enum ForClassFileApi implements Factory {
+
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             /**
@@ -81,7 +106,6 @@ public interface AsmClassReader {
              */
             public AsmClassReader make(byte[] binaryRepresentation) {
                 return new ForJdk(new JdkClassReader(binaryRepresentation));
-                //new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation));
             }
 
             /**
@@ -89,7 +113,6 @@ public interface AsmClassReader {
              */
             public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
                 return new ForJdk(new JdkClassReader(binaryRepresentation));
-                //return new AsmClassReader.Default(OpenedClassReader.of(binaryRepresentation, experimental));
             }
         }
     }
@@ -136,20 +159,36 @@ public interface AsmClassReader {
         }
     }
 
+    /**
+     * A class reader that is based upon the Class File API.
+     */
     class ForJdk implements AsmClassReader {
 
+        /**
+         * The class reader that represents the class file to be read.
+         */
         private final JdkClassReader classReader;
 
+        /**
+         * Creates a new class reader that is based upon the Class File API.
+         *
+         * @param classReader The class reader that represents the class file to be read.
+         */
         public ForJdk(JdkClassReader classReader) {
             this.classReader = classReader;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @MaybeNull
         public <T> T unwrap(Class<T> type) {
             return null;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void accept(ClassVisitor classVisitor, int flags) {
             classReader.accept(classVisitor, flags);
         }
