@@ -98,9 +98,6 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    if (experimental) {
-                        return ASM_ONLY.make(binaryRepresentation);
-                    }
                     ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation);
                     return classFileVersion.isGreaterThan(ClassFileVersion.latest())
                             ? ASM_ONLY.make(binaryRepresentation)
