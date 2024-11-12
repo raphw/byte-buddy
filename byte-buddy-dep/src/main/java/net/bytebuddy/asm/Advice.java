@@ -10710,7 +10710,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(Opcodes.FSTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         } else if (adviceMethod.getReturnType().represents(double.class)) {
                             methodVisitor.visitVarInsn(Opcodes.DSTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
-                        } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                        } else if (adviceMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitInsn(Opcodes.NOP);
+                        } else {
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         }
                         methodSizeHandler.requireStackSize(postProcessor
