@@ -2507,7 +2507,7 @@ public interface TypeWriter<T> {
                             type = String.class;
                     }
                     if (!type.isInstance(value)) {
-                        throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value);
+                        throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value + " (" + value.getClass() + ")");
                     } else if (type == Integer.class) {
                         int minimum, maximum;
                         switch (descriptor.charAt(0)) {
@@ -2532,7 +2532,7 @@ public interface TypeWriter<T> {
                                 maximum = Integer.MAX_VALUE;
                         }
                         if ((Integer) value < minimum || (Integer) value > maximum) {
-                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value);
+                            throw new IllegalStateException("Field " + name + " defines an incompatible ranged value " + value + " (" + minimum + " - " + maximum + ")");
                         }
                     }
                 }
@@ -6131,12 +6131,14 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                @MaybeNull
                 protected FieldVisitor onVisitField(int modifiers, String name, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
                     visitedFields.add(new SignatureKey(name, descriptor));
                     return super.onVisitField(modifiers, name, descriptor, signature, value);
                 }
 
                 @Override
+                @MaybeNull
                 protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
                     visitedMethods.add(new SignatureKey(internalName, descriptor));
                     return super.onVisitMethod(modifiers, internalName, descriptor, signature, exception);
