@@ -3713,13 +3713,26 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 private final File folder;
 
+                private final boolean link;
+
                 /**
                  * Creates a new target for a folder.
                  *
                  * @param folder The folder that is represented by this instance.
                  */
                 public ForFolder(File folder) {
+                    this(folder, false);
+                }
+
+                /**
+                 * Creates a new target for a folder.
+                 *
+                 * @param folder The folder that is represented by this instance.
+                 * @param link   {@code true} if retained files should be linked and not copied.
+                 */
+                public ForFolder(File folder, boolean link) {
                     this.folder = folder;
+                    this.link = link;
                 }
 
                 /**
@@ -3789,7 +3802,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
                         } else if (resolved != null && !resolved.equals(target)) {
-                            FileSystem.getInstance().copy(resolved, target);
+                            if (link) {
+                                FileSystem.getInstance().link(resolved, target);
+                            } else {
+                                FileSystem.getInstance().copy(resolved, target);
+                            }
                         } else if (!target.equals(resolved)) {
                             InputStream inputStream = element.getInputStream();
                             try {
@@ -3889,7 +3906,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 void materialize(Target.Sink sink,
                                  List<TypeDescription> transformed,
                                  Map<TypeDescription,
-                                 List<Throwable>> failed,
+                                         List<Throwable>> failed,
                                  List<String> unresolved) throws IOException;
 
                 /**
@@ -3925,7 +3942,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         if (classFileVersion == null) {
                             sink.store(dynamicType.getAllTypes());
@@ -3961,7 +3978,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.retain(element);
                     }
@@ -4006,7 +4023,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.retain(element);
                         failed.put(typeDescription, errored);
@@ -4045,7 +4062,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     public void materialize(Target.Sink sink,
                                             List<TypeDescription> transformed,
                                             Map<TypeDescription,
-                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                             List<String> unresolved) throws IOException {
                         sink.retain(element);
                         unresolved.add(typeName);

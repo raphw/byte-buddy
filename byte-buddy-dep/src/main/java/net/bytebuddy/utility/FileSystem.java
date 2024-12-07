@@ -66,6 +66,17 @@ public abstract class FileSystem {
     public abstract void copy(File source, File target) throws IOException;
 
     /**
+     * Links a file as a hard-link. If linking is not supported, a copy is made.
+     *
+     * @param source The source file.
+     * @param target The target file.
+     * @throws IOException If an I/O exception occurs.
+     */
+    public void link(File source, File target) throws IOException {
+        copy(source, target);
+    }
+
+    /**
      * Moves a file.
      *
      * @param source The source file.
@@ -151,6 +162,11 @@ public abstract class FileSystem {
         }
 
         @Override
+        public void link(File source, File target) throws IOException {
+            FILES.createLink(FILES.deleteIfExists(DISPATCHER.toPath(target)), DISPATCHER.toPath(source));
+        }
+
+        @Override
         public void move(File source, File target) throws IOException {
             Object[] option = STANDARD_COPY_OPTION.toArray(1);
             option[0] = STANDARD_COPY_OPTION.valueOf("REPLACE_EXISTING");
@@ -194,6 +210,18 @@ public abstract class FileSystem {
                         @JavaDispatcher.Proxied("java.nio.file.CopyOption") Object[] option) throws IOException;
 
             /**
+             * Links a file.
+             *
+             * @param source The source {@code java.nio.file.Path}.
+             * @param target The target {@code java.nio.file.Path}.
+             * @return The copied file.
+             * @throws IOException If an I/O exception occurs.
+             */
+            @JavaDispatcher.IsStatic
+            Object createLink(@JavaDispatcher.Proxied("java.nio.file.Path") Object source,
+                              @JavaDispatcher.Proxied("java.nio.file.Path") Object target) throws IOException;
+
+            /**
              * Moves a file.
              *
              * @param source The source {@code java.nio.file.Path}.
@@ -206,6 +234,16 @@ public abstract class FileSystem {
             Object move(@JavaDispatcher.Proxied("java.nio.file.Path") Object source,
                         @JavaDispatcher.Proxied("java.nio.file.Path") Object target,
                         @JavaDispatcher.Proxied("java.nio.file.CopyOption") Object[] option) throws IOException;
+
+            /**
+             * Deletes a file if it exists.
+             *
+             * @param file The {@code java.nio.file.Path} to delete if it exists.
+             * @return The supplied file.
+             * @throws IOException If an I/O exception occurs.
+             */
+            @JavaDispatcher.IsStatic
+            Object deleteIfExists(@JavaDispatcher.Proxied("java.nio.file.Path") Object file) throws IOException;
         }
 
         /**
