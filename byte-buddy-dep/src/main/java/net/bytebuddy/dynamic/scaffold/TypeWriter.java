@@ -2507,7 +2507,7 @@ public interface TypeWriter<T> {
                             type = String.class;
                     }
                     if (!type.isInstance(value)) {
-                        throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value);
+                        throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value + " (" + value.getClass().getName() + ")");
                     } else if (type == Integer.class) {
                         int minimum, maximum;
                         switch (descriptor.charAt(0)) {
@@ -2532,7 +2532,7 @@ public interface TypeWriter<T> {
                                 maximum = Integer.MAX_VALUE;
                         }
                         if ((Integer) value < minimum || (Integer) value > maximum) {
-                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value);
+                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value + " (" + minimum + "-" + maximum + ")");
                         }
                     }
                 }
