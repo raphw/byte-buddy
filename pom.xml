@@ -77,8 +77,8 @@
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
         <version.plugin.install>3.0.1</version.plugin.install>
         <version.plugin.deploy>3.0.0</version.plugin.deploy>
-        <version.plugin.staging>1.6.13</version.plugin.staging>
-        <version.plugin.versions>2.11.0</version.plugin.versions>
+        <version.plugin.staging>1.7.0</version.plugin.staging>
+        <version.plugin.versions>2.18.0</version.plugin.versions>
         <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
         <version.plugin.source>3.2.1</version.plugin.source>
         <version.plugin.shade>3.5.2</version.plugin.shade>
@@ -89,16 +89,16 @@
         <version.plugin.site>3.12.0</version.plugin.site>
         <version.plugin.exec>3.1.0</version.plugin.exec>
         <version.plugin.plugin>3.6.4</version.plugin.plugin>
-        <version.plugin.release>3.0.0-M7</version.plugin.release>
+        <version.plugin.release>3.1.1</version.plugin.release>
         <version.plugin.resources>3.2.0</version.plugin.resources>
         <version.plugin.assembly>3.4.2</version.plugin.assembly>
         <version.plugin.dependency>3.3.0</version.plugin.dependency>
         <version.plugin.help>3.2.0</version.plugin.help>
         <version.plugin.surefire>2.22.2</version.plugin.surefire>
-        <version.plugin.pitest>1.9.2</version.plugin.pitest>
+        <version.plugin.pitest>1.17.2</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.21</version.plugin.animal-sniffer>
         <version.plugin.enforcer>3.1.0</version.plugin.enforcer>
-        <version.plugin.jacoco>0.8.8</version.plugin.jacoco>
+        <version.plugin.jacoco>0.8.12</version.plugin.jacoco>
         <version.plugin.coveralls>4.3.0</version.plugin.coveralls>
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
