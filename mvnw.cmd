@@ -170,7 +170,7 @@ if exist %WRAPPER_JAR% (
 @REM Validate the Maven wrapper's hash (Byte Buddy edit)
 SET FILE_HASH=""
 FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.properties") DO (
-    IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
+    IF "%%A"=="wrapperSha256Sum" SET FILE_HASH=%%B
 )
 IF NOT %FILE_HASH%=="" (
     powershell -Command "&{"^

@@ -269,13 +269,13 @@ else
 fi
 
 # Validate the Maven wrapper's hash (Byte Buddy edit)
-wrapperHash=""
+wrapperSha256Sum=""
 while IFS="=" read key value; do
-  case "$key" in (wrapperHash) wrapperHash=$value; break ;;
+  case "$key" in (wrapperSha256Sum) wrapperSha256Sum=$value; break ;;
   esac
 done < "$BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.properties"
-if [ -n "$wrapperHash" ]; then
-  if ! echo "$wrapperHash  $BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.jar" | shasum -a 256 -c > /dev/null; then
+if [ -n "$wrapperSha256Sum" ]; then
+  if ! echo "$wrapperSha256Sum  $BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.jar" | shasum -a 256 -c > /dev/null; then
     echo "Could not validate hash of maven-wrapper.jar";
     exit 1
   fi
