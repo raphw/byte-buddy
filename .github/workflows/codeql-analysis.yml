@@ -17,9 +17,8 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
-      - uses: github/codeql-action/init@82a3f64131759f97922e0680c3730858bc7155a6 # v2.27.6
+      - uses: github/codeql-action/init@aa578102511db1f4524ed59b8cc2bae4f6e88195 # v3.27.6
         with:
           languages: 'java'
-      - uses: github/codeql-action/autobuild@82a3f64131759f97922e0680c3730858bc7155a6 # v2.27.6
-      - uses: github/codeql-action/analyze@82a3f64131759f97922e0680c3730858bc7155a6 # v2.27.6
-
+      - uses: github/codeql-action/autobuild@aa578102511db1f4524ed59b8cc2bae4f6e88195 # v3.27.6
+      - uses: github/codeql-action/analyze@aa578102511db1f4524ed59b8cc2bae4f6e88195 # v3.27.6
