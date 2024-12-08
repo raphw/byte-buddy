@@ -3713,6 +3713,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 private final File folder;
 
+                /**
+                 * {@code true} if retained files should be linked and not copied.
+                 */
                 private final boolean link;
 
                 /**
