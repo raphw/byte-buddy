@@ -2509,27 +2509,23 @@ public interface TypeWriter<T> {
                     if (!type.isInstance(value)) {
                         throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value + " (" + value.getClass().getName() + ")");
                     } else if (type == Integer.class) {
+                        char character = descriptor.charAt(0);
                         int minimum, maximum;
-                        switch (descriptor.charAt(0)) {
-                            case 'Z':
-                                minimum = 0;
-                                maximum = 1;
-                                break;
-                            case 'B':
-                                minimum = Byte.MIN_VALUE;
-                                maximum = Byte.MAX_VALUE;
-                                break;
-                            case 'C':
-                                minimum = Character.MIN_VALUE;
-                                maximum = Character.MAX_VALUE;
-                                break;
-                            case 'S':
-                                minimum = Short.MIN_VALUE;
-                                maximum = Short.MAX_VALUE;
-                                break;
-                            default:
-                                minimum = Integer.MIN_VALUE;
-                                maximum = Integer.MAX_VALUE;
+                        if (character == 'Z') {
+                            minimum = 0;
+                            maximum = 1;
+                        } else if (character == 'B') {
+                            minimum = Byte.MIN_VALUE;
+                            maximum = Byte.MAX_VALUE;
+                        } else if (character == 'S') {
+                            minimum = Short.MIN_VALUE;
+                            maximum = Short.MAX_VALUE;
+                        } else if (character == 'C') {
+                            minimum = Character.MIN_VALUE;
+                            maximum = Character.MAX_VALUE;
+                        } else {
+                            minimum = Integer.MIN_VALUE;
+                            maximum = Integer.MAX_VALUE;
                         }
                         if ((Integer) value < minimum || (Integer) value > maximum) {
                             throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value + " (" + minimum + "-" + maximum + ")");
