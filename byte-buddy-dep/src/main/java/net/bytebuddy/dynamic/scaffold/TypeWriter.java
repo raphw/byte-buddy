@@ -2509,26 +2509,25 @@ public interface TypeWriter<T> {
                     if (!type.isInstance(value)) {
                         throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value + " (" + value.getClass().getName() + ")");
                     } else if (type == Integer.class) {
-                        char character = descriptor.charAt(0);
-                        int minimum, maximum;
-                        if (character == 'Z') {
-                            minimum = 0;
-                            maximum = 1;
-                        } else if (character == 'B') {
-                            minimum = Byte.MIN_VALUE;
-                            maximum = Byte.MAX_VALUE;
-                        } else if (character == 'S') {
-                            minimum = Short.MIN_VALUE;
-                            maximum = Short.MAX_VALUE;
-                        } else if (character == 'C') {
-                            minimum = Character.MIN_VALUE;
-                            maximum = Character.MAX_VALUE;
-                        } else {
-                            minimum = Integer.MIN_VALUE;
-                            maximum = Integer.MAX_VALUE;
+                        boolean outOfRange;
+                        switch (descriptor.charAt(0)) {
+                            case 'Z':
+                                outOfRange = (Integer) value < 0 || (Integer) value > 1;
+                                break;
+                            case 'B':
+                                outOfRange = (Integer) value < Byte.MIN_VALUE || (Integer) value > Byte.MAX_VALUE;
+                                break;
+                            case 'S':
+                                outOfRange = (Integer) value < Short.MIN_VALUE || (Integer) value > Short.MAX_VALUE;
+                                break;
+                            case 'C':
+                                outOfRange = (Integer) value < Character.MIN_VALUE || (Integer) value > Character.MAX_VALUE;
+                                break;
+                            default:
+                                outOfRange = false;
                         }
-                        if ((Integer) value < minimum || (Integer) value > maximum) {
-                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value + " (" + minimum + "-" + maximum + ")");
+                        if (outOfRange) {
+                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value);
                         }
                     }
                 }
