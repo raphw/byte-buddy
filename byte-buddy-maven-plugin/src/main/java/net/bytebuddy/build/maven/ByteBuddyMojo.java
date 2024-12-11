@@ -374,6 +374,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             stalenessFilter = null;
             getLog().debug("Did not discover previous staleness file");
         }
+        List<File> artifacts = new ArrayList<File>(classPath.size());
+        for (String element : classPath) {
+            artifacts.add(new File(element));
+        }
         ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(), repositorySystem, repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession, project.getRemotePluginRepositories());
         try {
             List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformers.size());
@@ -384,7 +388,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             .with(transformer.toArgumentResolvers())
                             .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, file),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog())),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(MavenProject.class, project),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File[].class, artifacts.toArray(new File[0]))));
                     getLog().info("Resolved plugin: " + plugin);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Cannot resolve plugin: " + plugin, throwable);
@@ -408,10 +414,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             ClassFileVersion multiReleaseClassFileVersion = multiReleaseVersion == null
                     ? classFileVersion
                     : ClassFileVersion.ofJavaVersion(multiReleaseVersion);
-            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
+            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(artifacts.size());
             classFileLocators.add(ClassFileLocator.ForClassLoader.ofPlatformLoader());
-            for (String element : classPath) {
-                File artifact = new File(element);
+            for (File artifact : artifacts) {
                 classFileLocators.add(artifact.isFile()
                         ? ClassFileLocator.ForJarFile.of(artifact, multiReleaseClassFileVersion)
                         : ClassFileLocator.ForFolder.of(artifact, multiReleaseClassFileVersion));

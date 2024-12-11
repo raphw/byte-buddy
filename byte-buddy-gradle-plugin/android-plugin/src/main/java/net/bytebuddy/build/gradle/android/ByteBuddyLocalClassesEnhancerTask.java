@@ -29,8 +29,8 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
+import org.gradle.api.Project;
 import org.gradle.api.file.*;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.*;
@@ -226,7 +226,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         try {
             Class<?> discovery = Class.forName("net.bytebuddy.build.gradle.Discovery");
             Class.forName("net.bytebuddy.build.gradle.AbstractByteBuddyTask").getMethod("apply",
-                Logger.class,
+                Project.class,
                 ClassLoader.class,
                 List.class,
                 discovery,
@@ -245,7 +245,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                 boolean.class,
                 Plugin.Engine.Source.class,
                 Plugin.Engine.Target.class).invoke(null,
-                    getLogger(),
+                    getProject(),
                     classLoader,
                     transformations,
                     discovery.getMethod("valueOf", String.class).invoke(null, getDiscovery().get().name()),
