@@ -511,10 +511,12 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             }
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
             classFileLocators.add(rootLocator);
+            List<File> classPathElements = new ArrayList<File>();
             for (File artifact : artifacts) {
                 classFileLocators.add(artifact.isFile()
                         ? ClassFileLocator.ForJarFile.of(artifact, multiReleaseClassFileVersion)
                         : ClassFileLocator.ForFolder.of(artifact, multiReleaseClassFileVersion));
+                classPathElements.add(artifact);
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             try {
@@ -535,6 +537,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                         .with(threads == 0
                                 ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
                                 : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
+                        .withClassPath(classPathElements)
                         .apply(source, target, factories);
             } finally {
                 classFileLocator.close();

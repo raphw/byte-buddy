@@ -112,6 +112,16 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         Map<TypeDescription, byte[]> initialize(ClassFileLocator classFileLocator);
     }
 
+    interface WithClassPath extends Plugin {
+
+        /**
+         * Provides the classPath elements from the {@link Plugin.Engine}.
+         *
+         * @param elements The classPath elements
+         */
+        void processClassPath(Iterable<File> elements);
+    }
+
     /**
      * A factory for providing a build plugin.
      */
@@ -871,6 +881,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
          * @return A new plugin engine that is equal to this engine but which ignores any type that is matched by the supplied matcher.
          */
         Engine ignore(ElementMatcher<? super TypeDescription> matcher);
+
+        /**
+         * Appends the classPath elements to the Engine.
+         *
+         * @param elements The classPath elements
+         * @return A new plugin engine that is equal to this engine but with the supplied classpath elements.
+         */
+        Engine withClassPath(Iterable<File> elements);
 
         /**
          * Applies this plugin engine onto a given source and target.
@@ -4660,6 +4678,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             private final ElementMatcher.Junction<? super TypeDescription> ignoredTypeMatcher;
 
             /**
+             * The classPath elements.
+             */
+            private final Iterable<File> classPath;
+
+            /**
              * Creates a new default plugin engine that rebases types and fails fast and on unresolved types and on live initializers.
              */
             public Default() {
@@ -4692,7 +4715,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                 ErrorHandler.Enforcing.ALL_TYPES_RESOLVED,
                                 ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS),
                         Dispatcher.ForSerialTransformation.Factory.INSTANCE,
-                        none());
+                        none(),
+                        new ArrayList<File>());
             }
 
             /**
@@ -4707,6 +4731,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * @param errorHandler       The error handler to use.
              * @param dispatcherFactory  The dispatcher factory to use.
              * @param ignoredTypeMatcher A matcher for types to exclude from transformation.
+             * @param classPath          The classPath elements.
              */
             protected Default(ByteBuddy byteBuddy,
                               TypeStrategy typeStrategy,
@@ -4716,7 +4741,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                               Listener listener,
                               ErrorHandler errorHandler,
                               Dispatcher.Factory dispatcherFactory,
-                              ElementMatcher.Junction<? super TypeDescription> ignoredTypeMatcher) {
+                              ElementMatcher.Junction<? super TypeDescription> ignoredTypeMatcher,
+                              Iterable<File> classPath) {
                 this.byteBuddy = byteBuddy;
                 this.typeStrategy = typeStrategy;
                 this.poolStrategy = poolStrategy;
@@ -4726,6 +4752,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 this.errorHandler = errorHandler;
                 this.dispatcherFactory = dispatcherFactory;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
+                this.classPath = classPath;
             }
 
             /**
@@ -4796,7 +4823,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4811,7 +4839,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4826,7 +4855,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4841,7 +4871,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4856,7 +4887,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4871,7 +4903,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         new Listener.Compound(this.listener, listener),
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4886,7 +4919,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         Listener.NoOp.INSTANCE,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4901,7 +4935,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         new ErrorHandler.Compound(errorHandlers),
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4916,7 +4951,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher);
+                        ignoredTypeMatcher,
+                        classPath);
             }
 
             /**
@@ -4931,7 +4967,21 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener,
                         errorHandler,
                         dispatcherFactory,
-                        ignoredTypeMatcher.<TypeDescription>or(matcher));
+                        ignoredTypeMatcher.<TypeDescription>or(matcher),
+                        classPath);
+            }
+
+            public Engine withClassPath(Iterable<File> elements) {
+                return new Default(byteBuddy,
+                        typeStrategy,
+                        poolStrategy,
+                        classFileLocator,
+                        classFileVersion,
+                        listener,
+                        errorHandler,
+                        dispatcherFactory,
+                        ignoredTypeMatcher,
+                        elements);
             }
 
             /**
@@ -4946,6 +4996,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 List<Plugin> plugins = new ArrayList<Plugin>(factories.size());
                 List<WithInitialization> initializers = new ArrayList<WithInitialization>();
                 List<WithPreprocessor> preprocessors = new ArrayList<WithPreprocessor>();
+                List<WithClassPath> classPathers = new ArrayList<WithClassPath>();
                 try {
                     for (Plugin.Factory factory : factories) {
                         Plugin plugin = factory.make();
@@ -4956,6 +5007,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         if (plugin instanceof WithInitialization) {
                             initializers.add((WithInitialization) plugin);
                         }
+                        if (plugin instanceof WithClassPath) {
+                            classPathers.add((WithClassPath) plugin);
+                        }
                     }
                     Source.Origin origin = source.read();
                     try {
@@ -4965,6 +5019,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener.onManifest(manifest);
                         Target.Sink sink = target.write(manifest);
                         try {
+                            for (WithClassPath classPather : classPathers) {
+                                classPather.processClassPath(classPath);
+                            }
                             for (WithInitialization initializer : initializers) {
                                 sink.store(initializer.initialize(classFileLocator));
                             }

@@ -410,11 +410,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     : ClassFileVersion.ofJavaVersion(multiReleaseVersion);
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
             classFileLocators.add(ClassFileLocator.ForClassLoader.ofPlatformLoader());
+            List<File> classPathElements = new ArrayList<File>();
             for (String element : classPath) {
                 File artifact = new File(element);
                 classFileLocators.add(artifact.isFile()
                         ? ClassFileLocator.ForJarFile.of(artifact, multiReleaseClassFileVersion)
                         : ClassFileLocator.ForFolder.of(artifact, multiReleaseClassFileVersion));
+                classPathElements.add(artifact);
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             Plugin.Engine.Summary summary;
@@ -438,6 +440,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                     failOnLiveInitializer ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS : Plugin.Engine.Listener.NoOp.INSTANCE,
                                     failFast ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
                             .with(threads == 0 ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
+                            .withClassPath(classPathElements)
                             .apply(source, target, factories);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Failed to transform class files in " + file, throwable);

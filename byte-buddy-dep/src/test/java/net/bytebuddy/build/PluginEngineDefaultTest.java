@@ -23,10 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.*;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
@@ -116,6 +113,22 @@ public class PluginEngineDefaultTest {
         verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
         verify(listener).onComplete(TypeDescription.ForLoadedType.of(Sample.class));
         verifyNoMoreInteractions(listener);
+    }
+
+    @Test
+    public void testSimpleTransformationWithClassPath() throws Exception {
+        ClassPathPlugin plugin = new ClassPathPlugin();
+        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
+        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
+        List<File> classPath = new ArrayList<File>();
+        classPath.add(new File(""));
+        Plugin.Engine.Summary summary = new Plugin.Engine.Default()
+                .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
+                .withClassPath(classPath)
+                .apply(source, target, new Plugin.Factory.Simple(plugin));
+        assertThat(plugin.classPath.size(), is(classPath.size()));
+        assertThat(plugin.classPath, hasItem(classPath.get(0)));
     }
 
     @Test
@@ -518,12 +531,18 @@ public class PluginEngineDefaultTest {
         }
     }
 
-    private static class PreprocessingPlugin implements Plugin.WithPreprocessor, Plugin.WithInitialization {
+    private static class PreprocessingPlugin implements Plugin.WithPreprocessor, Plugin.WithInitialization, Plugin.WithClassPath {
 
         private final Plugin plugin;
 
         private PreprocessingPlugin(Plugin plugin) {
             this.plugin = plugin;
+        }
+
+        public void processClassPath(Iterable<File> elements) {
+            if (plugin instanceof WithClassPath) {
+                ((WithClassPath) plugin).processClassPath(elements);
+            }
         }
 
         public void onPreprocess(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
@@ -573,6 +592,29 @@ public class PluginEngineDefaultTest {
 
         public void close() throws IOException {
             plugin.close();
+        }
+    }
+
+    private static class ClassPathPlugin implements Plugin.WithClassPath {
+
+        private final List<File> classPath = new ArrayList<File>();
+
+        public void processClassPath(Iterable<File> elements) {
+            for (File element : elements) {
+                classPath.add(element);
+            }
+        }
+
+        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            return builder;
+        }
+
+        public boolean matches(TypeDescription target) {
+            return false;
+        }
+
+        public void close() {
+            /* empty */
         }
     }
 }
