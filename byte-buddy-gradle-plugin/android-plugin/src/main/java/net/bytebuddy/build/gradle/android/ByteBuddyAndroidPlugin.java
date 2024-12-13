@@ -611,13 +611,12 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
              * {@inheritDoc}
              */
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
-                FileCollection byteBuddyClasspath = ByteBuddyViewConfiguration.toClassPath(project, configuration);
-                if (byteBuddyClasspath.isEmpty()) {
+                if (configuration.getAllDependencies().isEmpty()) {
                     return;
                 }
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(byteBuddyClasspath,
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
                             project.getExtensions().getByType(BaseExtension.class),
                             project.getExtensions().getByType(ByteBuddyAndroidTaskExtension.class)));
                 try {
