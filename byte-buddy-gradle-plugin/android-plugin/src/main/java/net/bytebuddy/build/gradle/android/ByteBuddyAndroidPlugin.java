@@ -165,32 +165,34 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 throw new GradleException("Build type for " + variant + " was null");
             }
             String variantName = variant.getName();
-            String configurationSuffix = "ByteBuddy";
             ConfigurationConfigurationAction declarableConfigurationAction = new ConfigurationConfigurationAction();
-
-            // Example of declarable build config names: "debugByteBuddy, releaseByteBuddy".
-            Configuration buildTypeDeclarableConfiguration = getBuildTypeConfiguration(buildType, configurationSuffix, declarableConfigurationAction);
-
-            // Example of declarable variant config names for a "demo" flavor name: "demoDebugByteBuddy, demoReleaseByteBuddy".
-            String variantDeclarableConfigurationName = variantName + configurationSuffix;
+            Configuration buildTypeDeclarableConfiguration = configurations.get(buildType);
+            if (buildTypeDeclarableConfiguration == null) {
+                buildTypeDeclarableConfiguration = project.getConfigurations().maybeCreate(buildType + "ByteBuddy");
+                declarableConfigurationAction.execute(buildTypeDeclarableConfiguration);
+                buildTypeDeclarableConfiguration.extendsFrom(configuration);
+                Configuration previous = configurations.putIfAbsent(buildType, buildTypeDeclarableConfiguration);
+                if (previous != null) {
+                    buildTypeDeclarableConfiguration = previous;
+                }
+            }
+            String variantDeclarableConfigurationName = variantName + "ByteBuddy";
             Configuration variantDeclarableConfiguration;
             if (variantDeclarableConfigurationName.equals(buildTypeDeclarableConfiguration.getName())) {
-                // When there are no "flavors" defined, the variant and build type names are the same.
                 variantDeclarableConfiguration = buildTypeDeclarableConfiguration;
             } else {
                 variantDeclarableConfiguration = project.getConfigurations().maybeCreate(variantDeclarableConfigurationName);
                 declarableConfigurationAction.execute(variantDeclarableConfiguration);
                 variantDeclarableConfiguration.extendsFrom(buildTypeDeclarableConfiguration);
             }
-
-            // Example of resolvable variant config names: "demoDebugByteBuddyClasspath, demoReleaseByteBuddyClasspath".
-            Configuration variantResolvableConfiguration = project.getConfigurations().create(variantDeclarableConfigurationName + "Classpath", new VariantConfigurationConfigurationAction(
-                    project, variantDeclarableConfiguration, buildType
-            ));
+            Configuration variantResolvableConfiguration = project.getConfigurations().create(
+                    variantDeclarableConfigurationName + "Classpath",
+                    new VariantConfigurationConfigurationAction(project, variantDeclarableConfiguration, buildType));
             if (TRANSFORMATION_DISPATCHER instanceof TransformationDispatcher.ForApk74CompatibleAndroid) {
                 TRANSFORMATION_DISPATCHER.accept(project, variant, variantResolvableConfiguration, null);
             } else {
-                Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variantName + "ByteBuddyAndroidService",
+                Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(
+                        variantName + "ByteBuddyAndroidService",
                         ByteBuddyAndroidService.class,
                         new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
                 FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
@@ -200,20 +202,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                         classPath));
                 TRANSFORMATION_DISPATCHER.accept(project, variant, variantResolvableConfiguration, classPath);
             }
-        }
-
-        private Configuration getBuildTypeConfiguration(String buildType, String configurationSuffix, Action<Configuration> configurationAction) {
-            Configuration configuration = configurations.get(buildType);
-            if (configuration == null) {
-                configuration = project.getConfigurations().maybeCreate(buildType + configurationSuffix);
-                configurationAction.execute(configuration);
-                configuration.extendsFrom(this.configuration);
-                Configuration previous = configurations.putIfAbsent(buildType, configuration);
-                if (previous != null) {
-                    configuration = previous;
-                }
-            }
-            return configuration;
         }
     }
 
