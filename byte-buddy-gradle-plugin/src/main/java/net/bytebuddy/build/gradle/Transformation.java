@@ -258,14 +258,9 @@ public class Transformation {
          */
         public static Class<?> wrap(ClassLoader parent, Class<?> type) {
             try {
-                Class<?> t = Class.forName(type.getName(),
+                return Class.forName(type.getName(),
                     false,
                     new PluginResolvingClassLoader(parent, type.getClassLoader(), type.getProtectionDomain()));
-                System.out.println("XXXXX");
-                System.out.println(t.getClassLoader());
-                System.out.println(Plugin.class.getClassLoader());
-                System.out.println(parent);
-                return t;
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Failed to wrap plugin type " + type.getName(), exception);
             }
