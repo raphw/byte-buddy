@@ -27,7 +27,6 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -400,7 +399,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             classFileVersion = this.classFileVersion;
             getLogger().debug("Java version was configured: {}", classFileVersion.getJavaVersion());
         }
-        apply(getProject(),
+        apply(getLogger(),
                 getClass().getClassLoader(),
                 new ArrayList<Transformation>(getTransformations()),
                 getDiscovery(),
@@ -424,7 +423,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     /**
      * Dispatches a Byte Buddy instrumentation Gradle task.
      *
-     * @param project                      The current project.
+     * @param logger                       The logger to use.
      * @param rootLoader                   The class loader that is used for searching types and applying plugins.
      * @param transformations              The transformations to apply.
      * @param discovery                    The discovery for plugins to use.
@@ -445,7 +444,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * @param target                       The target to use for instrumenting.
      * @throws IOException If an I/O error occurs.
      */
-    public static void apply(Project project,
+    public static void apply(Logger logger,
                              ClassLoader rootLoader,
                              List<Transformation> transformations,
                              Discovery discovery,
@@ -485,16 +484,16 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                         } catch (ClassNotFoundException exception) {
                             throw new IllegalStateException("Discovered plugin is not available: " + name, exception);
                         }
-                        project.getLogger().debug("Registered discovered plugin: {}", name);
+                        logger.debug("Registered discovered plugin: {}", name);
                     } else {
-                        project.getLogger().info("Skipping discovered plugin {} which was previously discovered or registered", name);
+                        logger.info("Skipping discovered plugin {} which was previously discovered or registered", name);
                     }
                 }
             }
             if (transformations.isEmpty()) {
-                project.getLogger().warn("No transformations are specified or discovered. Application will be non-operational.");
+                logger.warn("No transformations are specified or discovered. Application will be non-operational.");
             } else {
-                project.getLogger().debug("{} plugins are being applied via configuration and discovery", transformations.size());
+                logger.debug("{} plugins are being applied via configuration and discovery", transformations.size());
             }
             List<File> classPath = new ArrayList<File>();
             for (File file : artifacts) {
@@ -506,12 +505,11 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                     factories.add(new Plugin.Factory.UsingReflection(transformation.toPlugin(classLoader))
                             .with(transformation.makeArgumentResolvers())
                             .with(rootLocationResolver,
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, project.getLogger()),
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, project.getLogger()),
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(project.getLogger())),
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Project.class, project),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, logger),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, logger),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(logger)),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File[].class, classPath.toArray(new File[0]))));
-                    project.getLogger().info("Resolved plugin: {}", transformation.toPluginName());
+                    logger.info("Resolved plugin: {}", transformation.toPluginName());
                 } catch (Throwable throwable) {
                     throw new IllegalStateException("Cannot resolve plugin: " + transformation.toPluginName(), throwable);
                 }
@@ -533,7 +531,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                                 : Plugin.Engine.PoolStrategy.Default.FAST)
                         .with(classFileLocator)
                         .with(multiReleaseClassFileVersion)
-                        .with(new TransformationLogger(project.getLogger()))
+                        .with(new TransformationLogger(logger))
                         .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, failOnLiveInitializer
                                 ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
                                 : Plugin.Engine.Listener.NoOp.INSTANCE, failFast
@@ -554,9 +552,9 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         if (!summary.getFailed().isEmpty()) {
             throw new IllegalStateException(summary.getFailed() + " type transformation(s) have failed");
         } else if (warnOnEmptyTypeSet && summary.getTransformed().isEmpty()) {
-            project.getLogger().warn("No types were transformed during plugin execution");
+            logger.warn("No types were transformed during plugin execution");
         } else {
-            project.getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
+            logger.info("Transformed {} type(s)", summary.getTransformed().size());
         }
     }
 

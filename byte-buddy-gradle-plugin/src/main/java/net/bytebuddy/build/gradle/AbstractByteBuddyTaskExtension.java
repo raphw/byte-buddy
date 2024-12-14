@@ -482,6 +482,11 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         doConfigure(task);
     }
 
+    /**
+     * Defines the discovery set to use.
+     *
+     * @param fileCollection The file collection that represents the discovery set.
+     */
     protected abstract void discoverySet(FileCollection fileCollection);
 
     /**

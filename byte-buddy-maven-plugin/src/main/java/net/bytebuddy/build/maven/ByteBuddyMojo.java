@@ -389,7 +389,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, file),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog())),
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(MavenProject.class, project),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File[].class, artifacts.toArray(new File[0]))));
                     getLog().info("Resolved plugin: " + plugin);
                 } catch (Throwable throwable) {

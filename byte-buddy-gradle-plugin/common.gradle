@@ -87,7 +87,7 @@ if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
         }
         javadoc {
             options {
-                links 'https://docs.oracle.com/javase/1.5.0/docs/api'
+                links 'https://docs.oracle.com/javase/6/docs/api'
                 links 'https://docs.gradle.org/7.5/javadoc'
                 linksOffline "https://javadoc.io/doc/net.bytebuddy/byte-buddy/${pom.parent.version.text().toString()}", '../byte-buddy/target/apidocs'
             }
