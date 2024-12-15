@@ -758,6 +758,7 @@ net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.9 2bc8809f83aed11a531f093da593c52
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.15.0 e14df4a925a628f3f7b937005eba803b1e9d320ee7a8172f734691dfa58bd432
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.15.1 9cb4a37d5bb17cd55ea52e9f660a87b7b9fdae56bfe886f9588b09929207f7e3
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.15.10 e2392cee16578a383bfc77c23681f67e39e9ec5fcaf4d823c3b8f323adf26afc
+net.bytebuddy:byte-buddy-maven-plugin:jar:1.15.11 573e3265866940efb63fa9cb43d19a2f71d3736e95059638af5458b92eb1384b
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.15.2 1cda61087db3b8159f77be5f74e04f816a24ea1d9cd54ba0b537c6573c6d118e
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.15.3 16610e701b07628b3ef47a9666748234217e53e6fb36c03b556ff8080558ce89
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.15.4 2274f3e5fb88248cd237f4b3e43b53a8befd09e71cc4f0f3fcfad09bd7cbd83d
@@ -791,6 +792,7 @@ net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.9 75c6d50a8cf6d528eb09b198e54035b
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.15.0 cc233d43805a7e9756c8a94c4751a18cb938ac3ccf83f0691604206157130bd0
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.15.1 d8f649ffa066009efc71e967a45cca915c6ffb1c4a4508b0718f4a51d4437197
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.15.10 452816fe5d47e14a784ea5acbd942052d55d604ea90c545b8d640643643dc0d0
+net.bytebuddy:byte-buddy-maven-plugin:pom:1.15.11 42a05451baa2daf994ecf741064f6a231542d4055d5250d967de0151d39c04f5
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.15.2 11d71812ac7ea9f397967f984750d4484dd9c027a4a64f5730d840bb3542aa15
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.15.3 03e3efd289dad0b03dedfcb73d6fef643ff2eb883de698aa87a80fffcab8489c
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.15.4 419d1b41d67718c954af8f3ba7d0dd6d52e8a7c8d4cd8a9a9ee73d3388a36ea2
@@ -824,6 +826,7 @@ net.bytebuddy:byte-buddy-parent:pom:1.14.9 66b8342251d35f2063e69316f63bafcb05634
 net.bytebuddy:byte-buddy-parent:pom:1.15.0 8ec247e077cdf76e72ad2b9919576cf2a477811935b56c8a27958e7297b4f18b
 net.bytebuddy:byte-buddy-parent:pom:1.15.1 7bb21259d04796865f0d83dd3344fcffdd34c94515c00a6525a8996acb1c413f
 net.bytebuddy:byte-buddy-parent:pom:1.15.10 657d47c137114cdf2ed2996fef7809613817deff64d8be1323f40989a3ba046e
+net.bytebuddy:byte-buddy-parent:pom:1.15.11 8dc519d7a3e792112a7cd841eafbec4f00dbc633d085add20c45f0ab476ca496
 net.bytebuddy:byte-buddy-parent:pom:1.15.2 3be68060e65990669555e02f4cf7826e10122462c14cb14c1b2db78447795bfd
 net.bytebuddy:byte-buddy-parent:pom:1.15.3 6e2f8cb09d5f363ddf1f9a1f479ebae5ca82fd93f5434c9c61d765393d6252e9
 net.bytebuddy:byte-buddy-parent:pom:1.15.4 9702c2213e3fdb7087bfd334b6343cd05f44508a93eb8f94aa7da654ac1fb48f
@@ -857,6 +860,7 @@ net.bytebuddy:byte-buddy:jar:1.14.9 377352e253282bf86f731ac90ed88348e8f40a63ce03
 net.bytebuddy:byte-buddy:jar:1.15.0 c743cfb4db1e6c67af6297fbe32a3ad94710884cde4c7eecb1bad7d820d4f2ba
 net.bytebuddy:byte-buddy:jar:1.15.1 cc5f178f37ef83339b7ec93e8d0bed6b0730871cdb39c663527ddeae4a54a825
 net.bytebuddy:byte-buddy:jar:1.15.10 d8390d20685a41a2bdca640f958942cd91bcbf21c42470494bdf5752d9a07b14
+net.bytebuddy:byte-buddy:jar:1.15.11 fa08998aae1e7bdae83bde0712c50e8444d71c0e0c196bb2247ade8d4ad0eb90
 net.bytebuddy:byte-buddy:jar:1.15.2 c754a34c3bf9cc7efbe9c229a2ad185504f017b1c255100a4d3023b38e1e14d5
 net.bytebuddy:byte-buddy:jar:1.15.3 50f3beedb2caa1f5cc6030eebe716cf409a476c03ec9bea08993cbbc4a32bf68
 net.bytebuddy:byte-buddy:jar:1.15.4 4a683d83ff219f20d44f35ca302d821e0c6842e3fa8f9f1ee913eb16f49cec6c
@@ -890,6 +894,7 @@ net.bytebuddy:byte-buddy:pom:1.14.9 2d6772910d16169bd4c9229e8a365cf54e192bc620cb
 net.bytebuddy:byte-buddy:pom:1.15.0 ed4d27216401c5cb6e8f16c09fbfd460679b90c43a033d8d0e7b11e45cfb4e58
 net.bytebuddy:byte-buddy:pom:1.15.1 e358152bf7abff7b763a9670c79e798e14aed9a1b07f83476a909e3eaa222f21
 net.bytebuddy:byte-buddy:pom:1.15.10 042cff136fb914f97623ba2b7a685d984b869dbfb5b4521dc7c9227a3259ce70
+net.bytebuddy:byte-buddy:pom:1.15.11 205b8b254196717e81dad672bb869a719afc96df297f97d811effe1f43653dae
 net.bytebuddy:byte-buddy:pom:1.15.2 2d72568104ae6c61368aede1864519a2a233ecf0a7aee3c52eed2d046fc4fb2f
 net.bytebuddy:byte-buddy:pom:1.15.3 b8a90d2dbb3d98d91344d69cf7b51e41b13c02151cada67cb6126ca3174054f5
 net.bytebuddy:byte-buddy:pom:1.15.4 2fbb9eb7ed5b70285bf04397be78dc2a851d0dc2e74865d81497c61a898e21bd

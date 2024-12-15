@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. December 2024: version 1.15.11
+
+- Avoid dependency of `CachedReturnPlugin` on precompiled class files.
+- Add `NOP` instruction when `Advice` is used on `void` methods as those might be empty which results on a frame being written to the same offset, causing an exception.
+- Allow `Plugin.Enging` to link files instead of copying.
+- Adjust validator code to avoid compiler bug that was reported by multiple users.
+- Allow injection of class path as `File[]` to `Plugin` constructors.
+- Allow for configuring variants when using the Android Gradle plugin.
+
 ### 4. November 2024: version 1.15.10
 
 - Fix Java 8 patterns for multi-release jars to avoid that inner classes are excluded.

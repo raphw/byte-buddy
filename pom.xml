@@ -183,7 +183,6 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${version.plugin.release}</version>
                 <configuration>
-                    <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>extras,gpg,gradle-release,multi-release</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>byte-buddy-@{project.version}</tagNameFormat>

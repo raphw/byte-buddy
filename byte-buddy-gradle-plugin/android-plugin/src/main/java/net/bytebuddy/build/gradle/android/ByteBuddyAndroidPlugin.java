@@ -114,6 +114,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      * {@inheritDoc}
      */
     public void apply(Project project) {
+        @SuppressWarnings("unchecked")
         AndroidComponentsExtension<?, ?, Variant> extension = project.getExtensions().getByType(AndroidComponentsExtension.class);
         AndroidPluginVersion currentAgpVersion = extension.getPluginVersion();
         if (currentAgpVersion.compareTo(new AndroidPluginVersion(7, 2)) < 0) {
