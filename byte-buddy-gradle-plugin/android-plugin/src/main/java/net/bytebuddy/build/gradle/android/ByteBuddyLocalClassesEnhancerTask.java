@@ -441,21 +441,23 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                 if (entry != null && entry.isDirectory()) {
                     return;
                 }
+                String name = element.getName();
                 try {
-                    outputStream.putNextEntry(new JarEntry(element.getName()));
-                    InputStream inputStream = element.getInputStream();
-                    try {
-                        byte[] buffer = new byte[1024];
-                        int length;
-                        while ((length = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, length);
+                    outputStream.putNextEntry(new JarEntry(name));
+                    if (!name.endsWith("/")) {
+                        InputStream inputStream = element.getInputStream();
+                        try {
+                            byte[] buffer = new byte[1024];
+                            int length;
+                            while ((length = inputStream.read(buffer)) != -1) {
+                                outputStream.write(buffer, 0, length);
+                            }
+                        } finally {
+                            inputStream.close();
                         }
-                    } finally {
-                        inputStream.close();
                     }
                     outputStream.closeEntry();
                 } catch (ZipException exception) {
-                    String name = element.getName();
                     if (!name.startsWith("META-INF") && !name.endsWith("-info.class") && name.endsWith(".class")) {
                         throw exception;
                     }

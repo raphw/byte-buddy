@@ -6,10 +6,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Iterator;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -17,6 +14,7 @@ import java.util.jar.Manifest;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
 public class PluginEngineSourceForFolderTest {
 
@@ -93,6 +91,17 @@ public class PluginEngineSourceForFolderTest {
             assertThat(origin.toClassFileLocator(null).locate("bar.Foo").resolve(), is(new byte[]{1, 2, 3}));
             assertThat(origin.toClassFileLocator(null).locate("Bar").isResolved(), is(false));
             Iterator<Plugin.Engine.Source.Element> iterator = origin.iterator();
+            assertThat(iterator.hasNext(), is(true));
+            Plugin.Engine.Source.Element folder = iterator.next();
+            assertThat(folder.getName(), is("bar/"));
+            assertThat(folder.resolveAs(Object.class), nullValue(Object.class));
+            assertThat(folder.resolveAs(File.class), is(file.getParentFile()));
+            try {
+                folder.getInputStream();
+                fail("Did not expect input stream to allow resolution from folder");
+            } catch (IOException ignored) {
+                /* expected */
+            }
             assertThat(iterator.hasNext(), is(true));
             Plugin.Engine.Source.Element element = iterator.next();
             assertThat(element.getName(), is("bar/Foo.class"));

@@ -28,6 +28,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
+import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.StreamDrainer;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
@@ -2518,14 +2519,16 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             interface Element {
 
                 /**
-                 * Returns the element's relative path and name.
+                 * Returns the element's relative path and name. If the name ends with a {@code /}, it represents
+                 * a folder.
                  *
                  * @return The element's path and name.
                  */
                 String getName();
 
                 /**
-                 * Returns an input stream to read this element's binary information.
+                 * Returns an input stream to read this element's binary information. Must not be invoked for
+                 * folders.
                  *
                  * @return An input stream that represents this element's binary information.
                  * @throws IOException If an I/O error occurs.
@@ -2865,7 +2868,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * A backlog of iterables to still consider.
                          */
-                        private final List<? extends Iterable<? extends Element>> backlog;
+                        private final Queue<? extends Iterable<? extends Element>> backlog;
 
                         /**
                          * Creates a compound iterator.
@@ -2873,7 +2876,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                          * @param iterables The iterables to consider.
                          */
                         protected CompoundIterator(List<? extends Iterable<? extends Element>> iterables) {
-                            backlog = iterables;
+                            backlog = QueueFactory.make(iterables);
                             forward();
                         }
 
@@ -2904,7 +2907,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                          */
                         private void forward() {
                             while ((current == null || !current.hasNext()) && !backlog.isEmpty()) {
-                                current = backlog.remove(0).iterator();
+                                current = backlog.remove().iterator();
                             }
                         }
 
@@ -3180,7 +3183,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * A list of files and folders to process with the next processed file at the end of the list.
                      */
-                    private final List<File> files;
+                    private final Queue<File> files;
 
                     /**
                      * Creates a new iterator representation for all files within a folder.
@@ -3188,15 +3191,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * @param folder The root folder.
                      */
                     protected FolderIterator(File folder) {
-                        files = new ArrayList<File>(Collections.singleton(folder));
-                        File candidate;
-                        do {
-                            candidate = files.remove(files.size() - 1);
-                            File[] file = candidate.listFiles();
-                            if (file != null) {
-                                files.addAll(Arrays.asList(file));
+                        files = QueueFactory.make();
+                        File[] file = folder.listFiles();
+                        if (file != null) {
+                            for (File candidate : file) {
+                                if (!candidate.equals(new File(folder, JarFile.MANIFEST_NAME))) {
+                                    files.add(candidate);
+                                }
                             }
-                        } while (!files.isEmpty() && (files.get(files.size() - 1).isDirectory() || files.get(files.size() - 1).equals(new File(folder, JarFile.MANIFEST_NAME))));
+                        }
                     }
 
                     /**
@@ -3211,17 +3214,18 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      */
                     @SuppressFBWarnings(value = "IT_NO_SUCH_ELEMENT", justification = "Exception is thrown by invoking removeFirst on an empty list.")
                     public Element next() {
-                        try {
-                            return new Element.ForFile(folder, files.remove(files.size() - 1));
-                        } finally {
-                            while (!files.isEmpty() && (files.get(files.size() - 1).isDirectory() || files.get(files.size() - 1).equals(new File(folder, JarFile.MANIFEST_NAME)))) {
-                                File folder = files.remove(files.size() - 1);
-                                File[] file = folder.listFiles();
-                                if (file != null) {
-                                    files.addAll(Arrays.asList(file));
+                        File next = files.remove();
+                        if (next.isDirectory()) {
+                            File[] file = next.listFiles();
+                            if (file != null) {
+                                for (File candidate : file) {
+                                    if (!candidate.equals(new File(folder, JarFile.MANIFEST_NAME))) {
+                                        files.add(candidate);
+                                    }
                                 }
                             }
                         }
+                        return new Element.ForFile(folder, next);
                     }
 
                     /**
@@ -3313,7 +3317,17 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @return A source that applies an appropriate filter.
                  */
                 public static Source dropMultiReleaseClassFilesAbove(Source delegate, ClassFileVersion classFileVersion) {
-                    return new Filtering(delegate, new MultiReleaseVersionMatcher(classFileVersion), true);
+                    return new Filtering(delegate, new MultiReleaseVersionMatcher(classFileVersion));
+                }
+
+                /**
+                 * Wraps a source to exclude elements that represent folders.
+                 *
+                 * @param delegate The delegate source.
+                 * @return A source that drops folders and delegates to the original source.
+                 */
+                public static Source dropFolders(Source delegate) {
+                    return new Filtering(delegate, NoFolderMatcher.INSTANCE);
                 }
 
                 /**
@@ -3366,6 +3380,25 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                             return version <= classFileVersion.getJavaVersion();
                         }
                         return true;
+                    }
+                }
+
+                /**
+                 * A matcher that removes folders from the iteration.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                protected enum NoFolderMatcher implements ElementMatcher<Element> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public boolean matches(@MaybeNull Element target) {
+                        return target == null || target.getName().endsWith("/");
                     }
                 }
             }
@@ -3466,18 +3499,21 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      */
                     public void retain(Source.Element element) throws IOException {
                         JarEntry entry = element.resolveAs(JarEntry.class);
+                        String name = element.getName();
                         outputStream.putNextEntry(entry == null
-                                ? new JarEntry(element.getName())
+                                ? new JarEntry(name)
                                 : entry);
-                        InputStream inputStream = element.getInputStream();
-                        try {
-                            byte[] buffer = new byte[1024];
-                            int length;
-                            while ((length = inputStream.read(buffer)) != -1) {
-                                outputStream.write(buffer, 0, length);
+                        if (entry != null || !name.endsWith("/")) {
+                            InputStream inputStream = element.getInputStream();
+                            try {
+                                byte[] buffer = new byte[1024];
+                                int length;
+                                while ((length = inputStream.read(buffer)) != -1) {
+                                    outputStream.write(buffer, 0, length);
+                                }
+                            } finally {
+                                inputStream.close();
                             }
-                        } finally {
-                            inputStream.close();
                         }
                         outputStream.closeEntry();
                     }
@@ -3798,8 +3834,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void retain(Source.Element element) throws IOException {
                     String name = element.getName();
+                    File target = new File(folder, name);
                     if (!name.endsWith("/")) {
-                        File target = new File(folder, name), resolved = element.resolveAs(File.class);
+                        File resolved = element.resolveAs(File.class);
                         if (!target.getCanonicalPath().startsWith(folder.getCanonicalPath() + File.separatorChar)) {
                             throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
                         } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
@@ -3827,6 +3864,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                 inputStream.close();
                             }
                         }
+                    } else if (!target.isDirectory() && !target.mkdirs()) {
+                        throw new IllegalStateException("Cannot create requested directory: " + target);
                     }
                 }
 

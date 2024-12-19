@@ -18,6 +18,7 @@ import java.util.jar.Manifest;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class PluginEngineTargetForFolderTest {
@@ -114,6 +115,48 @@ public class PluginEngineTargetForFolderTest {
             }
             assertThat(file.delete(), is(true));
             assertThat(file.getParentFile().delete(), is(true));
+        } finally {
+            assertThat(original.delete(), is(true));
+        }
+    }
+
+    @Test
+    public void testWriteFolder() throws Exception {
+        Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
+        Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
+        when(element.getName()).thenReturn(FOO + "/" + BAR + "/");
+        when(element.getInputStream()).thenThrow(new AssertionError());
+        File original = temporaryFolder.newFile();
+        try {
+            Plugin.Engine.Target.Sink sink = target.write(null);
+            sink.retain(element);
+            assertThat(new File(folder, FOO + "/" + BAR).isDirectory(), is(true));
+            assertThat(new File(folder, FOO + "/" + BAR).delete(), is(true));
+            assertThat(new File(folder, FOO).isDirectory(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
+        } finally {
+            assertThat(original.delete(), is(true));
+        }
+    }
+
+    @Test
+    public void testWriteFolderCannotReplaceFile() throws Exception {
+        Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
+        assertThat(new File(folder, FOO).createNewFile(), is(true));
+        Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
+        when(element.getName()).thenReturn(FOO + "/");
+        when(element.getInputStream()).thenThrow(new AssertionError());
+        File original = temporaryFolder.newFile();
+        try {
+            Plugin.Engine.Target.Sink sink = target.write(null);
+            try {
+                sink.retain(element);
+                fail("Expected error on overwritten file");
+            } catch (IllegalStateException exception) {
+                assertThat(exception.getMessage(), is("Cannot create requested directory: " + new File(folder, FOO)));
+            }
+            assertThat(new File(folder, FOO).isFile(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         } finally {
             assertThat(original.delete(), is(true));
         }
