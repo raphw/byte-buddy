@@ -3398,7 +3398,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * {@inheritDoc}
                      */
                     public boolean matches(@MaybeNull Element target) {
-                        return target == null || target.getName().endsWith("/");
+                        return target == null || !target.getName().endsWith("/");
                     }
                 }
             }
