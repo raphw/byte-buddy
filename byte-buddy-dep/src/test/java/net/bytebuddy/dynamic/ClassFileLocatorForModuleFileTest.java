@@ -10,6 +10,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -71,7 +72,13 @@ public class ClassFileLocatorForModuleFileTest {
     @Test
     @JavaVersionRule.Enforce(9)
     public void testBootJar() throws Exception {
-        ClassFileLocator classFileLocator = ClassFileLocator.ForModuleFile.ofBootPath();
+        ClassFileLocator classFileLocator;
+        try {
+            classFileLocator = ClassFileLocator.ForModuleFile.ofBootPath();
+        } catch (IllegalStateException exception) {
+            Logger.getLogger("net.bytebuddy").info("Module boot path not available as jmod files");
+            return;
+        }
         try {
             assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
         } finally {
