@@ -138,11 +138,6 @@ public class ByteBuddyAgent {
     private static final String OS_NAME = "os.name";
 
     /**
-     * Represents the {@code file} URL protocol.
-     */
-    private static final String FILE_PROTOCOL = "file";
-
-    /**
      * The attachment type evaluator to be used for determining if an attachment requires an external process.
      */
     private static final AttachmentTypeEvaluator ATTACHMENT_TYPE_EVALUATOR = doPrivileged(AttachmentTypeEvaluator.InstallationAction.INSTANCE);
@@ -705,7 +700,7 @@ public class ByteBuddyAgent {
                 return null;
             }
             URL location = codeSource.getLocation();
-            if (!location.getProtocol().equals(FILE_PROTOCOL)) {
+            if (!location.getProtocol().equals("file")) {
                 return null;
             }
             try {
@@ -1451,7 +1446,9 @@ public class ByteBuddyAgent {
                     return null;
                 }
                 URL location = codeSource.getLocation();
-                if (!location.getProtocol().equals(FILE_PROTOCOL)) {
+                if (!location.getProtocol().equals("file")
+                        || location.getPath() == null
+                        || !location.getPath().endsWith(".class")) {
                     return null;
                 }
                 File agentJar;
