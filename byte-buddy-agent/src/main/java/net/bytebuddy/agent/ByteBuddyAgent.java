@@ -1446,9 +1446,7 @@ public class ByteBuddyAgent {
                     return null;
                 }
                 URL location = codeSource.getLocation();
-                if (!location.getProtocol().equals("file")
-                        || location.getPath() != null
-                        && location.getPath().endsWith(".java")) {
+                if (!location.getProtocol().equals("file")) {
                     return null;
                 }
                 File agentJar;
