@@ -1308,7 +1308,7 @@ public class ByteBuddy {
      * Creates a new configuration where the {@link MethodGraph.Compiler} is used for creating a {@link MethodGraph}
      * of the instrumented type. A method graph is a representation of a type's virtual methods, including all information
      * on bridge methods that are inserted by the Java compiler. Creating a method graph is a rather expensive operation
-     * and more efficient strategies might exist for certain types or ava types that are created by alternative JVM
+     * and more efficient strategies might exist for certain types or Java types that are created by alternative JVM
      * languages. By default, a general purpose method graph compiler is used that uses the information that is exposed
      * by the generic type information that is embedded in any class file.
      *
