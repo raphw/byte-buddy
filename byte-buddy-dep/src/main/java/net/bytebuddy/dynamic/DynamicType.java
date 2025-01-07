@@ -6216,16 +6216,18 @@ public interface DynamicType extends ClassFileLocator {
          * @throws IOException If an I/O error occurs.
          */
         private File doInject(File sourceJar, File targetJar) throws IOException {
-            JarInputStream inputStream = new JarInputStream(new FileInputStream(sourceJar));
+            InputStream inputStream = new FileInputStream(sourceJar);
             try {
+                JarInputStream jarInputStream = new JarInputStream(inputStream);
                 if (!targetJar.isFile() && !targetJar.createNewFile()) {
                     throw new IllegalArgumentException("Could not create file: " + targetJar);
                 }
-                Manifest manifest = inputStream.getManifest();
-                JarOutputStream outputStream = manifest == null
-                        ? new JarOutputStream(new FileOutputStream(targetJar))
-                        : new JarOutputStream(new FileOutputStream(targetJar), manifest);
+                Manifest manifest = jarInputStream.getManifest();
+                OutputStream outputStream = new FileOutputStream(targetJar);
                 try {
+                    JarOutputStream jarOutputStream = manifest == null
+                            ? new JarOutputStream(outputStream)
+                            : new JarOutputStream(outputStream, manifest);
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>();
                     for (Map.Entry<TypeDescription, byte[]> entry : rawAuxiliaryTypes.entrySet()) {
@@ -6233,26 +6235,26 @@ public interface DynamicType extends ClassFileLocator {
                     }
                     files.put(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION, getBytes());
                     JarEntry jarEntry;
-                    while ((jarEntry = inputStream.getNextJarEntry()) != null) {
+                    while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
                         byte[] replacement = files.remove(jarEntry.getName());
                         if (replacement == null) {
-                            outputStream.putNextEntry(jarEntry);
+                            jarOutputStream.putNextEntry(jarEntry);
                             byte[] buffer = new byte[1024];
                             int index;
-                            while ((index = inputStream.read(buffer)) != -1) {
-                                outputStream.write(buffer, 0, index);
+                            while ((index = jarInputStream.read(buffer)) != -1) {
+                                jarOutputStream.write(buffer, 0, index);
                             }
                         } else {
-                            outputStream.putNextEntry(new JarEntry(jarEntry.getName()));
-                            outputStream.write(replacement);
+                            jarOutputStream.putNextEntry(new JarEntry(jarEntry.getName()));
+                            jarOutputStream.write(replacement);
                         }
-                        inputStream.closeEntry();
-                        outputStream.closeEntry();
+                        jarInputStream.closeEntry();
+                        jarOutputStream.closeEntry();
                     }
                     for (Map.Entry<String, byte[]> entry : files.entrySet()) {
-                        outputStream.putNextEntry(new JarEntry(entry.getKey()));
-                        outputStream.write(entry.getValue());
-                        outputStream.closeEntry();
+                        jarOutputStream.putNextEntry(new JarEntry(entry.getKey()));
+                        jarOutputStream.write(entry.getValue());
+                        jarOutputStream.closeEntry();
                     }
                 } finally {
                     outputStream.close();
@@ -6279,16 +6281,17 @@ public interface DynamicType extends ClassFileLocator {
             if (!file.isFile() && !file.createNewFile()) {
                 throw new IllegalArgumentException("Could not create file: " + file);
             }
-            JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file), manifest);
+            OutputStream outputStream = new FileOutputStream(file);
             try {
+                JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
                 for (Map.Entry<TypeDescription, byte[]> entry : getAuxiliaryTypes().entrySet()) {
-                    outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
-                    outputStream.write(entry.getValue());
-                    outputStream.closeEntry();
+                    jarOutputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
+                    jarOutputStream.write(entry.getValue());
+                    jarOutputStream.closeEntry();
                 }
-                outputStream.putNextEntry(new JarEntry(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION));
-                outputStream.write(getBytes());
-                outputStream.closeEntry();
+                jarOutputStream.putNextEntry(new JarEntry(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION));
+                jarOutputStream.write(getBytes());
+                jarOutputStream.closeEntry();
             } finally {
                 outputStream.close();
             }

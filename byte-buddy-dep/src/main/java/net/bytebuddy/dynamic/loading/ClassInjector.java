@@ -44,6 +44,7 @@ import net.bytebuddy.utility.privilege.GetMethodAction;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.*;
 import java.net.URL;
@@ -2518,14 +2519,15 @@ public interface ClassInjector {
                     throw new IllegalStateException("Cannot create file " + file);
                 }
                 try {
-                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
+                    OutputStream outputStream = new FileOutputStream(file);
                     try {
+                        JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
                         for (String name : names) {
                             jarOutputStream.putNextEntry(new JarEntry(name.replace('.', '/') + CLASS_FILE_EXTENSION));
                             jarOutputStream.write(classFileLocator.locate(name).resolve());
                         }
                     } finally {
-                        jarOutputStream.close();
+                        outputStream.close();
                     }
                     JarFile jarFile = new JarFile(file, false, ZipFile.OPEN_READ);
                     try {

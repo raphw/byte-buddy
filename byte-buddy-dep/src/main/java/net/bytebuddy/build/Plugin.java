@@ -3901,9 +3901,21 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public Sink write(@MaybeNull Manifest manifest) throws IOException {
-                    return manifest == null
-                            ? new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)))
-                            : new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
+                    OutputStream outputStream = new FileOutputStream(file);
+                    try {
+                        return manifest == null
+                                ? new Sink.ForJarOutputStream(new JarOutputStream(outputStream))
+                                : new Sink.ForJarOutputStream(new JarOutputStream(outputStream, manifest));
+                    } catch (RuntimeException exception) {
+                        outputStream.close();
+                        throw exception;
+                    } catch (IOException exception) {
+                        outputStream.close();
+                        throw exception;
+                    } catch (Error error) {
+                        outputStream.close();
+                        throw error;
+                    }
                 }
             }
         }
