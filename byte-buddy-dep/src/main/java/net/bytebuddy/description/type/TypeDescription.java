@@ -793,6 +793,54 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
+             * A visitor that generalizes all reference types to {@link Object} but retains primitive types.
+             */
+            enum Generalizing implements Visitor<TypeDescription> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription onGenericArray(Generic genericArray) {
+                    return TypeDescription.ForLoadedType.of(Object.class);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription onWildcard(Generic wildcard) {
+                    throw new IllegalArgumentException("Cannot erase a wildcard type: " + wildcard);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription onParameterizedType(Generic parameterizedType) {
+                    return TypeDescription.ForLoadedType.of(Object.class);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription onTypeVariable(Generic typeVariable) {
+                    return TypeDescription.ForLoadedType.of(Object.class);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription onNonGenericType(Generic typeDescription) {
+                    return typeDescription.isPrimitive()
+                            ? typeDescription.asErasure()
+                            : TypeDescription.ForLoadedType.of(Object.class);
+                }
+            }
+
+            /**
              * A visitor that strips all type annotations of all types.
              */
             enum AnnotationStripper implements Visitor<Generic> {
