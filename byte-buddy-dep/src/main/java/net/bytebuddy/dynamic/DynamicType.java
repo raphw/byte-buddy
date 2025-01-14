@@ -6280,6 +6280,7 @@ public interface DynamicType extends ClassFileLocator {
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "OS_OPEN_STREAM_EXCEPTION_PATH", justification = "Outer stream holds file handle and is closed")
         public File toJar(File file, Manifest manifest) throws IOException {
             if (!file.isFile() && !file.createNewFile()) {
                 throw new IllegalArgumentException("Could not create file: " + file);
