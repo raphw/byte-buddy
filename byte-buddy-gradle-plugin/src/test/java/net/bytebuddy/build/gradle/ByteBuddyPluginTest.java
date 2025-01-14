@@ -247,8 +247,9 @@ public class ByteBuddyPluginTest {
     private void assertResult(final String expectation, String... path) throws IOException {
         File jar = new File(folder, "build/libs/" + folder.getName() + ".jar");
         assertThat(jar.isFile(), is(true));
-        JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
+        InputStream inputStream = new FileInputStream(jar);
         try {
+            JarInputStream jarInputStream = new JarInputStream(inputStream);
             String concatenation = "";
             for (int index = 0; index < path.length; index++) {
                 JarEntry entry = jarInputStream.getNextJarEntry();
@@ -274,8 +275,9 @@ public class ByteBuddyPluginTest {
             }, ClassReader.SKIP_CODE);
             jarInputStream.closeEntry();
             assertThat(jarInputStream.getNextJarEntry(), nullValue(JarEntry.class));
-        } finally {
             jarInputStream.close();
+        } finally {
+            inputStream.close();
         }
     }
 }

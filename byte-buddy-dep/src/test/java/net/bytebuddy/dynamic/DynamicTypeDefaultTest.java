@@ -14,10 +14,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.stubbing.Answer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.jar.*;
 
@@ -71,8 +68,9 @@ public class DynamicTypeDefaultTest {
     }
 
     private static void assertJarFile(File file, Manifest manifest, Map<String, byte[]> expectedEntries) throws IOException {
-        JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
+        InputStream inputStream = new FileInputStream(file);
         try {
+            JarInputStream jarInputStream = new JarInputStream(inputStream);
             assertThat(jarInputStream.getManifest(), is(manifest));
             JarEntry jarEntry;
             while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
@@ -85,8 +83,9 @@ public class DynamicTypeDefaultTest {
                 jarInputStream.closeEntry();
             }
             assertThat(expectedEntries.size(), is(0));
-        } finally {
             jarInputStream.close();
+        } finally {
+            inputStream.close();
         }
     }
 
@@ -221,16 +220,18 @@ public class DynamicTypeDefaultTest {
         File sourceFile = temporaryFolder.newFile();
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(sourceFile), manifest);
+        OutputStream outputStream = new FileOutputStream(sourceFile);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
             jarOutputStream.putNextEntry(new JarEntry(BARBAZ + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
             jarOutputStream.putNextEntry(new JarEntry(FOOBAR + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         File file = temporaryFolder.newFile();
         assertThat(file.delete(), is(true));
@@ -256,16 +257,18 @@ public class DynamicTypeDefaultTest {
         File file = temporaryFolder.newFile();
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
+        OutputStream outputStream = new FileOutputStream(file);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
             jarOutputStream.putNextEntry(new JarEntry(BARBAZ + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
             jarOutputStream.putNextEntry(new JarEntry(FOOBAR + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         boolean fileDeletion;
         try {
@@ -289,16 +292,18 @@ public class DynamicTypeDefaultTest {
         File file = temporaryFolder.newFile();
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
+        OutputStream outputStream = new FileOutputStream(file);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
             jarOutputStream.putNextEntry(new JarEntry(BARBAZ + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
             jarOutputStream.putNextEntry(new JarEntry(FOOBAR + CLASS_FILE_EXTENSION));
             jarOutputStream.write(BINARY_THIRD);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         boolean fileDeletion;
         try {

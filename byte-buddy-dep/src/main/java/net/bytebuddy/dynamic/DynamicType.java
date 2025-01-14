@@ -6256,9 +6256,11 @@ public interface DynamicType extends ClassFileLocator {
                         jarOutputStream.write(entry.getValue());
                         jarOutputStream.closeEntry();
                     }
+                    jarOutputStream.close();
                 } finally {
                     outputStream.close();
                 }
+                jarInputStream.close();
             } finally {
                 inputStream.close();
             }
@@ -6292,6 +6294,7 @@ public interface DynamicType extends ClassFileLocator {
                 jarOutputStream.putNextEntry(new JarEntry(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION));
                 jarOutputStream.write(getBytes());
                 jarOutputStream.closeEntry();
+                jarOutputStream.close();
             } finally {
                 outputStream.close();
             }

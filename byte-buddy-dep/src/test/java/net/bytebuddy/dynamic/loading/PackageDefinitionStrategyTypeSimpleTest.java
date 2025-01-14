@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.Closeable;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -99,9 +100,15 @@ public class PackageDefinitionStrategyTypeSimpleTest {
             manifest.getMainAttributes().put(Attributes.Name.SEALED, Boolean.TRUE.toString());
             URL url = new ByteBuddy().subclass(Object.class).name("foo.Bar").make().toJar(file, manifest).toURI().toURL();
             ClassLoader classLoader = new URLClassLoader(new URL[]{url}, null);
-            Package definedPackage = classLoader.loadClass("foo.Bar").getPackage();
-            assertThat(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, BAZ, FOO + BAR, QUX + BAZ, null)
-                    .isCompatibleTo(definedPackage), is(false));
+            try {
+                Package definedPackage = classLoader.loadClass("foo.Bar").getPackage();
+                assertThat(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, BAZ, FOO + BAR, QUX + BAZ, null)
+                        .isCompatibleTo(definedPackage), is(false));
+            } finally {
+                if (classLoader instanceof Closeable) {
+                    ((Closeable) classLoader).close();
+                }
+            }
         } finally {
             file.deleteOnExit();
         }
@@ -116,9 +123,15 @@ public class PackageDefinitionStrategyTypeSimpleTest {
             manifest.getMainAttributes().put(Attributes.Name.SEALED, Boolean.TRUE.toString());
             URL url = new ByteBuddy().subclass(Object.class).name("foo.Bar").make().toJar(file, manifest).toURI().toURL();
             ClassLoader classLoader = new URLClassLoader(new URL[]{url}, null);
-            Package definedPackage = classLoader.loadClass("foo.Bar").getPackage();
-            assertThat(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, BAZ, FOO + BAR, QUX + BAZ, url)
-                    .isCompatibleTo(definedPackage), is(true));
+            try {
+                Package definedPackage = classLoader.loadClass("foo.Bar").getPackage();
+                assertThat(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, BAZ, FOO + BAR, QUX + BAZ, url)
+                        .isCompatibleTo(definedPackage), is(true));
+            } finally {
+                if (classLoader instanceof Closeable) {
+                    ((Closeable) classLoader).close();
+                }
+            }
         } finally {
             file.deleteOnExit();
         }

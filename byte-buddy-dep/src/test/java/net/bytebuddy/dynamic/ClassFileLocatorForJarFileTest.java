@@ -12,6 +12,7 @@ import org.objectweb.asm.ClassVisitor;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -127,14 +128,16 @@ public class ClassFileLocatorForJarFileTest {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
         manifest.getMainAttributes().putValue("Multi-Release", "true");
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
+        OutputStream outputStream = new FileOutputStream(file);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
             jarOutputStream.putNextEntry(new JarEntry("META-INF/versions/11/" + FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION));
             jarOutputStream.write(VALUE);
             jarOutputStream.write(VALUE * 2);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         ClassFileLocator classFileLocator = ClassFileLocator.ForJarFile.of(file, ClassFileVersion.JAVA_V11);
         ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);

@@ -1459,26 +1459,29 @@ public class ByteBuddyAgent {
                     return null;
                 }
                 // It is necessary to check the manifest of the containing file as this code can be shaded into another artifact.
-                JarInputStream jarInputStream = new JarInputStream(new FileInputStream(agentJar));
+                Manifest manifest;
+                InputStream inputStream = new FileInputStream(agentJar);
                 try {
-                    Manifest manifest = jarInputStream.getManifest();
-                    if (manifest == null) {
-                        return null;
-                    }
-                    Attributes attributes = manifest.getMainAttributes();
-                    if (attributes == null) {
-                        return null;
-                    }
-                    if (installer.getName().equals(attributes.getValue(AGENT_CLASS_PROPERTY))
-                            && Boolean.parseBoolean(attributes.getValue(CAN_REDEFINE_CLASSES_PROPERTY))
-                            && Boolean.parseBoolean(attributes.getValue(CAN_RETRANSFORM_CLASSES_PROPERTY))
-                            && Boolean.parseBoolean(attributes.getValue(CAN_SET_NATIVE_METHOD_PREFIX))) {
-                        return agentJar;
-                    } else {
-                        return null;
-                    }
-                } finally {
+                    JarInputStream jarInputStream = new JarInputStream(inputStream);
+                    manifest = jarInputStream.getManifest();
                     jarInputStream.close();
+                } finally {
+                    inputStream.close();
+                }
+                if (manifest == null) {
+                    return null;
+                }
+                Attributes attributes = manifest.getMainAttributes();
+                if (attributes == null) {
+                    return null;
+                }
+                if (installer.getName().equals(attributes.getValue(AGENT_CLASS_PROPERTY))
+                        && Boolean.parseBoolean(attributes.getValue(CAN_REDEFINE_CLASSES_PROPERTY))
+                        && Boolean.parseBoolean(attributes.getValue(CAN_RETRANSFORM_CLASSES_PROPERTY))
+                        && Boolean.parseBoolean(attributes.getValue(CAN_SET_NATIVE_METHOD_PREFIX))) {
+                    return agentJar;
+                } else {
+                    return null;
                 }
             }
 
@@ -1502,8 +1505,9 @@ public class ByteBuddyAgent {
                     manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
                     manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
                     manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
-                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
+                    OutputStream outputStream = new FileOutputStream(agentJar);
                     try {
+                        JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
                         jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
                         byte[] buffer = new byte[1024 * 8];
                         int index;
@@ -1511,8 +1515,9 @@ public class ByteBuddyAgent {
                             jarOutputStream.write(buffer, 0, index);
                         }
                         jarOutputStream.closeEntry();
-                    } finally {
                         jarOutputStream.close();
+                    } finally {
+                        outputStream.close();
                     }
                     return agentJar;
                 } finally {

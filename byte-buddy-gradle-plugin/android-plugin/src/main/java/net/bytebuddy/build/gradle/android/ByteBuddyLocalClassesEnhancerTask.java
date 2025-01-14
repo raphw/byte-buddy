@@ -408,9 +408,21 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
          * {@inheritDoc}
          */
         public Sink write(@MaybeNull Manifest manifest) throws IOException {
-            return manifest == null
-                    ? new ForAndroidAppOutputStream(new JarOutputStream(new FileOutputStream(file)))
-                    : new ForAndroidAppOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
+            OutputStream outputStream = new FileOutputStream(file);
+            try {
+                return manifest == null
+                        ? new ForAndroidAppOutputStream(new JarOutputStream(outputStream))
+                        : new ForAndroidAppOutputStream(new JarOutputStream(outputStream, manifest));
+            } catch (IOException exception) {
+                outputStream.close();
+                throw exception;
+            } catch (RuntimeException exception) {
+                outputStream.close();
+                throw exception;
+            } catch (Error error) {
+                outputStream.close();
+                throw error;
+            }
         }
 
         /**

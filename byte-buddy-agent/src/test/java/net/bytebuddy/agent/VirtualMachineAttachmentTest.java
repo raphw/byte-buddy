@@ -10,6 +10,7 @@ import org.junit.rules.TestRule;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -34,11 +35,13 @@ public class VirtualMachineAttachmentTest {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
         manifest.getMainAttributes().putValue("Agent-Class", SampleAgent.class.getName());
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(agent), manifest);
+        OutputStream outputStream = new FileOutputStream(agent);
         try {
-            outputStream.putNextEntry(new JarEntry(SampleAgent.class.getName().replace('.', '/') + ".class"));
-            outputStream.write(ClassFileLocator.ForClassLoader.read(SampleAgent.class));
-            outputStream.closeEntry();
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
+            jarOutputStream.putNextEntry(new JarEntry(SampleAgent.class.getName().replace('.', '/') + ".class"));
+            jarOutputStream.write(ClassFileLocator.ForClassLoader.read(SampleAgent.class));
+            jarOutputStream.closeEntry();
+            jarOutputStream.close();
         } finally {
             outputStream.close();
         }

@@ -371,10 +371,10 @@
                         <executions>
                             <execution>
                                 <id>multi-release</id>
+                                <phase>prepare-package</phase>
                                 <goals>
                                     <goal>compile</goal>
                                 </goals>
-                                <phase>prepare-package</phase>
                                 <configuration>
                                     <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
                                     <target>1.8</target>
@@ -382,25 +382,68 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- Create hashCode/equals method and cache some expensive properties. -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>${version.plugin.resources}</version>
+                        <groupId>net.bytebuddy</groupId>
+                        <artifactId>byte-buddy-maven-plugin</artifactId>
+                        <version>1.15.11</version>
                         <executions>
                             <execution>
-                                <id>copy-advice-templates</id>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
+                                <id>multi-release</id>
                                 <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>transform-location</goal>
+                                </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/destination-folder</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>src/main/precompiled-6</directory>
-                                            <filtering>false</filtering>
-                                        </resource>
-                                    </resources>
+                                    <source>${project.build.sourceDirectory}</source>
+                                    <target>${project.build.outputDirectory}/META-INF/versions/9</target>
+                                    <initialization>
+                                        <entryPoint>REDEFINE</entryPoint>
+                                    </initialization>
+                                    <transformations>
+                                        <transformation>
+                                            <groupId>net.bytebuddy</groupId>
+                                            <artifactId>byte-buddy</artifactId>
+                                            <version>1.15.11</version>
+                                            <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
+                                            <arguments>
+                                                <argument>
+                                                    <index>0</index>
+                                                    <value>net.bytebuddy.utility.nullability.MaybeNull</value>
+                                                </argument>
+                                            </arguments>
+                                        </transformation>
+                                        <transformation>
+                                            <groupId>net.bytebuddy</groupId>
+                                            <artifactId>byte-buddy</artifactId>
+                                            <version>1.15.11</version>
+                                            <plugin>net.bytebuddy.build.CachedReturnPlugin</plugin>
+                                        </transformation>
+                                        <transformation>
+                                            <groupId>net.bytebuddy</groupId>
+                                            <artifactId>byte-buddy</artifactId>
+                                            <version>1.15.11</version>
+                                            <plugin>net.bytebuddy.build.AccessControllerPlugin</plugin>
+                                            <arguments>
+                                                <argument>
+                                                    <index>0</index>
+                                                    <value>net.bytebuddy.securitymanager</value>
+                                                </argument>
+                                            </arguments>
+                                        </transformation>
+                                        <transformation>
+                                            <groupId>net.bytebuddy</groupId>
+                                            <artifactId>byte-buddy</artifactId>
+                                            <version>1.15.11</version>
+                                            <plugin>net.bytebuddy.build.DispatcherAnnotationPlugin</plugin>
+                                        </transformation>
+                                        <transformation>
+                                            <groupId>net.bytebuddy</groupId>
+                                            <artifactId>byte-buddy</artifactId>
+                                            <version>1.15.11</version>
+                                            <plugin>net.bytebuddy.build.RepeatedAnnotationPlugin</plugin>
+                                        </transformation>
+                                    </transformations>
                                 </configuration>
                             </execution>
                         </executions>
