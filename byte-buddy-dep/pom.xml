@@ -395,7 +395,7 @@
                                     <goal>transform-location</goal>
                                 </goals>
                                 <configuration>
-                                    <source>${project.build.sourceDirectory}</source>
+                                    <source>${project.build.outputDirectory}/META-INF/versions/9</source>
                                     <target>${project.build.outputDirectory}/META-INF/versions/9</target>
                                     <initialization>
                                         <entryPoint>REDEFINE</entryPoint>
