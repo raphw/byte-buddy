@@ -6215,6 +6215,7 @@ public interface DynamicType extends ClassFileLocator {
          * @return The jar file that was written to.
          * @throws IOException If an I/O error occurs.
          */
+        @SuppressFBWarnings(value = "OS_OPEN_STREAM_EXCEPTION_PATH", justification = "Outer stream holds file handle and is closed")
         private File doInject(File sourceJar, File targetJar) throws IOException {
             InputStream inputStream = new FileInputStream(sourceJar);
             try {

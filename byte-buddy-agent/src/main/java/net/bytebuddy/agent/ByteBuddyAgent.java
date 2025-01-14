@@ -618,6 +618,7 @@ public class ByteBuddyAgent {
      * @param argument           The argument to provide to the agent or {@code null} if no argument should be supplied.
      * @throws Exception If an exception occurs during the attachment or the external process fails the attachment.
      */
+    @SuppressFBWarnings(value = "OS_OPEN_STREAM_EXCEPTION_PATH", justification = "Outer stream holds file handle and is closed")
     private static void installExternal(AttachmentProvider.Accessor.ExternalAttachment externalAttachment,
                                         String processId,
                                         File agent,
@@ -1493,6 +1494,7 @@ public class ByteBuddyAgent {
              * @return The agent jar file.
              * @throws IOException If an I/O exception occurs.
              */
+            @SuppressFBWarnings(value = "OS_OPEN_STREAM_EXCEPTION_PATH", justification = "Outer stream holds file handle and is closed")
             private static File createJarFile() throws IOException {
                 InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 if (inputStream == null) {

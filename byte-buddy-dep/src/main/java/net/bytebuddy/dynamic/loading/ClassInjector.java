@@ -2512,6 +2512,7 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "OS_OPEN_STREAM_EXCEPTION_PATH", justification = "Outer stream holds file handle and is closed")
         public Map<String, Class<?>> injectRaw(Set<String> names, ClassFileLocator classFileLocator) {
             File file = new File(folder, JAR + randomString.nextString() + "." + JAR);
             try {
