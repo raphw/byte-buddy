@@ -168,11 +168,13 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             if (!jar.createNewFile()) {
                 throw new IllegalStateException("Cannot create " + jar);
             }
-            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jar)));
+            OutputStream outputStream = new FileOutputStream(jar);
             try {
-                outputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
-                conversion.drainTo(outputStream);
-                outputStream.closeEntry();
+                JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
+                jarOutputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
+                conversion.drainTo(jarOutputStream);
+                jarOutputStream.closeEntry();
+                jarOutputStream.close();
             } finally {
                 outputStream.close();
             }

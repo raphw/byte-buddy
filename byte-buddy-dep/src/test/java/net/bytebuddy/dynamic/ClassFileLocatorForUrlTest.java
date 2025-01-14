@@ -10,6 +10,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -41,15 +42,17 @@ public class ClassFileLocatorForUrlTest {
     @Test
     @JavaVersionRule.Enforce(7) // Avoid leak since class loader cannot be closed
     public void testSuccessfulLocation() throws Exception {
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
             JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
             jarOutputStream.putNextEntry(jarEntry);
             jarOutputStream.write(VALUE);
             jarOutputStream.write(VALUE * 2);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         URL url = file.toURI().toURL();
         ClassFileLocator classFileLocator = new ClassFileLocator.ForUrl(Collections.singleton(url));
@@ -73,14 +76,16 @@ public class ClassFileLocatorForUrlTest {
     @Test
     @JavaVersionRule.Enforce(7) // Avoid leak since class loader cannot be closed
     public void testNonSuccessfulLocation() throws Exception {
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
             JarEntry jarEntry = new JarEntry("noop.class");
             jarOutputStream.putNextEntry(jarEntry);
             jarOutputStream.write(VALUE);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         URL url = file.toURI().toURL();
         ClassFileLocator classFileLocator = new ClassFileLocator.ForUrl(url);

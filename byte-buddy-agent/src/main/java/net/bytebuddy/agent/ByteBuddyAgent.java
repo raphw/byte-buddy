@@ -632,8 +632,9 @@ public class ByteBuddyAgent {
                 }
                 try {
                     attachmentJar = File.createTempFile(ATTACHER_FILE_NAME, JAR_FILE_EXTENSION);
-                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(attachmentJar));
+                    OutputStream outputStream = new FileOutputStream(attachmentJar);
                     try {
+                        JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
                         jarOutputStream.putNextEntry(new JarEntry(Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
                         byte[] buffer = new byte[1024 * 8];
                         int index;
@@ -641,8 +642,9 @@ public class ByteBuddyAgent {
                             jarOutputStream.write(buffer, 0, index);
                         }
                         jarOutputStream.closeEntry();
-                    } finally {
                         jarOutputStream.close();
+                    } finally {
+                        outputStream.close();
                     }
                 } finally {
                     inputStream.close();

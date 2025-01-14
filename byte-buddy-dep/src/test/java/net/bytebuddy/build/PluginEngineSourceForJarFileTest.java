@@ -9,6 +9,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.jar.*;
 
@@ -29,11 +30,13 @@ public class PluginEngineSourceForJarFileTest {
 
     @Test
     public void testFile() throws Exception {
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
-            outputStream.putNextEntry(new JarEntry("Foo.class"));
-            outputStream.write(new byte[]{1, 2, 3});
-            outputStream.closeEntry();
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
+            jarOutputStream.putNextEntry(new JarEntry("Foo.class"));
+            jarOutputStream.write(new byte[]{1, 2, 3});
+            jarOutputStream.closeEntry();
+            jarOutputStream.close();
         } finally {
             outputStream.close();
         }
@@ -63,11 +66,13 @@ public class PluginEngineSourceForJarFileTest {
 
     @Test
     public void testFileInSubFolder() throws Exception {
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
-            outputStream.putNextEntry(new JarEntry("bar/Foo.class"));
-            outputStream.write(new byte[]{1, 2, 3});
-            outputStream.closeEntry();
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
+            jarOutputStream.putNextEntry(new JarEntry("bar/Foo.class"));
+            jarOutputStream.write(new byte[]{1, 2, 3});
+            jarOutputStream.closeEntry();
+            jarOutputStream.close();
         } finally {
             outputStream.close();
         }
@@ -99,11 +104,13 @@ public class PluginEngineSourceForJarFileTest {
     public void testManifest() throws Exception {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
-            outputStream.putNextEntry(new JarEntry(JarFile.MANIFEST_NAME));
-            manifest.write(outputStream);
-            outputStream.closeEntry();
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
+            jarOutputStream.putNextEntry(new JarEntry(JarFile.MANIFEST_NAME));
+            manifest.write(jarOutputStream);
+            jarOutputStream.closeEntry();
+            jarOutputStream.close();
         } finally {
             outputStream.close();
         }

@@ -43,15 +43,17 @@ public class ClassFileLocatorForJarFileTest {
 
     @Test
     public void testSuccessfulLocation() throws Exception {
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
             JarEntry jarEntry = new JarEntry(FOO + "/" + BAR + ClassFileLocator.CLASS_FILE_EXTENSION);
             jarOutputStream.putNextEntry(jarEntry);
             jarOutputStream.write(VALUE);
             jarOutputStream.write(VALUE * 2);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         JarFile jarFile = new JarFile(file);
         try {
@@ -89,14 +91,16 @@ public class ClassFileLocatorForJarFileTest {
 
     @Test
     public void testNonSuccessfulLocation() throws Exception {
-        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
             JarEntry jarEntry = new JarEntry("noop.class");
             jarOutputStream.putNextEntry(jarEntry);
             jarOutputStream.write(VALUE);
             jarOutputStream.closeEntry();
-        } finally {
             jarOutputStream.close();
+        } finally {
+            outputStream.close();
         }
         JarFile jarFile = new JarFile(file);
         try {

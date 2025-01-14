@@ -55,16 +55,18 @@ public class PluginEngineDefaultOtherTest {
     @Test
     public void testMissingDependency() throws IOException {
         File jar = temporaryFolder.newFile("source.jar");
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(jar));
+        OutputStream outputStream = new FileOutputStream(jar);
         try {
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
             for (Class<?> type : new Class<?>[] {
                     PluginEngineDefaultOtherTest.class,
                     TypeWithDependency.class,
                     TypeWithoutDependency.class}) {
-                outputStream.putNextEntry(new JarEntry(type.getName().replace(".", "/") + ClassFileLocator.CLASS_FILE_EXTENSION));
-                outputStream.write(ClassFileLocator.ForClassLoader.read(type));
-                outputStream.closeEntry();
+                jarOutputStream.putNextEntry(new JarEntry(type.getName().replace(".", "/") + ClassFileLocator.CLASS_FILE_EXTENSION));
+                jarOutputStream.write(ClassFileLocator.ForClassLoader.read(type));
+                jarOutputStream.closeEntry();
             }
+            jarOutputStream.close();
         } finally {
             outputStream.close();
         }

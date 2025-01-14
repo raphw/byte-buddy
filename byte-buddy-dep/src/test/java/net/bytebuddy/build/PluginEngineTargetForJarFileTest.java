@@ -80,7 +80,7 @@ public class PluginEngineTargetForJarFileTest {
             assertThat(jarInputStream.getManifest(), nullValue(Manifest.class));
             JarEntry entry = jarInputStream.getNextJarEntry();
             assertThat(entry.getName(), is(FOO + "/" + BAR));
-            assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[]{1, 2, 3}));
+            assertThat(StreamDrainer.DEFAULT.drain(jarInputStream), is(new byte[]{1, 2, 3}));
             assertThat(jarInputStream.getNextJarEntry(), nullValue(JarEntry.class));
             jarInputStream.close();
         } finally {

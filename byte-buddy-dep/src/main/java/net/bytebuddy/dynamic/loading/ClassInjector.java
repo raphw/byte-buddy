@@ -2526,6 +2526,7 @@ public interface ClassInjector {
                             jarOutputStream.putNextEntry(new JarEntry(name.replace('.', '/') + CLASS_FILE_EXTENSION));
                             jarOutputStream.write(classFileLocator.locate(name).resolve());
                         }
+                        jarOutputStream.close();
                     } finally {
                         outputStream.close();
                     }

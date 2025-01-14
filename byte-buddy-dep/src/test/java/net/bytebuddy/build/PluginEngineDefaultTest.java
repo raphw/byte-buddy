@@ -19,10 +19,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -353,10 +350,12 @@ public class PluginEngineDefaultTest {
     @Test
     public void testImplicitFileInput() throws Exception {
         File file = temporaryFolder.newFile();
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
+        OutputStream outputStream = new FileOutputStream(file);
         try {
-            outputStream.putNextEntry(new JarEntry("dummy"));
-            outputStream.write(new byte[]{1, 2, 3});
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
+            jarOutputStream.putNextEntry(new JarEntry("dummy"));
+            jarOutputStream.write(new byte[]{1, 2, 3});
+            jarOutputStream.close();
         } finally {
             outputStream.close();
         }
@@ -410,10 +409,13 @@ public class PluginEngineDefaultTest {
     @Test
     public void testMain() throws Exception {
         File source = temporaryFolder.newFile(), target = temporaryFolder.newFile();
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(source));
+        OutputStream outputStream = new FileOutputStream(source);
         try {
-            outputStream.putNextEntry(new JarEntry("dummy"));
-            outputStream.write(new byte[]{1, 2, 3});
+            JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
+            jarOutputStream.putNextEntry(new JarEntry("dummy"));
+            jarOutputStream.write(new byte[]{1, 2, 3});
+            jarOutputStream.closeEntry();
+            jarOutputStream.close();
         } finally {
             outputStream.close();
         }
