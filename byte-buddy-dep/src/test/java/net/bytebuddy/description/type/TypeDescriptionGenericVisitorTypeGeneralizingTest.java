@@ -26,7 +26,8 @@ public class TypeDescriptionGenericVisitorTypeGeneralizingTest {
 
     @Test
     public void testGenericArray() throws Exception {
-        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onGenericArray(typeDescription), is(TypeDescription.ForLoadedType.of(Object.class)));
+        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onGenericArray(typeDescription),
+                is(TypeDefinition.Sort.describe(Object.class)));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -36,21 +37,25 @@ public class TypeDescriptionGenericVisitorTypeGeneralizingTest {
 
     @Test
     public void testParameterized() throws Exception {
-        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onParameterizedType(typeDescription), is(TypeDescription.ForLoadedType.of(Object.class)));
+        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onParameterizedType(typeDescription),
+                is(TypeDefinition.Sort.describe(Object.class)));
     }
 
     @Test
     public void testTypeVariable() throws Exception {
-        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onTypeVariable(typeDescription), is(TypeDescription.ForLoadedType.of(Object.class)));
+        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onTypeVariable(typeDescription),
+                is(TypeDefinition.Sort.describe(Object.class)));
     }
 
     @Test
     public void testNonGeneric() throws Exception {
-        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onNonGenericType(typeDescription), is(TypeDescription.ForLoadedType.of(Object.class)));
+        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onNonGenericType(typeDescription),
+                is(TypeDefinition.Sort.describe(Object.class)));
     }
 
     @Test
     public void testNonGenericPrimitive() throws Exception {
-        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onNonGenericType(TypeDefinition.Sort.describe(int.class)), is(TypeDescription.ForLoadedType.of(int.class)));
+        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onNonGenericType(TypeDefinition.Sort.describe(int.class)),
+                is(TypeDefinition.Sort.describe(int.class)));
     }
 }

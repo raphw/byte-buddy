@@ -795,7 +795,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A visitor that generalizes all reference types to {@link Object} but retains primitive types.
              */
-            enum Generalizing implements Visitor<TypeDescription> {
+            enum Generalizing implements Visitor<Generic> {
 
                 /**
                  * The singleton instance.
@@ -805,38 +805,38 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                public TypeDescription onGenericArray(Generic genericArray) {
-                    return TypeDescription.ForLoadedType.of(Object.class);
+                public Generic onGenericArray(Generic genericArray) {
+                    return Sort.describe(Object.class);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public TypeDescription onWildcard(Generic wildcard) {
+                public Generic onWildcard(Generic wildcard) {
                     throw new IllegalArgumentException("Cannot erase a wildcard type: " + wildcard);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public TypeDescription onParameterizedType(Generic parameterizedType) {
-                    return TypeDescription.ForLoadedType.of(Object.class);
+                public Generic onParameterizedType(Generic parameterizedType) {
+                    return Sort.describe(Object.class);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public TypeDescription onTypeVariable(Generic typeVariable) {
-                    return TypeDescription.ForLoadedType.of(Object.class);
+                public Generic onTypeVariable(Generic typeVariable) {
+                    return Sort.describe(Object.class);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public TypeDescription onNonGenericType(Generic typeDescription) {
+                public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.isPrimitive()
-                            ? typeDescription.asErasure()
-                            : TypeDescription.ForLoadedType.of(Object.class);
+                            ? typeDescription
+                            : Sort.describe(Object.class);
                 }
             }
 
