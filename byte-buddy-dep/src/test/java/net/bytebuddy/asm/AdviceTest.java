@@ -281,7 +281,6 @@ public class AdviceTest {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.AdviceBootstrapErased");
         Class<?> type = new ByteBuddy()
                 .redefine(TypedAdviceDelegation.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping().bootstrap(bootstrap.getMethod("bootstrap",
                         JavaType.METHOD_HANDLES_LOOKUP.load(),
                         String.class,
