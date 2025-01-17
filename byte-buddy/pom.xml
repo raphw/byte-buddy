@@ -261,16 +261,10 @@
                                         <relocation>
                                             <pattern>${shade.asm.source}</pattern>
                                             <shadedPattern>${shade.asm.target}</shadedPattern>
-                                            <includes>
-                                                <include>org.ow2.asm:*</include>
-                                            </includes>
                                         </relocation>
                                         <relocation>
                                             <pattern>${shade.asmjdkbridge.source}</pattern>
                                             <shadedPattern>${shade.asmjdkbridge.target}</shadedPattern>
-                                            <includes>
-                                                <include>codes.rafael.asmjdkbridge:*</include>
-                                            </includes>
                                         </relocation>
                                     </relocations>
                                     <filters>
