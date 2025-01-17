@@ -11034,15 +11034,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                             StackManipulation exceptionHandler,
                                             RelocationHandler.Relocation relocation) {
-                        MethodDescription.TypeToken typeToken = delegator.getTypeToken();
                         return doResolve(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                argumentHandler.bindEnter(typeToken),
-                                methodSizeHandler.bindEnter(typeToken),
-                                stackMapFrameHandler.bindEnter(typeToken),
+                                argumentHandler.bindEnter(delegator.getTypeToken()),
+                                methodSizeHandler.bindEnter(delegator.getTypeToken()),
+                                stackMapFrameHandler.bindEnter(delegator.getTypeToken()),
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler);
@@ -11281,15 +11280,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                             StackManipulation exceptionHandler,
                                             RelocationHandler.Relocation relocation) {
-                        MethodDescription.TypeToken typeToken = delegator.getTypeToken();
                         return doResolve(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                argumentHandler.bindExit(typeToken, getThrowable().represents(NoExceptionHandler.class)),
-                                methodSizeHandler.bindExit(typeToken),
-                                stackMapFrameHandler.bindExit(typeToken),
+                                argumentHandler.bindExit(delegator.getTypeToken(), getThrowable().represents(NoExceptionHandler.class)),
+                                methodSizeHandler.bindExit(delegator.getTypeToken()),
+                                stackMapFrameHandler.bindExit(delegator.getTypeToken()),
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler);
