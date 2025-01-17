@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
@@ -1676,7 +1677,9 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(PostProcessorInline.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
-                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                    public Advice.PostProcessor make(List<? extends AnnotationDescription> annotations,
+                                                     final TypeDescription returnType,
+                                                     boolean exit) {
                         return new Advice.PostProcessor() {
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
@@ -1685,7 +1688,7 @@ public class AdviceTest {
                                                              Advice.StackMapFrameHandler.ForPostProcessor stackMapFrameHandler,
                                                              StackManipulation exceptionHandler) {
                                 return new StackManipulation.Compound(
-                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        MethodVariableAccess.of(returnType).loadFrom(argumentHandler.enter()),
                                         MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
                                 );
                             }
@@ -1703,7 +1706,9 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(PostProcessorDelegate.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
-                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                    public Advice.PostProcessor make(List<? extends AnnotationDescription> annotations,
+                                                     final TypeDescription returnType,
+                                                     boolean exit) {
                         return new Advice.PostProcessor() {
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
@@ -1712,7 +1717,7 @@ public class AdviceTest {
                                                              Advice.StackMapFrameHandler.ForPostProcessor stackMapFrameHandler,
                                                              StackManipulation exceptionHandler) {
                                 return new StackManipulation.Compound(
-                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        MethodVariableAccess.of(returnType).loadFrom(argumentHandler.enter()),
                                         MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
                                 );
                             }
