@@ -200,7 +200,9 @@ public interface AsmClassWriter {
                 FACTORY = processor == null ? Default.ASM_FIRST : Default.valueOf(processor);
                 Class<?> type;
                 try {
-                    type = Class.forName("codes.rafael.asmjdkbridge.JdkClassReader");
+                    type = ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V24)
+                        ? Class.forName("codes.rafael.asmjdkbridge.JdkClassReader")
+                        : null;
                 } catch (ClassNotFoundException ignored) {
                     type = null;
                 }

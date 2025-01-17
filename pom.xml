@@ -344,6 +344,7 @@
                     <version>${version.plugin.surefire}</version>
                     <configuration>
                         <argLine>${surefire.arguments}</argLine>
+                        <trimStackTrace>false</trimStackTrace>
                         <systemPropertyVariables>
                             <net.bytebuddy.experimental>${bytebuddy.experimental}</net.bytebuddy.experimental>
                             <net.bytebuddy.test.integration>${bytebuddy.integration}</net.bytebuddy.test.integration>
