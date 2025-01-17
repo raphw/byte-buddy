@@ -37,7 +37,7 @@
         <dependency>
             <groupId>codes.rafael.asmjdkbridge</groupId>
             <artifactId>asm-jdk-bridge</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${version.asmjdkbridge}</version>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
