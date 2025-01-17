@@ -26,8 +26,8 @@
     -->
 
     <properties>
-        <shade.source>org.objectweb.asm</shade.source>
-        <shade.target>net.bytebuddy.jar.asm</shade.target>
+        <shade.asm.source>org.objectweb.asm</shade.asm.source>
+        <shade.asm.target>net.bytebuddy.jar.asm</shade.asm.target>
         <packages.list.external>
             net.bytebuddy,
             net.bytebuddy.agent.builder,
@@ -63,9 +63,9 @@
             net.bytebuddy.utility.nullability,
             net.bytebuddy.utility.privilege,
             net.bytebuddy.utility.visitor,
-            ${shade.target},
-            ${shade.target}.signature,
-            ${shade.target}.commons
+            ${shade.asm.target},
+            ${shade.asm.target}.signature,
+            ${shade.asm.target}.commons
         </packages.list.external>
         <packages.list.internal>
             net.bytebuddy.utility.dispatcher
@@ -256,8 +256,8 @@
                                     <shadeSourcesContent>true</shadeSourcesContent>
                                     <relocations>
                                         <relocation>
-                                            <pattern>${shade.source}</pattern>
-                                            <shadedPattern>${shade.target}</shadedPattern>
+                                            <pattern>${shade.asm.source}</pattern>
+                                            <shadedPattern>${shade.asm.target}</shadedPattern>
                                         </relocation>
                                     </relocations>
                                     <filters>
@@ -349,8 +349,8 @@
                                     <shadeSourcesContent>true</shadeSourcesContent>
                                     <relocations>
                                         <relocation>
-                                            <pattern>${shade.source}</pattern>
-                                            <shadedPattern>${shade.target}</shadedPattern>
+                                            <pattern>${shade.asm.source}</pattern>
+                                            <shadedPattern>${shade.asm.target}</shadedPattern>
                                         </relocation>
                                     </relocations>
                                     <filters>
@@ -439,8 +439,8 @@
                                 <phase>prepare-package</phase>
                                 <configuration>
                                     <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
-                                    <oldPackage>${shade.source}</oldPackage>
-                                    <newPackage>${shade.target}</newPackage>
+                                    <oldPackage>${shade.asm.source}</oldPackage>
+                                    <newPackage>${shade.asm.target}</newPackage>
                                     <artifacts>
                                         <artifact>org\.ow2\.asm:.*</artifact>
                                     </artifacts>
