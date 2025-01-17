@@ -160,14 +160,19 @@ public interface AsmClassWriter {
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "False positive in FindBugs.")
                 public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                    Object unwrapped = JDK_CLASS_READER == null ? null : classReader.unwrap(JDK_CLASS_READER);
-                    return new ForClassFileApi(unwrapped == null ? ForClassFileApi.DISPATCHER.make(flags,
-                            SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
-                            new SuperClassResolvingJdkClassWriter(typePool)) : ForClassFileApi.DISPATCHER.make(flags,
-                            unwrapped,
-                            SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
-                            new SuperClassResolvingJdkClassWriter(typePool)));
+                    Object jdkClassReader = JDK_CLASS_READER == null ? null : classReader.unwrap(JDK_CLASS_READER);
+                    if (jdkClassReader == null) {
+                        return new ForClassFileApi(ForClassFileApi.DISPATCHER.make(flags,
+                                SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
+                                new SuperClassResolvingJdkClassWriter(typePool)));
+                    } else {
+                        return new ForClassFileApi(ForClassFileApi.DISPATCHER.make(flags,
+                                jdkClassReader,
+                                SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
+                                new SuperClassResolvingJdkClassWriter(typePool)));
+                    }
                 }
             };
 
