@@ -20,6 +20,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
@@ -279,6 +280,7 @@ public class AdviceTest {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.AdviceBootstrapErased");
         Class<?> type = new ByteBuddy()
                 .redefine(TypedAdviceDelegation.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping().bootstrap(bootstrap.getMethod("bootstrap",
                         JavaType.METHOD_HANDLES_LOOKUP.load(),
                         String.class,

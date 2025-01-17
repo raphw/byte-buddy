@@ -4924,19 +4924,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Binds an advice method as enter advice for this handler.
              *
-             * @param adviceMethod The resolved enter advice handler.
+             * @param typeToken The type token of the advice method.
              * @return The resolved argument handler for enter advice.
              */
-            ForAdvice bindEnter(MethodDescription adviceMethod);
+            ForAdvice bindEnter(MethodDescription.TypeToken typeToken);
 
             /**
              * Binds an advice method as exit advice for this handler.
              *
-             * @param adviceMethod  The resolved exit advice handler.
+             * @param typeToken     The type token of the advice method.
              * @param skipThrowable {@code true} if no throwable is stored.
              * @return The resolved argument handler for enter advice.
              */
-            ForAdvice bindExit(MethodDescription adviceMethod, boolean skipThrowable);
+            ForAdvice bindExit(MethodDescription.TypeToken typeToken, boolean skipThrowable);
 
             /**
              * Returns {@code true} if the original arguments are copied before invoking the instrumented method.
@@ -5044,16 +5044,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
-                public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.Default.ForMethodEnter(instrumentedMethod, adviceMethod, exitType, namedTypes);
+                public ForAdvice bindEnter(MethodDescription.TypeToken typeToken) {
+                    return new ForAdvice.Default.ForMethodEnter(instrumentedMethod, typeToken, exitType, namedTypes);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public ForAdvice bindExit(MethodDescription adviceMethod, boolean skipThrowable) {
+                public ForAdvice bindExit(MethodDescription.TypeToken typeToken, boolean skipThrowable) {
                     return new ForAdvice.Default.ForMethodExit(instrumentedMethod,
-                            adviceMethod,
+                            typeToken,
                             exitType,
                             namedTypes,
                             enterType,
@@ -5210,9 +5210,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final MethodDescription instrumentedMethod;
 
                 /**
-                 * The advice method.
+                 * The type token of the advice method.
                  */
-                protected final MethodDescription adviceMethod;
+                protected final MethodDescription.TypeToken typeToken;
 
                 /**
                  * The enter type or {@code void} if no enter type is defined.
@@ -5228,16 +5228,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new argument handler for an enter advice.
                  *
                  * @param instrumentedMethod The instrumented method.
-                 * @param adviceMethod       The advice method.
+                 * @param typeToken          The type token of the advice method.
                  * @param exitType           The exit type or {@code void} if no exit type is defined.
                  * @param namedTypes         A mapping of all available local variables by their name to their type.
                  */
                 protected Default(MethodDescription instrumentedMethod,
-                                  MethodDescription adviceMethod,
+                                  MethodDescription.TypeToken typeToken,
                                   TypeDefinition exitType,
                                   SortedMap<String, TypeDefinition> namedTypes) {
                     this.instrumentedMethod = instrumentedMethod;
-                    this.adviceMethod = adviceMethod;
+                    this.typeToken = typeToken;
                     this.exitType = exitType;
                     this.namedTypes = namedTypes;
                 }
@@ -5284,15 +5284,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new argument handler for an enter advice method.
                      *
                      * @param instrumentedMethod The instrumented method.
-                     * @param adviceMethod       The advice method.
+                     * @param typeToken          The type token of the advice method.
                      * @param exitType           The exit type or {@code void} if no exit type is defined.
                      * @param namedTypes         A mapping of all available local variables by their name to their type.
                      */
                     protected ForMethodEnter(MethodDescription instrumentedMethod,
-                                             MethodDescription adviceMethod,
+                                             MethodDescription.TypeToken typeToken,
                                              TypeDefinition exitType,
                                              SortedMap<String, TypeDefinition> namedTypes) {
-                        super(instrumentedMethod, adviceMethod, exitType, namedTypes);
+                        super(instrumentedMethod, typeToken, exitType, namedTypes);
                     }
 
                     /**
@@ -5316,7 +5316,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return instrumentedMethod.getStackSize()
                                 + exitType.getStackSize().getSize()
                                 + StackSize.of(namedTypes.values())
-                                - adviceMethod.getStackSize() + offset;
+                                - StackSize.of(typeToken.getParameterTypes()) + offset;
                     }
                 }
 
@@ -5340,19 +5340,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new argument handler for an exit advice method.
                      *
                      * @param instrumentedMethod The instrumented method.
-                     * @param adviceMethod       The advice method.
+                     * @param typeToken       The type token of the advice method.
                      * @param exitType           The exit type or {@code void} if no exit type is defined.
                      * @param namedTypes         A mapping of all available local variables by their name to their type.
                      * @param enterType          The enter type or {@code void} if no enter type is defined.
                      * @param throwableSize      The stack size of a possibly stored throwable.
                      */
                     protected ForMethodExit(MethodDescription instrumentedMethod,
-                                            MethodDescription adviceMethod,
+                                            MethodDescription.TypeToken typeToken,
                                             TypeDefinition exitType,
                                             SortedMap<String, TypeDefinition> namedTypes,
                                             TypeDefinition enterType,
                                             StackSize throwableSize) {
-                        super(instrumentedMethod, adviceMethod, exitType, namedTypes);
+                        super(instrumentedMethod, typeToken, exitType, namedTypes);
                         this.enterType = enterType;
                         this.throwableSize = throwableSize;
                     }
@@ -5388,7 +5388,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 + enterType.getStackSize().getSize()
                                 + instrumentedMethod.getReturnType().getStackSize().getSize()
                                 + throwableSize.getSize()
-                                - adviceMethod.getStackSize()
+                                - StackSize.of(typeToken.getParameterTypes())
                                 + offset;
                     }
                 }
@@ -5636,6 +5636,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         StackManipulation apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
+        TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> getVisitor();
+
         /**
          * A factory for creating a {@link Delegator}.
          */
@@ -5676,6 +5678,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public StackManipulation apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return MethodInvocation.invoke(adviceMethod);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> getVisitor() {
+                return TypeDescription.Generic.Visitor.NoOp.INSTANCE;
             }
 
             /**
@@ -5782,6 +5791,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         adviceMethod.getReturnType().accept(visitor).asErasure(),
                         adviceMethod.getParameters().asTypeList().accept(visitor).asErasures(),
                         constants);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> getVisitor() {
+                return visitor;
             }
 
             /**
@@ -6946,7 +6962,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param instrumentedType   The instrumented type.
                  * @param instrumentedMethod The instrumented method.
-                 * @param typeToken  The method for which a frame is created.
+                 * @param typeToken          The method for which a frame is created.
                  * @param localVariable      The original local variable array.
                  * @param translated         The array containing the translated frames.
                  * @return The amount of frames added to the translated frame array.
@@ -9580,7 +9596,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return doApply(methodVisitor,
                                 implementationContext,
                                 assigner,
-                                argumentHandler.bindEnter(adviceMethod),
+                                argumentHandler.bindEnter(adviceMethod.asTypeToken()),
                                 methodSizeHandler.bindEnter(adviceMethod),
                                 stackMapFrameHandler.bindEnter(adviceMethod.asTypeToken()),
                                 instrumentedType,
@@ -9860,7 +9876,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return doApply(methodVisitor,
                                 implementationContext,
                                 assigner,
-                                argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
+                                argumentHandler.bindExit(adviceMethod.asTypeToken(), getThrowable().represents(NoExceptionHandler.class)),
                                 methodSizeHandler.bindExit(adviceMethod),
                                 stackMapFrameHandler.bindExit(adviceMethod.asTypeToken()),
                                 instrumentedType,
@@ -11003,14 +11019,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                             StackManipulation exceptionHandler,
                                             RelocationHandler.Relocation relocation) {
+                        MethodDescription.TypeToken typeToken = new MethodDescription.TypeToken(
+                                adviceMethod.getReturnType().accept(delegator.getVisitor()).asErasure(),
+                                adviceMethod.getParameters().asTypeList().accept(delegator.getVisitor()).asErasures()); // TODO: retain initial?
                         return doResolve(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                argumentHandler.bindEnter(adviceMethod),
+                                argumentHandler.bindEnter(typeToken),
                                 methodSizeHandler.bindEnter(adviceMethod),
-                                stackMapFrameHandler.bindEnter(adviceMethod.asTypeToken()), // TODO: visitor
+                                stackMapFrameHandler.bindEnter(typeToken),
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler);
@@ -11249,14 +11268,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                             StackManipulation exceptionHandler,
                                             RelocationHandler.Relocation relocation) {
+                        MethodDescription.TypeToken typeToken = new MethodDescription.TypeToken(
+                                adviceMethod.getReturnType().accept(delegator.getVisitor()).asErasure(),
+                                adviceMethod.getParameters().asTypeList().accept(delegator.getVisitor()).asErasures());
                         return doResolve(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
+                                argumentHandler.bindExit(typeToken, getThrowable().represents(NoExceptionHandler.class)),
                                 methodSizeHandler.bindExit(adviceMethod),
-                                stackMapFrameHandler.bindExit(adviceMethod.asTypeToken()),
+                                stackMapFrameHandler.bindExit(typeToken),
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler);
