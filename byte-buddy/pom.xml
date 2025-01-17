@@ -263,6 +263,10 @@
                                             <shadedPattern>${shade.asm.target}</shadedPattern>
                                         </relocation>
                                         <relocation>
+                                            <pattern>${shade.asmjdkbridge.source}</pattern>
+                                            <shadedPattern>${shade.asmjdkbridge.target}</shadedPattern>
+                                        </relocation>
+                                        <relocation>
                                             <pattern>codes/rafael/asmjdkbridge</pattern>
                                             <shadedPattern>net/bytebuddy/jar/asmjdkbridge</shadedPattern>
                                             <rawString>true</rawString>
