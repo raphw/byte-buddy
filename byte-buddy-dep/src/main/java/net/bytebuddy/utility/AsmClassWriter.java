@@ -15,8 +15,6 @@
  */
 package net.bytebuddy.utility;
 
-import codes.rafael.asmjdkbridge.JdkClassReader;
-import codes.rafael.asmjdkbridge.JdkClassWriter;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -181,8 +179,8 @@ public interface AsmClassWriter {
                     processor = doPrivileged(new GetSystemPropertyAction(OpenedClassReader.PROCESSOR_PROPERTY));
                 } catch (Throwable ignored) {
                     processor = null;
-                } // TODO: ASM_FIRST
-                FACTORY = processor == null ? Default.CLASS_FILE_API_ONLY : Default.valueOf(processor);
+                }
+                FACTORY = processor == null ? Default.ASM_FIRST : Default.valueOf(processor);
             }
 
             /**
