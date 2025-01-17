@@ -6729,7 +6729,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, initialTypes, latentTypes, preMethodTypes, TranslationMode.ENTER, instrumentedMethod.isConstructor()
+                return new ForAdvice(adviceMethod.asTypeToken(), initialTypes, latentTypes, preMethodTypes, TranslationMode.ENTER, instrumentedMethod.isConstructor()
                         ? Initialization.UNITIALIZED
                         : Initialization.INITIALIZED);
             }
@@ -6748,7 +6748,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param methodVisitor       The method visitor to write the frame to.
              * @param translationMode     The translation mode to apply.
-             * @param methodDescription   The method description for which the frame is written.
+             * @param typeToken           A type token for the method description for which the frame is written.
              * @param additionalTypes     The additional types to consider part of the instrumented method's parameters.
              * @param type                The frame's type.
              * @param localVariableLength The local variable length.
@@ -6758,7 +6758,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected void translateFrame(MethodVisitor methodVisitor,
                                           TranslationMode translationMode,
-                                          MethodDescription methodDescription,
+                                          boolean isStatic,
+                                          MethodDescription.TypeToken typeToken,
                                           List<? extends TypeDescription> additionalTypes,
                                           int type,
                                           int localVariableLength,
@@ -6775,41 +6776,41 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     case Opcodes.F_CHOP:
                         currentFrameDivergence -= localVariableLength;
                         if (currentFrameDivergence < 0) {
-                            throw new IllegalStateException(methodDescription + " dropped " + Math.abs(currentFrameDivergence) + " implicit frames");
+                            throw new IllegalStateException(typeToken + " dropped " + Math.abs(currentFrameDivergence) + " implicit frames");
                         }
                         break;
                     case Opcodes.F_FULL:
                     case Opcodes.F_NEW:
-                        if (methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1) > localVariableLength) {
-                            throw new IllegalStateException("Inconsistent frame length for " + methodDescription + ": " + localVariableLength);
+                        if (typeToken.getParameterTypes().size() + (isStatic ? 0 : 1) > localVariableLength) {
+                            throw new IllegalStateException("Inconsistent frame length for " + typeToken + ": " + localVariableLength);
                         }
                         int offset;
-                        if (methodDescription.isStatic()) {
+                        if (isStatic) {
                             offset = 0;
                         } else {
                             if (!translationMode.isPossibleThisFrameValue(instrumentedType, instrumentedMethod, localVariable[0])) {
-                                throw new IllegalStateException(methodDescription + " is inconsistent for 'this' reference: " + localVariable[0]);
+                                throw new IllegalStateException(typeToken + " is inconsistent for 'this' reference: " + localVariable[0]);
                             }
                             offset = 1;
                         }
-                        for (int index = 0; index < methodDescription.getParameters().size(); index++) {
-                            if (!Initialization.INITIALIZED.toFrame(methodDescription.getParameters().get(index).getType().asErasure()).equals(localVariable[index + offset])) {
-                                throw new IllegalStateException(methodDescription + " is inconsistent at " + index + ": " + localVariable[index + offset]);
+                        for (int index = 0; index < typeToken.getParameterTypes().size(); index++) {
+                            if (!Initialization.INITIALIZED.toFrame(typeToken.getParameterTypes().get(index)).equals(localVariable[index + offset])) {
+                                throw new IllegalStateException(typeToken + " is inconsistent at " + index + ": " + localVariable[index + offset]);
                             }
                         }
                         Object[] translated = new Object[localVariableLength
-                                - (methodDescription.isStatic() ? 0 : 1)
-                                - methodDescription.getParameters().size()
+                                - (isStatic ? 0 : 1)
+                                - typeToken.getParameterTypes().size()
                                 + (instrumentedMethod.isStatic() ? 0 : 1)
                                 + instrumentedMethod.getParameters().size()
                                 + additionalTypes.size()];
-                        int index = translationMode.copy(instrumentedType, instrumentedMethod, methodDescription, localVariable, translated);
+                        int index = translationMode.copy(instrumentedType, instrumentedMethod, typeToken, localVariable, translated);
                         for (TypeDescription typeDescription : additionalTypes) {
                             translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                         }
                         if (translated.length != index) {
                             System.arraycopy(localVariable,
-                                    methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
+                                    typeToken.getParameterTypes().size() + (isStatic ? 0 : 1),
                                     translated,
                                     index,
                                     translated.length - index);
@@ -6870,7 +6871,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected int copy(TypeDescription instrumentedType,
                                        MethodDescription instrumentedMethod,
-                                       MethodDescription methodDescription,
+                                       MethodDescription.TypeToken typeToken,
                                        Object[] localVariable,
                                        Object[] translated) {
                         int length = instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1);
@@ -6891,7 +6892,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected int copy(TypeDescription instrumentedType,
                                        MethodDescription instrumentedMethod,
-                                       MethodDescription methodDescription,
+                                       MethodDescription.TypeToken typeToken,
                                        Object[] localVariable,
                                        Object[] translated) {
                         int index = 0;
@@ -6921,7 +6922,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected int copy(TypeDescription instrumentedType,
                                        MethodDescription instrumentedMethod,
-                                       MethodDescription methodDescription,
+                                       MethodDescription.TypeToken typeToken,
                                        Object[] localVariable,
                                        Object[] translated) {
                         int index = 0;
@@ -6945,14 +6946,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param instrumentedType   The instrumented type.
                  * @param instrumentedMethod The instrumented method.
-                 * @param methodDescription  The method for which a frame is created.
+                 * @param typeToken  The method for which a frame is created.
                  * @param localVariable      The original local variable array.
                  * @param translated         The array containing the translated frames.
                  * @return The amount of frames added to the translated frame array.
                  */
                 protected abstract int copy(TypeDescription instrumentedType,
                                             MethodDescription instrumentedMethod,
-                                            MethodDescription methodDescription,
+                                            MethodDescription.TypeToken typeToken,
                                             Object[] localVariable,
                                             Object[] translated);
 
@@ -7145,7 +7146,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "ASM models frames by reference identity.")
                 protected void translateFrame(MethodVisitor methodVisitor,
                                               TranslationMode translationMode,
-                                              MethodDescription methodDescription,
+                                              boolean isStatic,
+                                              MethodDescription.TypeToken typeToken,
                                               List<? extends TypeDescription> additionalTypes,
                                               int type,
                                               int localVariableLength,
@@ -7155,14 +7157,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (type == Opcodes.F_FULL && localVariableLength > 0 && localVariable[0] != Opcodes.UNINITIALIZED_THIS) {
                         allowCompactCompletionFrame = true;
                     }
-                    super.translateFrame(methodVisitor, translationMode, methodDescription, additionalTypes, type, localVariableLength, localVariable, stackSize, stack);
+                    super.translateFrame(methodVisitor, translationMode, isStatic, typeToken, additionalTypes, type, localVariableLength, localVariable, stackSize, stack);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
-                    return new ForAdvice(adviceMethod,
+                    return new ForAdvice(adviceMethod.asTypeToken(),
                             CompoundList.of(initialTypes, preMethodTypes, postMethodTypes),
                             Collections.<TypeDescription>emptyList(),
                             Collections.<TypeDescription>emptyList(),
@@ -7315,8 +7317,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                int stackSize,
                                                @MaybeNull Object[] stack) {
                         translateFrame(methodVisitor,
-                                TranslationMode.COPY,
-                                instrumentedMethod,
+                                TranslationMode.COPY, // TODO: needs token?
+                                instrumentedMethod.isStatic(),
+                                instrumentedMethod.asTypeToken(),
                                 CompoundList.of(initialTypes, preMethodTypes),
                                 type,
                                 localVariableLength,
@@ -7476,9 +7479,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected class ForAdvice implements StackMapFrameHandler.ForAdvice {
 
                 /**
-                 * The method description for which frames are translated.
+                 * A token for the method description for which frames are translated.
                  */
-                protected final MethodDescription.InDefinedShape adviceMethod;
+                protected final MethodDescription.TypeToken typeToken;
 
                 /**
                  * The types provided before execution of the advice code.
@@ -7511,9 +7514,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private boolean intermedate;
 
                 /**
-                 * Creates a new meta data handler for an advice method.
+                 * Creates a new metadata handler for an advice method.
                  *
-                 * @param adviceMethod      The method description for which frames are translated.
+                 * @param typeToken         A token for the method description for which frames are translated.
                  * @param startTypes        The types provided before execution of the advice code.
                  * @param intermediateTypes The types that are given post execution of the advice.
                  * @param endTypes          The types provided after execution of the advice code.
@@ -7521,13 +7524,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *                          either {@link TranslationMode#ENTER} or {@link TranslationMode#EXIT}.
                  * @param initialization    The initialization to apply when resolving a reference to the instance on which a non-static method is invoked.
                  */
-                protected ForAdvice(MethodDescription.InDefinedShape adviceMethod,
+                protected ForAdvice(MethodDescription.TypeToken typeToken,
                                     List<? extends TypeDescription> startTypes,
                                     List<? extends TypeDescription> intermediateTypes,
                                     List<? extends TypeDescription> endTypes,
                                     TranslationMode translationMode,
                                     Initialization initialization) {
-                    this.adviceMethod = adviceMethod;
+                    this.typeToken = typeToken;
                     this.startTypes = startTypes;
                     this.intermediateTypes = intermediateTypes;
                     this.endTypes = endTypes;
@@ -7547,7 +7550,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            @MaybeNull Object[] stack) {
                     Default.this.translateFrame(methodVisitor,
                             translationMode,
-                            adviceMethod,
+                            true,
+                            typeToken,
                             startTypes,
                             type,
                             localVariableLength,
@@ -7561,19 +7565,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public void injectReturnFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
-                        if (adviceMethod.getReturnType().represents(void.class)) {
+                        if (typeToken.getReturnType().represents(void.class)) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             methodVisitor.visitFrame(Opcodes.F_SAME1,
                                     EMPTY.length,
                                     EMPTY,
                                     1,
-                                    new Object[]{Initialization.INITIALIZED.toFrame(adviceMethod.getReturnType().asErasure())});
+                                    new Object[]{Initialization.INITIALIZED.toFrame(typeToken.getReturnType())});
                         }
                     } else {
-                        injectFullFrame(methodVisitor, initialization, startTypes, adviceMethod.getReturnType().represents(void.class)
+                        injectFullFrame(methodVisitor, initialization, startTypes, typeToken.getReturnType().represents(void.class)
                                 ? Collections.<TypeDescription>emptyList()
-                                : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
+                                : Collections.singletonList(typeToken.getReturnType()));
                     }
                 }
 
