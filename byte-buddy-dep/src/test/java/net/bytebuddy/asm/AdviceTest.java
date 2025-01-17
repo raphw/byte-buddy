@@ -289,7 +289,7 @@ public class AdviceTest {
                         return new Advice.BootstrapArgumentResolver() {
                             public List<JavaConstant> resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                                 return Arrays.asList(
-                                        JavaConstant.Simple.ofLoaded(adviceMethod.getName()),
+                                        JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
                                         JavaConstant.Simple.ofLoaded(adviceMethod.getDescriptor()));
                             }
                         };
