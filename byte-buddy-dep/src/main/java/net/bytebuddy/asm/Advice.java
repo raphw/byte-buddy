@@ -6754,6 +6754,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param methodVisitor       The method visitor to write the frame to.
              * @param translationMode     The translation mode to apply.
+             * @param isStatic            {@code true} if the targeted type token represents a static method.
              * @param typeToken           A type token for the method description for which the frame is written.
              * @param additionalTypes     The additional types to consider part of the instrumented method's parameters.
              * @param type                The frame's type.
@@ -6810,7 +6811,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 + (instrumentedMethod.isStatic() ? 0 : 1)
                                 + instrumentedMethod.getParameters().size()
                                 + additionalTypes.size()];
-                        int index = translationMode.copy(instrumentedType, instrumentedMethod, typeToken, localVariable, translated);
+                        int index = translationMode.copy(instrumentedType, instrumentedMethod, localVariable, translated);
                         for (TypeDescription typeDescription : additionalTypes) {
                             translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                         }
@@ -6877,7 +6878,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected int copy(TypeDescription instrumentedType,
                                        MethodDescription instrumentedMethod,
-                                       MethodDescription.TypeToken typeToken,
                                        Object[] localVariable,
                                        Object[] translated) {
                         int length = instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1);
@@ -6898,7 +6898,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected int copy(TypeDescription instrumentedType,
                                        MethodDescription instrumentedMethod,
-                                       MethodDescription.TypeToken typeToken,
                                        Object[] localVariable,
                                        Object[] translated) {
                         int index = 0;
@@ -6928,7 +6927,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected int copy(TypeDescription instrumentedType,
                                        MethodDescription instrumentedMethod,
-                                       MethodDescription.TypeToken typeToken,
                                        Object[] localVariable,
                                        Object[] translated) {
                         int index = 0;
@@ -6952,14 +6950,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param instrumentedType   The instrumented type.
                  * @param instrumentedMethod The instrumented method.
-                 * @param typeToken          The method for which a frame is created.
                  * @param localVariable      The original local variable array.
                  * @param translated         The array containing the translated frames.
                  * @return The amount of frames added to the translated frame array.
                  */
                 protected abstract int copy(TypeDescription instrumentedType,
                                             MethodDescription instrumentedMethod,
-                                            MethodDescription.TypeToken typeToken,
                                             Object[] localVariable,
                                             Object[] translated);
 
@@ -7323,7 +7319,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                int stackSize,
                                                @MaybeNull Object[] stack) {
                         translateFrame(methodVisitor,
-                                TranslationMode.COPY, // TODO: needs token?
+                                TranslationMode.COPY,
                                 instrumentedMethod.isStatic(),
                                 instrumentedMethod.asTypeToken(),
                                 CompoundList.of(initialTypes, preMethodTypes),
@@ -10831,7 +10827,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new advice method writer.
                          *
-                         * @param typeToken          The advice method's type token.
+                         * @param typeToken             The advice method's type token.
                          * @param instrumentedType      The instrumented type.
                          * @param instrumentedMethod    The instrumented method.
                          * @param assigner              The assigner to use.
