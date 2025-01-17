@@ -20,6 +20,7 @@ import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
@@ -27,6 +28,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 
+import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
 /**
@@ -158,12 +160,20 @@ public interface AsmClassWriter {
                  * {@inheritDoc}
                  */
                 public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                    JdkClassReader unwrapped = classReader.unwrap(JdkClassReader.class);
-                    return new ForClassFileApi(unwrapped == null
-                            ? new SuperClassResolvingJdkClassWriter(flags, typePool)
-                            : new SuperClassResolvingJdkClassWriter(flags, unwrapped, typePool));
+                    Object unwrapped = JDK_CLASS_READER == null ? null : classReader.unwrap(JDK_CLASS_READER);
+                    return new ForClassFileApi(unwrapped == null ? ForClassFileApi.DISPATCHER.make(flags,
+                            SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
+                            new SuperClassResolvingJdkClassWriter(typePool)) : ForClassFileApi.DISPATCHER.make(flags,
+                            unwrapped, SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
+                            new SuperClassResolvingJdkClassWriter(typePool)));
                 }
             };
+
+            /**
+             * The {@code codes.rafael.asmjdkbridge.JdkClassReader} type or {@code null} if not available.
+             */
+            @MaybeNull
+            private static final Class<?> JDK_CLASS_READER;
 
             /**
              * The implicit factory to use for writing class files.
@@ -171,7 +181,7 @@ public interface AsmClassWriter {
             private static final Factory FACTORY;
 
             /*
-             * Resolves the implicit writer factory, if any.
+             * Resolves the implicit writer factory, if any and locates a possible {@code JdkClassReader} type.
              */
             static {
                 String processor;
@@ -181,6 +191,13 @@ public interface AsmClassWriter {
                     processor = null;
                 }
                 FACTORY = processor == null ? Default.ASM_FIRST : Default.valueOf(processor);
+                Class<?> type;
+                try {
+                    type = Class.forName("codes.rafael.asmjdkbridge.JdkClassReader");
+                } catch (ClassNotFoundException ignored) {
+                    type = null;
+                }
+                JDK_CLASS_READER = type;
             }
 
             /**
@@ -335,17 +352,38 @@ public interface AsmClassWriter {
     class ForClassFileApi implements AsmClassWriter {
 
         /**
+         * The dispatcher for interacting with a {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+         */
+        private static final JdkClassWriter DISPATCHER = doPrivileged(JavaDispatcher.of(JdkClassWriter.class));
+
+        /**
          * The represented class writer.
          */
-        private final JdkClassWriter classWriter;
+        private final ClassVisitor classWriter;
 
         /**
          * Creates a new class file API-based class writer.
          *
          * @param classWriter The represented class writer.
          */
-        public ForClassFileApi(JdkClassWriter classWriter) {
+        public ForClassFileApi(ClassVisitor classWriter) {
+            if (!DISPATCHER.isInstance(classWriter)) {
+                throw new IllegalArgumentException("Not a JDK class writer: " + classWriter);
+            }
             this.classWriter = classWriter;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @MaybeNull
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -359,7 +397,57 @@ public interface AsmClassWriter {
          * {@inheritDoc}
          */
         public byte[] getBinaryRepresentation() {
-            return classWriter.toByteArray();
+            return DISPATCHER.toByteArray(classWriter);
+        }
+
+        /**
+         * An API to interact with {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+         */
+        @JavaDispatcher.Proxied("codes.rafael.asmjdkbridge.JdkClassWriter")
+        protected interface JdkClassWriter {
+
+            /**
+             * Checks if the supplied instance is a {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+             *
+             * @param value The value to evaluate.
+             * @return {@code true} if the supplied instance is a  {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+             */
+            @JavaDispatcher.Instance
+            boolean isInstance(ClassVisitor value);
+
+            /**
+             * Create a new {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+             *
+             * @param flags         The flags to consider.
+             * @param getSuperClass A resolver for the super class.
+             * @param target        The target to invoke the super class resolver upon.
+             * @return A new {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+             */
+            @JavaDispatcher.IsConstructor
+            ClassVisitor make(int flags, Method getSuperClass, Object target);
+
+            /**
+             * Create a new {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+             *
+             * @param flags         The flags to consider.
+             * @param classReader   The class reader of which to reuse the constant pool.
+             * @param getSuperClass A resolver for the super class.
+             * @param target        The target to invoke the super class resolver upon.
+             * @return A new {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+             */
+            @JavaDispatcher.IsConstructor
+            ClassVisitor make(int flags,
+                              @JavaDispatcher.Proxied("codes.rafael.asmjdkbridge.JdkClassReader") Object classReader,
+                              Method getSuperClass,
+                              Object target);
+
+            /**
+             * Reads the created class file byte array from a given {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
+             *
+             * @param value The {@code codes.rafael.asmjdkbridge.JdkClassWriter} to read from.
+             * @return The generated class file.
+             */
+            byte[] toByteArray(ClassVisitor value);
         }
     }
 
@@ -423,9 +511,27 @@ public interface AsmClassWriter {
     }
 
     /**
-     * A JDK class write that resolves super classes using a {@link TypePool}.
+     * A pseudo-JDK class writer that resolves super classes using a {@link TypePool}, to pass in the constructor.
      */
-    class SuperClassResolvingJdkClassWriter extends JdkClassWriter {
+    class SuperClassResolvingJdkClassWriter {
+
+        /**
+         * The {@link SuperClassResolvingJdkClassWriter#getSuperClass(String)} method.
+         */
+        protected static final Method GET_SUPER_CLASS;
+
+        /*
+         * Resolve the method instance to use for reflection.
+         */
+        static {
+            Method getSuperClass;
+            try {
+                getSuperClass = SuperClassResolvingJdkClassWriter.class.getMethod("getSuperClass", String.class);
+            } catch (NoSuchMethodException e) {
+                throw new IllegalStateException("Failed to resolve own method", e);
+            }
+            GET_SUPER_CLASS = getSuperClass;
+        }
 
         /**
          * The {@link TypePool} to use.
@@ -435,29 +541,23 @@ public interface AsmClassWriter {
         /**
          * Creates a super class resolving JDK class writer.
          *
-         * @param flags    The writer flags to use.
          * @param typePool The {@link TypePool} to use.
          */
-        public SuperClassResolvingJdkClassWriter(int flags, TypePool typePool) {
-            super(flags);
+        public SuperClassResolvingJdkClassWriter(TypePool typePool) {
             this.typePool = typePool;
         }
 
         /**
-         * Creates a super class resolving JDK class writer.
+         * Resolves the super class for a given internal class name, or {@code null} if a given class
+         * represents an interface. The provided class name will never be {@link Object}.
          *
-         * @param flags       The writer flags to use.
-         * @param classReader The JDK class reader that represents the transformed type that is written, in its original state.
-         * @param typePool    The {@link TypePool} to use.
+         * @param internalName The internal name of the class or interface of which to return a super type.
+         * @return The internal name of the super class or {@code null} if the provided type name represents
+         * an interface.
          */
-        public SuperClassResolvingJdkClassWriter(int flags, JdkClassReader classReader, TypePool typePool) {
-            super(classReader, flags);
-            this.typePool = typePool;
-        }
-
-        @Override
-        protected String getSuperClass(String name) {
-            TypeDescription typeDescription = typePool.describe(name.replace('/', '.')).resolve();
+        @MaybeNull
+        public String getSuperClass(String internalName) {
+            TypeDescription typeDescription = typePool.describe(internalName.replace('/', '.')).resolve();
             return typeDescription.isInterface()
                     ? null
                     : typeDescription.getSuperClass().asErasure().getInternalName();
