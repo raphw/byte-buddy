@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -164,7 +165,8 @@ public interface AsmClassWriter {
                     return new ForClassFileApi(unwrapped == null ? ForClassFileApi.DISPATCHER.make(flags,
                             SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
                             new SuperClassResolvingJdkClassWriter(typePool)) : ForClassFileApi.DISPATCHER.make(flags,
-                            unwrapped, SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
+                            unwrapped,
+                            SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
                             new SuperClassResolvingJdkClassWriter(typePool)));
                 }
             };
@@ -557,6 +559,7 @@ public interface AsmClassWriter {
          * an interface.
          */
         @MaybeNull
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Object class can never be passed.")
         public String getSuperClass(String internalName) {
             TypeDescription typeDescription = typePool.describe(internalName.replace('/', '.')).resolve();
             return typeDescription.isInterface()

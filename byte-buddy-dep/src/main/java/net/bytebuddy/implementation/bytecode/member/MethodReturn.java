@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation.bytecode.member;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -65,7 +66,7 @@ public enum MethodReturn implements StackManipulation {
     /**
      * The operand stack size change that is implied by this operation.
      */
-    private final Size size;
+    private final StackSize stackSize;
 
     /**
      * Creates a new method return manipulation.
@@ -75,7 +76,7 @@ public enum MethodReturn implements StackManipulation {
      */
     MethodReturn(int returnOpcode, StackSize stackSize) {
         this.returnOpcode = returnOpcode;
-        size = stackSize.toDecreasingSize();
+        this.stackSize = stackSize;
     }
 
     /**
@@ -114,6 +115,6 @@ public enum MethodReturn implements StackManipulation {
      */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(returnOpcode);
-        return size;
+        return stackSize.toIncreasingSize();
     }
 }
