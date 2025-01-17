@@ -10416,8 +10416,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public TypeDescription getAdviceType() {
-                return adviceMethod.getReturnType().asErasure();
+            public TypeDefinition getAdviceType() {
+                return adviceMethod.getReturnType();
             }
 
             /**
@@ -11113,7 +11113,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * {@inheritDoc}
                          */
                         public TypeDefinition getAdviceType() {
-                            return adviceMethod.getReturnType();
+                            return adviceMethod.getReturnType().accept(delegator.getVisitor()); // TODO: replace method with field?
                         }
                     }
 
@@ -11349,7 +11349,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * {@inheritDoc}
                      */
                     public TypeDefinition getAdviceType() {
-                        return adviceMethod.getReturnType();
+                        return adviceMethod.getReturnType().accept(delegator.getVisitor());
                     }
 
                     /**
