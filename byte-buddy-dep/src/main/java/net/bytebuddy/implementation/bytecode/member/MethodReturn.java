@@ -114,6 +114,6 @@ public enum MethodReturn implements StackManipulation {
      */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(returnOpcode);
-        return stackSize.toIncreasingSize();
+        return stackSize.toDecreasingSize();
     }
 }
