@@ -6450,20 +6450,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         interface ForInstrumentedMethod extends StackMapFrameHandler {
 
             /**
-             * Binds this meta data handler for the enter advice.
+             * Binds this metadata handler for the enter advice.
              *
-             * @param adviceMethod The enter advice method.
-             * @return An appropriate meta data handler for the enter method.
+             * @param typeToken The type token representing the advice method.
+             * @return An appropriate metadata handler for the enter method.
              */
-            ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod);
+            ForAdvice bindEnter(MethodDescription.TypeToken typeToken);
 
             /**
-             * Binds this meta data handler for the exit advice.
+             * Binds this metadata handler for the exit advice.
              *
-             * @param adviceMethod The exit advice method.
-             * @return An appropriate meta data handler for the enter method.
+             * @param typeToken The type token representing the advice method.
+             * @return An appropriate metadata handler for the enter method.
              */
-            ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod);
+            ForAdvice bindExit(MethodDescription.TypeToken typeToken);
 
             /**
              * Returns a hint to supply to a {@link ClassReader} when parsing an advice method.
@@ -6514,14 +6514,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
+            public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.TypeToken typeToken) {
                 return this;
             }
 
             /**
              * {@inheritDoc}
              */
-            public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
+            public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.TypeToken typeToken) {
                 return this;
             }
 
@@ -6728,8 +6728,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod.asTypeToken(), initialTypes, latentTypes, preMethodTypes, TranslationMode.ENTER, instrumentedMethod.isConstructor()
+            public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.TypeToken typeToken) {
+                return new ForAdvice(typeToken, initialTypes, latentTypes, preMethodTypes, TranslationMode.ENTER, instrumentedMethod.isConstructor()
                         ? Initialization.UNITIALIZED
                         : Initialization.INITIALIZED);
             }
@@ -7061,8 +7061,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
-                public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
-                    throw new IllegalStateException("Did not expect exit advice " + adviceMethod + " for " + instrumentedMethod);
+                public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.TypeToken typeToken) {
+                    throw new IllegalStateException("Did not expect exit advice " + typeToken + " for " + instrumentedMethod);
                 }
 
                 /**
@@ -7163,8 +7163,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
-                public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
-                    return new ForAdvice(adviceMethod.asTypeToken(),
+                public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.TypeToken typeToken) {
+                    return new ForAdvice(typeToken,
                             CompoundList.of(initialTypes, preMethodTypes, postMethodTypes),
                             Collections.<TypeDescription>emptyList(),
                             Collections.<TypeDescription>emptyList(),
@@ -7511,7 +7511,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@code true} if an intermediate frame was yielded.
                  */
-                private boolean intermedate;
+                private boolean intermediate;
 
                 /**
                  * Creates a new metadata handler for an advice method.
@@ -7536,7 +7536,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.endTypes = endTypes;
                     this.translationMode = translationMode;
                     this.initialization = initialization;
-                    intermedate = false;
+                    intermediate = false;
                 }
 
                 /**
@@ -7598,8 +7598,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void injectCompletionFrame(MethodVisitor methodVisitor) {
                     if (expandFrames) {
                         injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
-                    } else if (currentFrameDivergence == 0 && (intermedate || endTypes.size() < 4)) {
-                        if (intermedate || endTypes.isEmpty()) {
+                    } else if (currentFrameDivergence == 0 && (intermediate || endTypes.size() < 4)) {
+                        if (intermediate || endTypes.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             Object[] local = new Object[endTypes.size()];
@@ -7623,7 +7623,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void injectIntermediateFrame(MethodVisitor methodVisitor, List<? extends TypeDescription> stack) {
                     if (expandFrames) {
                         injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, intermediateTypes), stack);
-                    } else if (intermedate && stack.size() < 2) {
+                    } else if (intermediate && stack.size() < 2) {
                         if (stack.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
@@ -7652,7 +7652,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, intermediateTypes), stack);
                     }
                     currentFrameDivergence = intermediateTypes.size() - endTypes.size();
-                    intermedate = true;
+                    intermediate = true;
                 }
             }
         }
@@ -9582,7 +9582,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 assigner,
                                 argumentHandler.bindEnter(adviceMethod),
                                 methodSizeHandler.bindEnter(adviceMethod),
-                                stackMapFrameHandler.bindEnter(adviceMethod),
+                                stackMapFrameHandler.bindEnter(adviceMethod.asTypeToken()),
                                 instrumentedType,
                                 instrumentedMethod,
                                 suppressionHandler,
@@ -9862,7 +9862,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 assigner,
                                 argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 methodSizeHandler.bindExit(adviceMethod),
-                                stackMapFrameHandler.bindExit(adviceMethod),
+                                stackMapFrameHandler.bindExit(adviceMethod.asTypeToken()),
                                 instrumentedType,
                                 instrumentedMethod,
                                 suppressionHandler,
@@ -11010,7 +11010,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 assigner,
                                 argumentHandler.bindEnter(adviceMethod),
                                 methodSizeHandler.bindEnter(adviceMethod),
-                                stackMapFrameHandler.bindEnter(adviceMethod),
+                                stackMapFrameHandler.bindEnter(adviceMethod.asTypeToken()), // TODO: visitor
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler);
@@ -11256,7 +11256,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 assigner,
                                 argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 methodSizeHandler.bindExit(adviceMethod),
-                                stackMapFrameHandler.bindExit(adviceMethod),
+                                stackMapFrameHandler.bindExit(adviceMethod.asTypeToken()),
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler);
