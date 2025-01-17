@@ -8772,7 +8772,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : offsetMapping);
                     }
                     suppressionHandler = SuppressionHandler.Suppressing.of(throwableType);
-                    relocationHandler = RelocationHandler.ForType.of(relocatableType, relocatableIndex, adviceMethod.getReturnType()); // TODO
+                    relocationHandler = RelocationHandler.ForType.of(relocatableType, relocatableIndex, adviceMethod.getReturnType());
                 }
 
                 /**
@@ -10831,7 +10831,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new advice method writer.
                          *
-                         * @param adviceMethod          The advice method.
+                         * @param typeToken          The advice method's type token.
                          * @param instrumentedType      The instrumented type.
                          * @param instrumentedMethod    The instrumented method.
                          * @param assigner              The assigner to use.
@@ -10997,8 +10997,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * {@inheritDoc}
                      */
                     public TypeDefinition getActualAdviceType() {
-                        return adviceMethod.getReturnType();
-                    } // TODO: rework?
+                        return delegator.toTypeToken().getReturnType();
+                    }
 
                     @Override
                     protected Bound resolve(TypeDescription instrumentedType,
@@ -11060,7 +11060,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     argumentHandler,
                                     OffsetMapping.Sort.ENTER));
                         }
-                        return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
+                        return new AdviceMethodWriter.ForMethodEnter(delegator.toTypeToken(),
                                 instrumentedType,
                                 instrumentedMethod,
                                 assigner,
@@ -11307,7 +11307,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     argumentHandler,
                                     OffsetMapping.Sort.EXIT));
                         }
-                        return new AdviceMethodWriter.ForMethodExit(adviceMethod,
+                        return new AdviceMethodWriter.ForMethodExit(adviceMethod.asTypeToken(),
                                 instrumentedType,
                                 instrumentedMethod,
                                 assigner,
