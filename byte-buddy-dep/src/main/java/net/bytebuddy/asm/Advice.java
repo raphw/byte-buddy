@@ -5493,8 +5493,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a post processor for a given advice method.
              *
-             * @param returnType The advice method's return type that is being post-processed.
-             * @param exit       {@code true} if the advice is exit advice.
+             * @param annotations The annotations of the advice method.
+             * @param returnType  The advice method's return type that is being post-processed.
+             * @param exit        {@code true} if the advice is exit advice.
              * @return The created post processor.
              */
             PostProcessor make(List<? extends AnnotationDescription> annotations, TypeDescription returnType, boolean exit);
@@ -13077,7 +13078,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Creates a new post processor for assigning an advice method's return value.
          *
-         * @param typeDescription                    The advice method's return type.
+         * @param typeDescription         The advice method's return type.
          * @param exceptionHandlerFactory The exception handler factory to use.
          * @param exit                    {@code true} if this post processor is used within exit advice.
          * @param skipOnDefaultValue      {@code true} if a default value indicates that no assignment should be conducted.
