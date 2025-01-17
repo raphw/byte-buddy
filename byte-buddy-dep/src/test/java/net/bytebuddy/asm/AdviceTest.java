@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
@@ -20,7 +21,9 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
 import org.junit.Test;
@@ -268,6 +271,37 @@ public class AdviceTest {
                 .load(bootstrap.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = TypedAdviceDelegation.class)
+    public void testErasedAdviceWithDelegationBootstrapped() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.AdviceBootstrapErased");
+        Class<?> type = new ByteBuddy()
+                .redefine(TypedAdviceDelegation.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.withCustomMapping().bootstrap(bootstrap.getMethod("bootstrap",
+                        JavaType.METHOD_HANDLES_LOOKUP.load(),
+                        String.class,
+                        JavaType.METHOD_TYPE.load(),
+                        String.class,
+                        String.class), new Advice.BootstrapArgumentResolver.Factory() {
+                    public Advice.BootstrapArgumentResolver resolve(final MethodDescription.InDefinedShape adviceMethod, boolean exit) {
+                        return new Advice.BootstrapArgumentResolver() {
+                            public List<JavaConstant> resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return Arrays.asList(
+                                        JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
+                                        JavaConstant.Simple.ofLoaded(adviceMethod.getDescriptor()));
+                            }
+                        };
+                    }
+                }, TypeDescription.Generic.Visitor.Generalizing.INSTANCE).to(TypedAdviceDelegation.class).on(named(FOO)))
+                .make()
+                .load(bootstrap.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
@@ -1643,7 +1677,9 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(PostProcessorInline.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
-                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                    public Advice.PostProcessor make(List<? extends AnnotationDescription> annotations,
+                                                     final TypeDescription returnType,
+                                                     boolean exit) {
                         return new Advice.PostProcessor() {
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
@@ -1652,7 +1688,7 @@ public class AdviceTest {
                                                              Advice.StackMapFrameHandler.ForPostProcessor stackMapFrameHandler,
                                                              StackManipulation exceptionHandler) {
                                 return new StackManipulation.Compound(
-                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        MethodVariableAccess.of(returnType).loadFrom(argumentHandler.enter()),
                                         MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
                                 );
                             }
@@ -1670,7 +1706,9 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(PostProcessorDelegate.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
-                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                    public Advice.PostProcessor make(List<? extends AnnotationDescription> annotations,
+                                                     final TypeDescription returnType,
+                                                     boolean exit) {
                         return new Advice.PostProcessor() {
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
@@ -1679,7 +1717,7 @@ public class AdviceTest {
                                                              Advice.StackMapFrameHandler.ForPostProcessor stackMapFrameHandler,
                                                              StackManipulation exceptionHandler) {
                                 return new StackManipulation.Compound(
-                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        MethodVariableAccess.of(returnType).loadFrom(argumentHandler.enter()),
                                         MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
                                 );
                             }
@@ -2463,6 +2501,34 @@ public class AdviceTest {
 
         @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         private static void exit() {
+            exit++;
+        }
+    }
+
+
+    @SuppressWarnings("unused")
+    public static class TypedAdviceDelegation {
+
+        public static int enter, exit;
+
+        public String foo(String argument) {
+            return argument;
+        }
+
+        @Advice.OnMethodEnter(inline = false)
+        private static String enter(@Advice.Argument(0) String argument) {
+            if (!FOO.equals(argument)) {
+                throw new AssertionError();
+            }
+            enter++;
+            return BAR;
+        }
+
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
+        private static void exit(@Advice.Enter String enter) {
+            if (!BAR.equals(enter)) {
+                throw new AssertionError();
+            }
             exit++;
         }
     }

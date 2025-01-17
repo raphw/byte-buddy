@@ -793,7 +793,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A visitor that generalizes all reference types to {@link Object} but retains primitive types.
+             * A visitor that generalizes all reference types to {@link Object} but retains primitive types. Arrays
+             * are retained as such.
              */
             enum Generalizing implements Visitor<Generic> {
 
@@ -805,8 +806,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                 public Generic onGenericArray(Generic genericArray) {
-                    return Sort.describe(Object.class);
+                    int arity = 0;
+                    do {
+                        arity++;
+                        genericArray = genericArray.getComponentType();
+                    } while (genericArray.isArray());
+                    return ArrayProjection.of(TypeDescription.ForLoadedType.of(Object.class), arity).asGenericType();
                 }
 
                 /**
@@ -820,23 +827,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * {@inheritDoc}
                  */
                 public Generic onParameterizedType(Generic parameterizedType) {
-                    return Sort.describe(Object.class);
+                    return TypeDescription.ForLoadedType.of(Object.class).asGenericType();
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Generic onTypeVariable(Generic typeVariable) {
-                    return Sort.describe(Object.class);
+                    return TypeDescription.ForLoadedType.of(Object.class).asGenericType();
                 }
 
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                 public Generic onNonGenericType(Generic typeDescription) {
-                    return typeDescription.isPrimitive()
+                    int arity = 0;
+                    Generic componentType = typeDescription;
+                    while (componentType.isArray()) {
+                        arity++;
+                        componentType = componentType.getComponentType();
+                    }
+                    return componentType.isPrimitive()
                             ? typeDescription
-                            : Sort.describe(Object.class);
+                            : ArrayProjection.of(TypeDescription.ForLoadedType.of(Object.class), arity).asGenericType();
                 }
             }
 

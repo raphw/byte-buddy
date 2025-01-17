@@ -17,17 +17,14 @@ public class TypeDescriptionGenericVisitorTypeGeneralizingTest {
     public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
-    private TypeDescription.Generic typeDescription, rawType;
+    private TypeDescription.Generic typeDescription, componentType;
 
-    @Before
-    public void setUp() throws Exception {
-        when(typeDescription.asRawType()).thenReturn(rawType);
-    }
 
     @Test
     public void testGenericArray() throws Exception {
+        when(typeDescription.getComponentType()).thenReturn(componentType);
         assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onGenericArray(typeDescription),
-                is(TypeDefinition.Sort.describe(Object.class)));
+                is(TypeDefinition.Sort.describe(Object[].class)));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -54,8 +51,22 @@ public class TypeDescriptionGenericVisitorTypeGeneralizingTest {
     }
 
     @Test
+    public void testNonGenericArray() throws Exception {
+        when(typeDescription.isArray()).thenReturn(true);
+        when(typeDescription.getComponentType()).thenReturn(componentType);
+        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onNonGenericType(typeDescription),
+                is(TypeDefinition.Sort.describe(Object[].class)));
+    }
+
+    @Test
     public void testNonGenericPrimitive() throws Exception {
         assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onNonGenericType(TypeDefinition.Sort.describe(int.class)),
                 is(TypeDefinition.Sort.describe(int.class)));
+    }
+
+    @Test
+    public void testNonGenericPrimitiveArray() throws Exception {
+        assertThat(TypeDescription.Generic.Visitor.Generalizing.INSTANCE.onNonGenericType(TypeDefinition.Sort.describe(int[].class)),
+                is(TypeDefinition.Sort.describe(int[].class)));
     }
 }
