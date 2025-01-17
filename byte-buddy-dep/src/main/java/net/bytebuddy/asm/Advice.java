@@ -5909,16 +5909,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public List<JavaConstant> resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 if (instrumentedMethod.isTypeInitializer()) {
-                    return Arrays.asList(net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
-                            net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(exit ? 1 : 0),
-                            net.bytebuddy.utility.JavaConstant.Simple.of(instrumentedType),
-                            net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()));
+                    return Arrays.asList(JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
+                            JavaConstant.Simple.ofLoaded(exit ? 1 : 0),
+                            JavaConstant.Simple.of(instrumentedType),
+                            JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()));
                 } else {
-                    return Arrays.asList(net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
-                            net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(exit ? 1 : 0),
-                            net.bytebuddy.utility.JavaConstant.Simple.of(instrumentedType),
-                            net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()),
-                            net.bytebuddy.utility.JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()));
+                    return Arrays.asList(JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
+                            JavaConstant.Simple.ofLoaded(exit ? 1 : 0),
+                            JavaConstant.Simple.of(instrumentedType),
+                            JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()),
+                            JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()));
                 }
             }
 
