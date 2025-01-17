@@ -35,11 +35,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>codes.rafael.asmjdkbridge</groupId>
-            <artifactId>asm-jdk-bridge</artifactId>
-            <version>${version.asmjdkbridge}</version>
-        </dependency>
-        <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
             <version>${version.asm}</version>
@@ -58,6 +53,11 @@
                     <artifactId>asm-tree</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>codes.rafael.asmjdkbridge</groupId>
+            <artifactId>asm-jdk-bridge</artifactId>
+            <version>${version.asmjdkbridge}</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
