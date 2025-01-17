@@ -15,9 +15,10 @@
  */
 package net.bytebuddy.utility;
 
-import codes.rafael.asmjdkbridge.JdkClassReader;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Attribute;
@@ -81,7 +82,6 @@ public interface AsmClassReader {
              * or {@link AsmClassWriter.Factory.Default#ASM_FIRST} if no implicit processor is defined.
              */
             IMPLICIT {
-
                 /**
                  * {@inheritDoc}
                  */
@@ -134,12 +134,11 @@ public interface AsmClassReader {
              * A factory for a class reader that always uses the class file API.
              */
             CLASS_FILE_API_ONLY {
-
                 /**
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    return new AsmClassReader.ForClassFileApi(new JdkClassReader(binaryRepresentation));
+                    return new AsmClassReader.ForClassFileApi(ForClassFileApi.DISPATCHER.make(binaryRepresentation));
                 }
             };
 
@@ -228,20 +227,41 @@ public interface AsmClassReader {
     /**
      * A class reader that is based upon the Class File API.
      */
+    @HashCodeAndEqualsPlugin.Enhance
     class ForClassFileApi implements AsmClassReader {
+
+        /**
+         * A dispatcher to interact with {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+         */
+        protected static final JdkClassReader DISPATCHER = doPrivileged(JavaDispatcher.of(JdkClassReader.class));
 
         /**
          * The class reader that represents the class file to be read.
          */
-        private final JdkClassReader classReader;
+        private final Object classReader;
 
         /**
          * Creates a new class reader that is based upon the Class File API.
          *
          * @param classReader The class reader that represents the class file to be read.
          */
-        public ForClassFileApi(JdkClassReader classReader) {
+        public ForClassFileApi(Object classReader) {
+            if (!DISPATCHER.isInstance(classReader)) {
+                throw new IllegalArgumentException();
+            }
             this.classReader = classReader;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -256,7 +276,41 @@ public interface AsmClassReader {
          * {@inheritDoc}
          */
         public void accept(ClassVisitor classVisitor, int flags) {
-            classReader.accept(classVisitor, flags);
+            DISPATCHER.accept(classReader, classVisitor, flags);
+        }
+
+        /**
+         * A dispatcher to interact with {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+         */
+        @JavaDispatcher.Proxied("codes.rafael.asmjdkbridge.JdkClassReader")
+        protected interface JdkClassReader {
+
+            /**
+             * Checks if the supplied object is an instance of {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+             *
+             * @param value The instance to evaluate.
+             * @return {@code true} if the supplied object is an instance of {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+             */
+            @JavaDispatcher.IsConstructor
+            boolean isInstance(Object value);
+
+            /**
+             * Creates an instance of {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+             *
+             * @param binaryRepresentation The binary representation of a class file to represent through the reader.
+             * @return A new instance of {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+             */
+            @JavaDispatcher.IsConstructor
+            Object make(byte[] binaryRepresentation);
+
+            /**
+             * Accepts a class reader to visit the represented class file.
+             *
+             * @param classReader  The class reader that is being visited.
+             * @param classVisitor The class visitor to visit the class.
+             * @param flags        The flags to consider during reading.
+             */
+            void accept(Object classReader, ClassVisitor classVisitor, int flags);
         }
     }
 }
