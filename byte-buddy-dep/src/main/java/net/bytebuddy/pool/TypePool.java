@@ -806,7 +806,7 @@ public interface TypePool {
          * @param parentPool       The parent type pool.
          */
         public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool) {
-            this(cacheProvider, classFileLocator, readerMode, AsmClassReader.Factory.Default.INSTANCE, parentPool);
+            this(cacheProvider, classFileLocator, readerMode, AsmClassReader.Factory.Default.IMPLICIT, parentPool);
         }
 
         /**

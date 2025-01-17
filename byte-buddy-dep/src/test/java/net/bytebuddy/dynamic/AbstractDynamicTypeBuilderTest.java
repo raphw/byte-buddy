@@ -1521,7 +1521,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         TypeDescription typeDescription = createPlain()
                 .make()
                 .getTypeDescription();
-        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(AsmVisitorWrapper.NO_FLAGS);
+        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(AsmVisitorWrapper.NO_FLAGS);
         ContextClassVisitor classVisitor = createPlain()
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC, Ownership.STATIC)
                 .throwing(Exception.class)

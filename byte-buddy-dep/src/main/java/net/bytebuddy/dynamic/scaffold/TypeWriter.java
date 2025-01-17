@@ -6126,12 +6126,14 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                @MaybeNull
                 protected FieldVisitor onVisitField(int modifiers, String name, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
                     visitedFields.add(new SignatureKey(name, descriptor));
                     return super.onVisitField(modifiers, name, descriptor, signature, value);
                 }
 
                 @Override
+                @MaybeNull
                 protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
                     visitedMethods.add(new SignatureKey(internalName, descriptor));
                     return super.onVisitMethod(modifiers, internalName, descriptor, signature, exception);

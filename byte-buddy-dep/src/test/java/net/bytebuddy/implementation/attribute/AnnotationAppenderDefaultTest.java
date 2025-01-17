@@ -157,7 +157,7 @@ public class AnnotationAppenderDefaultTest {
 
     private Class<?> makeTypeWithAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
-        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(AsmVisitorWrapper.NO_FLAGS);
+        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(AsmVisitorWrapper.NO_FLAGS);
         classWriter.getVisitor().visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),
@@ -177,7 +177,7 @@ public class AnnotationAppenderDefaultTest {
 
     private Class<?> makeTypeWithSuperClassAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
-        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.INSTANCE.make(AsmVisitorWrapper.NO_FLAGS);
+        AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(AsmVisitorWrapper.NO_FLAGS);
         classWriter.getVisitor().visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),

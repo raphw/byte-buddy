@@ -61,7 +61,7 @@ public class TypeWriterDeclarationPreservationTest {
     @Test
     public void testRedefinition() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
+        AsmClassReader.Factory.Default.IMPLICIT.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
         new ByteBuddy()
                 .redefine(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))
@@ -71,7 +71,7 @@ public class TypeWriterDeclarationPreservationTest {
     @Test
     public void testRebasing() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
+        AsmClassReader.Factory.Default.IMPLICIT.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
         new ByteBuddy()
                 .rebase(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))
@@ -81,7 +81,7 @@ public class TypeWriterDeclarationPreservationTest {
     @Test
     public void testDecoration() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        AsmClassReader.Factory.Default.INSTANCE.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
+        AsmClassReader.Factory.Default.IMPLICIT.make(ClassFileLocator.ForClassLoader.read(type)).accept(typeModifierExtractor, AsmVisitorWrapper.NO_FLAGS);
         new ByteBuddy()
                 .decorate(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))

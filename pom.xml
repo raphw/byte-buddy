@@ -59,7 +59,7 @@
         <copyright.holder>Rafael Winterhalter</copyright.holder>
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
-        <bytebuddy.experimental>false</bytebuddy.experimental>
+        <bytebuddy.experimental>true</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.outputTimestamp>1734253639</project.build.outputTimestamp>
         <sourcecode.main.version>1.5</sourcecode.main.version>
@@ -342,7 +342,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${version.plugin.surefire}</version>
                     <configuration>
-                        <argLine>${surefire.arguments}</argLine>
+                        <argLine>--enable-preview ${surefire.arguments}</argLine>
                         <systemPropertyVariables>
                             <net.bytebuddy.experimental>${bytebuddy.experimental}</net.bytebuddy.experimental>
                             <net.bytebuddy.test.integration>${bytebuddy.integration}</net.bytebuddy.test.integration>
@@ -365,8 +365,8 @@
                     <version>${version.plugin.compiler}</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <source>${sourcecode.main.version}</source>
-                        <target>${bytecode.main.version}</target>
+                        <enablePreview>true</enablePreview>
+                        <release>24</release>
                         <testSource>${sourcecode.test.version}</testSource>
                         <testTarget>${bytecode.test.version}</testTarget>
                         <encoding>${project.build.sourceEncoding}</encoding>
