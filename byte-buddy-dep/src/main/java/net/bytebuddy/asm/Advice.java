@@ -5644,6 +5644,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         MethodDescription.TypeToken toTypeToken();
 
         /**
+         * Asserts the visibility of the delegation target.
+         *
+         * @param instrumentedType The instrumented type.
+         */
+        void assertVisibility(TypeDescription instrumentedType);
+
+        /**
          * A factory for creating a {@link Delegator}.
          */
         interface Factory {
@@ -5690,6 +5697,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public MethodDescription.TypeToken toTypeToken() {
                 return adviceMethod.asTypeToken();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void assertVisibility(TypeDescription instrumentedType) {
+                if (!adviceMethod.isVisibleTo(instrumentedType)) {
+                    throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedType);
+                }
             }
 
             /**
@@ -5787,6 +5803,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public MethodDescription.TypeToken toTypeToken() {
                 return signatureToken.asTypeToken();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void assertVisibility(TypeDescription instrumentedType) {
+                if (!bootstrapMethod.isVisibleTo(instrumentedType)) {
+                    throw new IllegalStateException(bootstrapMethod + " is not visible to " + instrumentedType);
+                }
             }
 
             /**
@@ -8698,11 +8723,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             abstract class AbstractBase implements Resolved {
 
                 /**
-                 * The represented advice method.
-                 */
-                protected final MethodDescription.InDefinedShape adviceMethod;
-
-                /**
                  * The post processor to apply.
                  */
                 protected final PostProcessor postProcessor;
@@ -8740,7 +8760,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                        TypeDescription relocatableType,
                                        int relocatableIndex,
                                        OffsetMapping.Factory.AdviceType adviceType) {
-                    this.adviceMethod = adviceMethod;
                     this.postProcessor = postProcessor;
                     Map<TypeDescription, OffsetMapping.Factory<?>> offsetMappings = new HashMap<TypeDescription, OffsetMapping.Factory<?>>();
                     for (OffsetMapping.Factory<?> factory : factories) {
@@ -9040,6 +9059,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected abstract static class Resolved extends Dispatcher.Resolved.AbstractBase {
 
                 /**
+                 * The represented advice method.
+                 */
+                protected final MethodDescription.InDefinedShape adviceMethod;
+
+                /**
                  * A class reader to query for the class file of the advice method.
                  */
                 protected final AsmClassReader classReader;
@@ -9063,6 +9087,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                    int relocatableIndex,
                                    AsmClassReader classReader) {
                     super(adviceMethod, postProcessor, factories, throwableType, relocatableType, relocatableIndex, OffsetMapping.Factory.AdviceType.INLINING);
+                    this.adviceMethod = adviceMethod;
                     this.classReader = classReader;
                 }
 
@@ -10515,9 +10540,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                   StackManipulation exceptionHandler,
                                   RelocationHandler.Relocation relocation) {
-                    if (!adviceMethod.isVisibleTo(instrumentedType)) {
-                        throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
-                    }
+                    delegator.assertVisibility(instrumentedType);
                     return resolve(instrumentedType,
                             instrumentedMethod,
                             methodVisitor,
@@ -11146,7 +11169,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   SuppressionHandler.Bound suppressionHandler,
                                                   RelocationHandler.Bound relocationHandler,
                                                   StackManipulation exceptionHandler) {
-                            methodSizeHandler.requireLocalVariableLengthPadding(adviceMethod.getReturnType().getStackSize().getSize());
+                            methodSizeHandler.requireLocalVariableLengthPadding(delegator.toTypeToken().getReturnType().getStackSize().getSize());
                             return super.doResolve(instrumentedType,
                                     instrumentedMethod,
                                     methodVisitor,
@@ -11303,7 +11326,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     argumentHandler,
                                     OffsetMapping.Sort.EXIT));
                         }
-                        return new AdviceMethodWriter.ForMethodExit(adviceMethod.asTypeToken(),
+                        return new AdviceMethodWriter.ForMethodExit(delegator.toTypeToken(),
                                 instrumentedType,
                                 instrumentedMethod,
                                 assigner,
