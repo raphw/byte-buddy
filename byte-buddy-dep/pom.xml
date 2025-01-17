@@ -502,7 +502,6 @@
                                     <goal>testCompile</goal>
                                 </goals>
                                 <configuration>
-                                    <enablePreview>true</enablePreview>
                                     <testIncludes>
                                         <include>net/bytebuddy/test/precompiled/v4/**</include>
                                     </testIncludes>
@@ -597,7 +596,6 @@
                                     <goal>testCompile</goal>
                                 </goals>
                                 <configuration>
-                                    <enablePreview>true</enablePreview>
                                     <target>${bytecode.test.version}</target>
                                     <testIncludes>
                                         <include>net/bytebuddy/test/precompiled/v4jsr14/**</include>
@@ -914,7 +912,6 @@
                                     <goal>testCompile</goal>
                                 </goals>
                                 <configuration>
-                                    <enablePreview>true</enablePreview>
                                     <parameters>true</parameters>
                                     <testIncludes>
                                         <include>net/bytebuddy/test/precompiled/v8parameters/**</include>

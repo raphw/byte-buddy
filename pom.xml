@@ -343,7 +343,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${version.plugin.surefire}</version>
                     <configuration>
-                        <argLine>--enable-preview ${surefire.arguments}</argLine>
+                        <argLine>${surefire.arguments}</argLine>
                         <systemPropertyVariables>
                             <net.bytebuddy.experimental>${bytebuddy.experimental}</net.bytebuddy.experimental>
                             <net.bytebuddy.test.integration>${bytebuddy.integration}</net.bytebuddy.test.integration>
@@ -366,8 +366,6 @@
                     <version>${version.plugin.compiler}</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <enablePreview>true</enablePreview>
-                        <release>24</release>
                         <testSource>${sourcecode.test.version}</testSource>
                         <testTarget>${bytecode.test.version}</testTarget>
                         <encoding>${project.build.sourceEncoding}</encoding>

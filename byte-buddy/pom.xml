@@ -28,6 +28,8 @@
     <properties>
         <shade.asm.source>org.objectweb.asm</shade.asm.source>
         <shade.asm.target>net.bytebuddy.jar.asm</shade.asm.target>
+        <shade.asmjdkbridge.source>codes.rafael.asmjdkbridge</shade.asmjdkbridge.source>
+        <shade.asmjdkbridge.target>net.bytebuddy.jar.asmjdkbridge</shade.asmjdkbridge.target>
         <packages.list.external>
             net.bytebuddy,
             net.bytebuddy.agent.builder,
@@ -65,7 +67,8 @@
             net.bytebuddy.utility.visitor,
             ${shade.asm.target},
             ${shade.asm.target}.signature,
-            ${shade.asm.target}.commons
+            ${shade.asm.target}.commons,
+            ${shade.asmjdkbridge.target}
         </packages.list.external>
         <packages.list.internal>
             net.bytebuddy.utility.dispatcher
@@ -258,6 +261,16 @@
                                         <relocation>
                                             <pattern>${shade.asm.source}</pattern>
                                             <shadedPattern>${shade.asm.target}</shadedPattern>
+                                            <includes>
+                                                <include>org.ow2.asm:*</include>
+                                            </includes>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>${shade.asmjdkbridge.source}</pattern>
+                                            <shadedPattern>${shade.asmjdkbridge.target}</shadedPattern>
+                                            <includes>
+                                                <include>codes.rafael.asmjdkbridge:*</include>
+                                            </includes>
                                         </relocation>
                                     </relocations>
                                     <filters>
@@ -275,6 +288,16 @@
                                                 <exclude>**/module-info.class</exclude>
                                                 <exclude>**/LICENSE</exclude>
                                                 <exclude>**/NOTICE</exclude>
+                                            </excludes>
+                                        </filter>
+                                        <filter>
+                                            <artifact>codes.rafael.asmjdkbridge:*</artifact>
+                                            <includes>
+                                                <include>META-INF/versions/**</include>
+                                            </includes>
+                                            <excludes>
+                                                <exclude>META-INF/MANIFEST.MF</exclude>
+                                                <exclude>**/module-info.class</exclude>
                                             </excludes>
                                         </filter>
                                         <filter>
@@ -351,6 +374,16 @@
                                         <relocation>
                                             <pattern>${shade.asm.source}</pattern>
                                             <shadedPattern>${shade.asm.target}</shadedPattern>
+                                            <includes>
+                                                <include>org.ow2.asm:*</include>
+                                            </includes>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>${shade.asmjdkbridge.source}</pattern>
+                                            <shadedPattern>${shade.asmjdkbridge.target}</shadedPattern>
+                                            <includes>
+                                                <include>codes.rafael.asmjdkbridge:*</include>
+                                            </includes>
                                         </relocation>
                                     </relocations>
                                     <filters>
@@ -358,6 +391,7 @@
                                             <artifact>net.bytebuddy:byte-buddy-dep:*</artifact>
                                             <excludes>
                                                 <exclude>META-INF/MANIFEST.MF</exclude>
+                                                <exclude>META-INF/maven/**</exclude>
                                             </excludes>
                                         </filter>
                                         <filter>
@@ -367,6 +401,16 @@
                                                 <exclude>**/module-info.class</exclude>
                                                 <exclude>**/LICENSE</exclude>
                                                 <exclude>**/NOTICE</exclude>
+                                            </excludes>
+                                        </filter>
+                                        <filter>
+                                            <artifact>codes.rafael.asmjdkbridge:*</artifact>
+                                            <includes>
+                                                <include>META-INF/versions/**</include>
+                                            </includes>
+                                            <excludes>
+                                                <exclude>META-INF/MANIFEST.MF</exclude>
+                                                <exclude>**/module-info.class</exclude>
                                             </excludes>
                                         </filter>
                                         <filter>
