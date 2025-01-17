@@ -354,7 +354,9 @@ public interface AsmClassWriter {
         /**
          * The dispatcher for interacting with a {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
          */
-        private static final JdkClassWriter DISPATCHER = doPrivileged(JavaDispatcher.of(JdkClassWriter.class));
+        private static final JdkClassWriter DISPATCHER = doPrivileged(JavaDispatcher.of(
+                JdkClassWriter.class,
+                ForClassFileApi.class.getClassLoader()));
 
         /**
          * The represented class writer.
@@ -380,7 +382,6 @@ public interface AsmClassWriter {
          * @param <T>    The type of the action's resolved value.
          * @return The action's resolved value.
          */
-        @MaybeNull
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
             return action.run();

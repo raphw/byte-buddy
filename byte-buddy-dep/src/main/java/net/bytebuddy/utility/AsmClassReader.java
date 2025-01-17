@@ -233,7 +233,9 @@ public interface AsmClassReader {
         /**
          * A dispatcher to interact with {@code codes.rafael.asmjdkbridge.JdkClassReader}.
          */
-        protected static final JdkClassReader DISPATCHER = doPrivileged(JavaDispatcher.of(JdkClassReader.class));
+        protected static final JdkClassReader DISPATCHER = doPrivileged(JavaDispatcher.of(
+                JdkClassReader.class,
+                ForClassFileApi.class.getClassLoader()));
 
         /**
          * The class reader that represents the class file to be read.

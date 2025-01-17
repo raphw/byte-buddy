@@ -148,7 +148,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param <T>         The resolved type.
      * @return An action for creating an appropriate dispatcher.
      */
-    protected static <T> PrivilegedAction<T> of(Class<T> type, @MaybeNull ClassLoader classLoader) {
+    public static <T> PrivilegedAction<T> of(Class<T> type, @MaybeNull ClassLoader classLoader) {
         return of(type, classLoader, GENERATE);
     }
 
