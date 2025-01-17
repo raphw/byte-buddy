@@ -1,11 +1,19 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. January 2025: version 1.16.0
+
+- Allow for erasure of types of bootstrapped methods in `Advice` within instrumented class.
+- Rework `Advice` post-processing to allow for erasure of bootstrapped methods.
+- Fix missing application of hashCode/equals plugin for Java 8 code.
+- Include support for JDK Class File API.
+- Allow `Plugin.Engine` to retain folders.
+
 ### 15. December 2024: version 1.15.11
 
 - Avoid dependency of `CachedReturnPlugin` on precompiled class files.
 - Add `NOP` instruction when `Advice` is used on `void` methods as those might be empty which results on a frame being written to the same offset, causing an exception.
-- Allow `Plugin.Enging` to link files instead of copying.
+- Allow `Plugin.Engine` to link files instead of copying.
 - Adjust validator code to avoid compiler bug that was reported by multiple users.
 - Allow injection of class path as `File[]` to `Plugin` constructors.
 - Allow for configuring variants when using the Android Gradle plugin.
