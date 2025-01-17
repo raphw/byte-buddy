@@ -5658,34 +5658,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             private final BootstrapArgumentResolver resolver;
 
                             /**
-                             * A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                             * that is passed to the bootstrap method. The supplied types might not be available
-                             * to the instrumented type what might make it necessary to camouflage them to avoid
-                             * class loading errors. The actual type should then rather be passed in a different
-                             * format by the supplied {@link Advice.BootstrapArgumentResolver}.
-                             */
-                            private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
-
-                            /**
                              * Creates a dispatcher for a dynamic method invocation.
                              *
                              * @param bootstrapMethod The bootstrap method.
                              * @param delegate        The delegation method.
                              * @param resolver        A resolver for supplying arguments to the bootstrap method.
-                             * @param visitor         A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                             *                        that is passed to the bootstrap method. The supplied types might not be available
-                             *                        to the instrumented type what might make it necessary to camouflage them to avoid
-                             *                        class loading errors. The actual type should then rather be passed in a different
-                             *                        format by the supplied {@link Advice.BootstrapArgumentResolver}.
                              */
                             protected ForDynamicInvocation(MethodDescription.InDefinedShape bootstrapMethod,
                                                            MethodDescription.InDefinedShape delegate,
-                                                           BootstrapArgumentResolver resolver,
-                                                           TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                                                           BootstrapArgumentResolver resolver) {
                                 this.bootstrapMethod = bootstrapMethod;
                                 this.delegate = delegate;
                                 this.resolver = resolver;
-                                this.visitor = visitor;
                             }
 
                             /**
@@ -5693,27 +5677,21 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              *
                              * @param bootstrapMethod The bootstrap method.
                              * @param resolverFactory A resolver for supplying arguments to the bootstrap method.
-                             * @param visitor         A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                             *                        that is passed to the bootstrap method. The supplied types might not be available
-                             *                        to the instrumented type what might make it necessary to camouflage them to avoid
-                             *                        class loading errors. The actual type should then rather be passed in a different
-                             *                        format by the supplied {@link Advice.BootstrapArgumentResolver}.
                              * @return An appropriate dispatcher factory.
                              */
                             protected static Dispatcher.Factory of(MethodDescription.InDefinedShape bootstrapMethod,
-                                                                   BootstrapArgumentResolver.Factory resolverFactory,
-                                                                   TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                                                                   BootstrapArgumentResolver.Factory resolverFactory) {
                                 if (!bootstrapMethod.isInvokeBootstrap()) {
                                     throw new IllegalStateException("Not a bootstrap method: " + bootstrapMethod);
                                 }
-                                return new ForDynamicInvocation.Factory(bootstrapMethod, resolverFactory, visitor);
+                                return new ForDynamicInvocation.Factory(bootstrapMethod, resolverFactory);
                             }
 
                             /**
                              * {@inheritDoc}
                              */
                             public Dispatcher.Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                                return new ForDynamicInvocation.Resolved(bootstrapMethod, delegate, resolver.resolve(instrumentedType, instrumentedMethod), visitor);
+                                return new ForDynamicInvocation.Resolved(bootstrapMethod, delegate, resolver.resolve(instrumentedType, instrumentedMethod));
                             }
 
                             /**
@@ -5738,36 +5716,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 private final BootstrapArgumentResolver.Resolved resolver;
 
                                 /**
-                                 * A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                                 * that is passed to the bootstrap method. The supplied types might not be available
-                                 * to the instrumented type what might make it necessary to camouflage them to avoid
-                                 * class loading errors. The actual type should then rather be passed in a different
-                                 * format by the supplied {@link Advice.BootstrapArgumentResolver}.
-                                 */
-                                private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
-
-                                /**
                                  * Creates a resolved dispatcher of a dynamic method dispatcher.
                                  *
                                  * @param bootstrapMethod The bootstrap method.
                                  * @param delegate        The delegation target.
                                  * @param resolver        The bootstrap argument resolver to use.
-                                 * @param visitor         A visitor to apply to the parameter types prior to resolving
-                                 *                        the {@code MethodType} that is passed to the bootstrap method.
-                                 *                        The supplied types might not be available to the instrumented
-                                 *                        type what might make it necessary to camouflage them to avoid
-                                 *                        class loading errors. The actual type should then rather be
-                                 *                        passed in a different format by the supplied
-                                 *                        {@link Advice.BootstrapArgumentResolver}.
                                  */
                                 protected Resolved(MethodDescription.InDefinedShape bootstrapMethod,
                                                    MethodDescription.InDefinedShape delegate,
-                                                   BootstrapArgumentResolver.Resolved resolver,
-                                                   TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                                                   BootstrapArgumentResolver.Resolved resolver) {
                                     this.bootstrapMethod = bootstrapMethod;
                                     this.delegate = delegate;
                                     this.resolver = resolver;
-                                    this.visitor = visitor;
                                 }
 
                                 /**
@@ -5786,8 +5746,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments: " + constants);
                                     }
                                     return MethodInvocation.invoke(bootstrapMethod).dynamic(delegate.getInternalName(),
-                                            delegate.getReturnType().accept(visitor).asErasure(),
-                                            delegate.getParameters().asTypeList().accept(visitor).asErasures(),
+                                            delegate.getReturnType().asErasure(),
+                                            delegate.getParameters().asTypeList().asErasures(),
                                             constants);
                                 }
                             }
@@ -5809,39 +5769,22 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 private final BootstrapArgumentResolver.Factory resolverFactory;
 
                                 /**
-                                 *
-                                 * A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                                 * that is passed to the bootstrap method. The supplied types might not be available
-                                 * to the instrumented type what might make it necessary to camouflage them to avoid
-                                 * class loading errors. The actual type should then rather be passed in a different
-                                 * format by the supplied {@link Advice.BootstrapArgumentResolver}.
-                                 */
-                                private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
-
-                                /**
                                  * Creates a new factory for a dispatcher using a dynamic method invocation.
                                  *
                                  * @param bootstrapMethod The bootstrap method.
                                  * @param resolverFactory A factory for a bootstrap argument resolver.
-                                 * @param visitor         A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                                 *                        that is passed to the bootstrap method. The supplied types might not be available
-                                 *                        to the instrumented type what might make it necessary to camouflage them to avoid
-                                 *                        class loading errors. The actual type should then rather be passed in a different
-                                 *                        format by the supplied {@link Advice.BootstrapArgumentResolver}.
                                  */
                                 protected Factory(MethodDescription.InDefinedShape bootstrapMethod,
-                                                  BootstrapArgumentResolver.Factory resolverFactory,
-                                                  TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                                                  BootstrapArgumentResolver.Factory resolverFactory) {
                                     this.bootstrapMethod = bootstrapMethod;
                                     this.resolverFactory = resolverFactory;
-                                    this.visitor = visitor;
                                 }
 
                                 /**
                                  * {@inheritDoc}
                                  */
                                 public Dispatcher make(MethodDescription.InDefinedShape delegate) {
-                                    return new ForDynamicInvocation(bootstrapMethod, delegate, resolverFactory.make(delegate), visitor);
+                                    return new ForDynamicInvocation(bootstrapMethod, delegate, resolverFactory.make(delegate));
                                 }
                             }
                         }
@@ -6486,24 +6429,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         }
 
                         /**
-                         * Defines the supplied method as a dynamic invocation bootstrap target for delegating advice methods.
-                         *
-                         * @param method          The bootstrap method or constructor.
-                         * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
-                         * @param visitor         A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                         *                        that is passed to the bootstrap method. The supplied types might not be available
-                         *                        to the instrumented type what might make it necessary to camouflage them to avoid
-                         *                        class loading errors. The actual type should then rather be passed in a different
-                         *                        format by the supplied {@link Advice.BootstrapArgumentResolver}.
-                         * @return A new builder for a delegation within a member substitution that uses the supplied method for bootstrapping.
-                         */
-                        public WithCustomMapping bootstrap(Method method,
-                                                           BootstrapArgumentResolver.Factory resolverFactory,
-                                                           TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-                            return bootstrap(new MethodDescription.ForLoadedMethod(method), resolverFactory, visitor);
-                        }
-
-                        /**
                          * Defines the supplied method description as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
                          * method arguments are:
                          * <ul>
@@ -6534,25 +6459,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @return A new builder for a delegation within a member substitution that uses the supplied method or constructor for bootstrapping.
                          */
                         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap, BootstrapArgumentResolver.Factory resolverFactory) {
-                            return bootstrap(bootstrap, resolverFactory, TypeDescription.Generic.Visitor.NoOp.INSTANCE);
-                        }
-
-                        /**
-                         * Defines the supplied method description as a dynamic invocation bootstrap target for delegating advice methods.
-                         *
-                         * @param bootstrap       The bootstrap method or constructor.
-                         * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
-                         * @param visitor         A visitor to apply to the parameter types prior to resolving the {@code MethodType}
-                         *                        that is passed to the bootstrap method. The supplied types might not be available
-                         *                        to the instrumented type what might make it necessary to camouflage them to avoid
-                         *                        class loading errors. The actual type should then rather be passed in a different
-                         *                        format by the supplied {@link Advice.BootstrapArgumentResolver}.
-                         * @return A new builder for a delegation within a member substitution that uses the supplied method or constructor for bootstrapping.
-                         */
-                        public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap,
-                                                           BootstrapArgumentResolver.Factory resolverFactory,
-                                                           TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-                            return new WithCustomMapping(Dispatcher.ForDynamicInvocation.of(bootstrap, resolverFactory, visitor), offsetMappings);
+                            return new WithCustomMapping(Dispatcher.ForDynamicInvocation.of(bootstrap, resolverFactory), offsetMappings);
                         }
 
                         /**
