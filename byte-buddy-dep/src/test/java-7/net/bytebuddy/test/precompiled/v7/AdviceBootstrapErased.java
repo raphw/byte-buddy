@@ -23,11 +23,11 @@ public class AdviceBootstrapErased {
 
     public static ConstantCallSite bootstrap(MethodHandles.Lookup lookup,
                                              String invokedMethodName,
-                                             MethodType erasedInvokedMethodType,
+                                             MethodType erasedMethodType,
                                              String invokedClassName,
                                              String invokedMethodDescriptor) throws Exception {
         return new ConstantCallSite(lookup.findStatic(Class.forName(invokedClassName, false, lookup.lookupClass().getClassLoader()),
                 invokedMethodName,
-                MethodType.fromMethodDescriptorString(invokedMethodDescriptor, lookup.lookupClass().getClassLoader())));
+                MethodType.fromMethodDescriptorString(invokedMethodDescriptor, lookup.lookupClass().getClassLoader())).asType(erasedMethodType));
     }
 }

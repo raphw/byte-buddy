@@ -274,11 +274,11 @@ public class AdviceTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, target = TrivialAdviceDelegation.class)
+    @JavaVersionRule.Enforce(value = 7, target = TypedAdviceDelegation.class)
     public void testErasedAdviceWithDelegationBootstrapped() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.AdviceBootstrapErased");
         Class<?> type = new ByteBuddy()
-                .redefine(TrivialAdviceDelegation.class)
+                .redefine(TypedAdviceDelegation.class)
                 .visit(Advice.withCustomMapping().bootstrap(bootstrap.getMethod("bootstrap",
                         JavaType.METHOD_HANDLES_LOOKUP.load(),
                         String.class,
@@ -294,11 +294,11 @@ public class AdviceTest {
                             }
                         };
                     }
-                }, TypeDescription.Generic.Visitor.Generalizing.INSTANCE).to(TrivialAdviceDelegation.class).on(named(FOO)))
+                }, TypeDescription.Generic.Visitor.Generalizing.INSTANCE).to(TypedAdviceDelegation.class).on(named(FOO)))
                 .make()
                 .load(bootstrap.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
@@ -2494,6 +2494,34 @@ public class AdviceTest {
 
         @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         private static void exit() {
+            exit++;
+        }
+    }
+
+
+    @SuppressWarnings("unused")
+    public static class TypedAdviceDelegation {
+
+        public static int enter, exit;
+
+        public String foo(String argument) {
+            return argument;
+        }
+
+        @Advice.OnMethodEnter(inline = false)
+        private static String enter(@Advice.Argument(0) String argument) {
+            if (!FOO.equals(argument)) {
+                throw new AssertionError();
+            }
+            enter++;
+            return BAR;
+        }
+
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
+        private static void exit(@Advice.Enter String enter) {
+            if (!BAR.equals(enter)) {
+                throw new AssertionError();
+            }
             exit++;
         }
     }
