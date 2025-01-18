@@ -587,9 +587,13 @@ public interface TypePool {
             }
             if (arity > 0) {
                 String primitiveName = PRIMITIVE_DESCRIPTORS.get(name);
-                name = primitiveName == null
-                        ? name.substring(1, name.length() - 1)
-                        : primitiveName;
+                if (primitiveName != null) {
+                    name = primitiveName;
+                } else if (name.startsWith("L") && name.endsWith(";")) {
+                    name = name.substring(1, name.length() - 1);
+                } else {
+                    throw new IllegalArgumentException("Not a legitimate array type descriptor: " + name);
+                }
             }
             TypeDescription typeDescription = PRIMITIVE_TYPES.get(name);
             Resolution resolution = typeDescription == null

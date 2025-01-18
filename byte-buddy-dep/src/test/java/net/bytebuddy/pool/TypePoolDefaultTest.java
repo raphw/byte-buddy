@@ -33,6 +33,21 @@ public class TypePoolDefaultTest {
         typePool.describe("/");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testArrayNameMustBeDescriptorUnlessPrimitive() throws Exception {
+        typePool.describe("[abc");
+    }
+
+    @Test
+    public void testPrimitiveType() throws Exception {
+        assertThat(typePool.describe("int").resolve().represents(int.class), is(true));
+    }
+
+    @Test
+    public void testPrimitiveTypeArray() throws Exception {
+        assertThat(typePool.describe("[I").resolve().represents(int[].class), is(true));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testCannotFindClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe("foo");
