@@ -33,6 +33,11 @@ import java.security.PrivilegedAction;
 public interface AsmClassReader {
 
     /**
+     * Indicates that no custom attributes should be mapped.
+     */
+    Attribute[] NO_ATTRIBUTES = new Attribute[0];
+
+    /**
      * Unwraps a class reader to the underlying reader mechanism.
      *
      * @param type The type of the reader that should be unwrapped.
@@ -138,7 +143,9 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    return new AsmClassReader.ForClassFileApi(ForClassFileApi.DISPATCHER.make(binaryRepresentation));
+                    return new AsmClassReader.ForClassFileApi(ForClassFileApi.DISPATCHER.make(
+                            binaryRepresentation,
+                            NO_ATTRIBUTES));
                 }
             };
 
@@ -186,11 +193,6 @@ public interface AsmClassReader {
      * A class reader for ASM's own {@link ClassReader}.
      */
     class ForAsm implements AsmClassReader {
-
-        /**
-         * Indicates that no custom attributes should be mapped.
-         */
-        private static final Attribute[] NO_ATTRIBUTES = new Attribute[0];
 
         /**
          * The class reader that represents the class file to be read.
@@ -271,7 +273,9 @@ public interface AsmClassReader {
          */
         @MaybeNull
         public <T> T unwrap(Class<T> type) {
-            return null;
+            return type.isInstance(classReader)
+                    ? type.cast(classReader)
+                    : null;
         }
 
         /**
@@ -293,17 +297,18 @@ public interface AsmClassReader {
              * @param value The instance to evaluate.
              * @return {@code true} if the supplied object is an instance of {@code codes.rafael.asmjdkbridge.JdkClassReader}.
              */
-            @JavaDispatcher.IsConstructor
+            @JavaDispatcher.Instance
             boolean isInstance(Object value);
 
             /**
              * Creates an instance of {@code codes.rafael.asmjdkbridge.JdkClassReader}.
              *
              * @param binaryRepresentation The binary representation of a class file to represent through the reader.
+             * @param attribute            An array of attribute prototypes.
              * @return A new instance of {@code codes.rafael.asmjdkbridge.JdkClassReader}.
              */
             @JavaDispatcher.IsConstructor
-            Object make(byte[] binaryRepresentation);
+            Object make(byte[] binaryRepresentation, Attribute[] attribute);
 
             /**
              * Accepts a class reader to visit the represented class file.

@@ -168,8 +168,8 @@ public interface AsmClassWriter {
                                 SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
                                 new SuperClassResolvingJdkClassWriter(typePool)));
                     } else {
-                        return new ForClassFileApi(ForClassFileApi.DISPATCHER.make(flags,
-                                jdkClassReader,
+                        return new ForClassFileApi(ForClassFileApi.DISPATCHER.make(jdkClassReader,
+                                flags,
                                 SuperClassResolvingJdkClassWriter.GET_SUPER_CLASS,
                                 new SuperClassResolvingJdkClassWriter(typePool)));
                     }
@@ -439,15 +439,15 @@ public interface AsmClassWriter {
             /**
              * Create a new {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
              *
-             * @param flags         The flags to consider.
              * @param classReader   The class reader of which to reuse the constant pool.
+             * @param flags         The flags to consider.
              * @param getSuperClass A resolver for the super class.
              * @param target        The target to invoke the super class resolver upon.
              * @return A new {@code codes.rafael.asmjdkbridge.JdkClassWriter}.
              */
             @JavaDispatcher.IsConstructor
-            ClassVisitor make(int flags,
-                              @JavaDispatcher.Proxied("codes.rafael.asmjdkbridge.JdkClassReader") Object classReader,
+            ClassVisitor make(@JavaDispatcher.Proxied("codes.rafael.asmjdkbridge.JdkClassReader") Object classReader,
+                              int flags,
                               Method getSuperClass,
                               Object target);
 

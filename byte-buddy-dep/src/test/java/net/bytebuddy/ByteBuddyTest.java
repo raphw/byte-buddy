@@ -9,6 +9,8 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.AsmClassReader;
+import net.bytebuddy.utility.AsmClassWriter;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -197,6 +199,49 @@ public class ByteBuddyTest {
         assertThat(type.getName(), is("foo.Bar$"
                 + ByteBuddyTest.class.getName().replace('.', '$')
                 + "$testCallerSuffixNamingStrategy$SuffixedName"));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(24)
+    public void testCanUseClassFileApiReaderAndWriter() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .with(AsmClassReader.Factory.Default.CLASS_FILE_API_ONLY)
+                .with(AsmClassWriter.Factory.Default.CLASS_FILE_API_ONLY)
+                .redefine(Recorder.class)
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object object = type.getConstructor().newInstance();
+        type.getMethod("instrument").invoke(object);
+        assertThat(type.getField("counter").get(object), is((Object) 1));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(24)
+    public void testCanUseClassFileApiReaderOnly() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .with(AsmClassReader.Factory.Default.CLASS_FILE_API_ONLY)
+                .redefine(Recorder.class)
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object object = type.getConstructor().newInstance();
+        type.getMethod("instrument").invoke(object);
+        assertThat(type.getField("counter").get(object), is((Object) 1));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(24)
+    public void testCanUseClassFileApiWriterOnly() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .with(AsmClassWriter.Factory.Default.CLASS_FILE_API_ONLY)
+                .redefine(Recorder.class)
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object object = type.getConstructor().newInstance();
+        type.getMethod("instrument").invoke(object);
+        assertThat(type.getField("counter").get(object), is((Object) 1));
     }
 
     public static class Recorder {
