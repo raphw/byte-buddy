@@ -4,6 +4,7 @@ Byte Buddy release notes
 ### 18. January 2025: version 1.16.1
 
 - Correct reflective activation of Class File API.
+- Reject array descriptors that are not well-formed in `TypePool`.
 
 ### 17. January 2025: version 1.16.0
 
