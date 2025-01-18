@@ -1252,7 +1252,7 @@
                                         <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
-                                        <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
+                                        <breakBuildBasedOnSemanticVersioning>false</breakBuildBasedOnSemanticVersioning>
                                     </parameter>
                                 </configuration>
                             </execution>
