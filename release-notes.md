@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. January 2025: version 1.16.1
+
+- Correct reflective activation of Class File API.
+
 ### 17. January 2025: version 1.16.0
 
 - Allow for erasure of types of bootstrapped methods in `Advice` within instrumented class.
