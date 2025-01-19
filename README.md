@@ -301,7 +301,8 @@ the majority of Byte Buddy's classes will never be loaded. Yet, file size might 
 agents. As agents already need to be bundled as a single jar, it is therefore recommended to remove either the basic 
 Java five version, or the multi-release Java eight version of the contained class files, to reduce this issue. This 
 is supported by most build plugins for this purpose, such as the
-[Maven Shade plugin](https://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html#filters).
+[Maven Shade plugin](https://maven.apache.org/plugins/maven-shade-plugin/shade-mojo.html#filters). Integration to the JDK's Class File API is contained in multi-release folders for version
+24 and later. These folders can be stripped without consequence, other than loosing support for the Class File API.
 
 License and development
 -----------------------
