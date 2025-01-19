@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.16.0-SNAPSHOT</version>
+    <version>1.16.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -1252,7 +1252,7 @@
                                         <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
-                                        <breakBuildBasedOnSemanticVersioning>false</breakBuildBasedOnSemanticVersioning>
+                                        <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
                                     </parameter>
                                 </configuration>
                             </execution>
