@@ -1673,7 +1673,7 @@ public interface JavaConstant extends ConstantValue {
              * @param identifier The identifier to extract a handle type for.
              * @return The representing handle type.
              */
-            protected static HandleType of(int identifier) {
+            public static HandleType of(int identifier) {
                 for (HandleType handleType : HandleType.values()) {
                     if (handleType.getIdentifier() == identifier) {
                         return handleType;

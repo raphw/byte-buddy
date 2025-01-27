@@ -57,7 +57,7 @@ public class JavaConstantValue extends StackManipulation.AbstractBase {
     }
 
     /**
-     * A visitor to resolve a {@link JavaConstant} to a ASM constant pool representation.
+     * A visitor to resolve a {@link JavaConstant} to an ASM constant pool representation.
      */
     public enum Visitor implements JavaConstant.Visitor<Object> {
 

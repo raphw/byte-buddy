@@ -49,6 +49,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -61,6 +62,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.hasDescriptor;
 
 /**
  * <p>
@@ -6740,6 +6742,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType);
 
+        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, JavaConstant.MethodHandle handle, String name, TypeDescription returnType, List<? extends TypeDescription> parameterTypes);
+
         /**
          * A binding for a replacement of a field or method access within another method.
          */
@@ -7503,6 +7507,80 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 throw new IllegalStateException("Could not resolve " + owner.replace('/', '.') + " using " + typePool);
             }
             super.visitMethodInsn(opcode, owner, internalName, descriptor, isInterface);
+        }
+
+        @Override
+        public void visitInvokeDynamicInsn(String name, String descriptor, org.objectweb.asm.Handle handle, Object... argument) {
+            TypePool.Resolution resolution = typePool.describe(handle.getOwner().replace('/', '.'));
+            if (resolution.isResolved()) {
+                org.objectweb.asm.Type handleType = org.objectweb.asm.Type.getType(handle.getDesc());
+                TypePool.Resolution handleReturnType = typePool.describe(toJavaName(handleType.getReturnType()));
+                if (handleReturnType.isResolved()) {
+                    List<TypeDescription> handleParameterTypes = new ArrayList<TypeDescription>(handleType.getArgumentCount());
+                    for (org.objectweb.asm.Type type : handleType.getArgumentTypes()) {
+                        TypePool.Resolution candidate = typePool.describe(toJavaName(type));
+                        if (candidate.isResolved()) {
+                            handleParameterTypes.add(candidate.resolve());
+                        } else if (strict) {
+                            throw new IllegalStateException("Could not resolve " + toJavaName(type) + " using " + typePool);
+                        } else {
+                            break;
+                        }
+                    }
+                    if (handleParameterTypes.size() == handleType.getArgumentCount()) {
+                        org.objectweb.asm.Type targetType = org.objectweb.asm.Type.getMethodType(descriptor);
+                        TypePool.Resolution targetReturnType = typePool.describe(toJavaName(targetType.getReturnType()));
+                        if (targetReturnType.isResolved()) {
+                            List<TypeDescription> targetParameterTypes = new ArrayList<TypeDescription>(targetType.getArgumentCount());
+                            for (org.objectweb.asm.Type type : targetType.getArgumentTypes()) {
+                                TypePool.Resolution parameterType = typePool.describe(toJavaName(type.getReturnType()));
+                                if (parameterType.isResolved()) {
+                                    targetParameterTypes.add(parameterType.resolve());
+                                } else if (strict) {
+                                    throw new IllegalStateException("Could not resolve " + type.getClassName() + " using " + typePool);
+                                } else {
+                                    break;
+                                }
+                            }
+                            if (targetParameterTypes.size() == targetType.getArgumentCount()) {
+                                Replacement.Binding binding = replacement.bind(instrumentedType,
+                                        instrumentedMethod,
+                                        new JavaConstant.MethodHandle(JavaConstant.MethodHandle.HandleType.of(handle.getTag()),
+                                                resolution.resolve(),
+                                                handle.getName(),
+                                                handleReturnType.resolve(),
+                                                handleParameterTypes),
+                                        name,
+                                        targetReturnType.resolve(),
+                                        targetParameterTypes);
+                                if (binding.isBound()) {
+                                    matched = true;
+                                    return;
+                                }
+                            }
+                        } else if (strict) {
+                            throw new IllegalStateException("Could not resolve " + toJavaName(handleType.getReturnType()) + " using " + typePool);
+                        }
+                    }
+                } else if (strict) {
+                    throw new IllegalStateException("Could not resolve " + toJavaName(handleType.getReturnType()) + " using " + typePool);
+                }
+            } else if (strict) {
+                throw new IllegalStateException("Could not resolve " + handle.getOwner().replace('/', '.') + " using " + typePool);
+            }
+            super.visitInvokeDynamicInsn(name, descriptor, handle, argument);
+        }
+
+        private static String toJavaName(org.objectweb.asm.Type type) {
+            if (type.getSort() == org.objectweb.asm.Type.ARRAY) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int index = 0; index < type.getArgumentCount(); index++) {
+                    stringBuilder.append('[');
+                }
+                return stringBuilder.append(type.getElementType().getDescriptor()).toString();
+            } else {
+                return type.getClassName();
+            }
         }
 
         @Override
