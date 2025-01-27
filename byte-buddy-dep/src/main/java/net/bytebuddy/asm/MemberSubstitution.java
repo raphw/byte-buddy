@@ -49,7 +49,6 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -62,7 +61,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.matcher.ElementMatchers.hasDescriptor;
 
 /**
  * <p>
@@ -6742,7 +6740,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType);
 
-        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, JavaConstant.MethodHandle handle, String name, TypeDescription returnType, List<? extends TypeDescription> parameterTypes);
+        /**
+         * Binds this replacement for a dynamic method invocation that was discovered.
+         *
+         * @param instrumentedType   The instrumented type.FieldDescription
+         * @param instrumentedMethod The instrumented method.
+         * @param methodHandle       The method handle of the bootstrap method.
+         * @param name               The name of the method that was bound.
+         * @param returnType         The return type of the expected binding.
+         * @param parameterTypes     The parameter types of the expected binding.
+         * @param arguments          The constant arguments to the bootstrap method.
+         * @return A binding for the discovered method invocation.
+         */
+        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, JavaConstant.MethodHandle methodHandle, String name, TypeDescription returnType, List<? extends TypeDescription> parameterTypes, List<?> arguments);
 
         /**
          * A binding for a replacement of a field or method access within another method.
@@ -7007,6 +7017,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 InvocationType invocationType) {
                 return Binding.Unresolved.INSTANCE;
             }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                JavaConstant.MethodHandle handle,
+                                String name,
+                                TypeDescription returnType,
+                                List<? extends TypeDescription> parameterTypes,
+                                List<?> arguments) {
+                return Binding.Unresolved.INSTANCE;
+            }
         }
 
         /**
@@ -7093,6 +7116,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return invocationType.matches(includeVirtualCalls, includeSuperCalls) && methodMatcher.matches(methodDescription)
                         ? new Binding.Resolved(typeDescription, methodDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                JavaConstant.MethodHandle handle,
+                                String name,
+                                TypeDescription returnType,
+                                List<? extends TypeDescription> parameterTypes,
+                                List<?> arguments) {
+                return Binding.Unresolved.INSTANCE;
             }
 
             /**
@@ -7254,6 +7290,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType) {
                 for (Replacement replacement : replacements) {
                     Binding binding = replacement.bind(instrumentedType, instrumentedMethod, typeDescription, methodDescription, invocationType);
+                    if (binding.isBound()) {
+                        return binding;
+                    }
+                }
+                return Binding.Unresolved.INSTANCE;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, JavaConstant.MethodHandle handle, String name, TypeDescription returnType, List<? extends TypeDescription> parameterTypes, List<?> arguments) {
+                for (Replacement replacement : replacements) {
+                    Binding binding = replacement.bind(instrumentedType, instrumentedMethod, handle, name, returnType, parameterTypes, arguments);
                     if (binding.isBound()) {
                         return binding;
                     }
