@@ -3646,6 +3646,145 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * An offset mapping that describes a Java method handle that is resolved through the constant pool.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForHandle implements OffsetMapping {
+
+            /**
+             * The type of the method handle.
+             */
+            private final JavaConstant.MethodHandle.HandleType type;
+
+            /**
+             * The owner of the handle, or {@code void} for the instrumented type.
+             */
+            private final TypeDescription owner;
+
+            /**
+             * The name of the method handle.
+             */
+            private final String name;
+
+            /**
+             * The type that is returned from the handle.
+             */
+            private final TypeDescription returnType;
+
+            /**
+             * The parameter types required by the handle.
+             */
+            private final List<? extends TypeDescription> parameterTypes;
+
+            /**
+             * Creates a new offset mapping for a method handle.
+             *
+             * @param type           The type of the method handle.
+             * @param owner          The owner of the handle, or {@code void} for the instrumented type.
+             * @param name           The name of the method handle.
+             * @param returnType     The type that is returned from the handle.
+             * @param parameterTypes The parameter types required by the handle.
+             */
+            protected ForHandle(JavaConstant.MethodHandle.HandleType type,
+                                TypeDescription owner,
+                                String name,
+                                TypeDescription returnType,
+                                List<? extends TypeDescription> parameterTypes) {
+                this.type = type;
+                this.owner = owner;
+                this.name = name;
+                this.returnType = returnType;
+                this.parameterTypes = parameterTypes;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Target resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  Assigner assigner,
+                                  ArgumentHandler argumentHandler,
+                                  Sort sort) {
+                return new Target.ForStackManipulation(new JavaConstantValue(new JavaConstant.MethodHandle(type,
+                        owner.represents(void.class) ? instrumentedType : owner,
+                        name,
+                        returnType,
+                        parameterTypes)));
+            }
+
+            /**
+             * A factory for creating an offset mapping for a constant pool-stored method handle.
+             */
+            protected enum Factory implements OffsetMapping.Factory<Handle> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * The {@link Handle#type()} method.
+                 */
+                private static final MethodDescription.InDefinedShape HANDLE_TYPE;
+
+                /**
+                 * The {@link Handle#owner()} method, or {@code void} to resolve the instrumented type.
+                 */
+                private static final MethodDescription.InDefinedShape HANDLE_OWNER;
+
+                /**
+                 * The {@link Handle#name()} method.
+                 */
+                private static final MethodDescription.InDefinedShape HANDLE_NAME;
+
+                /**
+                 * The {@link Handle#returnType()} method.
+                 */
+                private static final MethodDescription.InDefinedShape HANDLE_RETURN_TYPE;
+
+                /**
+                 * The {@link Handle#parameterTypes()} ()} method.
+                 */
+                private static final MethodDescription.InDefinedShape HANDLE_PARAMETER_TYPES;
+
+                /*
+                 * Resolves the annotation attributes.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Handle.class).getDeclaredMethods();
+                    HANDLE_TYPE = methods.filter(named("type")).getOnly();
+                    HANDLE_OWNER = methods.filter(named("owner")).getOnly();
+                    HANDLE_NAME = methods.filter(named("name")).getOnly();
+                    HANDLE_RETURN_TYPE = methods.filter(named("returnType")).getOnly();
+                    HANDLE_PARAMETER_TYPES = methods.filter(named("parameterTypes")).getOnly();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<Handle> getAnnotationType() {
+                    return Handle.class;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Handle> annotation,
+                                          AdviceType adviceType) {
+                    if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                        throw new IllegalStateException("Cannot assign a MethodHandle to " + target);
+                    }
+                    return new ForHandle(annotation.getValue(HANDLE_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
+                            annotation.getValue(HANDLE_TYPE).resolve(TypeDescription.class),
+                            annotation.getValue(HANDLE_TYPE).resolve(String.class),
+                            annotation.getValue(HANDLE_TYPE).resolve(TypeDescription.class),
+                            Arrays.asList(annotation.getValue(HANDLE_TYPE).resolve(TypeDescription[].class)));
+                }
+            }
+        }
+
+        /**
          * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
          */
         @HashCodeAndEqualsPlugin.Enhance
@@ -9497,6 +9636,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.INSTANCE,
@@ -9812,6 +9952,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
@@ -10973,6 +11114,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForExitValue.Factory.of(exitType),
@@ -11227,6 +11369,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
@@ -12668,6 +12811,62 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if the handle should be bound to the current arguments.
          */
         boolean bound() default true;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should load a {@code java.lang.invoke.MethodHandle} that represents
+     * a method invocation, constructor invocation or field access.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with
+     * {@link net.bytebuddy.asm.MemberSubstitution.Handle}. This annotation should
+     * be used only in combination with {@link Advice}.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface Handle {
+
+        /**
+         * Returns the type of the method handle to resolve.
+         *
+         * @return The type of the method handle to resolve.
+         */
+        JavaConstant.MethodHandle.HandleType type();
+
+        /**
+         * Returns the owner type of the method handle, or {@code void}, to represent the instrumented type.
+         *
+         * @return The owner type of the method handle, or {@code void}, to represent the instrumented type.
+         */
+        Class<?> owner() default void.class;
+
+        /**
+         * Returns the name of the method handle.
+         *
+         * @return The name of the method handle.
+         */
+        String name();
+
+        /**
+         * Returns the return type of the method handle.
+         *
+         * @return The return type of the method handle.
+         */
+        Class<?> returnType();
+
+        /**
+         * Returns the parameter types of the method handle.
+         *
+         * @return The parameter types of the method handle.
+         */
+        Class<?>[] parameterTypes();
     }
 
     /**

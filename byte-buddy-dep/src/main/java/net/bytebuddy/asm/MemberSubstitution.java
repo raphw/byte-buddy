@@ -2610,6 +2610,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                 OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                OffsetMapping.ForHandle.Factory.INSTANCE,
                                 OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                 OffsetMapping.ForFieldHandle.Unresolved.GetterFactory.INSTANCE,
                                 OffsetMapping.ForFieldHandle.Unresolved.SetterFactory.INSTANCE,
@@ -4075,20 +4076,20 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 /**
                                  * The {@link SelfCallHandle#source()} property.
                                  */
-                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_SOURCE;
+                                private static final MethodDescription.InDefinedShape SELF_CALL_HANDLE_SOURCE;
 
                                 /**
                                  * The {@link SelfCallHandle#bound()} property.
                                  */
-                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_BOUND;
+                                private static final MethodDescription.InDefinedShape SELF_CALL_HANDLE_BOUND;
 
                                 /*
                                  * Resolves all annotation properties.
                                  */
                                 static {
                                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SelfCallHandle.class).getDeclaredMethods();
-                                    ALL_ARGUMENTS_SOURCE = methods.filter(named("source")).getOnly();
-                                    ALL_ARGUMENTS_BOUND = methods.filter(named("bound")).getOnly();
+                                    SELF_CALL_HANDLE_SOURCE = methods.filter(named("source")).getOnly();
+                                    SELF_CALL_HANDLE_BOUND = methods.filter(named("bound")).getOnly();
                                 }
 
                                 /**
@@ -4113,8 +4114,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         throw new IllegalStateException("Cannot assign method handle to " + target);
                                     }
                                     return new ForSelfCallHandle(
-                                            annotation.getValue(ALL_ARGUMENTS_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
-                                            annotation.getValue(ALL_ARGUMENTS_BOUND).resolve(Boolean.class));
+                                            annotation.getValue(SELF_CALL_HANDLE_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
+                                            annotation.getValue(SELF_CALL_HANDLE_BOUND).resolve(Boolean.class));
                                 }
                             }
 
@@ -4221,6 +4222,150 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                Map<Integer, Integer> offsets,
                                                                int offset) {
                                     return source.handle(methodHandle, instrumentedMethod).toStackManipulation();
+                                }
+                            }
+                        }
+
+                        /**
+                         * A handle for an offset mapping that resolves a method handle.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForHandle implements OffsetMapping {
+
+                            /**
+                             * The type of the method handle.
+                             */
+                            private final JavaConstant.MethodHandle.HandleType type;
+
+                            /**
+                             * The owner of the handle, or {@code void} for the instrumented type.
+                             */
+                            private final TypeDescription owner;
+
+                            /**
+                             * The name of the method handle.
+                             */
+                            private final String name;
+
+                            /**
+                             * The type that is returned from the handle.
+                             */
+                            private final TypeDescription returnType;
+
+                            /**
+                             * The parameter types required by the handle.
+                             */
+                            private final List<? extends TypeDescription> parameterTypes;
+
+                            /**
+                             * Creates an offset mapping for a method handle.
+                             *
+                             * @param type           The type of the method handle.
+                             * @param owner          The owner of the handle, or {@code void} for the instrumented type.
+                             * @param name           The name of the method handle.
+                             * @param returnType     The type that is returned from the handle.
+                             * @param parameterTypes The parameter types required by the handle.
+                             */
+                            protected ForHandle(JavaConstant.MethodHandle.HandleType type,
+                                                TypeDescription owner,
+                                                String name,
+                                                TypeDescription returnType,
+                                                List<? extends TypeDescription> parameterTypes) {
+                                this.type = type;
+                                this.owner = owner;
+                                this.name = name;
+                                this.returnType = returnType;
+                                this.parameterTypes = parameterTypes;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Resolved resolve(Assigner assigner,
+                                                    Assigner.Typing typing,
+                                                    TypeDescription instrumentedType,
+                                                    MethodDescription instrumentedMethod) {
+                                return new Resolved.ForStackManipulation(new JavaConstantValue(new JavaConstant.MethodHandle(type,
+                                        owner.represents(void.class) ? instrumentedType : owner,
+                                        name,
+                                        returnType,
+                                        parameterTypes)));
+                            }
+
+                            /**
+                             * A factory to create an offset mapping for a method handle.
+                             */
+                            protected enum Factory implements OffsetMapping.Factory<Handle> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                /**
+                                 * The {@link Handle#type()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape HANDLE_TYPE;
+
+                                /**
+                                 * The {@link Handle#owner()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape HANDLE_OWNER;
+
+                                /**
+                                 * The {@link Handle#name()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape HANDLE_NAME;
+
+                                /**
+                                 * The {@link Handle#returnType()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape HANDLE_RETURN_TYPE;
+
+                                /**
+                                 * The {@link Handle#parameterTypes()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape HANDLE_PARAMETER_TYPES;
+
+                                /*
+                                 * Resolves all annotation properties.
+                                 */
+                                static {
+                                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Handle.class).getDeclaredMethods();
+                                    HANDLE_TYPE = methods.filter(named("type")).getOnly();
+                                    HANDLE_OWNER = methods.filter(named("owner")).getOnly();
+                                    HANDLE_NAME = methods.filter(named("name")).getOnly();
+                                    HANDLE_RETURN_TYPE = methods.filter(named("returnType")).getOnly();
+                                    HANDLE_PARAMETER_TYPES = methods.filter(named("parameterTypes")).getOnly();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<Handle> getAnnotationType() {
+                                    return Handle.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<Handle> annotation) {
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<Handle> annotation) {
+                                    if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                                        throw new IllegalStateException("Cannot assign method handle to " + target);
+                                    }
+                                    return new ForHandle(
+                                            annotation.getValue(HANDLE_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
+                                            annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class),
+                                            annotation.getValue(HANDLE_OWNER).resolve(String.class),
+                                            annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class),
+                                            Arrays.asList(annotation.getValue(HANDLE_OWNER).resolve(TypeDescription[].class)));
                                 }
                             }
                         }
@@ -7567,6 +7712,59 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return {@code true} if the handle should be bound to the current arguments.
          */
         boolean bound() default true;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should load a {@code java.lang.invoke.MethodHandle} that represents an invocation of
+     * the specified expression.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Handle}. This annotation should
+     * be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface Handle {
+
+        /**
+         * Returns the type of the method handle to resolve.
+         *
+         * @return The type of the method handle to resolve.
+         */
+        JavaConstant.MethodHandle.HandleType type();
+
+        /**
+         * Returns the owner type of the method handle, or {@code void}, to represent the instrumented type.
+         *
+         * @return The owner type of the method handle, or {@code void}, to represent the instrumented type.
+         */
+        Class<?> owner() default void.class;
+
+        /**
+         * Returns the name of the method handle.
+         *
+         * @return The name of the method handle.
+         */
+        String name();
+
+        /**
+         * Returns the return type of the method handle.
+         *
+         * @return The return type of the method handle.
+         */
+        Class<?> returnType();
+
+        /**
+         * Returns the parameter types of the method handle.
+         *
+         * @return The parameter types of the method handle.
+         */
+        Class<?>[] parameterTypes();
     }
 
     /**
