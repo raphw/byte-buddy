@@ -532,11 +532,6 @@ public interface TypePool {
          */
         protected static final Map<String, String> PRIMITIVE_DESCRIPTORS;
 
-        /**
-         * The array symbol as used by Java descriptors.
-         */
-        private static final String ARRAY_SYMBOL = "[";
-
         /*
          * Initializes the maps of primitive type names and descriptors.
          */
@@ -581,7 +576,7 @@ public interface TypePool {
                 throw new IllegalArgumentException(name + " contains the illegal character '/'");
             }
             int arity = 0;
-            while (name.startsWith(ARRAY_SYMBOL)) {
+            while (name.startsWith("[")) {
                 arity++;
                 name = name.substring(1);
             }

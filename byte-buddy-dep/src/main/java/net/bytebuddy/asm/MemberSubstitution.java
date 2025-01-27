@@ -6726,7 +6726,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param writeAccess        {@code true} if this field was written to.
          * @return A binding for the discovered field access.
          */
-        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, FieldDescription fieldDescription, boolean writeAccess);
+        Binding bind(TypeDescription instrumentedType,
+                     MethodDescription instrumentedMethod,
+                     TypeDescription typeDescription,
+                     FieldDescription fieldDescription,
+                     boolean writeAccess);
 
         /**
          * Binds this replacement for a field that was discovered.
@@ -6738,7 +6742,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param invocationType     The invocation type for this method.
          * @return A binding for the discovered method invocation.
          */
-        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType);
+        Binding bind(TypeDescription instrumentedType,
+                     MethodDescription instrumentedMethod,
+                     TypeDescription typeDescription,
+                     MethodDescription methodDescription,
+                     InvocationType invocationType);
 
         /**
          * Binds this replacement for a dynamic method invocation that was discovered.
@@ -6746,13 +6754,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param instrumentedType   The instrumented type.FieldDescription
          * @param instrumentedMethod The instrumented method.
          * @param methodHandle       The method handle of the bootstrap method.
-         * @param name               The name of the method that was bound.
-         * @param returnType         The return type of the expected binding.
-         * @param parameterTypes     The parameter types of the expected binding.
-         * @param arguments          The constant arguments to the bootstrap method.
+         * @param name               The name of the method that is bound.
+         * @param methodType         The type of the method that is bound.
+         * @param constants          The constant arguments to the bootstrap method.
          * @return A binding for the discovered method invocation.
          */
-        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, JavaConstant.MethodHandle methodHandle, String name, TypeDescription returnType, List<? extends TypeDescription> parameterTypes, List<?> arguments);
+        Binding bind(TypeDescription instrumentedType,
+                     MethodDescription instrumentedMethod,
+                     JavaConstant.MethodHandle methodHandle,
+                     String name,
+                     JavaConstant.MethodType methodType,
+                     List<JavaConstant> constants);
 
         /**
          * A binding for a replacement of a field or method access within another method.
@@ -7023,11 +7035,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              */
             public Binding bind(TypeDescription instrumentedType,
                                 MethodDescription instrumentedMethod,
-                                JavaConstant.MethodHandle handle,
+                                JavaConstant.MethodHandle methodHandle,
                                 String name,
-                                TypeDescription returnType,
-                                List<? extends TypeDescription> parameterTypes,
-                                List<?> arguments) {
+                                JavaConstant.MethodType methodType,
+                                List<JavaConstant> constants) {
                 return Binding.Unresolved.INSTANCE;
             }
         }
@@ -7123,11 +7134,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              */
             public Binding bind(TypeDescription instrumentedType,
                                 MethodDescription instrumentedMethod,
-                                JavaConstant.MethodHandle handle,
+                                JavaConstant.MethodHandle methodHandle,
                                 String name,
-                                TypeDescription returnType,
-                                List<? extends TypeDescription> parameterTypes,
-                                List<?> arguments) {
+                                JavaConstant.MethodType methodType,
+                                List<JavaConstant> constants) {
                 return Binding.Unresolved.INSTANCE;
             }
 
@@ -7274,7 +7284,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, FieldDescription fieldDescription, boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                TypeDescription typeDescription,
+                                FieldDescription fieldDescription,
+                                boolean writeAccess) {
                 for (Replacement replacement : replacements) {
                     Binding binding = replacement.bind(instrumentedType, instrumentedMethod, typeDescription, fieldDescription, writeAccess);
                     if (binding.isBound()) {
@@ -7287,7 +7301,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType) {
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                TypeDescription typeDescription,
+                                MethodDescription methodDescription,
+                                InvocationType invocationType) {
                 for (Replacement replacement : replacements) {
                     Binding binding = replacement.bind(instrumentedType, instrumentedMethod, typeDescription, methodDescription, invocationType);
                     if (binding.isBound()) {
@@ -7300,9 +7318,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, JavaConstant.MethodHandle handle, String name, TypeDescription returnType, List<? extends TypeDescription> parameterTypes, List<?> arguments) {
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                JavaConstant.MethodHandle methodHandle,
+                                String name,
+                                JavaConstant.MethodType methodType,
+                                List<JavaConstant> constants) {
                 for (Replacement replacement : replacements) {
-                    Binding binding = replacement.bind(instrumentedType, instrumentedMethod, handle, name, returnType, parameterTypes, arguments);
+                    Binding binding = replacement.bind(instrumentedType, instrumentedMethod, methodHandle, name, methodType, constants);
                     if (binding.isBound()) {
                         return binding;
                     }
@@ -7560,76 +7583,35 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
         @Override
         public void visitInvokeDynamicInsn(String name, String descriptor, org.objectweb.asm.Handle handle, Object... argument) {
-            TypePool.Resolution resolution = typePool.describe(handle.getOwner().replace('/', '.'));
-            if (resolution.isResolved()) {
-                org.objectweb.asm.Type handleType = org.objectweb.asm.Type.getType(handle.getDesc());
-                TypePool.Resolution handleReturnType = typePool.describe(toJavaName(handleType.getReturnType()));
-                if (handleReturnType.isResolved()) {
-                    List<TypeDescription> handleParameterTypes = new ArrayList<TypeDescription>(handleType.getArgumentCount());
-                    for (org.objectweb.asm.Type type : handleType.getArgumentTypes()) {
-                        TypePool.Resolution candidate = typePool.describe(toJavaName(type));
-                        if (candidate.isResolved()) {
-                            handleParameterTypes.add(candidate.resolve());
-                        } else if (strict) {
-                            throw new IllegalStateException("Could not resolve " + toJavaName(type) + " using " + typePool);
-                        } else {
-                            break;
-                        }
-                    }
-                    if (handleParameterTypes.size() == handleType.getArgumentCount()) {
-                        org.objectweb.asm.Type targetType = org.objectweb.asm.Type.getMethodType(descriptor);
-                        TypePool.Resolution targetReturnType = typePool.describe(toJavaName(targetType.getReturnType()));
-                        if (targetReturnType.isResolved()) {
-                            List<TypeDescription> targetParameterTypes = new ArrayList<TypeDescription>(targetType.getArgumentCount());
-                            for (org.objectweb.asm.Type type : targetType.getArgumentTypes()) {
-                                TypePool.Resolution parameterType = typePool.describe(toJavaName(type.getReturnType()));
-                                if (parameterType.isResolved()) {
-                                    targetParameterTypes.add(parameterType.resolve());
-                                } else if (strict) {
-                                    throw new IllegalStateException("Could not resolve " + type.getClassName() + " using " + typePool);
-                                } else {
-                                    break;
-                                }
-                            }
-                            if (targetParameterTypes.size() == targetType.getArgumentCount()) {
-                                Replacement.Binding binding = replacement.bind(instrumentedType,
-                                        instrumentedMethod,
-                                        new JavaConstant.MethodHandle(JavaConstant.MethodHandle.HandleType.of(handle.getTag()),
-                                                resolution.resolve(),
-                                                handle.getName(),
-                                                handleReturnType.resolve(),
-                                                handleParameterTypes),
-                                        name,
-                                        targetReturnType.resolve(),
-                                        targetParameterTypes);
-                                if (binding.isBound()) {
-                                    matched = true;
-                                    return;
-                                }
-                            }
-                        } else if (strict) {
-                            throw new IllegalStateException("Could not resolve " + toJavaName(handleType.getReturnType()) + " using " + typePool);
-                        }
-                    }
-                } else if (strict) {
-                    throw new IllegalStateException("Could not resolve " + toJavaName(handleType.getReturnType()) + " using " + typePool);
+            JavaConstant.MethodHandle methodHandle;
+            JavaConstant.MethodType methodType;
+            List<JavaConstant> constants = new ArrayList<JavaConstant>(argument.length);
+            try {
+                methodHandle = JavaConstant.MethodHandle.ofAsm(typePool, handle);
+                methodType = JavaConstant.MethodType.ofAsm(typePool, org.objectweb.asm.Type.getMethodType(descriptor));
+                for (Object anArgument : argument) {
+                    constants.add(JavaConstant.Simple.ofAsm(typePool, anArgument));
                 }
-            } else if (strict) {
-                throw new IllegalStateException("Could not resolve " + handle.getOwner().replace('/', '.') + " using " + typePool);
+            } catch (TypePool.Resolution.NoSuchTypeException exception) {
+                if (strict) {
+                    throw new IllegalStateException("Could not resolve " + exception.getName() + " using " + typePool);
+                }
+                methodHandle = null;
+                methodType = null;
+            }
+            if (methodHandle != null && methodType != null && constants.size() == argument.length) {
+                Replacement.Binding binding = replacement.bind(instrumentedType,
+                        instrumentedMethod,
+                        methodHandle,
+                        name,
+                        methodType,
+                        constants);
+                if (binding.isBound()) {
+                    matched = true;
+                    return;
+                }
             }
             super.visitInvokeDynamicInsn(name, descriptor, handle, argument);
-        }
-
-        private static String toJavaName(org.objectweb.asm.Type type) {
-            if (type.getSort() == org.objectweb.asm.Type.ARRAY) {
-                StringBuilder stringBuilder = new StringBuilder();
-                for (int index = 0; index < type.getArgumentCount(); index++) {
-                    stringBuilder.append('[');
-                }
-                return stringBuilder.append(type.getElementType().getDescriptor()).toString();
-            } else {
-                return type.getClassName();
-            }
         }
 
         @Override

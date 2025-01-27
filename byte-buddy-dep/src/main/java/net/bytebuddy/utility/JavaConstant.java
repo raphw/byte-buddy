@@ -29,6 +29,8 @@ import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.ConstantDynamic;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -228,6 +230,46 @@ public interface JavaConstant extends ConstantValue {
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
             return action.run();
+        }
+
+        /**
+         * Resolves an ASM constant to a {@link JavaConstant}.
+         *
+         * @param typePool The type pool to resolve type descriptions with.
+         * @param value    The ASM constant value.
+         * @return An appropriate {@link JavaConstant}.
+         */
+        public static JavaConstant ofAsm(TypePool typePool, Object value) {
+            if (value instanceof Integer) {
+                return new OfTrivialValue.ForInteger((Integer) value);
+            } else if (value instanceof Long) {
+                return new OfTrivialValue.ForLong((Long) value);
+            } else if (value instanceof Float) {
+                return new OfTrivialValue.ForFloat((Float) value);
+            } else if (value instanceof Double) {
+                return new OfTrivialValue.ForDouble((Double) value);
+            } else if (value instanceof String) {
+                return new OfTrivialValue.ForString((String) value);
+            } else if (value instanceof Type) {
+                Type type = (Type) value;
+                if (type.getSort() == Type.METHOD) {
+                    return MethodType.ofAsm(typePool, type);
+                } else if (type.getSort() == Type.ARRAY) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (int index = 0; index < type.getDimensions(); index++) {
+                        stringBuilder.append(type.getDescriptor());
+                    }
+                    return of(typePool.describe(stringBuilder.toString()).resolve());
+                } else {
+                    return of(typePool.describe(type.getClassName()).resolve());
+                }
+            } else if (value instanceof Handle) {
+                return MethodHandle.ofAsm(typePool, (Handle) value);
+            } else if (value instanceof ConstantDynamic) {
+                return Dynamic.ofAsm(typePool, (ConstantDynamic) value);
+            } else {
+                throw new IllegalArgumentException("Not an ASM constant: " + value);
+            }
         }
 
         /**
@@ -873,6 +915,42 @@ public interface JavaConstant extends ConstantValue {
         }
 
         /**
+         * Resolves an ASM {@link Type} of sort {@link Type#METHOD}.
+         *
+         * @param typePool   The type pool to resolve type descriptions with.
+         * @param methodType The ASM method {@link Type} to resolve.
+         * @return An appropriate {@link MethodType}.
+         */
+        public static MethodType ofAsm(TypePool typePool, Type methodType) {
+            if (methodType.getSort() != Type.METHOD) {
+                throw new IllegalArgumentException("Not a method type description: " + methodType);
+            }
+            List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(methodType.getArgumentCount());
+            for (Type type : methodType.getArgumentTypes()) {
+                if (type.getSort() == Type.ARRAY) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (int index = 0; index < type.getDimensions(); index++) {
+                        stringBuilder.append('[');
+                    }
+                    parameterTypes.add(typePool.describe(stringBuilder.append(type.getDescriptor()).toString()).resolve());
+                } else {
+                    parameterTypes.add(typePool.describe(type.getClassName()).resolve());
+                }
+            }
+            TypeDescription returnType;
+            if (methodType.getReturnType().getSort() == Type.ARRAY) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int index = 0; index < methodType.getReturnType().getDimensions(); index++) {
+                    stringBuilder.append('[');
+                }
+                returnType = typePool.describe(stringBuilder.append(methodType.getReturnType().getDescriptor()).toString()).resolve();
+            } else {
+                returnType = typePool.describe(methodType.getReturnType().getClassName()).resolve();
+            }
+            return new MethodType(returnType, parameterTypes);
+        }
+
+        /**
          * Returns a method type representation of a loaded {@code MethodType} object.
          *
          * @param methodType A method type object to represent as a {@link JavaConstant}.
@@ -1266,6 +1344,44 @@ public interface JavaConstant extends ConstantValue {
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
             return action.run();
+        }
+
+        /**
+         * Resolves an ASM {@link Handle} to a {@link MethodHandle}.
+         *
+         * @param typePool The type pool to use for resolving type descriptions.
+         * @param handle   The {@link Handle} to resolve.
+         * @return An appropriate {@link MethodHandle}.
+         */
+        public static MethodHandle ofAsm(TypePool typePool, Handle handle) {
+            Type methodType = Type.getMethodType(handle.getDesc());
+            List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(methodType.getArgumentCount());
+            for (Type type : methodType.getArgumentTypes()) {
+                if (type.getSort() == Type.ARRAY) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (int index = 0; index < type.getDimensions(); index++) {
+                        stringBuilder.append('[');
+                    }
+                    parameterTypes.add(typePool.describe(stringBuilder.append(type.getDescriptor()).toString()).resolve());
+                } else {
+                    parameterTypes.add(typePool.describe(type.getClassName()).resolve());
+                }
+            }
+            TypeDescription returnType;
+            if (methodType.getReturnType().getSort() == Type.ARRAY) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int index = 0; index < methodType.getReturnType().getDimensions(); index++) {
+                    stringBuilder.append('[');
+                }
+                returnType = typePool.describe(stringBuilder.append(methodType.getReturnType().getDescriptor()).toString()).resolve();
+            } else {
+                returnType = typePool.describe(methodType.getReturnType().getClassName()).resolve();
+            }
+            return new MethodHandle(HandleType.of(handle.getTag()),
+                    typePool.describe(handle.getOwner().replace('/', '.')).resolve(),
+                    handle.getName(),
+                    returnType,
+                    parameterTypes);
         }
 
         /**
@@ -1673,7 +1789,7 @@ public interface JavaConstant extends ConstantValue {
              * @param identifier The identifier to extract a handle type for.
              * @return The representing handle type.
              */
-            public static HandleType of(int identifier) {
+            protected static HandleType of(int identifier) {
                 for (HandleType handleType : HandleType.values()) {
                     if (handleType.getIdentifier() == identifier) {
                         return handleType;
@@ -1895,6 +2011,35 @@ public interface JavaConstant extends ConstantValue {
             this.typeDescription = typeDescription;
             this.bootstrap = bootstrap;
             this.arguments = arguments;
+        }
+
+        /**
+         * Resolves an ASM {@link ConstantDynamic} to a {@link Dynamic}.
+         *
+         * @param typePool        The type pool to use for resolving type descriptions.
+         * @param constantDynamic The ASM constant to translate.
+         * @return An appropriate {@link JavaConstant}.
+         */
+        public static Dynamic ofAsm(TypePool typePool, ConstantDynamic constantDynamic) {
+            Type type = Type.getType(constantDynamic.getDescriptor());
+            TypeDescription describedType;
+            if (type.getSort() == Type.ARRAY) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int index = 0; index < type.getDimensions(); index++) {
+                    stringBuilder.append('[');
+                }
+                describedType = typePool.describe(stringBuilder.append(type.getElementType().getDescriptor()).toString()).resolve();
+            } else {
+                describedType = typePool.describe(type.getClassName()).resolve();
+            }
+            List<JavaConstant> constants = new ArrayList<>(constantDynamic.getBootstrapMethodArgumentCount());
+            for (int index = 0; index < constantDynamic.getBootstrapMethodArgumentCount(); index++) {
+                constants.add(JavaConstant.Simple.ofAsm(typePool, constantDynamic.getBootstrapMethodArgument(index)));
+            }
+            return new Dynamic(constantDynamic.getName(),
+                    describedType,
+                    MethodHandle.ofAsm(typePool, constantDynamic.getBootstrapMethod()),
+                    constants);
         }
 
         /**
