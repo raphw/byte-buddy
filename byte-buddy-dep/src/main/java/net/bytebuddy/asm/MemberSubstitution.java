@@ -4363,9 +4363,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return new ForHandle(
                                             annotation.getValue(HANDLE_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
                                             annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class),
-                                            annotation.getValue(HANDLE_OWNER).resolve(String.class),
-                                            annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class),
-                                            Arrays.asList(annotation.getValue(HANDLE_OWNER).resolve(TypeDescription[].class)));
+                                            annotation.getValue(HANDLE_NAME).resolve(String.class),
+                                            annotation.getValue(HANDLE_RETURN_TYPE).resolve(TypeDescription.class),
+                                            Arrays.asList(annotation.getValue(HANDLE_PARAMETER_TYPES).resolve(TypeDescription[].class)));
                                 }
                             }
                         }
@@ -7720,8 +7720,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * the specified expression.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Handle}. This annotation should
-     * be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Handle} or
+     * {@link net.bytebuddy.implementation.bind.annotation.Handle}. This annotation should be used only in combination
+     * with {@link Substitution.Chain.Step.ForDelegation}.
      * </p>
      *
      * @see Substitution.Chain.Step.ForDelegation

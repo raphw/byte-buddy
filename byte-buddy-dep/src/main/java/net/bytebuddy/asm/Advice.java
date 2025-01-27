@@ -12819,9 +12819,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * a method invocation, constructor invocation or field access.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with
-     * {@link net.bytebuddy.asm.MemberSubstitution.Handle}. This annotation should
-     * be used only in combination with {@link Advice}.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.MemberSubstitution.Handle} or
+     * {@link net.bytebuddy.implementation.bind.annotation.Handle}. This annotation should be used only in combination
+     * with {@link Advice}.
      * </p>
      *
      * @see Advice
