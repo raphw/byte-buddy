@@ -1593,6 +1593,20 @@ public class AdviceTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = HandleSample.class)
+    public void testHandle() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(HandleSample.class)
+                .visit(Advice.to(HandleSample.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getMethod(FOO, String.class).invoke(instance, FOO), is((Object) FOO));
+        assertThat(type.getField(FOO).get(null), is((Object) (BAR)));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
     public void testSelfCallHandle() throws Exception {
         Class<?> type = new ByteBuddy()
@@ -3541,6 +3555,29 @@ public class AdviceTest {
         @Retention(RetentionPolicy.RUNTIME)
         public @interface SampleParameter {
             /* empty */
+        }
+    }
+
+    public static class HandleSample {
+
+        public static String foo;
+
+        public static String bar() {
+            return BAR;
+        }
+
+        public String foo(String value) {
+            return value;
+        }
+
+        @Advice.OnMethodExit
+        public static void exit(@Advice.Handle(
+                type = JavaConstant.MethodHandle.HandleType.INVOKE_STATIC,
+                name = "bar",
+                returnType = String.class,
+                parameterTypes = {}) Object bound) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            foo = method.invoke(bound, Collections.emptyList()).toString();
         }
     }
 

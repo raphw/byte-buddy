@@ -297,6 +297,23 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = HandleSample.class)
+    public void testHandle() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(HandleSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(HandleSample.class.getMethod("handle", Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor(String.class).newInstance(FOO);
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) (FOO + BAR)));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
     public void testSelfCallHandleHierarchy() throws Exception {
         Class<?> type = new ByteBuddy()
@@ -915,6 +932,26 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 @MemberSubstitution.SelfCallHandle(bound = false) Object unbound) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             return method.invoke(bound, Collections.emptyList()).toString() + method.invoke(unbound, Collections.singletonList(new SelfCallHandleSample(BAR)));
+        }
+    }
+
+    public static class HandleSample {
+
+        public static String foo() {
+            return FOO;
+        }
+
+        public String run() {
+            return null;
+        }
+
+        public static String handle(@MemberSubstitution.Handle(
+                type = JavaConstant.MethodHandle.HandleType.INVOKE_STATIC,
+                name = "foo",
+                returnType = String.class,
+                parameterTypes = {}) Object bound) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            return method.invoke(bound, Collections.emptyList()).toString();
         }
     }
 

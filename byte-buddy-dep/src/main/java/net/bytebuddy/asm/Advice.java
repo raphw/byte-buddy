@@ -3776,10 +3776,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot assign a MethodHandle to " + target);
                     }
                     return new ForHandle(annotation.getValue(HANDLE_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
-                            annotation.getValue(HANDLE_TYPE).resolve(TypeDescription.class),
-                            annotation.getValue(HANDLE_TYPE).resolve(String.class),
-                            annotation.getValue(HANDLE_TYPE).resolve(TypeDescription.class),
-                            Arrays.asList(annotation.getValue(HANDLE_TYPE).resolve(TypeDescription[].class)));
+                            annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class),
+                            annotation.getValue(HANDLE_NAME).resolve(String.class),
+                            annotation.getValue(HANDLE_RETURN_TYPE).resolve(TypeDescription.class),
+                            Arrays.asList(annotation.getValue(HANDLE_PARAMETER_TYPES).resolve(TypeDescription[].class)));
                 }
             }
         }
