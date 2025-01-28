@@ -980,7 +980,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Resolves this substitution into a stack manipulation.
          *
          * @param receiver          The target type on which a member is accessed.
-         * @param original          The field, method or constructor that is substituted.
+         * @param original          The field, method or constructor that is substituted, or {@code null} if the substituted
+         *                          expression is an invokedynamic instruction.
          * @param parameters        All parameters that serve as input to this access.
          * @param result            The result that is expected from the interaction or {@code void} if no result is expected.
          * @param methodHandle      A method handle describing the substituted expression.
@@ -989,7 +990,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return A stack manipulation that represents the access.
          */
         StackManipulation resolve(TypeDescription receiver,
-                                  ByteCodeElement.Member original,
+                                  @MaybeNull ByteCodeElement.Member original,
                                   TypeList.Generic parameters,
                                   TypeDescription.Generic result,
                                   JavaConstant.MethodHandle methodHandle,
@@ -1033,7 +1034,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription receiver, ByteCodeElement.Member original, TypeList.Generic parameters, TypeDescription.Generic result, JavaConstant.MethodHandle methodHandle, StackManipulation stackManipulation, int freeOffset) {
+            public StackManipulation resolve(TypeDescription receiver,
+                                             @MaybeNull ByteCodeElement.Member original,
+                                             TypeList.Generic parameters,
+                                             TypeDescription.Generic result,
+                                             JavaConstant.MethodHandle methodHandle,
+                                             StackManipulation stackManipulation,
+                                             int freeOffset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
                 for (int index = parameters.size() - 1; index >= 0; index--) {
                     stackManipulations.add(Removal.of(parameters.get(index)));
@@ -1080,7 +1087,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * {@inheritDoc}
              */
             public StackManipulation resolve(TypeDescription receiver,
-                                             ByteCodeElement.Member original,
+                                             @MaybeNull ByteCodeElement.Member original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
                                              JavaConstant.MethodHandle methodHandle,
@@ -1129,13 +1136,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              */
             @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
             public StackManipulation resolve(TypeDescription receiver,
-                                             ByteCodeElement.Member original,
+                                             @MaybeNull ByteCodeElement.Member original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
                                              JavaConstant.MethodHandle methodHandle,
                                              StackManipulation stackManipulation,
                                              int freeOffset) {
-                FieldDescription fieldDescription = fieldResolver.resolve(receiver, original, parameters, result);
+                FieldDescription fieldDescription = fieldResolver.resolve(receiver, parameters, result);
                 if (!fieldDescription.isAccessibleTo(instrumentedType)) {
                     throw new IllegalStateException(instrumentedType + " cannot access " + fieldDescription);
                 } else if (result.represents(void.class)) {
@@ -1168,12 +1175,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Resolves the field to substitute with.
                  *
                  * @param receiver   The target type on which a member is accessed.
-                 * @param original   The target field, method or constructor that is substituted,
                  * @param parameters All parameters that serve as input to this access.
                  * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
                  * @return The field to substitute with.
                  */
-                FieldDescription resolve(TypeDescription receiver, ByteCodeElement.Member original, TypeList.Generic parameters, TypeDescription.Generic result);
+                FieldDescription resolve(TypeDescription receiver, TypeList.Generic parameters, TypeDescription.Generic result);
 
                 /**
                  * A simple field resolver that returns a specific field.
@@ -1198,7 +1204,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public FieldDescription resolve(TypeDescription receiver, ByteCodeElement.Member original, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public FieldDescription resolve(TypeDescription receiver, TypeList.Generic parameters, TypeDescription.Generic result) {
                         return fieldDescription;
                     }
                 }
@@ -1233,11 +1239,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public FieldDescription resolve(TypeDescription receiver, ByteCodeElement.Member original, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public FieldDescription resolve(TypeDescription receiver, TypeList.Generic parameters, TypeDescription.Generic result) {
                         if (parameters.isEmpty()) {
-                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + original);
+                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + parameters);
                         } else if (parameters.get(0).isPrimitive() || parameters.get(0).isArray()) {
-                            throw new IllegalStateException("Cannot access field on primitive or array type for " + original);
+                            throw new IllegalStateException("Cannot access field on primitive or array type for " + parameters.get(0));
                         }
                         TypeDefinition current = parameters.get(0).accept(new TypeDescription.Generic.Visitor.Substitutor.ForReplacement(instrumentedType));
                         do {
@@ -1342,13 +1348,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * {@inheritDoc}
              */
             public StackManipulation resolve(TypeDescription receiver,
-                                             ByteCodeElement.Member original,
+                                             @MaybeNull ByteCodeElement.Member original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
                                              JavaConstant.MethodHandle methodHandle,
                                              StackManipulation stackManipulation,
                                              int freeOffset) {
-                MethodDescription methodDescription = methodResolver.resolve(receiver, original, parameters, result);
+                MethodDescription methodDescription = methodResolver.resolve(receiver, parameters, result);
                 if (!methodDescription.isAccessibleTo(instrumentedType)) {
                     throw new IllegalStateException(instrumentedType + " cannot access " + methodDescription);
                 }
@@ -1377,12 +1383,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Resolves the method to substitute with.
                  *
                  * @param receiver   The target type on which a member is accessed.
-                 * @param original   The target field, method or constructor that is substituted,
                  * @param parameters All parameters that serve as input to this access.
                  * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
                  * @return The field to substitute with.
                  */
-                MethodDescription resolve(TypeDescription receiver, ByteCodeElement.Member original, TypeList.Generic parameters, TypeDescription.Generic result);
+                MethodDescription resolve(TypeDescription receiver, TypeList.Generic parameters, TypeDescription.Generic result);
 
                 /**
                  * A simple method resolver that returns a given method.
@@ -1407,7 +1412,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public MethodDescription resolve(TypeDescription receiver, ByteCodeElement.Member original, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public MethodDescription resolve(TypeDescription receiver, TypeList.Generic parameters, TypeDescription.Generic result) {
                         return methodDescription;
                     }
                 }
@@ -1449,11 +1454,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public MethodDescription resolve(TypeDescription receiver, ByteCodeElement.Member original, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public MethodDescription resolve(TypeDescription receiver, TypeList.Generic parameters, TypeDescription.Generic result) {
                         if (parameters.isEmpty()) {
-                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + original);
+                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + parameters);
                         } else if (parameters.get(0).isPrimitive() || parameters.get(0).isArray()) {
-                            throw new IllegalStateException("Cannot invoke method on primitive or array type for " + original);
+                            throw new IllegalStateException("Cannot invoke method on primitive or array type for " + parameters.get(0));
                         }
                         TypeDefinition typeDefinition = parameters.get(0).accept(new TypeDescription.Generic.Visitor.Substitutor.ForReplacement(instrumentedType));
                         List<MethodDescription> candidates = CompoundList.<MethodDescription>of(methodGraphCompiler.compile(typeDefinition, instrumentedType).listNodes()
@@ -1608,7 +1613,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * {@inheritDoc}
              */
             public StackManipulation resolve(TypeDescription receiver,
-                                             ByteCodeElement.Member original,
+                                             @MaybeNull ByteCodeElement.Member original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
                                              JavaConstant.MethodHandle methodHandle,
@@ -1626,7 +1631,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 stackManipulations.add(DefaultValue.of(result));
                 TypeDescription.Generic current = result;
                 for (Step step : steps) {
-                    Step.Resolution resolution = step.resolve(receiver, original, parameters, result, methodHandle, stackManipulation, current, offsets, freeOffset);
+                    Step.Resolution resolution = step.resolve(receiver,
+                            original,
+                            parameters,
+                            result,
+                            methodHandle,
+                            stackManipulation,
+                            current,
+                            offsets,
+                            freeOffset);
                     stackManipulations.add(resolution.getStackManipulation());
                     current = resolution.getResultType();
                 }
@@ -1647,7 +1660,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Resolves this step of a substitution chain.
                  *
                  * @param receiver          The target result type of the substitution.
-                 * @param original          The byte code element that is currently substituted.
+                 * @param original          The byte code element that is currently substituted, or {@code null}
+                 *                          if the target is an invokedynamic instruction.
                  * @param parameters        The parameters of the substituted element.
                  * @param result            The resulting type of the substituted element.
                  * @param methodHandle      A method handle of the stackManipulation invocation that is being substituted.
@@ -1658,7 +1672,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @return A resolved substitution step for the supplied inputs.
                  */
                 Resolution resolve(TypeDescription receiver,
-                                   ByteCodeElement.Member original,
+                                   @MaybeNull ByteCodeElement.Member original,
                                    TypeList.Generic parameters,
                                    TypeDescription.Generic result,
                                    JavaConstant.MethodHandle methodHandle,
@@ -1718,7 +1732,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -1726,7 +1740,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
-                        List<StackManipulation> stackManipulations;
+                        List<StackManipulation> stackManipulations; // TODO: null?
                         if (original instanceof MethodDescription && ((MethodDescription) original).isConstructor()) {
                             stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 4);
                             stackManipulations.add(Removal.of(current));
@@ -1834,7 +1848,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -2037,7 +2051,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -2175,7 +2189,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -2288,7 +2302,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      */
                     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Field description always has declaring type.")
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -2318,7 +2332,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param stackManipulation A stack manipulation to prepare the field access.
                      * @return A resolved substitution step for the supplied inputs.
                      */
-                    protected abstract Resolution doResolve(ByteCodeElement.Member original, TypeList.Generic parameters, Map<Integer, Integer> offsets, StackManipulation stackManipulation);
+                    protected abstract Resolution doResolve(@MaybeNull ByteCodeElement.Member original,
+                                                            TypeList.Generic parameters,
+                                                            Map<Integer, Integer> offsets,
+                                                            StackManipulation stackManipulation);
 
                     /**
                      * A step for reading a field.
@@ -2340,7 +2357,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        protected Resolution doResolve(ByteCodeElement.Member original, TypeList.Generic parameters, Map<Integer, Integer> offsets, StackManipulation stackManipulation) {
+                        protected Resolution doResolve(@MaybeNull ByteCodeElement.Member original,
+                                                       TypeList.Generic parameters,
+                                                       Map<Integer, Integer> offsets,
+                                                       StackManipulation stackManipulation) {
                             return new Simple(new StackManipulation.Compound(stackManipulation, FieldAccess.forField(fieldDescription).read()), fieldDescription.getType());
                         }
 
@@ -2409,8 +2429,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        protected Resolution doResolve(ByteCodeElement.Member original, TypeList.Generic parameters, Map<Integer, Integer> offsets, StackManipulation stackManipulation) {
-                            int index = ((original.getModifiers() & Opcodes.ACC_STATIC) == 0)
+                        protected Resolution doResolve(@MaybeNull ByteCodeElement.Member original,
+                                                       TypeList.Generic parameters,
+                                                       Map<Integer, Integer> offsets,
+                                                       StackManipulation stackManipulation) {
+                            int index = original != null // TODO
+                                    && ((original.getModifiers() & Opcodes.ACC_STATIC) == 0)
                                     && !(original instanceof MethodDescription
                                     && ((MethodDescription) original).isConstructor()) ? this.index + 1 : this.index;
                             if (index >= parameters.size()) {
@@ -2519,7 +2543,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -2540,7 +2564,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                             stackManipulations.add(assignment);
                         }
-                        boolean shift = ((original.getModifiers() & Opcodes.ACC_STATIC) == 0) && !(original instanceof MethodDescription && ((MethodDescription) original).isConstructor());
+                        boolean shift = original != null // TODO
+                                && ((original.getModifiers() & Opcodes.ACC_STATIC) == 0)
+                                && !(original instanceof MethodDescription && ((MethodDescription) original).isConstructor());
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
                             int substitution = substitutions.containsKey(index + (shift ? 1 : 0)) ? substitutions.get(index + (shift ? 1 : 0)) : index + (shift ? 1 : 0);
                             if (substitution >= parameters.size()) {
@@ -2727,7 +2753,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -2741,7 +2767,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 : MethodVariableAccess.of(current).storeAt(freeOffset));
                         stackManipulations.add(dispatcher.initialize());
                         for (OffsetMapping.Resolved offsetMapping : offsetMappings) {
-                            stackManipulations.add(offsetMapping.apply(receiver, original, parameters, result, current, methodHandle, offsets, freeOffset));
+                            stackManipulations.add(offsetMapping.apply(receiver,
+                                    original,
+                                    parameters,
+                                    result,
+                                    current,
+                                    methodHandle,
+                                    offsets,
+                                    freeOffset));
                         }
                         stackManipulations.add(dispatcher.apply(receiver, original, methodHandle));
                         return new Simple(new StackManipulation.Compound(stackManipulations), returned);
@@ -2857,7 +2890,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * Applies this offset mapping.
                              *
                              * @param receiver     The target type of the invoked delegate.
-                             * @param original     The substituted element.
+                             * @param original     The substituted element, or {@code null} if the target is an
+                             *                     invokedynamic instruction.
                              * @param parameters   The parameters that are supplied to the substituted expression.
                              * @param result       The resulting type of the substituted expression.
                              * @param current      The type of the value that was produced by the previous step in the substitution chain.
@@ -2867,7 +2901,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * @return An appropriate stack manipulation.
                              */
                             StackManipulation apply(TypeDescription receiver,
-                                                    ByteCodeElement.Member original,
+                                                    @MaybeNull ByteCodeElement.Member original,
                                                     TypeList.Generic parameters,
                                                     TypeDescription.Generic result,
                                                     TypeDescription.Generic current,
@@ -2899,7 +2933,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -3143,7 +3177,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -3671,7 +3705,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -3812,7 +3846,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -4098,7 +4132,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -4244,7 +4278,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -4308,7 +4342,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -5506,7 +5540,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -5579,7 +5613,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -5750,7 +5784,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public StackManipulation apply(TypeDescription receiver,
-                                                               ByteCodeElement.Member original,
+                                                               @MaybeNull ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
                                                                TypeDescription.Generic result,
                                                                TypeDescription.Generic current,
@@ -5796,7 +5830,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * @param methodHandle A method handle that describes the invocation.
                              * @return A stack manipulation that executes the represented delegation.
                              */
-                            StackManipulation apply(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle);
+                            StackManipulation apply(TypeDescription receiver,
+                                                    @MaybeNull ByteCodeElement.Member original,
+                                                    JavaConstant.MethodHandle methodHandle);
                         }
 
                         /**
@@ -5852,7 +5888,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * {@inheritDoc}
                              */
-                            public StackManipulation apply(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle) {
+                            public StackManipulation apply(TypeDescription receiver,
+                                                           @MaybeNull ByteCodeElement.Member original,
+                                                           JavaConstant.MethodHandle methodHandle) {
                                 return MethodInvocation.invoke(delegate);
                             }
 
@@ -5979,7 +6017,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 /**
                                  * {@inheritDoc}
                                  */
-                                public StackManipulation apply(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle) {
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               @MaybeNull ByteCodeElement.Member original,
+                                                               JavaConstant.MethodHandle methodHandle) {
                                     List<JavaConstant> constants = resolver.make(receiver, original, methodHandle);
                                     if (!bootstrapMethod.isInvokeBootstrap(TypeList.Explicit.of(constants))) {
                                         throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments: " + constants);
@@ -6056,7 +6096,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * @param methodHandle A method handle that represents the substituted element.
                              * @return A list of constant values to supply to the bootstrap method.
                              */
-                            List<JavaConstant> make(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle);
+                            List<JavaConstant> make(TypeDescription receiver,
+                                                    @MaybeNull ByteCodeElement.Member original,
+                                                    JavaConstant.MethodHandle methodHandle);
                         }
 
                         /**
@@ -6925,8 +6967,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 private final TypeDescription receiver;
 
                 /**
-                 * The field or method that was accessed.
+                 * The field or method that was accessed, or {@code null} if the target is an
+                 * invokedynamic instruction.
                  */
+                @MaybeNull
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ByteCodeElement.Member original;
 
                 /**
@@ -6938,10 +6983,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Creates a new resolved binding.
                  *
                  * @param receiver     The type on which a field or method was accessed.
-                 * @param original     The field or method that was accessed.
+                 * @param original     The field or method that was accessed, or {@code null} if the target is an
+                 *                     invokedynamic instruction.
                  * @param substitution The substitution to apply.
                  */
-                protected Resolved(TypeDescription receiver, ByteCodeElement.Member original, Substitution substitution) {
+                protected Resolved(TypeDescription receiver, @MaybeNull ByteCodeElement.Member original, Substitution substitution) {
                     this.receiver = receiver;
                     this.original = original;
                     this.substitution = substitution;
@@ -7376,10 +7422,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             private final Substitution substitution;
 
             protected ForDynamicInvocation(ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher,
-                                        ElementMatcher.Junction<? super String> nameMatcher,
-                                        ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
-                                        ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher,
-                                        Substitution substitution) {
+                                           ElementMatcher.Junction<? super String> nameMatcher,
+                                           ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
+                                           ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher,
+                                           Substitution substitution) {
                 this.handleMatcher = handleMatcher;
                 this.nameMatcher = nameMatcher;
                 this.typeMatcher = typeMatcher;
@@ -8335,9 +8381,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
             @Override
             @MaybeNull
-            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                return index < parameters.size() - (original.isStatic() ? 0 : 1)
-                        ? new Source.Value(parameters.get(index + (original.isStatic() ? 0 : 1)), offsets.get(index + (original.isStatic() ? 0 : 1)))
+            protected Source.Value argument(int index,
+                                            TypeList.Generic parameters,
+                                            Map<Integer, Integer> offsets,
+                                            @MaybeNull ByteCodeElement.Member original,
+                                            MethodDescription instrumentedMethod) {
+                return index < parameters.size() - (original != null && original.isStatic() ? 0 : 1) // TODO
+                        ? new Source.Value(parameters.get(index + (original != null && original.isStatic() ? 0 : 1)), offsets.get(index + (original != null && original.isStatic() ? 0 : 1)))
                         : null;
             }
 
@@ -8345,10 +8395,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             protected List<Source.Value> arguments(boolean includesSelf,
                                                    TypeList.Generic parameters,
                                                    Map<Integer, Integer> offsets,
-                                                   ByteCodeElement.Member original,
+                                                   @MaybeNull ByteCodeElement.Member original,
                                                    MethodDescription instrumentedMethod) {
                 List<Source.Value> values = new ArrayList<Source.Value>(parameters.size() - (!includesSelf && !original.isStatic() ? 1 : 0));
-                for (int index = original.isStatic() || includesSelf ? 0 : 1; index < parameters.size(); index++) {
+                for (int index = original != null && original.isStatic() || includesSelf ? 0 : 1; index < parameters.size(); index++) { // TODO
                     values.add(new Source.Value(parameters.get(index), offsets.get(index)));
                 }
                 return values;
@@ -8379,13 +8429,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         ENCLOSING_METHOD {
             @Override
-            protected ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+            protected ByteCodeElement.Member element(@MaybeNull ByteCodeElement.Member original,
+                                                     MethodDescription instrumentedMethod) {
                 return instrumentedMethod;
             }
 
             @Override
             @MaybeNull
-            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+            protected Source.Value self(TypeList.Generic parameters,
+                                        Map<Integer, Integer> offsets,
+                                        @MaybeNull ByteCodeElement.Member original,
+                                        MethodDescription instrumentedMethod) {
                 return instrumentedMethod.isStatic()
                         ? null
                         : new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), THIS_REFERENCE);
@@ -8393,7 +8447,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
             @Override
             @MaybeNull
-            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+            protected Source.Value argument(int index,
+                                            TypeList.Generic parameters,
+                                            Map<Integer, Integer> offsets,
+                                            @MaybeNull ByteCodeElement.Member original,
+                                            MethodDescription instrumentedMethod) {
                 if (index < instrumentedMethod.getParameters().size()) {
                     ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
                     return new Source.Value(parameterDescription.getType(), parameterDescription.getOffset());
@@ -8403,7 +8461,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             @Override
-            protected List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+            protected List<Source.Value> arguments(boolean includesSelf,
+                                                   TypeList.Generic parameters,
+                                                   Map<Integer, Integer> offsets,
+                                                   @MaybeNull ByteCodeElement.Member original,
+                                                   MethodDescription instrumentedMethod) {
                 List<Source.Value> values;
                 if (includesSelf && !instrumentedMethod.isStatic()) {
                     values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size() + 1);
@@ -8418,18 +8480,21 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             @Override
-            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod) {
+            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle,
+                                                       MethodDescription instrumentedMethod) {
                 return JavaConstant.MethodHandle.of(instrumentedMethod.asDefined());
             }
 
             @Override
-            protected boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+            protected boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
+                                              @MaybeNull ByteCodeElement.Member original,
+                                              MethodDescription instrumentedMethod) {
                 return sort.isRepresentable(instrumentedMethod);
             }
 
             @Override
             protected StackManipulation resolve(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
-                                                ByteCodeElement.Member original,
+                                                @MaybeNull ByteCodeElement.Member original,
                                                 TypeList.Generic parameters,
                                                 TypeDescription.Generic result,
                                                 MethodDescription instrumentedMethod) {
@@ -8450,7 +8515,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param instrumentedMethod The instrumented element.
          * @return The byte code element that is represented by this source.
          */
-        protected abstract ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+        protected abstract ByteCodeElement.Member element(@MaybeNull ByteCodeElement.Member original,
+                                                          MethodDescription instrumentedMethod);
 
         /**
          * Resolves a value representation of the {@code this} reference or {@code null} if no such reference is available.
@@ -8462,7 +8528,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return A representation of the {@code this} reference or {@code null} if no such reference is available.
          */
         @MaybeNull
-        protected abstract Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+        protected abstract Source.Value self(TypeList.Generic parameters,
+                                             Map<Integer, Integer> offsets,
+                                             @MaybeNull ByteCodeElement.Member original,
+                                             MethodDescription instrumentedMethod);
 
         /**
          * Resolves a value representation of the parameter of the specified index or {@code null} if no such parameter is available.
@@ -8475,7 +8544,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return A representation of the parameter of the specified index or {@code null} if no such parameter is available.
          */
         @MaybeNull
-        protected abstract Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+        protected abstract Source.Value argument(int index,
+                                                 TypeList.Generic parameters,
+                                                 Map<Integer, Integer> offsets,
+                                                 @MaybeNull ByteCodeElement.Member original,
+                                                 MethodDescription instrumentedMethod);
 
         /**
          * Resolves a list of value representation of all parameters.
@@ -8487,7 +8560,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param instrumentedMethod The instrumented method.
          * @return A list of representation of all values of all parameters.
          */
-        protected abstract List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+        protected abstract List<Source.Value> arguments(boolean includesSelf,
+                                                        TypeList.Generic parameters,
+                                                        Map<Integer, Integer> offsets,
+                                                        @MaybeNull ByteCodeElement.Member original,
+                                                        MethodDescription instrumentedMethod);
 
         /**
          * Resolves a method handle.
@@ -8496,7 +8573,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param instrumentedMethod The instrumented method.
          * @return An appropriate method handle.
          */
-        protected abstract JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod);
+        protected abstract JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle,
+                                                            MethodDescription instrumentedMethod);
 
         /**
          * Validates if the supplied origin sort is representable.
@@ -8506,7 +8584,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param instrumentedMethod The instrumented method.
          * @return {@code true} if the supplied sort of origin is representable.
          */
-        protected abstract boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+        protected abstract boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
+                                                   @MaybeNull ByteCodeElement.Member original,
+                                                   MethodDescription instrumentedMethod);
 
         /**
          * Resolves a stack manipulation that loads the supplied sort of origin onto the operand stack.
@@ -8519,7 +8599,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return A stack manipulation loading the supplied sort of origin onto the operand stack.
          */
         protected abstract StackManipulation resolve(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
-                                                     ByteCodeElement.Member original,
+                                                     @MaybeNull ByteCodeElement.Member original,
                                                      TypeList.Generic parameters,
                                                      TypeDescription.Generic result,
                                                      MethodDescription instrumentedMethod);
