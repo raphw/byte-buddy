@@ -215,6 +215,27 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
+    public WithoutSpecification lambdaExpression() {
+        return dynamic(new ElementMatcher<JavaConstant.MethodHandle>() {
+            @Override
+            public boolean matches(JavaConstant.MethodHandle target) {
+                return target.getTypeDescription().getName().equals("java.lang.invoke.LambdaMetafactory");
+            }
+        }); // TODO
+    }
+
+    public WithoutSpecification dynamic(ElementMatcher<? super JavaConstant.MethodHandle> matcher) {
+        return new WithoutSpecification.ForMatchedDynamicInvocation(methodGraphCompiler,
+                typePoolResolver,
+                strict,
+                failIfNoMatch,
+                replacementFactory,
+                matcher,
+                ElementMatchers.<String>any(),
+                ElementMatchers.<JavaConstant.MethodType>any(),
+                ElementMatchers.<List<JavaConstant>>any());
+    }
+
     /**
      * Specifies the use of a specific method graph compiler for the resolution of virtual methods.
      *
@@ -510,6 +531,79 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return A member substitution that replaces any matched byte code element with the supplied substitution.
          */
         public abstract MemberSubstitution replaceWith(Substitution.Factory factory);
+
+        public static class ForMatchedDynamicInvocation extends WithoutSpecification {
+
+            private final ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher;
+            private final ElementMatcher.Junction<? super String> nameMatcher;
+            private final ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher;
+            private final ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher;
+
+            protected ForMatchedDynamicInvocation(MethodGraph.Compiler methodGraphCompiler,
+                                                  TypePoolResolver typePoolResolver,
+                                                  boolean strict,
+                                                  boolean failIfNoMatch,
+                                                  Replacement.Factory replacementFactory,
+                                                  ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher,
+                                                  ElementMatcher.Junction<? super String> nameMatcher,
+                                                  ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
+                                                  ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher) {
+                super(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
+                this.handleMatcher = handleMatcher;
+                this.nameMatcher = nameMatcher;
+                this.typeMatcher = typeMatcher;
+                this.argumentsMatcher = argumentsMatcher;
+            }
+
+            public ForMatchedDynamicInvocation withName(ElementMatcher<? super String> nameMatcher) {
+                return new ForMatchedDynamicInvocation(methodGraphCompiler,
+                        typePoolResolver,
+                        strict,
+                        failIfNoMatch,
+                        replacementFactory,
+                        handleMatcher,
+                        this.nameMatcher.and(nameMatcher),
+                        typeMatcher,
+                        argumentsMatcher);
+            }
+
+            public ForMatchedDynamicInvocation withType(ElementMatcher<? super JavaConstant.MethodType> typeMatcher) {
+                return new ForMatchedDynamicInvocation(methodGraphCompiler,
+                        typePoolResolver,
+                        strict,
+                        failIfNoMatch,
+                        replacementFactory,
+                        handleMatcher,
+                        nameMatcher,
+                        this.typeMatcher.and(typeMatcher),
+                        argumentsMatcher);
+            }
+
+            public ForMatchedDynamicInvocation withArguments(ElementMatcher<? super List<JavaConstant>> argumentsMatcher) {
+                return new ForMatchedDynamicInvocation(methodGraphCompiler,
+                        typePoolResolver,
+                        strict,
+                        failIfNoMatch,
+                        replacementFactory,
+                        handleMatcher,
+                        nameMatcher,
+                        typeMatcher,
+                        this.argumentsMatcher.and(argumentsMatcher));
+            }
+
+            @Override
+            public MemberSubstitution replaceWith(Substitution.Factory substitutionFactory) {
+                return new MemberSubstitution(methodGraphCompiler,
+                        typePoolResolver,
+                        strict,
+                        failIfNoMatch,
+                        new Replacement.Factory.Compound(this.replacementFactory, new Replacement.ForDynamicInvocation.Factory(handleMatcher,
+                                nameMatcher,
+                                typeMatcher,
+                                argumentsMatcher,
+                                substitutionFactory))); // TODO
+            }
+        }
 
         /**
          * Describes a member substitution that requires a specification for how to replace a byte code element.
@@ -7114,7 +7208,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, FieldDescription fieldDescription, boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                TypeDescription typeDescription,
+                                FieldDescription fieldDescription,
+                                boolean writeAccess) {
                 return (writeAccess ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
                         ? new Binding.Resolved(typeDescription, fieldDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
@@ -7123,7 +7221,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType) {
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                TypeDescription typeDescription,
+                                MethodDescription methodDescription,
+                                InvocationType invocationType) {
                 return invocationType.matches(includeVirtualCalls, includeSuperCalls) && methodMatcher.matches(methodDescription)
                         ? new Binding.Resolved(typeDescription, methodDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
@@ -7256,6 +7358,107 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             matchFieldWrite,
                             includeVirtualCalls,
                             includeSuperCalls,
+                            substitutionFactory.make(instrumentedType, instrumentedMethod, typePool));
+                }
+            }
+        }
+
+        class ForDynamicInvocation implements Replacement {
+
+            private final ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher;
+
+            private final ElementMatcher.Junction<? super String> nameMatcher;
+
+            private final ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher;
+
+            private final ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher;
+
+            private final Substitution substitution;
+
+            protected ForDynamicInvocation(ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher,
+                                        ElementMatcher.Junction<? super String> nameMatcher,
+                                        ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
+                                        ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher,
+                                        Substitution substitution) {
+                this.handleMatcher = handleMatcher;
+                this.nameMatcher = nameMatcher;
+                this.typeMatcher = typeMatcher;
+                this.argumentsMatcher = argumentsMatcher;
+                this.substitution = substitution;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                TypeDescription typeDescription,
+                                FieldDescription fieldDescription,
+                                boolean writeAccess) {
+                return Binding.Unresolved.INSTANCE;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                TypeDescription typeDescription,
+                                MethodDescription methodDescription,
+                                InvocationType invocationType) {
+                return Binding.Unresolved.INSTANCE;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                JavaConstant.MethodHandle methodHandle,
+                                String name,
+                                JavaConstant.MethodType methodType,
+                                List<JavaConstant> constants) {
+                if (handleMatcher.matches(methodHandle)
+                        && nameMatcher.matches(name)
+                        && typeMatcher.matches(methodType)
+                        && argumentsMatcher.matches(constants)) {
+                    return new Binding.Resolved(methodHandle.getTypeDescription(), null, substitution);
+                }
+                return Binding.Unresolved.INSTANCE;
+            }
+
+            protected static class Factory implements Replacement.Factory {
+
+                private final ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher;
+
+                private final ElementMatcher.Junction<? super String> nameMatcher;
+
+                private final ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher;
+
+                private final ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher;
+
+                private final Substitution.Factory substitutionFactory;
+
+                protected Factory(ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher,
+                                  ElementMatcher.Junction<? super String> nameMatcher,
+                                  ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
+                                  ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher,
+                                  Substitution.Factory substitutionFactory) {
+                    this.handleMatcher = handleMatcher;
+                    this.nameMatcher = nameMatcher;
+                    this.typeMatcher = typeMatcher;
+                    this.argumentsMatcher = argumentsMatcher;
+                    this.substitutionFactory = substitutionFactory;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Replacement make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                    return new ForDynamicInvocation(handleMatcher,
+                            nameMatcher,
+                            typeMatcher,
+                            argumentsMatcher,
                             substitutionFactory.make(instrumentedType, instrumentedMethod, typePool));
                 }
             }
@@ -7607,6 +7810,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         methodType,
                         constants);
                 if (binding.isBound()) {
+                    StackManipulation.Size size = binding.make(methodType.getParameterTypes().asGenericTypes(),
+                            methodType.getReturnType().asGenericType(),
+                            methodHandle, // TODO
+                            MethodInvocation.invoke(null).dynamic(name, // TODO
+                                    methodType.getReturnType(),
+                                    methodType.getParameterTypes(),
+                                    constants),
+                            getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext);
+                    stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize());
                     matched = true;
                     return;
                 }

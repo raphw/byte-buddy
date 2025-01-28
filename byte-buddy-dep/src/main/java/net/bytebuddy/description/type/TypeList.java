@@ -73,6 +73,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     int getStackSize();
 
     /**
+     * Returns a generic list of types.
+     *
+     * @return A representation of these types in a generic format.
+     */
+    TypeList.Generic asGenericTypes();
+
+    /**
      * An abstract base implementation of a type list.
      */
     abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
@@ -102,6 +109,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             return internalNames.length == 0
                     ? NO_INTERFACES
                     : internalNames;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Generic asGenericTypes() {
+            return new Generic.Explicit(this);
         }
     }
 
@@ -238,6 +252,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          */
         public int getStackSize() {
             return 0;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Generic asGenericTypes() {
+            return new Generic.Empty();
         }
     }
 
