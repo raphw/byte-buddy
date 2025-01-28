@@ -2630,7 +2630,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                        TypeList.Generic parameters,
                                                        Map<Integer, Integer> offsets,
                                                        StackManipulation stackManipulation) {
-                            int index = target.isStaticDispatch() ? this.index + 1 : this.index;
+                            int index = target.isStaticDispatch() ? this.index : this.index + 1;
                             if (index >= parameters.size()) {
                                 throw new IllegalStateException("Target does not define an argument with index " + index);
                             }

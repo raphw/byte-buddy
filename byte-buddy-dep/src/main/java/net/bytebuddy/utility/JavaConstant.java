@@ -932,7 +932,7 @@ public interface JavaConstant extends ConstantValue {
                     for (int index = 0; index < type.getDimensions(); index++) {
                         stringBuilder.append('[');
                     }
-                    parameterTypes.add(typePool.describe(stringBuilder.append(type.getDescriptor()).toString()).resolve());
+                    parameterTypes.add(typePool.describe(stringBuilder.append(type.getDescriptor().replace('/', '.')).toString()).resolve());
                 } else {
                     parameterTypes.add(typePool.describe(type.getClassName()).resolve());
                 }
@@ -943,7 +943,7 @@ public interface JavaConstant extends ConstantValue {
                 for (int index = 0; index < methodType.getReturnType().getDimensions(); index++) {
                     stringBuilder.append('[');
                 }
-                returnType = typePool.describe(stringBuilder.append(methodType.getReturnType().getDescriptor()).toString()).resolve();
+                returnType = typePool.describe(stringBuilder.append(methodType.getReturnType().getDescriptor().replace('/', '.')).toString()).resolve();
             } else {
                 returnType = typePool.describe(methodType.getReturnType().getClassName()).resolve();
             }
@@ -1362,7 +1362,7 @@ public interface JavaConstant extends ConstantValue {
                     for (int index = 0; index < type.getDimensions(); index++) {
                         stringBuilder.append('[');
                     }
-                    parameterTypes.add(typePool.describe(stringBuilder.append(type.getDescriptor()).toString()).resolve());
+                    parameterTypes.add(typePool.describe(stringBuilder.append(type.getDescriptor().replace('/', '.')).toString()).resolve());
                 } else {
                     parameterTypes.add(typePool.describe(type.getClassName()).resolve());
                 }
@@ -1373,7 +1373,7 @@ public interface JavaConstant extends ConstantValue {
                 for (int index = 0; index < methodType.getReturnType().getDimensions(); index++) {
                     stringBuilder.append('[');
                 }
-                returnType = typePool.describe(stringBuilder.append(methodType.getReturnType().getDescriptor()).toString()).resolve();
+                returnType = typePool.describe(stringBuilder.append(methodType.getReturnType().getDescriptor().replace('/', '.')).toString()).resolve();
             } else {
                 returnType = typePool.describe(methodType.getReturnType().getClassName()).resolve();
             }
@@ -2028,7 +2028,7 @@ public interface JavaConstant extends ConstantValue {
                 for (int index = 0; index < type.getDimensions(); index++) {
                     stringBuilder.append('[');
                 }
-                describedType = typePool.describe(stringBuilder.append(type.getElementType().getDescriptor()).toString()).resolve();
+                describedType = typePool.describe(stringBuilder.append(type.getElementType().getDescriptor().replace('/', '.')).toString()).resolve();
             } else {
                 describedType = typePool.describe(type.getClassName()).resolve();
             }
