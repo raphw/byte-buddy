@@ -8774,7 +8774,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * {@inheritDoc}
          */
         public boolean matches(@MaybeNull JavaConstant.MethodHandle target) {
-            return target != null && target.getTypeDescription().getName().equals("java.lang.invoke.LambdaMetafactory");
+            return target != null && target.getOwnerType().getName().equals("java.lang.invoke.LambdaMetafactory");
         }
     }
 }
