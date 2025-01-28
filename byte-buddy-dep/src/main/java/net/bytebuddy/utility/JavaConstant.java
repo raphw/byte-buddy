@@ -2032,7 +2032,7 @@ public interface JavaConstant extends ConstantValue {
             } else {
                 describedType = typePool.describe(type.getClassName()).resolve();
             }
-            List<JavaConstant> constants = new ArrayList<>(constantDynamic.getBootstrapMethodArgumentCount());
+            List<JavaConstant> constants = new ArrayList<JavaConstant>(constantDynamic.getBootstrapMethodArgumentCount());
             for (int index = 0; index < constantDynamic.getBootstrapMethodArgumentCount(); index++) {
                 constants.add(JavaConstant.Simple.ofAsm(typePool, constantDynamic.getBootstrapMethodArgument(index)));
             }

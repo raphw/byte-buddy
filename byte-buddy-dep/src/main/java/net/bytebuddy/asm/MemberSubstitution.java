@@ -1829,11 +1829,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return new Simple(new StackManipulation.Compound(stackManipulations), TypeDefinition.Sort.describe(void.class));
                                 }
                             }
-                        } else if (original == null) {
-                            // TODO: handle lambda invocation
-                            return null;
                         } else {
-                            throw new IllegalArgumentException("Unexpected target type: " + original);
+                            return new Simple(new StackManipulation.Compound(stackManipulations), result);
                         }
                     }
 
