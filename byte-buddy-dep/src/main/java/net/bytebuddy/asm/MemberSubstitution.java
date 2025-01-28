@@ -7017,10 +7017,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             /**
-             * A binding that was resolved for an actual substitution.
+             * A binding that was resolved for a field or method expression.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class Resolved implements Binding {
+            class ForMember implements Binding {
 
                 /**
                  * The type on which a field or method was accessed.
@@ -7028,11 +7028,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 private final TypeDescription receiver;
 
                 /**
-                 * The field or method that was accessed, or {@code null} if the target is an
-                 * invokedynamic instruction.
+                 * The field or method that was accessed.
                  */
-                @MaybeNull
-                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ByteCodeElement.Member original;
 
                 /**
@@ -7044,11 +7041,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Creates a new resolved binding.
                  *
                  * @param receiver     The type on which a field or method was accessed.
-                 * @param original     The field or method that was accessed, or {@code null} if the target is an
-                 *                     invokedynamic instruction.
+                 * @param original     The field or method that was accessed.
                  * @param substitution The substitution to apply.
                  */
-                protected Resolved(TypeDescription receiver, @MaybeNull ByteCodeElement.Member original, Substitution substitution) {
+                protected ForMember(TypeDescription receiver, ByteCodeElement.Member original, Substitution substitution) {
                     this.receiver = receiver;
                     this.original = original;
                     this.substitution = substitution;
@@ -7064,8 +7060,72 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, JavaConstant.MethodHandle methodHandle, StackManipulation stackManipulation, int freeOffset) {
+                public StackManipulation make(TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
+                                              int freeOffset) {
                     return substitution.resolve(receiver, original, parameters, result, methodHandle, stackManipulation, freeOffset);
+                }
+            }
+
+            /**
+             * A binding that was resolved for an invokedynamic expression.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForDynamicInvocation implements Binding {
+
+                /**
+                 * The type on which a field or method was accessed.
+                 */
+                private final TypeDescription receiver;
+
+                /**
+                 * The name of the lambda expression target;
+                 */
+                private final String name;
+
+                /**
+                 * The constant arguments supplied to the bootstrap method.
+                 */
+                private final List<JavaConstant> arguments;
+
+                /**
+                 * The substitution to apply.
+                 */
+                private final Substitution substitution;
+
+                /**
+                 * Creates a resolved binding for an invokedynamic expression.
+                 *
+                 * @param receiver     The type on which a field or method was accessed.
+                 * @param name         The name of the lambda expression target;
+                 * @param arguments    The constant arguments supplied to the bootstrap method.
+                 * @param substitution The substitution to apply.
+                 */
+                public ForDynamicInvocation(TypeDescription receiver, String name, List<JavaConstant> arguments, Substitution substitution) {
+                    this.receiver = receiver;
+                    this.name = name;
+                    this.arguments = arguments;
+                    this.substitution = substitution;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isBound() {
+                    return true;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation make(TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
+                                              int freeOffset) {
+                    return substitution.resolve(receiver, null, parameters, result, methodHandle, stackManipulation, freeOffset);
                 }
             }
         }
@@ -7321,7 +7381,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 FieldDescription fieldDescription,
                                 boolean writeAccess) {
                 return (writeAccess ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
-                        ? new Binding.Resolved(typeDescription, fieldDescription, substitution)
+                        ? new Binding.ForMember(typeDescription, fieldDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
             }
 
@@ -7334,7 +7394,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 MethodDescription methodDescription,
                                 InvocationType invocationType) {
                 return invocationType.matches(includeVirtualCalls, includeSuperCalls) && methodMatcher.matches(methodDescription)
-                        ? new Binding.Resolved(typeDescription, methodDescription, substitution)
+                        ? new Binding.ForMember(typeDescription, methodDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
             }
 
@@ -7557,7 +7617,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         && nameMatcher.matches(name)
                         && typeMatcher.matches(methodType)
                         && argumentsMatcher.matches(constants)) {
-                    return new Binding.Resolved(methodHandle.getTypeDescription(), null, substitution);
+                    return new Binding.ForDynamicInvocation(methodHandle.getOwnerType(), name, constants, substitution);
                 }
                 return Binding.Unresolved.INSTANCE;
             }
