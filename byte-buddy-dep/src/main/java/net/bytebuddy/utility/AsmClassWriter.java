@@ -264,8 +264,59 @@ public interface AsmClassWriter {
                 /**
                  * {@inheritDoc}
                  */
+                @AlwaysNull
+                public AsmClassWriter toWriter(int flags, TypePool typePool) {
+                    return null;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public void accept(ClassVisitor classVisitor, int flags) {
                     throw new UnsupportedOperationException();
+                }
+            }
+
+            /**
+             * A class reader that does not retain a compatible {@link AsmClassWriter} implementation.
+             */
+            public static class NonRetainingAsmClassReader implements AsmClassReader {
+
+                /**
+                 * The delegate implementation.
+                 */
+                private final AsmClassReader delegate;
+
+                /**
+                 * Creates a new non-retaining ASM class writer.
+                 *
+                 * @param delegate The delegate implementation.
+                 */
+                public NonRetainingAsmClassReader(AsmClassReader delegate) {
+                    this.delegate = delegate;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @MaybeNull
+                public <T> T unwrap(Class<T> type) {
+                    return delegate.unwrap(type);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @AlwaysNull
+                public AsmClassWriter toWriter(int flags, TypePool typePool) {
+                    return null;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void accept(ClassVisitor classVisitor, int flags) {
+                    delegate.accept(classVisitor, flags);
                 }
             }
         }

@@ -4029,7 +4029,10 @@ public interface TypeWriter<T> {
                     byte[] binaryRepresentation = classFileLocator.locate(originalType.getName()).resolve();
                     dispatcher.dump(instrumentedType, true, binaryRepresentation);
                     AsmClassReader classReader = classReaderFactory.make(binaryRepresentation);
-                    AsmClassWriter classWriter = classWriterFactory.make(writerFlags, classReader, typePool);
+                    AsmClassWriter classWriter = classReader.toWriter(writerFlags, typePool);
+                    if (classWriter == null) {
+                        classWriter = classWriterFactory.make(writerFlags, classReader, typePool);
+                    }
                     ContextRegistry contextRegistry = new ContextRegistry();
                     classReader.accept(writeTo(ValidatingClassVisitor.of(classWriter.getVisitor(), typeValidation),
                             typeInitializer,
