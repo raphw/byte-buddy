@@ -11,6 +11,7 @@ import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -1018,6 +1019,19 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAZ));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testLambdaSubstitution() throws Exception{
+        Class<?> type = new ByteBuddy()
+                .redefine(Class.forName("net.bytebuddy.test.precompiled.v8.LambdaSampleFactory"))
+                .visit(MemberSubstitution.strict().lambdaExpression().stub().on(named("nonCapturing")))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getMethod("nonCapturing").invoke(instance), nullValue(Object.class));
     }
 
     @Test(expected = IllegalStateException.class)

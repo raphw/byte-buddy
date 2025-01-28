@@ -220,7 +220,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      *
      * @return A member substitution for Java lambda expressions.
      */
-    public WithoutSpecification lambdaExpression() {
+    public WithoutSpecification.ForMatchedDynamicInvocation lambdaExpression() {
         return dynamic(new LambdaMetaFactoryMatcher());
     }
 
@@ -230,7 +230,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param matcher A matcher for the invokedynamic's bootstrap method.
      * @return A member substitution for invokedynamic instructions that are dispatched by any matched bootstrap method.
      */
-    public WithoutSpecification dynamic(ElementMatcher<? super JavaConstant.MethodHandle> matcher) {
+    public WithoutSpecification.ForMatchedDynamicInvocation dynamic(ElementMatcher<? super JavaConstant.MethodHandle> matcher) {
         return new WithoutSpecification.ForMatchedDynamicInvocation(methodGraphCompiler,
                 typePoolResolver,
                 strict,
@@ -538,6 +538,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         public abstract MemberSubstitution replaceWith(Substitution.Factory factory);
 
+        /**
+         * A member substitution for an invokedynamic instruction.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         public static class ForMatchedDynamicInvocation extends WithoutSpecification {
 
