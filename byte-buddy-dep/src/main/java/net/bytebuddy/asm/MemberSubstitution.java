@@ -2326,7 +2326,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * Completes the resolution.
                      *
-                     * @param original          The byte code element that is currently substituted.
+                     * @param original          The byte code element that is currently substituted, or {@code null} if the
+                     *                          target is an invokedynamic instruction.
                      * @param parameters        The parameters of the substituted element.
                      * @param offsets           The arguments of the substituted byte code element mapped to their local variable offsets.
                      * @param stackManipulation A stack manipulation to prepare the field access.
@@ -5826,7 +5827,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * Creates a stack manipulation for a given substitution target.
                              *
                              * @param receiver     The type upon which the substituted element is invoked upon.
-                             * @param original     The substituted element.
+                             * @param original     The substituted element, or {@code null} if the target is an
+                             *                     invokedynamic instruction.
                              * @param methodHandle A method handle that describes the invocation.
                              * @return A stack manipulation that executes the represented delegation.
                              */
@@ -6092,7 +6094,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * Returns the constant values to supply to the bootstrap method.
                              *
                              * @param receiver     The type upon which the substituted element is applied.
-                             * @param original     The substituted element.
+                             * @param original     The substituted element, or {@code null} if the target is
+                             *                     an invokedynamic instructions.
                              * @param methodHandle A method handle that represents the substituted element.
                              * @return A list of constant values to supply to the bootstrap method.
                              */
@@ -8511,7 +8514,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Resolves the targeted byte code element.
          *
-         * @param original           The substituted element.
+         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
          * @param instrumentedMethod The instrumented element.
          * @return The byte code element that is represented by this source.
          */
@@ -8523,7 +8526,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          *
          * @param parameters         The list of parameters of the substituted element.
          * @param offsets            A mapping of offsets of parameter indices to offsets.
-         * @param original           The substituted element.
+         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
          * @param instrumentedMethod The instrumented method.
          * @return A representation of the {@code this} reference or {@code null} if no such reference is available.
          */
@@ -8539,7 +8542,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param index              The index of the targeted parameter.
          * @param parameters         The list of parameters of the substituted element.
          * @param offsets            A mapping of offsets of parameter indices to offsets.
-         * @param original           The substituted element.
+         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
          * @param instrumentedMethod The instrumented method.
          * @return A representation of the parameter of the specified index or {@code null} if no such parameter is available.
          */
@@ -8556,7 +8559,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param includesSelf       {@code true} if the {@code this} reference should be included if available.
          * @param parameters         The list of parameters of the substituted element.
          * @param offsets            A mapping of offsets of parameter indices to offsets.
-         * @param original           The substituted element.
+         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
          * @param instrumentedMethod The instrumented method.
          * @return A list of representation of all values of all parameters.
          */
@@ -8580,7 +8583,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Validates if the supplied origin sort is representable.
          *
          * @param sort               The sort of origin.
-         * @param original           The substituted element.
+         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
          * @param instrumentedMethod The instrumented method.
          * @return {@code true} if the supplied sort of origin is representable.
          */
@@ -8592,7 +8595,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Resolves a stack manipulation that loads the supplied sort of origin onto the operand stack.
          *
          * @param sort               The sort of origin.
-         * @param original           The substituted element.
+         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
          * @param parameters         The parameters to the substituted element.
          * @param result             The type upon which the substituted element is invoked.
          * @param instrumentedMethod The instrumented method.
