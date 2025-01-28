@@ -3,17 +3,22 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaConstant;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
@@ -1023,15 +1028,37 @@ public class MemberSubstitutionTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    public void testLambdaSubstitution() throws Exception{
+    public void testLambdaSubstitutionWithStub() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Class.forName("net.bytebuddy.test.precompiled.v8.LambdaSampleFactory"))
-                .visit(MemberSubstitution.strict().lambdaExpression().stub().on(named("nonCapturing")))
+                .visit(MemberSubstitution.strict()
+                        .lambdaExpression()
+                        .withName(ElementMatchers.is("call"))
+                        .withType(ElementMatchers.is(JavaConstant.MethodType.of(
+                                TypeDescription.ForLoadedType.of(Callable.class),
+                                Collections.<TypeDescription>emptyList())))
+                        .withArguments(ElementMatchers.<List<JavaConstant>>any())
+                        .stub()
+                        .on(named("nonCapturing")))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getMethod("nonCapturing").invoke(instance), nullValue(Object.class));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testLambdaSubstitutionWithChainOriginal() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Class.forName("net.bytebuddy.test.precompiled.v8.LambdaSampleFactory"))
+                .visit(MemberSubstitution.strict().lambdaExpression().replaceWithChain(
+                        MemberSubstitution.Substitution.Chain.Step.OfOriginalExpression.INSTANCE).on(named("nonCapturing")))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getMethod("nonCapturing").invoke(instance), notNullValue(Object.class));
     }
 
     @Test(expected = IllegalStateException.class)

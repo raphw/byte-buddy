@@ -1977,6 +1977,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             for (int index = 0; index < parameters.size(); index++) {
                                 stackManipulations.add(MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)));
                             }
+                            stackManipulations.add(stackManipulation);
                             return new Simple(new StackManipulation.Compound(stackManipulations), ((Target.ForDynamicInvocation) target).getMethodType().getReturnType().asGenericType());
                         } else {
                             throw new IllegalStateException("Unexpected target: " + target);
