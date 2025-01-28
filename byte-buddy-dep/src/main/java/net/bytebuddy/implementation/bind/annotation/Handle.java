@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.implementation.bind.annotation;
 
-import net.bytebuddy.asm.MemberSubstitution;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -97,27 +96,27 @@ public @interface Handle {
          */
         INSTANCE;
         /**
-         * The {@link MemberSubstitution.Handle#type()} method.
+         * The {@link Handle#type()} method.
          */
         private static final MethodDescription.InDefinedShape HANDLE_TYPE;
 
         /**
-         * The {@link MemberSubstitution.Handle#owner()} method.
+         * The {@link Handle#owner()} method.
          */
         private static final MethodDescription.InDefinedShape HANDLE_OWNER;
 
         /**
-         * The {@link MemberSubstitution.Handle#name()} method.
+         * The {@link Handle#name()} method.
          */
         private static final MethodDescription.InDefinedShape HANDLE_NAME;
 
         /**
-         * The {@link MemberSubstitution.Handle#returnType()} method.
+         * The {@link Handle#returnType()} method.
          */
         private static final MethodDescription.InDefinedShape HANDLE_RETURN_TYPE;
 
         /**
-         * The {@link MemberSubstitution.Handle#parameterTypes()} method.
+         * The {@link Handle#parameterTypes()} method.
          */
         private static final MethodDescription.InDefinedShape HANDLE_PARAMETER_TYPES;
 
@@ -125,7 +124,7 @@ public @interface Handle {
          * Initializes the methods of the annotation that is read by this binder.
          */
         static {
-            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(MemberSubstitution.Handle.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Handle.class).getDeclaredMethods();
             HANDLE_TYPE = methods.filter(named("type")).getOnly();
             HANDLE_OWNER = methods.filter(named("owner")).getOnly();
             HANDLE_NAME = methods.filter(named("name")).getOnly();
@@ -149,12 +148,13 @@ public @interface Handle {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
-            if (!target.getType().asErasure().isAssignableTo(JavaType.METHOD_HANDLE.getTypeStub())) {
+            if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
+            TypeDescription owner = annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class);
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new JavaConstantValue(new JavaConstant.MethodHandle(
                     annotation.getValue(HANDLE_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
-                    annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class),
+                    owner.represents(void.class) ? implementationTarget.getInstrumentedType() : owner,
                     annotation.getValue(HANDLE_NAME).resolve(String.class),
                     annotation.getValue(HANDLE_RETURN_TYPE).resolve(TypeDescription.class),
                     Arrays.asList(annotation.getValue(HANDLE_PARAMETER_TYPES).resolve(TypeDescription[].class)))));
