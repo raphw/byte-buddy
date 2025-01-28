@@ -215,15 +215,21 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
+    /**
+     * Matches invokedynamic instructions which represents Java lambda expressions.
+     *
+     * @return A member substitution for Java lambda expressions.
+     */
     public WithoutSpecification lambdaExpression() {
-        return dynamic(new ElementMatcher<JavaConstant.MethodHandle>() {
-            @Override
-            public boolean matches(JavaConstant.MethodHandle target) {
-                return target.getTypeDescription().getName().equals("java.lang.invoke.LambdaMetafactory");
-            }
-        }); // TODO
+        return dynamic(new LambdaMetaFactoryMatcher());
     }
 
+    /**
+     * Matches invokedynamic instructions that are dispatched for the supplied method handle.
+     *
+     * @param matcher A matcher for the invokedynamic's bootstrap method.
+     * @return A member substitution for invokedynamic instructions that are dispatched by any matched bootstrap method.
+     */
     public WithoutSpecification dynamic(ElementMatcher<? super JavaConstant.MethodHandle> matcher) {
         return new WithoutSpecification.ForMatchedDynamicInvocation(methodGraphCompiler,
                 typePoolResolver,
@@ -532,13 +538,42 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         public abstract MemberSubstitution replaceWith(Substitution.Factory factory);
 
+        @HashCodeAndEqualsPlugin.Enhance
         public static class ForMatchedDynamicInvocation extends WithoutSpecification {
 
+            /**
+             * A matcher for an invokedynamic bootstrap method.
+             */
             private final ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher;
+
+            /**
+             * A matcher for an invokedynamic instruction's name.
+             */
             private final ElementMatcher.Junction<? super String> nameMatcher;
+
+            /**
+             * A matcher for an invokedynamic instruction's result type.
+             */
             private final ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher;
+
+            /**
+             * A matcher for an invokedynamic instruction's constant arguments.
+             */
             private final ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher;
 
+            /**
+             * Creates a member substitution for an invokedynamic instruction.
+             *
+             * @param methodGraphCompiler The method graph compiler to use.
+             * @param typePoolResolver    The type pool resolver to use.
+             * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+             * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
+             * @param replacementFactory  The replacement factory to use for creating substitutions.
+             * @param handleMatcher       A matcher for an invokedynamic bootstrap method.
+             * @param nameMatcher         A matcher for an invokedynamic instruction's name.
+             * @param typeMatcher         A matcher for an invokedynamic instruction's result type.
+             * @param argumentsMatcher    A matcher for an invokedynamic instruction's constant arguments.
+             */
             protected ForMatchedDynamicInvocation(MethodGraph.Compiler methodGraphCompiler,
                                                   TypePoolResolver typePoolResolver,
                                                   boolean strict,
@@ -555,6 +590,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 this.argumentsMatcher = argumentsMatcher;
             }
 
+            /**
+             * Reduces matched invokedynamic instructions to such instructions that declare a name which is matched by the supplied matcher.
+             *
+             * @param nameMatcher A matcher for an invokedynamic instruction's name.
+             * @return A member substitution for an invokedynamic instruction with a name that is matched by the given matcher.
+             */
             public ForMatchedDynamicInvocation withName(ElementMatcher<? super String> nameMatcher) {
                 return new ForMatchedDynamicInvocation(methodGraphCompiler,
                         typePoolResolver,
@@ -567,6 +608,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         argumentsMatcher);
             }
 
+            /**
+             * Reduces matched invokedynamic instructions to such instructions that require a type which is matched by the supplied matcher.
+             *
+             * @param typeMatcher A matcher for an invokedynamic instruction's required type.
+             * @return A member substitution for an invokedynamic instruction with a required type that is matched by the given matcher.
+             */
             public ForMatchedDynamicInvocation withType(ElementMatcher<? super JavaConstant.MethodType> typeMatcher) {
                 return new ForMatchedDynamicInvocation(methodGraphCompiler,
                         typePoolResolver,
@@ -579,6 +626,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         argumentsMatcher);
             }
 
+            /**
+             * Reduces matched invokedynamic instructions to such instructions that is provided with constant arguments which are matched by the supplied matcher.
+             *
+             * @param argumentsMatcher A matcher for an invokedynamic instruction's constant arguments.
+             * @return A member substitution for an invokedynamic instruction with constant arguments that are matched by the given matcher.
+             */
             public ForMatchedDynamicInvocation withArguments(ElementMatcher<? super List<JavaConstant>> argumentsMatcher) {
                 return new ForMatchedDynamicInvocation(methodGraphCompiler,
                         typePoolResolver,
@@ -601,7 +654,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 nameMatcher,
                                 typeMatcher,
                                 argumentsMatcher,
-                                substitutionFactory))); // TODO
+                                substitutionFactory)));
             }
         }
 
@@ -1740,7 +1793,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
-                        List<StackManipulation> stackManipulations; // TODO: null?
+                        List<StackManipulation> stackManipulations;
                         if (original instanceof MethodDescription && ((MethodDescription) original).isConstructor()) {
                             stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 4);
                             stackManipulations.add(Removal.of(current));
@@ -1776,6 +1829,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return new Simple(new StackManipulation.Compound(stackManipulations), TypeDefinition.Sort.describe(void.class));
                                 }
                             }
+                        } else if (original == null) {
+                            // TODO: handle lambda invocation
+                            return null;
                         } else {
                             throw new IllegalArgumentException("Unexpected target type: " + original);
                         }
@@ -1938,7 +1994,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,
-                                              ByteCodeElement.Member original,
+                                              @MaybeNull ByteCodeElement.Member original,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic result,
                                               JavaConstant.MethodHandle methodHandle,
@@ -2434,12 +2490,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                        TypeList.Generic parameters,
                                                        Map<Integer, Integer> offsets,
                                                        StackManipulation stackManipulation) {
-                            int index = original != null // TODO
+                            int index = original != null
                                     && ((original.getModifiers() & Opcodes.ACC_STATIC) == 0)
                                     && !(original instanceof MethodDescription
                                     && ((MethodDescription) original).isConstructor()) ? this.index + 1 : this.index;
                             if (index >= parameters.size()) {
-                                throw new IllegalStateException(original + " does not define an argument with index " + index);
+                                throw new IllegalStateException("Target does not define an argument with index " + index);
                             }
                             StackManipulation assignment = assigner.assign(parameters.get(index), fieldDescription.getType(), typing);
                             if (!assignment.isValid()) {
@@ -2565,7 +2621,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                             stackManipulations.add(assignment);
                         }
-                        boolean shift = original != null // TODO
+                        boolean shift = original != null
                                 && ((original.getModifiers() & Opcodes.ACC_STATIC) == 0)
                                 && !(original instanceof MethodDescription && ((MethodDescription) original).isConstructor());
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
@@ -3777,7 +3833,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * {@inheritDoc}
                              */
-                            public ForThisReference.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                                 return new ForThisReference.Resolved(targetType, this.typing == null ? typing : this.typing, source, optional, assigner, instrumentedMethod);
                             }
 
@@ -7412,18 +7468,46 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
         }
 
+        /**
+         * A replacement that substitutes a invokedynamic instruction.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
         class ForDynamicInvocation implements Replacement {
 
+            /**
+             * A matcher for an invokedynamic bootstrap method.
+             */
             private final ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher;
 
+            /**
+             * A matcher for an invokedynamic instruction's name.
+             */
             private final ElementMatcher.Junction<? super String> nameMatcher;
 
+            /**
+             * A matcher for an invokedynamic instruction's result type.
+             */
             private final ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher;
 
+            /**
+             * A matcher for an invokedynamic instruction's constant arguments.
+             */
             private final ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher;
 
+            /**
+             * The substitution to apply.
+             */
             private final Substitution substitution;
 
+            /**
+             * Creates a replacement for an invokedynamic instruction.
+             *
+             * @param handleMatcher    A matcher for an invokedynamic bootstrap method.
+             * @param nameMatcher      A matcher for an invokedynamic instruction's name.
+             * @param typeMatcher      A matcher for an invokedynamic instruction's result type.
+             * @param argumentsMatcher A matcher for an invokedynamic instruction's constant arguments.
+             * @param substitution     The substitution to apply.
+             */
             protected ForDynamicInvocation(ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher,
                                            ElementMatcher.Junction<? super String> nameMatcher,
                                            ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
@@ -7476,18 +7560,46 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return Binding.Unresolved.INSTANCE;
             }
 
+            /**
+             * A factory for a replacement for an invokedynamic instruction.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements Replacement.Factory {
 
+                /**
+                 * A matcher for an invokedynamic bootstrap method.
+                 */
                 private final ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher;
 
+                /**
+                 * A matcher for an invokedynamic instruction's name.
+                 */
                 private final ElementMatcher.Junction<? super String> nameMatcher;
 
+                /**
+                 * A matcher for an invokedynamic instruction's result type.
+                 */
                 private final ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher;
 
+                /**
+                 * A matcher for an invokedynamic instruction's constant arguments.
+                 */
                 private final ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher;
 
+                /**
+                 * A factory for creating a substitution.
+                 */
                 private final Substitution.Factory substitutionFactory;
 
+                /**
+                 * Creates a factory for a replacement for a replacement for an invokedynamic instruction.
+                 *
+                 * @param handleMatcher       A matcher for an invokedynamic bootstrap method.
+                 * @param nameMatcher         A matcher for an invokedynamic instruction's name.
+                 * @param typeMatcher         A matcher for an invokedynamic instruction's result type.
+                 * @param argumentsMatcher    A matcher for an invokedynamic instruction's constant arguments.
+                 * @param substitutionFactory A factory for creating a substitution.
+                 */
                 protected Factory(ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher,
                                   ElementMatcher.Junction<? super String> nameMatcher,
                                   ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
@@ -7861,7 +7973,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 if (binding.isBound()) {
                     StackManipulation.Size size = binding.make(methodType.getParameterTypes().asGenericTypes(),
                             methodType.getReturnType().asGenericType(),
-                            methodHandle, // TODO
+                            methodHandle,
                             MethodInvocation.invoke(null).dynamic(name, // TODO
                                     methodType.getReturnType(),
                                     methodType.getParameterTypes(),
@@ -8389,7 +8501,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             Map<Integer, Integer> offsets,
                                             @MaybeNull ByteCodeElement.Member original,
                                             MethodDescription instrumentedMethod) {
-                return index < parameters.size() - (original != null && original.isStatic() ? 0 : 1) // TODO
+                return index < parameters.size() - (original == null || original.isStatic() ? 0 : 1)
                         ? new Source.Value(parameters.get(index + (original != null && original.isStatic() ? 0 : 1)), offsets.get(index + (original != null && original.isStatic() ? 0 : 1)))
                         : null;
             }
@@ -8400,8 +8512,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                    Map<Integer, Integer> offsets,
                                                    @MaybeNull ByteCodeElement.Member original,
                                                    MethodDescription instrumentedMethod) {
-                List<Source.Value> values = new ArrayList<Source.Value>(parameters.size() - (!includesSelf && !original.isStatic() ? 1 : 0));
-                for (int index = original != null && original.isStatic() || includesSelf ? 0 : 1; index < parameters.size(); index++) { // TODO
+                List<Source.Value> values = new ArrayList<Source.Value>(parameters.size() - (!includesSelf && original != null && !original.isStatic() ? 1 : 0));
+                for (int index = original == null || original.isStatic() || includesSelf ? 0 : 1; index < parameters.size(); index++) {
                     values.add(new Source.Value(parameters.get(index), offsets.get(index)));
                 }
                 return values;
@@ -8651,6 +8763,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             protected int getOffset() {
                 return offset;
             }
+        }
+    }
+
+    /**
+     * A matcher for method handles of the {@code java.lang.invoke.LambdaMetafactory}.
+     */
+    protected static class LambdaMetaFactoryMatcher implements ElementMatcher<JavaConstant.MethodHandle> {
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean matches(@MaybeNull JavaConstant.MethodHandle target) {
+            return target != null && target.getTypeDescription().getName().equals("java.lang.invoke.LambdaMetafactory");
         }
     }
 }
