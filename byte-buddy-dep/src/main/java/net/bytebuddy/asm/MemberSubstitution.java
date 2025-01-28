@@ -7076,11 +7076,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             class ForDynamicInvocation implements Binding {
 
                 /**
-                 * The type on which a field or method was accessed.
-                 */
-                private final TypeDescription receiver;
-
-                /**
                  * The name of the lambda expression target;
                  */
                 private final String name;
@@ -7098,13 +7093,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Creates a resolved binding for an invokedynamic expression.
                  *
-                 * @param receiver     The type on which a field or method was accessed.
                  * @param name         The name of the lambda expression target;
                  * @param arguments    The constant arguments supplied to the bootstrap method.
                  * @param substitution The substitution to apply.
                  */
-                public ForDynamicInvocation(TypeDescription receiver, String name, List<JavaConstant> arguments, Substitution substitution) {
-                    this.receiver = receiver;
+                public ForDynamicInvocation(String name, List<JavaConstant> arguments, Substitution substitution) {
                     this.name = name;
                     this.arguments = arguments;
                     this.substitution = substitution;
@@ -7125,7 +7118,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                               JavaConstant.MethodHandle methodHandle,
                                               StackManipulation stackManipulation,
                                               int freeOffset) {
-                    return substitution.resolve(receiver, null, parameters, result, methodHandle, stackManipulation, freeOffset);
+                    return substitution.resolve(null, null, parameters, result, methodHandle, stackManipulation, freeOffset);
                 }
             }
         }
@@ -7617,7 +7610,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         && nameMatcher.matches(name)
                         && typeMatcher.matches(methodType)
                         && argumentsMatcher.matches(constants)) {
-                    return new Binding.ForDynamicInvocation(methodHandle.getOwnerType(), name, constants, substitution);
+                    return new Binding.ForDynamicInvocation(name, constants, substitution);
                 }
                 return Binding.Unresolved.INSTANCE;
             }
