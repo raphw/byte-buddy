@@ -18,7 +18,6 @@ package net.bytebuddy.utility;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
@@ -47,17 +46,6 @@ public interface AsmClassReader {
      */
     @MaybeNull
     <T> T unwrap(Class<T> type);
-
-    /**
-     * Creates a compatible class writer to this class reader implementation, or {@code null} if such an
-     * implementation does not exist.
-     *
-     * @param flags The ASM flags to provide to the class writer.
-     * @param typePool    The type pool to use for resolving frames.
-     * @return An appropriate class writer implementation.
-     */
-    @MaybeNull
-    AsmClassWriter toWriter(int flags, TypePool typePool);
 
     /**
      * Accepts a class visitor to read a class.
@@ -115,9 +103,9 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    return ClassFileVersion.ofClassFile(binaryRepresentation).isGreaterThan(ClassFileVersion.latest())
-                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation)
-                            : ASM_ONLY.make(binaryRepresentation);
+                    return ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
+                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation, experimental)
+                            : ASM_ONLY.make(binaryRepresentation, experimental);
                 }
             },
 
@@ -130,8 +118,8 @@ public interface AsmClassReader {
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
                     return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V24)
-                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation)
-                            : ASM_ONLY.make(binaryRepresentation);
+                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation, experimental)
+                            : ASM_ONLY.make(binaryRepresentation, experimental);
                 }
             },
 
@@ -233,13 +221,6 @@ public interface AsmClassReader {
         /**
          * {@inheritDoc}
          */
-        public AsmClassWriter toWriter(int flags, TypePool typePool) {
-            return new AsmClassWriter.ForAsm(new AsmClassWriter.FrameComputingClassWriter(classReader, flags, typePool));
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public void accept(ClassVisitor classVisitor, int flags) {
             classReader.accept(classVisitor, NO_ATTRIBUTES, flags);
         }
@@ -295,13 +276,6 @@ public interface AsmClassReader {
             return type.isInstance(classReader)
                     ? type.cast(classReader)
                     : null;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public AsmClassWriter toWriter(int flags, TypePool typePool) {
-            return AsmClassWriter.Factory.Default.CLASS_FILE_API_ONLY.make(flags, this, typePool);
         }
 
         /**
