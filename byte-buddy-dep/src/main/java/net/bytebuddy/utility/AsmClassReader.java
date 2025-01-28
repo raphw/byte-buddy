@@ -91,7 +91,7 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    return FACTORY.make(binaryRepresentation, experimental);
+                    return (FACTORY == IMPLICIT ? ASM_FIRST : FACTORY).make(binaryRepresentation, experimental);
                 }
             },
 
@@ -103,9 +103,9 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    return ClassFileVersion.ofClassFile(binaryRepresentation).isGreaterThan(ClassFileVersion.latest())
-                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation)
-                            : ASM_ONLY.make(binaryRepresentation);
+                    return ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
+                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation, experimental)
+                            : ASM_ONLY.make(binaryRepresentation, experimental);
                 }
             },
 
@@ -118,8 +118,8 @@ public interface AsmClassReader {
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
                     return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V24)
-                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation)
-                            : ASM_ONLY.make(binaryRepresentation);
+                            ? CLASS_FILE_API_ONLY.make(binaryRepresentation, experimental)
+                            : ASM_ONLY.make(binaryRepresentation, experimental);
                 }
             },
 
