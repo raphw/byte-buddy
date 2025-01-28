@@ -7974,10 +7974,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     StackManipulation.Size size = binding.make(methodType.getParameterTypes().asGenericTypes(),
                             methodType.getReturnType().asGenericType(),
                             methodHandle,
-                            MethodInvocation.invoke(null).dynamic(name, // TODO
-                                    methodType.getReturnType(),
-                                    methodType.getParameterTypes(),
-                                    constants),
+                            MethodInvocation.invoke(methodHandle.getOwnerType().getDeclaredMethods()
+                                    .filter(named(methodHandle.getName()).and(hasDescriptor(methodHandle.getDescriptor())))
+                                    .getOnly()).dynamic(name, methodType.getReturnType(), methodType.getParameterTypes(), constants),
                             getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext);
                     stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize());
                     matched = true;
