@@ -5604,7 +5604,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                JavaConstant.MethodHandle methodHandle,
                                                                Map<Integer, Integer> offsets,
                                                                int offset) {
-                                    if (!source.isRepresentable(sort, original, instrumentedMethod)) {
+                                    if (original == null || !source.isRepresentable(sort, original, instrumentedMethod)) {
                                         throw new IllegalStateException("Cannot represent " + sort + " for " + source + " in " + instrumentedMethod);
                                     }
                                     return source.resolve(sort, original, parameters, result, instrumentedMethod);
@@ -6249,18 +6249,20 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 /**
                                  * {@inheritDoc}
                                  */
-                                public List<JavaConstant> make(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle) {
+                                public List<JavaConstant> make(TypeDescription receiver,
+                                                               @MaybeNull ByteCodeElement.Member original,
+                                                               JavaConstant.MethodHandle methodHandle) {
                                     if (instrumentedMethod.isTypeInitializer()) {
                                         return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().getName()),
                                                 JavaConstant.Simple.of(receiver),
-                                                JavaConstant.Simple.ofLoaded(original.getInternalName()),
+                                                JavaConstant.Simple.ofLoaded(original == null ? "" : original.getInternalName()),
                                                 methodHandle,
                                                 JavaConstant.Simple.of(instrumentedType),
                                                 JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()));
                                     } else {
                                         return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().getName()),
                                                 JavaConstant.Simple.of(receiver),
-                                                JavaConstant.Simple.ofLoaded(original.getInternalName()),
+                                                JavaConstant.Simple.ofLoaded(original == null ? "" : original.getInternalName()),
                                                 methodHandle,
                                                 JavaConstant.Simple.of(instrumentedType),
                                                 JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()),
@@ -8481,14 +8483,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         SUBSTITUTED_ELEMENT {
             @Override
-            protected ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                return original;
-            }
-
-            @Override
             @MaybeNull
-            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                return original.isStatic()
+            protected Source.Value self(TypeList.Generic parameters,
+                                        Map<Integer, Integer> offsets,
+                                        @MaybeNull ByteCodeElement.Member original,
+                                        MethodDescription instrumentedMethod) {
+                return original == null || original.isStatic()
                         ? null
                         : new Source.Value(parameters.get(THIS_REFERENCE), offsets.get(THIS_REFERENCE));
             }
@@ -8524,7 +8524,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             @Override
-            protected boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+            protected boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
+                                              ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
                 return sort.isRepresentable(original);
             }
 
@@ -8542,12 +8543,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Indicates that an element should be loaded in context of the instrumented method.
          */
         ENCLOSING_METHOD {
-            @Override
-            protected ByteCodeElement.Member element(@MaybeNull ByteCodeElement.Member original,
-                                                     MethodDescription instrumentedMethod) {
-                return instrumentedMethod;
-            }
-
             @Override
             @MaybeNull
             protected Source.Value self(TypeList.Generic parameters,
@@ -8623,16 +8618,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         };
 
         /**
-         * Resolves the targeted byte code element.
-         *
-         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
-         * @param instrumentedMethod The instrumented element.
-         * @return The byte code element that is represented by this source.
-         */
-        protected abstract ByteCodeElement.Member element(@MaybeNull ByteCodeElement.Member original,
-                                                          MethodDescription instrumentedMethod);
-
-        /**
          * Resolves a value representation of the {@code this} reference or {@code null} if no such reference is available.
          *
          * @param parameters         The list of parameters of the substituted element.
@@ -8694,26 +8679,26 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Validates if the supplied origin sort is representable.
          *
          * @param sort               The sort of origin.
-         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
+         * @param original           The substituted element.
          * @param instrumentedMethod The instrumented method.
          * @return {@code true} if the supplied sort of origin is representable.
          */
         protected abstract boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
-                                                   @MaybeNull ByteCodeElement.Member original,
+                                                   ByteCodeElement.Member original,
                                                    MethodDescription instrumentedMethod);
 
         /**
          * Resolves a stack manipulation that loads the supplied sort of origin onto the operand stack.
          *
          * @param sort               The sort of origin.
-         * @param original           The substituted element, or {@code null} if the target is an invokedynamic instruction.
+         * @param original           The substituted element.
          * @param parameters         The parameters to the substituted element.
          * @param result             The type upon which the substituted element is invoked.
          * @param instrumentedMethod The instrumented method.
          * @return A stack manipulation loading the supplied sort of origin onto the operand stack.
          */
         protected abstract StackManipulation resolve(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
-                                                     @MaybeNull ByteCodeElement.Member original,
+                                                     ByteCodeElement.Member original,
                                                      TypeList.Generic parameters,
                                                      TypeDescription.Generic result,
                                                      MethodDescription instrumentedMethod);
