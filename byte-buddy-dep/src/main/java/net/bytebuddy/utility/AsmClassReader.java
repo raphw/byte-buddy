@@ -91,7 +91,7 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    return FACTORY.make(binaryRepresentation, experimental);
+                    return (FACTORY == IMPLICIT ? ASM_FIRST : FACTORY).make(binaryRepresentation, experimental);
                 }
             },
 

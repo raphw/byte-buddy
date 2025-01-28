@@ -106,7 +106,7 @@ public interface AsmClassWriter {
                  * {@inheritDoc}
                  */
                 public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                    return FACTORY.make(flags, classReader, typePool);
+                    return (FACTORY == IMPLICIT ? ASM_FIRST : FACTORY).make(flags, classReader, typePool);
                 }
             },
 
