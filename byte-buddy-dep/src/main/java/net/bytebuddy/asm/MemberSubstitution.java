@@ -7195,7 +7195,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 private final JavaConstant.MethodType methodType;
 
                 /**
-                 * The name of the lambda expression target;
+                 * The name of the lambda expression target.
                  */
                 private final String name;
 
@@ -7213,7 +7213,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Creates a resolved binding for an invokedynamic expression.
                  *
                  * @param methodType   The type of the lambda expression that is to be bound.
-                 * @param name         The name of the lambda expression target;
+                 * @param name         The name of the lambda expression target.
                  * @param arguments    The constant arguments supplied to the bootstrap method.
                  * @param substitution The substitution to apply.
                  */
