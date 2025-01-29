@@ -313,6 +313,40 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7)
+    public void testDynamicConstantInvokedynamic() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionDynamicConstant");
+        Class<?> type = new ByteBuddy()
+                .redefine(bootstrap)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(bootstrap.getMethod("intercept", bootstrap)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), instanceOf(bootstrap));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 11)
+    public void testDynamicConstant() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v11.MemberSubstitutionDynamicConstant");
+        Class<?> type = new ByteBuddy()
+                .redefine(bootstrap)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(bootstrap.getMethod("intercept", bootstrap)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), instanceOf(bootstrap));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
     public void testSelfCallHandleHierarchy() throws Exception {
         Class<?> type = new ByteBuddy()

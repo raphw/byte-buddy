@@ -7,9 +7,9 @@ import java.lang.invoke.CallSite;
 import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandles;
 
-public class DynamicConstantAdvice {
+public class AdviceDynamicConstant {
 
-    public DynamicConstantAdvice foo() {
+    public AdviceDynamicConstant foo() {
         return null;
     }
 
@@ -17,15 +17,15 @@ public class DynamicConstantAdvice {
     public static void exit(@Advice.DynamicConstant(
                                     bootstrapType = JavaConstant.MethodHandle.HandleType.INVOKE_STATIC,
                                     bootstrapName = "invokedynamic",
-                                    bootstrapOwner = DynamicConstantAdvice.class,
+                                    bootstrapOwner = AdviceDynamicConstant.class,
                                     bootstrapReturnType = CallSite.class,
                                     bootstrapParameterTypes = Object[].class,
-                                    invokedynamic = true) DynamicConstantAdvice constant,
-                            @Advice.Return(readOnly = false) DynamicConstantAdvice returned) throws Throwable {
+                                    invokedynamic = true) AdviceDynamicConstant constant,
+                            @Advice.Return(readOnly = false) AdviceDynamicConstant returned) throws Throwable {
         returned = constant;
     }
 
     public static CallSite invokedynamic(Object... args) {
-        return new ConstantCallSite(MethodHandles.constant(DynamicConstantAdvice.class, new DynamicConstantAdvice()));
+        return new ConstantCallSite(MethodHandles.constant(AdviceDynamicConstant.class, new AdviceDynamicConstant()));
     }
 }

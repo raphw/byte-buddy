@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -60,7 +61,7 @@ public class MethodInvocationGenericTest {
         when(declaredMethod.asSignatureToken()).thenReturn(token);
         when(declaredMethod.isSpecializableFor(targetType)).thenReturn(true);
         when(declaredMethod.asDefined()).thenReturn(declaredMethod);
-        when(declaredMethod.getParameters()).thenReturn(new ParameterList.Empty<>());
+        when(declaredMethod.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(declaredMethod.getInternalName()).thenReturn(FOO);
     }
 

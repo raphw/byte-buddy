@@ -21,7 +21,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
@@ -1609,7 +1608,7 @@ public class AdviceTest {
     @Test
     @JavaVersionRule.Enforce(value = 11, target = HandleSample.class)
     public void testDynamicConstant() throws Exception {
-        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v11.DynamicConstantAdvice");
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v11.AdviceDynamicConstant");
         Class<?> type = new ByteBuddy()
                 .redefine(bootstrap)
                 .visit(Advice.to(bootstrap).on(named(FOO)))
@@ -1625,7 +1624,7 @@ public class AdviceTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, target = HandleSample.class)
     public void testDynamicConstantInvokedynamic() throws Exception {
-        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.DynamicConstantAdvice");
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.AdviceDynamicConstant");
         Class<?> type = new ByteBuddy()
                 .redefine(bootstrap)
                 .visit(Advice.to(bootstrap).on(named(FOO)))
