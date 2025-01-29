@@ -308,9 +308,8 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        Object instance = type.getDeclaredConstructor(String.class).newInstance(FOO);
-        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
-        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) (FOO + BAR)));
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) FOO));
     }
 
     @Test
@@ -937,12 +936,14 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     public static class HandleSample {
 
+        public String foo;
+
         public static String foo() {
             return FOO;
         }
 
         public String run() {
-            return null;
+            return foo;
         }
 
         public static String handle(@MemberSubstitution.Handle(
