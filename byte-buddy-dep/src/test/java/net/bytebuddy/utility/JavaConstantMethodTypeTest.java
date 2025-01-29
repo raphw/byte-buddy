@@ -2,6 +2,7 @@ package net.bytebuddy.utility;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -118,6 +119,13 @@ public class JavaConstantMethodTypeTest {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofLoaded(loadedMethodType);
         assertThat(methodType.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Object.class)));
+    }
+
+    @Test
+    public void testAsmMethodType() {
+        assertThat(JavaConstant.MethodType.ofAsm(TypePool.Default.ofSystemLoader(), Type.getMethodType(
+                Type.VOID_TYPE,
+                Type.getType(Foo.class))), is(JavaConstant.MethodType.of(void.class, Foo.class)));
     }
 
     @Test

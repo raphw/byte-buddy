@@ -1,9 +1,11 @@
 package net.bytebuddy.utility;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.pool.TypePool;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.objectweb.asm.Type;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,14 +20,14 @@ public class JavaConstantSimpleTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {0, TypeDescription.ForLoadedType.of(int.class), 0},
-                {0L, TypeDescription.ForLoadedType.of(long.class), 0L},
-                {0f, TypeDescription.ForLoadedType.of(float.class), 0f},
-                {0d, TypeDescription.ForLoadedType.of(double.class), 0d},
-                {"foo", TypeDescription.ForLoadedType.of(String.class), "foo"},
-                {Object.class, TypeDescription.ForLoadedType.of(Class.class), TypeDescription.ForLoadedType.of(Object.class)},
-                {TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(Class.class), TypeDescription.ForLoadedType.of(Object.class)},
-                {JavaConstant.Simple.ofLoaded(0), TypeDescription.ForLoadedType.of(int.class), 0}
+                {0, TypeDescription.ForLoadedType.of(int.class), 0, 0},
+                {0L, TypeDescription.ForLoadedType.of(long.class), 0L, 0L},
+                {0f, TypeDescription.ForLoadedType.of(float.class), 0f, 0f},
+                {0d, TypeDescription.ForLoadedType.of(double.class), 0d, 0d},
+                {"foo", TypeDescription.ForLoadedType.of(String.class), "foo", "foo"},
+                {Object.class, TypeDescription.ForLoadedType.of(Class.class), TypeDescription.ForLoadedType.of(Object.class), Type.getType(Object.class)},
+                {TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(Class.class), TypeDescription.ForLoadedType.of(Object.class), Type.getType(Object.class)},
+                {JavaConstant.Simple.ofLoaded(0), TypeDescription.ForLoadedType.of(int.class), 0, 0}
         });
     }
 
@@ -35,10 +37,13 @@ public class JavaConstantSimpleTest {
 
     private final Object constant;
 
-    public JavaConstantSimpleTest(Object value, TypeDescription typeDescription, Object constant) {
+    private final Object asm;
+
+    public JavaConstantSimpleTest(Object value, TypeDescription typeDescription, Object constant, Object asm) {
         this.value = value;
         this.typeDescription = typeDescription;
         this.constant = constant;
+        this.asm = asm;
     }
 
     @Test
@@ -50,6 +55,11 @@ public class JavaConstantSimpleTest {
     @Test
     public void testTypeMatchesConstant() {
         assertThat(JavaConstant.Simple.wrap(value).getTypeDescription(), is(typeDescription));
+    }
+
+    @Test
+    public void testOfAsm() {
+        assertThat(JavaConstant.Simple.ofAsm(TypePool.Default.ofSystemLoader(), asm), is((Object) JavaConstant.Simple.wrap(value)));
     }
 
     @Test

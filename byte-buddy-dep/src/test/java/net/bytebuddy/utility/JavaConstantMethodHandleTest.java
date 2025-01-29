@@ -4,10 +4,14 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -179,6 +183,17 @@ public class JavaConstantMethodHandleTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(methodDescription.isSpecializableFor(typeDescription)).thenReturn(false);
         JavaConstant.MethodHandle.ofSpecial(methodDescription, typeDescription);
+    }
+
+    @Test
+    public void testAsmMethodHandle() throws Exception {
+        assertThat(JavaConstant.MethodHandle.ofAsm(TypePool.Default.ofSystemLoader(), new Handle(
+                        Opcodes.H_INVOKEVIRTUAL,
+                        Type.getInternalName(Foo.class),
+                        BAR,
+                        Type.getMethodDescriptor(Foo.class.getDeclaredMethod(BAR, Void.class)),
+                        false)),
+                is(JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class))));
     }
 
     @Test
