@@ -15,7 +15,9 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +32,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class MemberSubstitutionTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", RUN = "run";
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     public void testFieldReadStub() throws Exception {
