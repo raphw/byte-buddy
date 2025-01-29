@@ -23,6 +23,7 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +36,9 @@ public class MethodInvocationDynamicTest {
 
     @Mock
     private MethodDescription.InDefinedShape methodDescription;
+
+    @Mock
+    private TypeDescription.Generic genericReturnType, genericFirstType, genericSecondType;
 
     @Mock
     private TypeDescription returnType, declaringType, firstType, secondType;
@@ -55,9 +59,20 @@ public class MethodInvocationDynamicTest {
     private Object provided;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.asDefined()).thenReturn(methodDescription);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
+        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
+        when(genericReturnType.asErasure()).thenReturn(returnType);
+        when(genericFirstType.asErasure()).thenReturn(firstType);
+        when(genericFirstType.accept((TypeDescription.Generic.Visitor) any())).thenReturn(genericFirstType);
+        when(genericFirstType.asGenericType()).thenReturn(genericFirstType);
+        when(genericFirstType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(genericSecondType.asErasure()).thenReturn(secondType);
+        when(genericSecondType.accept((TypeDescription.Generic.Visitor) any())).thenReturn(genericSecondType);
+        when(genericSecondType.asGenericType()).thenReturn(genericSecondType);
+        when(genericSecondType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getDescriptor()).thenReturn(FOO);
         when(secondType.getDescriptor()).thenReturn(BAR);
@@ -67,7 +82,9 @@ public class MethodInvocationDynamicTest {
         when(methodDescription.getInternalName()).thenReturn(QUX);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(declaringType.getInternalName()).thenReturn(BAR);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, firstType, secondType));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription,
+                genericFirstType,
+                genericSecondType));
         when(argument.accept(JavaConstantValue.Visitor.INSTANCE)).thenReturn(provided);
         when(argument.getTypeDescription()).thenReturn(typeDescription);
     }
@@ -82,7 +99,7 @@ public class MethodInvocationDynamicTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_INVOKESTATIC, BAR, QUX, BAZ, false), provided);
+        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_INVOKESTATIC, BAR, QUX, "(" + FOO + BAR + ")" + QUX, false), provided);
     }
 
     @Test
@@ -95,7 +112,7 @@ public class MethodInvocationDynamicTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_NEWINVOKESPECIAL, BAR, QUX, BAZ, false), provided);
+        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_NEWINVOKESPECIAL, BAR, QUX, "(" + FOO + BAR + ")" + QUX, false), provided);
     }
 
     @Test

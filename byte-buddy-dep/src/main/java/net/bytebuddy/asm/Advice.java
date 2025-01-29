@@ -49,7 +49,6 @@ import net.bytebuddy.implementation.bytecode.member.Invokedynamic;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.AlwaysNull;

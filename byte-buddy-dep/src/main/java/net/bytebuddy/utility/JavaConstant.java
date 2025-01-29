@@ -1450,7 +1450,7 @@ public interface JavaConstant extends ConstantValue {
          */
         public static MethodHandle of(MethodDescription.InDefinedShape methodDescription) {
             return new MethodHandle(HandleType.of(methodDescription),
-                    methodDescription.getDeclaringType().asErasure(),
+                    methodDescription.getDeclaringType(),
                     methodDescription.getInternalName(),
                     methodDescription.getReturnType().asErasure(),
                     methodDescription.getParameters().asTypeList().asErasures());
