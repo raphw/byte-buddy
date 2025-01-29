@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. January 2025: version 1.17.0
+
+- Assure that implicit choice for class reader and class writer are always symmetric with regard to internal representation.
+- Retrofit `MemberSubstitution` to also allow for intercepting invokedynamic instructions.
+- Introduce `@Handle` annotations to allow for injecting constant pool-stored method handle in `Advice`, `MemberSubstitution` and `MethodDelegation`.
+- Introduce `@DynamicConstant` annotations to allow for injecting constant pool-stored dynamic constants in `Advice`, `MemberSubstitution` and `MethodDelegation`.
+
 ### 19. January 2025: version 1.16.1
 
 - Correct reflective activation of Class File API.
