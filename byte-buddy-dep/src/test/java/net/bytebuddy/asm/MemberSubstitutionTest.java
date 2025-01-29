@@ -1042,7 +1042,7 @@ public class MemberSubstitutionTest {
                         .withType(ElementMatchers.is(JavaConstant.MethodType.of(
                                 TypeDescription.ForLoadedType.of(Callable.class),
                                 Collections.<TypeDescription>emptyList())))
-                        .withArguments(ElementMatchers.<List<JavaConstant>>any())
+                        .withArguments(ElementMatchers.<List<? extends JavaConstant>>any())
                         .stub()
                         .on(named("nonCapturing")))
                 .make()
