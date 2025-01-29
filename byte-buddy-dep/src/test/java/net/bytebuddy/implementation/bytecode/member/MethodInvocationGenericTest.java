@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -10,6 +11,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 
@@ -18,6 +20,7 @@ import java.util.Collections;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -44,16 +47,21 @@ public class MethodInvocationGenericTest {
     private MethodDescription.SignatureToken token;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.asDefined()).thenReturn(declaredMethod);
         when(methodDescription.getReturnType()).thenReturn(methodReturnType);
         when(declaredMethod.getReturnType()).thenReturn(declaredReturnType);
+        when(declaredReturnType.asGenericType()).thenReturn(declaredReturnType);
+        when(declaredReturnType.accept((TypeDescription.Generic.Visitor) any())).thenReturn(declaredReturnType);
         when(declaredReturnType.asErasure()).thenReturn(declaredErasure);
         when(declaredMethod.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.asErasure()).thenReturn(declaringType);
         when(declaredMethod.asSignatureToken()).thenReturn(token);
         when(declaredMethod.isSpecializableFor(targetType)).thenReturn(true);
         when(declaredMethod.asDefined()).thenReturn(declaredMethod);
+        when(declaredMethod.getParameters()).thenReturn(new ParameterList.Empty<>());
+        when(declaredMethod.getInternalName()).thenReturn(FOO);
     }
 
     @Test
