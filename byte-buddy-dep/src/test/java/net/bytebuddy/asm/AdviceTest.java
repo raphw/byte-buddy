@@ -1607,6 +1607,38 @@ public class AdviceTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 11, target = HandleSample.class)
+    public void testDynamicConstant() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v11.DynamicConstantAdvice");
+        Class<?> type = new ByteBuddy()
+                .redefine(bootstrap)
+                .visit(Advice.to(bootstrap).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        Object value = type.getMethod(FOO).invoke(instance);
+        assertThat(value, notNullValue(Object.class));
+        assertThat(type.getMethod(FOO).invoke(instance), sameInstance(value));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = HandleSample.class)
+    public void testDynamicConstantInvokedynamic() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.DynamicConstantAdvice");
+        Class<?> type = new ByteBuddy()
+                .redefine(bootstrap)
+                .visit(Advice.to(bootstrap).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        Object value = type.getMethod(FOO).invoke(instance);
+        assertThat(value, notNullValue(Object.class));
+        assertThat(type.getMethod(FOO).invoke(instance), sameInstance(value));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
     public void testSelfCallHandle() throws Exception {
         Class<?> type = new ByteBuddy()

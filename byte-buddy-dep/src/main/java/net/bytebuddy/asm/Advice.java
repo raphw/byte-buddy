@@ -3890,7 +3890,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 static {
                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(DynamicConstant.class).getDeclaredMethods();
-                    NAME = methods.filter(named("type")).getOnly();
+                    NAME = methods.filter(named("name")).getOnly();
                     BOOTSTRAP = methods.filter(named("bootstrap")).getOnly();
                     INVOKEDYNAMIC = methods.filter(named("invokedynamic")).getOnly();
                 }
@@ -13012,12 +13012,45 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Class<?>[] parameterTypes();
     }
 
+    /**
+     * <p>
+     * Indicates that the annotated parameter should resolve a dynamic constant, using either constantdynamic or
+     * invokedynamic which is then bound to the parameter as a value.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.MemberSubstitution.DynamicConstant}
+     * or {@link net.bytebuddy.implementation.bind.annotation.DynamicConstant}. This annotation should be used only
+     * in combination with {@link Advice}.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
     public @interface DynamicConstant {
 
+        /**
+         * Returns the name of the dynamic constant that is supplied to the bootstrap method.
+         *
+         * @return The name of the dynamic constant that is supplied to the bootstrap method.
+         */
         String name() default JavaConstant.Dynamic.DEFAULT_NAME;
 
+        /**
+         * Returns a definition of the bootstrap method that resolves the dynamic constant.
+         *
+         * @return A definition of the bootstrap method that resolves the dynamic constant.
+         */
         Handle bootstrap();
 
+        /**
+         * Returns {@code true} if invokedynamic should be used to bind the annotated parameter.
+         *
+         * @return {@code true} if invokedynamic should be used to bind the annotated parameter.
+         */
         boolean invokedynamic() default false;
     }
 
