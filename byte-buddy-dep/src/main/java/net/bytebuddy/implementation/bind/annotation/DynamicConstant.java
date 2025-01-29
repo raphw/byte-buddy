@@ -101,7 +101,7 @@ public @interface DynamicConstant {
      * @return {@code true} if invokedynamic should be used to bind the annotated parameter.
      */
     boolean invokedynamic() default false;
-    
+
     /**
      * A binder for handling the
      * {@link net.bytebuddy.implementation.bind.annotation.DynamicConstant}
