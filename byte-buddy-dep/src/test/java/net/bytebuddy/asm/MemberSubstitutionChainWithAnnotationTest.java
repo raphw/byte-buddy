@@ -321,12 +321,12 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
                         .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(bootstrap.getMethod("intercept", bootstrap)))
-                        .on(named(RUN)))
+                        .on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
-        assertThat(type.getDeclaredMethod(RUN).invoke(instance), instanceOf(bootstrap));
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), instanceOf(type));
     }
 
     @Test
@@ -338,12 +338,12 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
                         .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(bootstrap.getMethod("intercept", bootstrap)))
-                        .on(named(RUN)))
+                        .on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
-        assertThat(type.getDeclaredMethod(RUN).invoke(instance), instanceOf(bootstrap));
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), instanceOf(type));
     }
 
     @Test

@@ -20,7 +20,8 @@ public class MemberSubstitutionDynamicConstant {
             bootstrapName = "invokedynamic",
             bootstrapOwner = MemberSubstitutionDynamicConstant.class,
             bootstrapReturnType = CallSite.class,
-            bootstrapParameterTypes = Object[].class) MemberSubstitutionDynamicConstant constant) throws Throwable {
+            bootstrapParameterTypes = Object[].class,
+            invokedynamic = true) MemberSubstitutionDynamicConstant constant) throws Throwable {
         return constant;
     }
 

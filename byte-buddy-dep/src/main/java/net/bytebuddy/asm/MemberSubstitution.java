@@ -4727,6 +4727,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             private final List<JavaConstant> arguments;
 
                             /**
+                             * {@code true} if invokedynamic should be used to bind the constant.
+                             */
+                            private final boolean invokedynamic;
+
+                            /**
                              * Creates an offset mapping for a dynamic constant.
                              *
                              * @param name                    The name of the dynamic constant.
@@ -4737,6 +4742,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * @param bootstrapReturnType     The return type of the boostrap method.
                              * @param bootstrapParameterTypes The parameter types of the boostrap method.
                              * @param arguments               The constant arguments to the bootstrap method.
+                             * @param invokedynamic           {@code true} if invokedynamic should be used to bind the constant.
                              */
                             public ForDynamicConstant(String name,
                                                       TypeDescription typeDescription,
@@ -4745,7 +4751,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                       String bootstrapName,
                                                       TypeDescription bootstrapReturnType,
                                                       List<? extends TypeDescription> bootstrapParameterTypes,
-                                                      List<JavaConstant> arguments) {
+                                                      List<JavaConstant> arguments,
+                                                      boolean invokedynamic) {
                                 this.name = name;
                                 this.typeDescription = typeDescription;
                                 this.bootstrapType = bootstrapType;
@@ -4754,6 +4761,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 this.bootstrapReturnType = bootstrapReturnType;
                                 this.bootstrapParameterTypes = bootstrapParameterTypes;
                                 this.arguments = arguments;
+                                this.invokedynamic = invokedynamic;
                             }
 
                             /**
@@ -4763,15 +4771,26 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                     Assigner.Typing typing,
                                                     TypeDescription instrumentedType,
                                                     MethodDescription instrumentedMethod) {
-                                return new Resolved.ForStackManipulation(new JavaConstantValue(new JavaConstant.Dynamic(
-                                        name,
-                                        typeDescription,
-                                        new JavaConstant.MethodHandle(bootstrapType,
-                                                bootstrapOwner.represents(void.class) ? instrumentedType : bootstrapOwner,
-                                                bootstrapName,
-                                                bootstrapReturnType,
-                                                bootstrapParameterTypes),
-                                        arguments)));
+                                if (invokedynamic) {
+                                    return new Resolved.ForStackManipulation(new Invokedynamic(name,
+                                            JavaConstant.MethodType.of(typeDescription),
+                                            new JavaConstant.MethodHandle(bootstrapType,
+                                                    bootstrapOwner.represents(void.class) ? instrumentedType : bootstrapOwner,
+                                                    bootstrapName,
+                                                    bootstrapReturnType,
+                                                    bootstrapParameterTypes),
+                                            arguments));
+                                } else {
+                                    return new Resolved.ForStackManipulation(new JavaConstantValue(new JavaConstant.Dynamic(
+                                            name,
+                                            typeDescription,
+                                            new JavaConstant.MethodHandle(bootstrapType,
+                                                    bootstrapOwner.represents(void.class) ? instrumentedType : bootstrapOwner,
+                                                    bootstrapName,
+                                                    bootstrapReturnType,
+                                                    bootstrapParameterTypes),
+                                            arguments)));
+                                }
                             }
 
                             /**
@@ -4814,6 +4833,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  */
                                 private static final MethodDescription.InDefinedShape BOOTSTRAP_PARAMETER_TYPES;
 
+                                /**
+                                 * The {@link DynamicConstant#invokedynamic()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape INVOKEDYNAMIC;
+
                                 /*
                                  * Resolves all annotation properties.
                                  */
@@ -4825,6 +4849,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     BOOTSTRAP_NAME = methods.filter(named("bootstrapName")).getOnly();
                                     BOOTSTRAP_RETURN_TYPE = methods.filter(named("bootstrapReturnType")).getOnly();
                                     BOOTSTRAP_PARAMETER_TYPES = methods.filter(named("bootstrapParameterTypes")).getOnly();
+                                    INVOKEDYNAMIC = methods.filter(named("invokedynamic")).getOnly();
                                 }
 
                                 /**
@@ -4853,7 +4878,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             annotation.getValue(BOOTSTRAP_NAME).resolve(String.class),
                                             annotation.getValue(BOOTSTRAP_RETURN_TYPE).resolve(TypeDescription.class),
                                             Arrays.asList(annotation.getValue(BOOTSTRAP_PARAMETER_TYPES).resolve(TypeDescription[].class)),
-                                            Collections.<JavaConstant>emptyList());
+                                            Collections.<JavaConstant>emptyList(),
+                                            annotation.getValue(INVOKEDYNAMIC).resolve(Boolean.class));
                                 }
                             }
                         }
