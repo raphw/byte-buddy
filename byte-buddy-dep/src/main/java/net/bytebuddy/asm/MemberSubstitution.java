@@ -240,7 +240,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 matcher,
                 ElementMatchers.<String>any(),
                 ElementMatchers.<JavaConstant.MethodType>any(),
-                ElementMatchers.<List<JavaConstant>>any());
+                ElementMatchers.<List<? extends JavaConstant>>any());
     }
 
     /**
@@ -563,7 +563,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A matcher for an invokedynamic instruction's constant arguments.
              */
-            private final ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher;
+            private final ElementMatcher.Junction<? super List<? extends JavaConstant>> argumentsMatcher;
 
             /**
              * Creates a member substitution for an invokedynamic instruction.
@@ -586,7 +586,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                   ElementMatcher<? super JavaConstant.MethodHandle> handleMatcher,
                                                   ElementMatcher.Junction<? super String> nameMatcher,
                                                   ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
-                                                  ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher) {
+                                                  ElementMatcher.Junction<? super List<? extends JavaConstant>> argumentsMatcher) {
                 super(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
                 this.handleMatcher = handleMatcher;
                 this.nameMatcher = nameMatcher;
@@ -607,7 +607,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         failIfNoMatch,
                         replacementFactory,
                         handleMatcher,
-                        this.nameMatcher.and(nameMatcher),
+                        this.nameMatcher.<String>and(nameMatcher),
                         typeMatcher,
                         argumentsMatcher);
             }
@@ -626,7 +626,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         replacementFactory,
                         handleMatcher,
                         nameMatcher,
-                        this.typeMatcher.and(typeMatcher),
+                        this.typeMatcher.<JavaConstant.MethodType>and(typeMatcher),
                         argumentsMatcher);
             }
 
@@ -636,7 +636,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param argumentsMatcher A matcher for an invokedynamic instruction's constant arguments.
              * @return A member substitution for an invokedynamic instruction with constant arguments that are matched by the given matcher.
              */
-            public ForMatchedDynamicInvocation withArguments(ElementMatcher<? super List<JavaConstant>> argumentsMatcher) {
+            public ForMatchedDynamicInvocation withArguments(ElementMatcher<? super List<? extends JavaConstant>> argumentsMatcher) {
                 return new ForMatchedDynamicInvocation(methodGraphCompiler,
                         typePoolResolver,
                         strict,
@@ -645,7 +645,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         handleMatcher,
                         nameMatcher,
                         typeMatcher,
-                        this.argumentsMatcher.and(argumentsMatcher));
+                        this.argumentsMatcher.<List<? extends JavaConstant>>and(argumentsMatcher));
             }
 
             @Override
@@ -1126,7 +1126,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * The constant arguments that are provided to the invokedynamic instruction.
              */
-            private final List<JavaConstant> arguments;
+            private final List<? extends JavaConstant> arguments;
 
             /**
              * Creates a new target for an invokedynamic instruction.
@@ -1135,7 +1135,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param name       The name that is expected for the bound target.
              * @param arguments  The constant arguments that are provided to the invokedynamic instruction.
              */
-            protected ForDynamicInvocation(JavaConstant.MethodType methodType, String name, List<JavaConstant> arguments) {
+            protected ForDynamicInvocation(JavaConstant.MethodType methodType, String name, List<? extends JavaConstant> arguments) {
                 this.methodType = methodType;
                 this.name = name;
                 this.arguments = arguments;
@@ -1169,7 +1169,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @return The constant arguments that are provided to the invokedynamic instruction.
              */
-            public List<JavaConstant> getArguments() {
+            public List<? extends JavaConstant> getArguments() {
                 return arguments;
             }
         }
