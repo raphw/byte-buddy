@@ -63,11 +63,9 @@ public class HandleBinderTest extends AbstractAnnotationBinderTest<Handle> {
         assertThat(parameterBinding.isValid(), is(true));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testNonAssignableBinding() throws Exception {
         when(targetType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Handle.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
-        assertThat(parameterBinding.isValid(), is(false));
+        Handle.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 }

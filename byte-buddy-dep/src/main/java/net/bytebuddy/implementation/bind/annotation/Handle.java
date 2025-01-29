@@ -149,7 +149,7 @@ public @interface Handle {
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
             if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
-                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+                throw new IllegalStateException("Cannot assign " + target + " to " + JavaType.METHOD_HANDLE.getTypeStub());
             }
             TypeDescription owner = annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class);
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new JavaConstantValue(new JavaConstant.MethodHandle(
