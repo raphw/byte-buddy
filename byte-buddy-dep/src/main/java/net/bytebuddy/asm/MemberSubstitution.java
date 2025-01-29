@@ -41,6 +41,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
+import net.bytebuddy.implementation.bytecode.member.Invokedynamic;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -8340,11 +8341,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     StackManipulation.Size size = binding.make(methodType.getParameterTypes().asGenericTypes(),
                             methodType.getReturnType().asGenericType(),
                             methodHandle,
-                            MethodInvocation.invoke(methodHandle.getOwnerType().getDeclaredMethods()
-                                    .filter((methodHandle.getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
-                                            ? ElementMatchers.<MethodDescription.InDefinedShape>isConstructor()
-                                            : ElementMatchers.<MethodDescription.InDefinedShape>named(methodHandle.getName())).and(hasDescriptor(methodHandle.getDescriptor())))
-                                    .getOnly()).dynamic(name, methodType.getReturnType(), methodType.getParameterTypes(), constants),
+                            new Invokedynamic(name, methodType, methodHandle, constants),
                             getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext);
                     stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize());
                     matched = true;

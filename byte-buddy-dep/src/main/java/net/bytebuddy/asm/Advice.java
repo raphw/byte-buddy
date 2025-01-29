@@ -45,6 +45,7 @@ import net.bytebuddy.implementation.bytecode.collection.ArrayAccess;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
+import net.bytebuddy.implementation.bytecode.member.Invokedynamic;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -3866,12 +3867,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Sort sort) {
                 TypeDescription bootstrapOwner = this.bootstrapOwner.represents(void.class) ? instrumentedType : this.bootstrapOwner;
                 if (invokedynamic) {
-                    return new Target.ForStackManipulation(MethodInvocation.invoke(bootstrapOwner
-                            .getDeclaredMethods()
-                            .filter((bootstrapName.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
-                                    ? ElementMatchers.<MethodDescription.InDefinedShape>isConstructor()
-                                    : ElementMatchers.<MethodDescription.InDefinedShape>named(bootstrapName)))
-                            .getOnly()).dynamic(name, typeDescription, Collections.<TypeDescription>emptyList(), arguments));
+                    return new Target.ForStackManipulation(new Invokedynamic(name,
+                            JavaConstant.MethodType.of(typeDescription),
+                            new JavaConstant.MethodHandle(bootstrapType,
+                                    bootstrapOwner,
+                                    bootstrapName,
+                                    bootstrapReturnType,
+                                    bootstrapParameterTypes),
+                            arguments));
                 } else {
                     return new Target.ForStackManipulation(new JavaConstantValue(new JavaConstant.Dynamic(name,
                             typeDescription,

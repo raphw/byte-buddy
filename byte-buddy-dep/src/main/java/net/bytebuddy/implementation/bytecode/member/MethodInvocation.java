@@ -423,13 +423,14 @@ public enum MethodInvocation {
         /**
          * {@inheritDoc}
          */
-        public StackManipulation dynamic(String methodName,
+        public StackManipulation dynamic(String name,
                                          TypeDescription returnType,
                                          List<? extends TypeDescription> methodType,
                                          List<? extends JavaConstant> arguments) {
-            return methodDescription.isInvokeBootstrap(TypeList.Explicit.of(arguments))
-                    ? new DynamicInvocation(methodName, returnType, new TypeList.Explicit(methodType), methodDescription.asDefined(), arguments)
-                    : Illegal.INSTANCE;
+            return methodDescription.isInvokeBootstrap(TypeList.Explicit.of(arguments)) ? new Invokedynamic(name,
+                    JavaConstant.MethodType.of(returnType, methodType),
+                    JavaConstant.MethodHandle.of(methodDescription),
+                    arguments) : Illegal.INSTANCE;
         }
 
         /**
@@ -440,86 +441,6 @@ public enum MethodInvocation {
         }
     }
 
-    /**
-     * Performs a dynamic method invocation of the given method.
-     */
-    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-    protected class DynamicInvocation extends StackManipulation.AbstractBase {
-
-        /**
-         * The internal name of the method that is to be bootstrapped.
-         */
-        private final String methodName;
-
-        /**
-         * The return type of the method to be bootstrapped.
-         */
-        private final TypeDescription returnType;
-
-        /**
-         * The parameter types of the method to be bootstrapped.
-         */
-        private final List<? extends TypeDescription> parameterTypes;
-
-        /**
-         * The bootstrap method.
-         */
-        private final MethodDescription.InDefinedShape bootstrapMethod;
-
-        /**
-         * The list of arguments to be handed over to the bootstrap method.
-         */
-        private final List<? extends JavaConstant> arguments;
-
-        /**
-         * Creates a new dynamic method invocation.
-         *
-         * @param methodName      The internal name of the method that is to be bootstrapped.
-         * @param returnType      The return type of the method to be bootstrapped.
-         * @param parameterTypes  The type of the parameters to be bootstrapped.
-         * @param bootstrapMethod The bootstrap method.
-         * @param arguments       The list of arguments to be handed over to the bootstrap method.
-         */
-        public DynamicInvocation(String methodName,
-                                 TypeDescription returnType,
-                                 List<? extends TypeDescription> parameterTypes,
-                                 MethodDescription.InDefinedShape bootstrapMethod,
-                                 List<? extends JavaConstant> arguments) {
-            this.methodName = methodName;
-            this.returnType = returnType;
-            this.parameterTypes = parameterTypes;
-            this.bootstrapMethod = bootstrapMethod;
-            this.arguments = arguments;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            StringBuilder stringBuilder = new StringBuilder("(");
-            for (TypeDescription parameterType : parameterTypes) {
-                stringBuilder.append(parameterType.getDescriptor());
-            }
-            String methodDescriptor = stringBuilder.append(')').append(returnType.getDescriptor()).toString();
-            Object[] constant = new Object[arguments.size()];
-            int index = 0;
-            for (JavaConstant argument : arguments) {
-                constant[index++] = argument.accept(JavaConstantValue.Visitor.INSTANCE);
-            }
-            methodVisitor.visitInvokeDynamicInsn(methodName,
-                    methodDescriptor,
-                    new Handle(handle == legacyHandle || implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V11)
-                            ? handle
-                            : legacyHandle,
-                            bootstrapMethod.getDeclaringType().getInternalName(),
-                            bootstrapMethod.getInternalName(),
-                            bootstrapMethod.getDescriptor(),
-                            bootstrapMethod.getDeclaringType().isInterface()),
-                    constant);
-            int stackSize = returnType.getStackSize().getSize() - StackSize.of(parameterTypes);
-            return new Size(stackSize, Math.max(stackSize, 0));
-        }
-    }
 
     /**
      * Performs a method invocation on a method handle with a polymorphic type signature.
