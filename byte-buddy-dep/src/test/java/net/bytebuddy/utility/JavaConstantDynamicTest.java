@@ -4,11 +4,18 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.objectweb.asm.ConstantDynamic;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+
+import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
@@ -20,6 +27,27 @@ public class JavaConstantDynamicTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Test
+    public void testAsmDynamicConstant() throws Exception {
+        assertThat(JavaConstant.Dynamic.ofAsm(TypePool.Default.ofSystemLoader(), new ConstantDynamic(
+                        FOO,
+                        Type.getDescriptor(Foo.class),
+                        new Handle(Opcodes.H_INVOKESTATIC,
+                                Type.getInternalName(SampleClass.class),
+                                FOO,
+                                Type.getMethodDescriptor(SampleClass.class.getMethod(FOO)),
+                                false), BAR)),
+                is(new JavaConstant.Dynamic(FOO,
+                        TypeDescription.ForLoadedType.of(Foo.class),
+                        new JavaConstant.MethodHandle(
+                                JavaConstant.MethodHandle.HandleType.INVOKE_STATIC,
+                                TypeDescription.ForLoadedType.of(SampleClass.class),
+                                FOO,
+                                TypeDescription.ForLoadedType.of(void.class),
+                                Collections.<TypeDescription>emptyList()),
+                        Collections.singletonList(JavaConstant.Simple.wrap(BAR)))));
+    }
 
     @Test
     @JavaVersionRule.Enforce(11)
