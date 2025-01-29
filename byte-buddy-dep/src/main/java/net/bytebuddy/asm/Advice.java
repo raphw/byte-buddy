@@ -48,6 +48,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.AlwaysNull;
@@ -65,8 +66,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * <p>
@@ -3725,38 +3725,38 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The {@link Handle#type()} method.
                  */
-                private static final MethodDescription.InDefinedShape HANDLE_TYPE;
+                protected static final MethodDescription.InDefinedShape TYPE;
 
                 /**
-                 * The {@link Handle#owner()} method, or {@code void} to resolve the instrumented type.
+                 * The {@link Handle#owner()} method.
                  */
-                private static final MethodDescription.InDefinedShape HANDLE_OWNER;
+                protected static final MethodDescription.InDefinedShape OWNER;
 
                 /**
                  * The {@link Handle#name()} method.
                  */
-                private static final MethodDescription.InDefinedShape HANDLE_NAME;
+                protected static final MethodDescription.InDefinedShape NAME;
 
                 /**
                  * The {@link Handle#returnType()} method.
                  */
-                private static final MethodDescription.InDefinedShape HANDLE_RETURN_TYPE;
+                protected static final MethodDescription.InDefinedShape RETURN_TYPE;
 
                 /**
                  * The {@link Handle#parameterTypes()} ()} method.
                  */
-                private static final MethodDescription.InDefinedShape HANDLE_PARAMETER_TYPES;
+                protected static final MethodDescription.InDefinedShape PARAMETER_TYPES;
 
                 /*
                  * Resolves the annotation attributes.
                  */
                 static {
                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Handle.class).getDeclaredMethods();
-                    HANDLE_TYPE = methods.filter(named("type")).getOnly();
-                    HANDLE_OWNER = methods.filter(named("owner")).getOnly();
-                    HANDLE_NAME = methods.filter(named("name")).getOnly();
-                    HANDLE_RETURN_TYPE = methods.filter(named("returnType")).getOnly();
-                    HANDLE_PARAMETER_TYPES = methods.filter(named("parameterTypes")).getOnly();
+                    TYPE = methods.filter(named("type")).getOnly();
+                    OWNER = methods.filter(named("owner")).getOnly();
+                    NAME = methods.filter(named("name")).getOnly();
+                    RETURN_TYPE = methods.filter(named("returnType")).getOnly();
+                    PARAMETER_TYPES = methods.filter(named("parameterTypes")).getOnly();
                 }
 
                 /**
@@ -3775,11 +3775,150 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                         throw new IllegalStateException("Cannot assign a MethodHandle to " + target);
                     }
-                    return new ForHandle(annotation.getValue(HANDLE_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
-                            annotation.getValue(HANDLE_OWNER).resolve(TypeDescription.class),
-                            annotation.getValue(HANDLE_NAME).resolve(String.class),
-                            annotation.getValue(HANDLE_RETURN_TYPE).resolve(TypeDescription.class),
-                            Arrays.asList(annotation.getValue(HANDLE_PARAMETER_TYPES).resolve(TypeDescription[].class)));
+                    return new ForHandle(annotation.getValue(TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
+                            annotation.getValue(OWNER).resolve(TypeDescription.class),
+                            annotation.getValue(NAME).resolve(String.class),
+                            annotation.getValue(RETURN_TYPE).resolve(TypeDescription.class),
+                            Arrays.asList(annotation.getValue(PARAMETER_TYPES).resolve(TypeDescription[].class)));
+                }
+            }
+        }
+
+        /**
+         * An offset mapping for a dynamic constant.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForDynamicConstant implements OffsetMapping {
+
+            /**
+             * The name of the dynamic constant as it is presented to the bootstrap method.
+             */
+            private final String name;
+
+            /**
+             * The type of the dynamic constant.
+             */
+            private final TypeDescription typeDescription;
+
+            /**
+             * The bootstrap method.
+             */
+            private final JavaConstant.MethodHandle bootstrap;
+
+            /**
+             * The constant arguments that are provided to the boostrap method.
+             */
+            private final List<JavaConstant> arguments;
+
+            /**
+             * {@code true} if the dynamic constant should be resolved using invokedynamic.
+             */
+            private final boolean invokedynamic;
+
+            /**
+             * Creates an offset mapping for a dynamic constant.
+             *
+             * @param name            The name of the dynamic constant as it is presented to the bootstrap method.
+             * @param typeDescription The type of the dynamic constant.
+             * @param bootstrap       The bootstrap method.
+             * @param arguments       The constant arguments that are provided to the boostrap method.
+             * @param invokedynamic   {@code true} if the dynamic constant should be resolved using invokedynamic.
+             */
+            public ForDynamicConstant(String name,
+                                      TypeDescription typeDescription,
+                                      JavaConstant.MethodHandle bootstrap,
+                                      List<JavaConstant> arguments,
+                                      boolean invokedynamic) {
+                this.name = name;
+                this.typeDescription = typeDescription;
+                this.bootstrap = bootstrap;
+                this.arguments = arguments;
+                this.invokedynamic = invokedynamic;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Target resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  Assigner assigner,
+                                  ArgumentHandler argumentHandler,
+                                  Sort sort) {
+                if (invokedynamic) {
+                    return new Target.ForStackManipulation(MethodInvocation.invoke(bootstrap.getOwnerType()
+                            .getDeclaredMethods()
+                            .filter((bootstrap.getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                                    ? ElementMatchers.<MethodDescription.InDefinedShape>isConstructor()
+                                    : ElementMatchers.<MethodDescription.InDefinedShape>named(bootstrap.getName())).and(hasDescriptor(bootstrap.getDescriptor())))
+                            .getOnly()).dynamic(name, typeDescription, Collections.<TypeDescription>emptyList(), arguments));
+                } else {
+                    return new Target.ForStackManipulation(new JavaConstantValue(new JavaConstant.Dynamic(
+                            name,
+                            typeDescription,
+                            bootstrap,
+                            arguments)));
+                }
+            }
+
+            /**
+             * A factory for creating an offset mapping for a dynamic constant.
+             */
+            protected enum Factory implements OffsetMapping.Factory<DynamicConstant> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * The {@link DynamicConstant#name()} method.
+                 */
+                private static final MethodDescription.InDefinedShape NAME;
+
+                /**
+                 * The {@link DynamicConstant#bootstrap()} method.
+                 */
+                private static final MethodDescription.InDefinedShape BOOTSTRAP;
+
+                /**
+                 * The {@link DynamicConstant#invokedynamic()} method.
+                 */
+                private static final MethodDescription.InDefinedShape INVOKEDYNAMIC;
+
+                /*
+                 * Resolves the annotation attributes.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(DynamicConstant.class).getDeclaredMethods();
+                    NAME = methods.filter(named("type")).getOnly();
+                    BOOTSTRAP = methods.filter(named("bootstrap")).getOnly();
+                    INVOKEDYNAMIC = methods.filter(named("invokedynamic")).getOnly();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<DynamicConstant> getAnnotationType() {
+                    return DynamicConstant.class;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<DynamicConstant> annotation,
+                                          AdviceType adviceType) {
+                    AnnotationDescription bootstrap = annotation.getValue(BOOTSTRAP).resolve(AnnotationDescription.class);
+                    return new ForDynamicConstant(annotation.getValue(NAME).resolve(String.class),
+                            target.getType().asErasure(),
+                            new JavaConstant.MethodHandle(
+                                    bootstrap.getValue(ForHandle.Factory.TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
+                                    bootstrap.getValue(ForHandle.Factory.OWNER).resolve(TypeDescription.class),
+                                    bootstrap.getValue(ForHandle.Factory.NAME).resolve(String.class),
+                                    bootstrap.getValue(ForHandle.Factory.RETURN_TYPE).resolve(TypeDescription.class),
+                                    Arrays.asList(bootstrap.getValue(ForHandle.Factory.PARAMETER_TYPES).resolve(TypeDescription[].class))),
+                            Collections.<JavaConstant>emptyList(),
+                            annotation.getValue(INVOKEDYNAMIC).resolve(Boolean.class));
                 }
             }
         }
@@ -9637,6 +9776,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForDynamicConstant.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.INSTANCE,
@@ -9953,6 +10093,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForDynamicConstant.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
@@ -11115,6 +11256,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForDynamicConstant.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForExitValue.Factory.of(exitType),
@@ -11370,6 +11512,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForHandle.Factory.INSTANCE,
+                                        OffsetMapping.ForDynamicConstant.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
@@ -12867,6 +13010,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The parameter types of the method handle.
          */
         Class<?>[] parameterTypes();
+    }
+
+    public @interface DynamicConstant {
+
+        String name() default JavaConstant.Dynamic.DEFAULT_NAME;
+
+        Handle bootstrap();
+
+        boolean invokedynamic() default false;
     }
 
     /**

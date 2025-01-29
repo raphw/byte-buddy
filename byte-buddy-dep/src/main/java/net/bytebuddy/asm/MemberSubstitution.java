@@ -8162,7 +8162,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             methodType.getReturnType().asGenericType(),
                             methodHandle,
                             MethodInvocation.invoke(methodHandle.getOwnerType().getDeclaredMethods()
-                                    .filter(named(methodHandle.getName()).and(hasDescriptor(methodHandle.getDescriptor())))
+                                    .filter((methodHandle.getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                                            ? ElementMatchers.<MethodDescription.InDefinedShape>isConstructor()
+                                            : ElementMatchers.<MethodDescription.InDefinedShape>named(methodHandle.getName())).and(hasDescriptor(methodHandle.getDescriptor())))
                                     .getOnly()).dynamic(name, methodType.getReturnType(), methodType.getParameterTypes(), constants),
                             getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext);
                     stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize());

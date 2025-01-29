@@ -2006,7 +2006,7 @@ public interface JavaConstant extends ConstantValue {
          * @param bootstrap       A handle representation of the bootstrap method.
          * @param arguments       A list of the arguments to the dynamic constant.
          */
-        protected Dynamic(String name, TypeDescription typeDescription, MethodHandle bootstrap, List<JavaConstant> arguments) {
+        public Dynamic(String name, TypeDescription typeDescription, MethodHandle bootstrap, List<JavaConstant> arguments) {
             this.name = name;
             this.typeDescription = typeDescription;
             this.bootstrap = bootstrap;
