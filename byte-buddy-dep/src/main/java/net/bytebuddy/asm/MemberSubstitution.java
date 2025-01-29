@@ -2923,6 +2923,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                 OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                 OffsetMapping.ForHandle.Factory.INSTANCE,
+                                OffsetMapping.ForDynamicConstant.Factory.INSTANCE,
                                 OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                 OffsetMapping.ForFieldHandle.Unresolved.GetterFactory.INSTANCE,
                                 OffsetMapping.ForFieldHandle.Unresolved.SetterFactory.INSTANCE,
@@ -4535,7 +4536,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         }
 
                         /**
-                         * A handle for an offset mapping that resolves a method handle.
+                         * An offset mapping that resolves a method handle.
                          */
                         @HashCodeAndEqualsPlugin.Enhance
                         class ForHandle implements OffsetMapping {
@@ -4674,6 +4675,184 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             annotation.getValue(HANDLE_NAME).resolve(String.class),
                                             annotation.getValue(HANDLE_RETURN_TYPE).resolve(TypeDescription.class),
                                             Arrays.asList(annotation.getValue(HANDLE_PARAMETER_TYPES).resolve(TypeDescription[].class)));
+                                }
+                            }
+                        }
+
+                        /**
+                         * An offset mapping for a dynamic constant.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForDynamicConstant implements OffsetMapping {
+
+                            /**
+                             * The name of the dynamic constant.
+                             */
+                            private final String name;
+
+                            /**
+                             * The type of the dynamic constant.
+                             */
+                            private final TypeDescription typeDescription;
+
+                            /**
+                             * The type of the bootstrap method.
+                             */
+                            private final JavaConstant.MethodHandle.HandleType bootstrapType;
+
+                            /**
+                             * The type that declares the bootstrap method, or {@code void} if the instrumented type.
+                             */
+                            private final TypeDescription bootstrapOwner;
+
+                            /**
+                             * The name of the bootstrap method.
+                             */
+                            private final String bootstrapName;
+
+                            /**
+                             * The return type of the boostrap method.
+                             */
+                            private final TypeDescription bootstrapReturnType;
+
+                            /**
+                             * The parameter types of the boostrap method.
+                             */
+                            private final List<? extends TypeDescription> bootstrapParameterTypes;
+
+                            /**
+                             * The constant arguments to the bootstrap method.
+                             */
+                            private final List<JavaConstant> arguments;
+
+                            /**
+                             * Creates an offset mapping for a dynamic constant.
+                             *
+                             * @param name                    The name of the dynamic constant.
+                             * @param typeDescription         The type of the dynamic constant.
+                             * @param bootstrapType           The type of the bootstrap method.
+                             * @param bootstrapOwner          The type that declares the bootstrap method, or {@code void} if the instrumented type.
+                             * @param bootstrapName           The name of the bootstrap method.
+                             * @param bootstrapReturnType     The return type of the boostrap method.
+                             * @param bootstrapParameterTypes The parameter types of the boostrap method.
+                             * @param arguments               The constant arguments to the bootstrap method.
+                             */
+                            public ForDynamicConstant(String name,
+                                                      TypeDescription typeDescription,
+                                                      JavaConstant.MethodHandle.HandleType bootstrapType,
+                                                      TypeDescription bootstrapOwner,
+                                                      String bootstrapName,
+                                                      TypeDescription bootstrapReturnType,
+                                                      List<? extends TypeDescription> bootstrapParameterTypes,
+                                                      List<JavaConstant> arguments) {
+                                this.name = name;
+                                this.typeDescription = typeDescription;
+                                this.bootstrapType = bootstrapType;
+                                this.bootstrapOwner = bootstrapOwner;
+                                this.bootstrapName = bootstrapName;
+                                this.bootstrapReturnType = bootstrapReturnType;
+                                this.bootstrapParameterTypes = bootstrapParameterTypes;
+                                this.arguments = arguments;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Resolved resolve(Assigner assigner,
+                                                    Assigner.Typing typing,
+                                                    TypeDescription instrumentedType,
+                                                    MethodDescription instrumentedMethod) {
+                                return new Resolved.ForStackManipulation(new JavaConstantValue(new JavaConstant.Dynamic(
+                                        name,
+                                        typeDescription,
+                                        new JavaConstant.MethodHandle(bootstrapType,
+                                                bootstrapOwner.represents(void.class) ? instrumentedType : bootstrapOwner,
+                                                bootstrapName,
+                                                bootstrapReturnType,
+                                                bootstrapParameterTypes),
+                                        arguments)));
+                            }
+
+                            /**
+                             * A factory to create an offset mapping for a dynamic constant.
+                             */
+                            protected enum Factory implements OffsetMapping.Factory<DynamicConstant> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                /**
+                                 * The {@link DynamicConstant#name()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape NAME;
+
+                                /**
+                                 * The {@link DynamicConstant#bootstrapType()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape BOOTSTRAP_TYPE;
+
+                                /**
+                                 * The {@link DynamicConstant#bootstrapOwner()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape BOOTSTRAP_OWNER;
+
+                                /**
+                                 * The {@link DynamicConstant#bootstrapName()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape BOOTSTRAP_NAME;
+
+                                /**
+                                 * The {@link DynamicConstant#bootstrapReturnType()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape BOOTSTRAP_RETURN_TYPE;
+
+                                /**
+                                 * The {@link DynamicConstant#bootstrapParameterTypes()} method.
+                                 */
+                                private static final MethodDescription.InDefinedShape BOOTSTRAP_PARAMETER_TYPES;
+
+                                /*
+                                 * Resolves all annotation properties.
+                                 */
+                                static {
+                                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(DynamicConstant.class).getDeclaredMethods();
+                                    NAME = methods.filter(named("name")).getOnly();
+                                    BOOTSTRAP_TYPE = methods.filter(named("bootstrapType")).getOnly();
+                                    BOOTSTRAP_OWNER = methods.filter(named("bootstrapOwner")).getOnly();
+                                    BOOTSTRAP_NAME = methods.filter(named("bootstrapName")).getOnly();
+                                    BOOTSTRAP_RETURN_TYPE = methods.filter(named("bootstrapReturnType")).getOnly();
+                                    BOOTSTRAP_PARAMETER_TYPES = methods.filter(named("bootstrapParameterTypes")).getOnly();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<DynamicConstant> getAnnotationType() {
+                                    return DynamicConstant.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<DynamicConstant> annotation) {
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<DynamicConstant> annotation) {
+                                    return new ForDynamicConstant(
+                                            annotation.getValue(NAME).resolve(String.class),
+                                            target.getType().asErasure(),
+                                            annotation.getValue(BOOTSTRAP_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
+                                            annotation.getValue(BOOTSTRAP_OWNER).resolve(TypeDescription.class),
+                                            annotation.getValue(BOOTSTRAP_NAME).resolve(String.class),
+                                            annotation.getValue(BOOTSTRAP_RETURN_TYPE).resolve(TypeDescription.class),
+                                            Arrays.asList(annotation.getValue(BOOTSTRAP_PARAMETER_TYPES).resolve(TypeDescription[].class)),
+                                            Collections.<JavaConstant>emptyList());
                                 }
                             }
                         }
@@ -8436,6 +8615,74 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return The parameter types of the method handle.
          */
         Class<?>[] parameterTypes();
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should load a dynamic constant using the specificied bootstrap method.
+     * The constant can be bound using constantdynamic or invokedynamic.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.DynamicConstant} or
+     * {@link net.bytebuddy.implementation.bind.annotation.DynamicConstant}. This annotation should be used only in
+     * combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface DynamicConstant {
+
+        /**
+         * Returns the name of the dynamic constant that is supplied to the bootstrap method.
+         *
+         * @return The name of the dynamic constant that is supplied to the bootstrap method.
+         */
+        String name() default JavaConstant.Dynamic.DEFAULT_NAME;
+
+        /**
+         * Returns the type of the bootstrap method handle to resolve.
+         *
+         * @return The type of the bootstrap method handle to resolve.
+         */
+        JavaConstant.MethodHandle.HandleType bootstrapType();
+
+        /**
+         * Returns the owner type of the bootstrap method handle, or {@code void}, to represent the instrumented type.
+         *
+         * @return The owner type of the bootstrap method handle, or {@code void}, to represent the instrumented type.
+         */
+        Class<?> bootstrapOwner() default void.class;
+
+        /**
+         * Returns the name of the bootstrap method handle.
+         *
+         * @return The name of the bootstrap method handle.
+         */
+        String bootstrapName();
+
+        /**
+         * Returns the return type of the bootstrap method handle.
+         *
+         * @return The return type of the bootstrap method handle.
+         */
+        Class<?> bootstrapReturnType();
+
+        /**
+         * Returns the parameter types of the bootstrap method handle.
+         *
+         * @return The parameter types of the bootstrap method handle.
+         */
+        Class<?>[] bootstrapParameterTypes();
+
+        /**
+         * Returns {@code true} if invokedynamic should be used to bind the annotated parameter.
+         *
+         * @return {@code true} if invokedynamic should be used to bind the annotated parameter.
+         */
+        boolean invokedynamic() default false;
     }
 
     /**
