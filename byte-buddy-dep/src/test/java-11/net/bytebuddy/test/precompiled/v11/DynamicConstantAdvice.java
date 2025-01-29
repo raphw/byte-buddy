@@ -12,12 +12,12 @@ public class DynamicConstantAdvice {
     }
 
     @Advice.OnMethodExit
-    public static void exit(@Advice.DynamicConstant(bootstrap = @Advice.Handle(
-                                    type = JavaConstant.MethodHandle.HandleType.INVOKE_STATIC,
-                                    name = "constantdynamic",
-                                    owner = DynamicConstantAdvice.class,
-                                    returnType = DynamicConstantAdvice.class,
-                                    parameterTypes = {MethodHandles.Lookup.class, String.class, Object[].class})) DynamicConstantAdvice constant,
+    public static void exit(@Advice.DynamicConstant(
+                                    bootstrapType = JavaConstant.MethodHandle.HandleType.INVOKE_STATIC,
+                                    bootstrapName = "constantdynamic",
+                                    bootstrapOwner = DynamicConstantAdvice.class,
+                                    bootstrapReturnType = DynamicConstantAdvice.class,
+                                    bootstrapParameterTypes = {MethodHandles.Lookup.class, String.class, Object[].class}) DynamicConstantAdvice constant,
                             @Advice.Return(readOnly = false) DynamicConstantAdvice returned) throws Throwable {
         returned = constant;
     }

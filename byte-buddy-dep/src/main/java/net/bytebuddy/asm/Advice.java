@@ -66,7 +66,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -3725,27 +3726,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The {@link Handle#type()} method.
                  */
-                protected static final MethodDescription.InDefinedShape TYPE;
+                private static final MethodDescription.InDefinedShape TYPE;
 
                 /**
                  * The {@link Handle#owner()} method.
                  */
-                protected static final MethodDescription.InDefinedShape OWNER;
+                private static final MethodDescription.InDefinedShape OWNER;
 
                 /**
                  * The {@link Handle#name()} method.
                  */
-                protected static final MethodDescription.InDefinedShape NAME;
+                private static final MethodDescription.InDefinedShape NAME;
 
                 /**
                  * The {@link Handle#returnType()} method.
                  */
-                protected static final MethodDescription.InDefinedShape RETURN_TYPE;
+                private static final MethodDescription.InDefinedShape RETURN_TYPE;
 
                 /**
                  * The {@link Handle#parameterTypes()} ()} method.
                  */
-                protected static final MethodDescription.InDefinedShape PARAMETER_TYPES;
+                private static final MethodDescription.InDefinedShape PARAMETER_TYPES;
 
                 /*
                  * Resolves the annotation attributes.
@@ -3801,9 +3802,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final TypeDescription typeDescription;
 
             /**
-             * The bootstrap method.
+             * The type of the bootstrap method.
              */
-            private final JavaConstant.MethodHandle bootstrap;
+            private final JavaConstant.MethodHandle.HandleType bootstrapType;
+
+            /**
+             * The type that declares the bootstrap method, or {@code void} if the instrumented type.
+             */
+            private final TypeDescription bootstrapOwner;
+
+            /**
+             * The name of the bootstrap method.
+             */
+            private final String bootstrapName;
+
+            /**
+             * The return type of the boostrap method.
+             */
+            private final TypeDescription bootstrapReturnType;
+
+            /**
+             * The parameter types of the boostrap method.
+             */
+            private final List<? extends TypeDescription> bootstrapParameterTypes;
 
             /**
              * The constant arguments that are provided to the boostrap method.
@@ -3815,23 +3836,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             private final boolean invokedynamic;
 
-            /**
-             * Creates an offset mapping for a dynamic constant.
-             *
-             * @param name            The name of the dynamic constant as it is presented to the bootstrap method.
-             * @param typeDescription The type of the dynamic constant.
-             * @param bootstrap       The bootstrap method.
-             * @param arguments       The constant arguments that are provided to the boostrap method.
-             * @param invokedynamic   {@code true} if the dynamic constant should be resolved using invokedynamic.
-             */
             public ForDynamicConstant(String name,
                                       TypeDescription typeDescription,
-                                      JavaConstant.MethodHandle bootstrap,
+                                      JavaConstant.MethodHandle.HandleType bootstrapType,
+                                      TypeDescription bootstrapOwner,
+                                      String bootstrapName,
+                                      TypeDescription bootstrapReturnType,
+                                      List<? extends TypeDescription> bootstrapParameterTypes,
                                       List<JavaConstant> arguments,
                                       boolean invokedynamic) {
                 this.name = name;
                 this.typeDescription = typeDescription;
-                this.bootstrap = bootstrap;
+                this.bootstrapType = bootstrapType;
+                this.bootstrapOwner = bootstrapOwner;
+                this.bootstrapName = bootstrapName;
+                this.bootstrapReturnType = bootstrapReturnType;
+                this.bootstrapParameterTypes = bootstrapParameterTypes;
                 this.arguments = arguments;
                 this.invokedynamic = invokedynamic;
             }
@@ -3844,18 +3864,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
+                TypeDescription bootstrapOwner = this.bootstrapOwner.represents(void.class) ? instrumentedType : this.bootstrapOwner;
                 if (invokedynamic) {
-                    return new Target.ForStackManipulation(MethodInvocation.invoke(bootstrap.getOwnerType()
+                    return new Target.ForStackManipulation(MethodInvocation.invoke(bootstrapOwner
                             .getDeclaredMethods()
-                            .filter((bootstrap.getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                            .filter((bootstrapName.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
                                     ? ElementMatchers.<MethodDescription.InDefinedShape>isConstructor()
-                                    : ElementMatchers.<MethodDescription.InDefinedShape>named(bootstrap.getName())).and(hasDescriptor(bootstrap.getDescriptor())))
+                                    : ElementMatchers.<MethodDescription.InDefinedShape>named(bootstrapName)))
                             .getOnly()).dynamic(name, typeDescription, Collections.<TypeDescription>emptyList(), arguments));
                 } else {
-                    return new Target.ForStackManipulation(new JavaConstantValue(new JavaConstant.Dynamic(
-                            name,
+                    return new Target.ForStackManipulation(new JavaConstantValue(new JavaConstant.Dynamic(name,
                             typeDescription,
-                            bootstrap,
+                            new JavaConstant.MethodHandle(bootstrapType,
+                                    bootstrapOwner,
+                                    bootstrapName,
+                                    bootstrapReturnType,
+                                    bootstrapParameterTypes),
                             arguments)));
                 }
             }
@@ -3876,9 +3900,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private static final MethodDescription.InDefinedShape NAME;
 
                 /**
-                 * The {@link DynamicConstant#bootstrap()} method.
+                 * The {@link DynamicConstant#bootstrapType()} method.
                  */
-                private static final MethodDescription.InDefinedShape BOOTSTRAP;
+                protected static final MethodDescription.InDefinedShape BOOTSTRAP_TYPE;
+
+                /**
+                 * The {@link DynamicConstant#bootstrapOwner()} method.
+                 */
+                protected static final MethodDescription.InDefinedShape BOOTSTRAP_OWNER;
+
+                /**
+                 * The {@link DynamicConstant#bootstrapName()} method.
+                 */
+                protected static final MethodDescription.InDefinedShape BOOTSTRAP_NAME;
+
+                /**
+                 * The {@link DynamicConstant#bootstrapReturnType()} method.
+                 */
+                protected static final MethodDescription.InDefinedShape BOOTSTRAP_RETURN_TYPE;
+
+                /**
+                 * The {@link DynamicConstant#bootstrapParameterTypes()} method.
+                 */
+                protected static final MethodDescription.InDefinedShape BOOTSTRAP_PARAMETER_TYPES;
 
                 /**
                  * The {@link DynamicConstant#invokedynamic()} method.
@@ -3891,7 +3935,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 static {
                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(DynamicConstant.class).getDeclaredMethods();
                     NAME = methods.filter(named("name")).getOnly();
-                    BOOTSTRAP = methods.filter(named("bootstrap")).getOnly();
+                    BOOTSTRAP_TYPE = methods.filter(named("bootstrapType")).getOnly();
+                    BOOTSTRAP_OWNER = methods.filter(named("bootstrapOwner")).getOnly();
+                    BOOTSTRAP_NAME = methods.filter(named("bootstrapName")).getOnly();
+                    BOOTSTRAP_RETURN_TYPE = methods.filter(named("bootstrapReturnType")).getOnly();
+                    BOOTSTRAP_PARAMETER_TYPES = methods.filter(named("bootstrapParameterTypes")).getOnly();
                     INVOKEDYNAMIC = methods.filter(named("invokedynamic")).getOnly();
                 }
 
@@ -3908,15 +3956,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<DynamicConstant> annotation,
                                           AdviceType adviceType) {
-                    AnnotationDescription bootstrap = annotation.getValue(BOOTSTRAP).resolve(AnnotationDescription.class);
                     return new ForDynamicConstant(annotation.getValue(NAME).resolve(String.class),
                             target.getType().asErasure(),
-                            new JavaConstant.MethodHandle(
-                                    bootstrap.getValue(ForHandle.Factory.TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
-                                    bootstrap.getValue(ForHandle.Factory.OWNER).resolve(TypeDescription.class),
-                                    bootstrap.getValue(ForHandle.Factory.NAME).resolve(String.class),
-                                    bootstrap.getValue(ForHandle.Factory.RETURN_TYPE).resolve(TypeDescription.class),
-                                    Arrays.asList(bootstrap.getValue(ForHandle.Factory.PARAMETER_TYPES).resolve(TypeDescription[].class))),
+                            annotation.getValue(BOOTSTRAP_TYPE).resolve(EnumerationDescription.class).load(JavaConstant.MethodHandle.HandleType.class),
+                            annotation.getValue(BOOTSTRAP_OWNER).resolve(TypeDescription.class),
+                            annotation.getValue(BOOTSTRAP_NAME).resolve(String.class),
+                            annotation.getValue(BOOTSTRAP_RETURN_TYPE).resolve(TypeDescription.class),
+                            Arrays.asList(annotation.getValue(BOOTSTRAP_PARAMETER_TYPES).resolve(TypeDescription[].class)),
                             Collections.<JavaConstant>emptyList(),
                             annotation.getValue(INVOKEDYNAMIC).resolve(Boolean.class));
                 }
@@ -13040,11 +13086,39 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         String name() default JavaConstant.Dynamic.DEFAULT_NAME;
 
         /**
-         * Returns a definition of the bootstrap method that resolves the dynamic constant.
+         * Returns the type of the bootstrap method handle to resolve.
          *
-         * @return A definition of the bootstrap method that resolves the dynamic constant.
+         * @return The type of the bootstrap method handle to resolve.
          */
-        Handle bootstrap();
+        JavaConstant.MethodHandle.HandleType bootstrapType();
+
+        /**
+         * Returns the owner type of the bootstrap method handle, or {@code void}, to represent the instrumented type.
+         *
+         * @return The owner type of the bootstrap method handle, or {@code void}, to represent the instrumented type.
+         */
+        Class<?> bootstrapOwner() default void.class;
+
+        /**
+         * Returns the name of the bootstrap method handle.
+         *
+         * @return The name of the bootstrap method handle.
+         */
+        String bootstrapName();
+
+        /**
+         * Returns the return type of the bootstrap method handle.
+         *
+         * @return The return type of the bootstrap method handle.
+         */
+        Class<?> bootstrapReturnType();
+
+        /**
+         * Returns the parameter types of the bootstrap method handle.
+         *
+         * @return The parameter types of the bootstrap method handle.
+         */
+        Class<?>[] bootstrapParameterTypes();
 
         /**
          * Returns {@code true} if invokedynamic should be used to bind the annotated parameter.
