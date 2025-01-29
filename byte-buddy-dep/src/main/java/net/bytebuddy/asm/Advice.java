@@ -3904,27 +3904,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The {@link DynamicConstant#bootstrapType()} method.
                  */
-                protected static final MethodDescription.InDefinedShape BOOTSTRAP_TYPE;
+                private static final MethodDescription.InDefinedShape BOOTSTRAP_TYPE;
 
                 /**
                  * The {@link DynamicConstant#bootstrapOwner()} method.
                  */
-                protected static final MethodDescription.InDefinedShape BOOTSTRAP_OWNER;
+                private static final MethodDescription.InDefinedShape BOOTSTRAP_OWNER;
 
                 /**
                  * The {@link DynamicConstant#bootstrapName()} method.
                  */
-                protected static final MethodDescription.InDefinedShape BOOTSTRAP_NAME;
+                private static final MethodDescription.InDefinedShape BOOTSTRAP_NAME;
 
                 /**
                  * The {@link DynamicConstant#bootstrapReturnType()} method.
                  */
-                protected static final MethodDescription.InDefinedShape BOOTSTRAP_RETURN_TYPE;
+                private static final MethodDescription.InDefinedShape BOOTSTRAP_RETURN_TYPE;
 
                 /**
                  * The {@link DynamicConstant#bootstrapParameterTypes()} method.
                  */
-                protected static final MethodDescription.InDefinedShape BOOTSTRAP_PARAMETER_TYPES;
+                private static final MethodDescription.InDefinedShape BOOTSTRAP_PARAMETER_TYPES;
 
                 /**
                  * The {@link DynamicConstant#invokedynamic()} method.
