@@ -68,6 +68,7 @@ public class DefaultCallHandlerBinderTest extends AbstractAnnotationBinderTest<D
         when(methodHandle.toStackManipulation()).thenReturn(StackManipulation.Trivial.INSTANCE);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCallHandle> getSimpleBinder() {
         return DefaultCallHandle.Binder.INSTANCE;
     }

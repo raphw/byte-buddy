@@ -39,6 +39,7 @@ public class SuperMethodHandleBinderTest extends AbstractAnnotationBinderTest<Su
     @Mock
     private JavaConstant.MethodHandle methodHandle;
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperMethodHandle> getSimpleBinder() {
         return SuperMethodHandle.Binder.INSTANCE;
     }

@@ -29,6 +29,7 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
         when(genericType.asErasure()).thenReturn(type);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<StubValue> getSimpleBinder() {
         return StubValue.Binder.INSTANCE;
     }

@@ -58,6 +58,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(genericGetterType.asErasure()).thenReturn(getterType);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> getSimpleBinder() {
         return new FieldProxy.Binder(getterMethod, setterMethod);
     }

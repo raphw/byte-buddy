@@ -44,6 +44,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(fieldType.asErasure()).thenReturn(rawFieldType);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldValue> getSimpleBinder() {
         return FieldValue.Binder.INSTANCE;
     }

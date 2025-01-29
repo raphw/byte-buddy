@@ -38,6 +38,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         super(Morph.class);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> getSimpleBinder() {
         return new Morph.Binder(morphMethod);
     }

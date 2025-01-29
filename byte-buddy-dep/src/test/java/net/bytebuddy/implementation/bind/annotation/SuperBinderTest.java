@@ -39,6 +39,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
                 new MethodDescription.ForLoadedConstructor(Object.class.getConstructor())));
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Super> getSimpleBinder() {
         return Super.Binder.INSTANCE;
     }

@@ -40,6 +40,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
         binder = new Pipe.Binder(targetMethod);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> getSimpleBinder() {
         return binder;
     }

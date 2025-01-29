@@ -33,6 +33,7 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperMethod> getSimpleBinder() {
         return SuperMethod.Binder.INSTANCE;
     }

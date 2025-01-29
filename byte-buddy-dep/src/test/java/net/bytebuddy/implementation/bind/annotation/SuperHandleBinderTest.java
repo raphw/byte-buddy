@@ -57,10 +57,10 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCal
         when(methodHandle.toStackManipulation()).thenReturn(StackManipulation.Trivial.INSTANCE);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCallHandle> getSimpleBinder() {
         return SuperCallHandle.Binder.INSTANCE;
     }
-
 
     @Test
     public void testValidSuperMethodCall() throws Exception {

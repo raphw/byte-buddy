@@ -40,6 +40,7 @@ public class DefaultMethodHandlerBinderTest extends AbstractAnnotationBinderTest
     @Mock
     private JavaConstant.MethodHandle methodHandle;
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultMethodHandle> getSimpleBinder() {
         return DefaultMethodHandle.Binder.INSTANCE;
     }

@@ -52,6 +52,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(source.asDefined()).thenReturn(methodDescription);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Origin> getSimpleBinder() {
         return Origin.Binder.INSTANCE;
     }

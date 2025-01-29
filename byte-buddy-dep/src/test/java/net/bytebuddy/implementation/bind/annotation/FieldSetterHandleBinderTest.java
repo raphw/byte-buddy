@@ -45,6 +45,7 @@ public class FieldSetterHandleBinderTest extends AbstractAnnotationBinderTest<Fi
         when(targetType.asErasure()).thenReturn(rawTargetType);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldSetterHandle> getSimpleBinder() {
         return FieldSetterHandle.Binder.INSTANCE;
     }

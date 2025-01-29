@@ -34,6 +34,7 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultMethod> getSimpleBinder() {
         return DefaultMethod.Binder.INSTANCE;
     }

@@ -45,6 +45,7 @@ public class HandleBinderTest extends AbstractAnnotationBinderTest<Handle> {
         when(interfaces.asErasures()).thenReturn(rawInterfaces);
     }
 
+    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Handle> getSimpleBinder() {
         return Handle.Binder.INSTANCE;
     }
