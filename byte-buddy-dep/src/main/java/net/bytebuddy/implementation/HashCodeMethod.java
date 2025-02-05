@@ -208,7 +208,7 @@ public class HashCodeMethod implements Implementation {
      * @return A new version of this hash code method implementation that uses the given multiplier onto any given hash code before adding a
      * field's hash code.
      */
-    public Implementation withMultiplier(int multiplier) {
+    public HashCodeMethod withMultiplier(int multiplier) {
         if (multiplier == 0) {
             throw new IllegalArgumentException("Hash code multiplier must not be zero");
         }
