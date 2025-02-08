@@ -227,7 +227,7 @@ public class EqualsMethod implements Implementation {
      * @return A new version of this equals method implementation that permits subclasses of the instrumented type to be equal to instances
      * of the instrumented type instead of requiring an exact match.
      */
-    public Implementation withSubclassEquality() {
+    public EqualsMethod withSubclassEquality() {
         return new EqualsMethod(superClassCheck, TypeCompatibilityCheck.SUBCLASS, ignored, nonNullable, identity, comparator);
     }
 
