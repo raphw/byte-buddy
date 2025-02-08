@@ -2759,7 +2759,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                             stackManipulations.add(assignment);
                         }
-                        boolean shift = target.isStaticDispatch();
+                        boolean shift = !target.isStaticDispatch();
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
                             int substitution = substitutions.containsKey(index + (shift ? 1 : 0)) ? substitutions.get(index + (shift ? 1 : 0)) : index + (shift ? 1 : 0);
                             if (substitution >= parameters.size()) {
