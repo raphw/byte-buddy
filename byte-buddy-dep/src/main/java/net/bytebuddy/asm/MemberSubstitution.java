@@ -2080,7 +2080,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
 
                 /**
-                 * A step within a substitution chain that converts the current type to the expected return type.
+                 * A step within a substitution chain that converts the current type to another type by casting.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 class ForAssignment implements Step {
@@ -2804,10 +2804,32 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * Creates a factory for a method invocation without parameter substitutions.
                          *
+                         * @param method        The invoked method.
+                         * @param substitutions A mapping of substituted parameter indices. For targets that are non-static methods,
+                         *                      the targeted index is increased by one.
+                         */
+                        public Factory(Method method, Map<Integer, Integer> substitutions) {
+                            this(new MethodDescription.ForLoadedMethod(method), substitutions);
+                        }
+
+                        /**
+                         * Creates a factory for a method invocation without parameter substitutions.
+                         *
                          * @param constructor The constructor.
                          */
                         public Factory(Constructor<?> constructor) {
                             this(new MethodDescription.ForLoadedConstructor(constructor));
+                        }
+
+                        /**
+                         * Creates a factory for a method invocation without parameter substitutions.
+                         *
+                         * @param constructor The constructor.
+                         * @param substitutions A mapping of substituted parameter indices. For targets that are non-static methods,
+                         *                      the targeted index is increased by one.
+                         */
+                        public Factory(Constructor<?> constructor, Map<Integer, Integer> substitutions) {
+                            this(new MethodDescription.ForLoadedConstructor(constructor), substitutions);
                         }
 
                         /**
