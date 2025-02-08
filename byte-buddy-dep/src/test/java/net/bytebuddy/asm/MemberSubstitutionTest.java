@@ -979,6 +979,24 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    public void testSubstitutionChainMethodInvocationWithArgument() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(StaticMethodInvokeSample.class)
+                .visit(MemberSubstitution.strict().method(named(BAR)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForInvocation.Factory(
+                                StaticMethodInvokeSample.class.getDeclaredMethod(BAZ, String.class))).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(BAZ).get(instance), is((Object) BAZ));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(BAZ).get(instance), is((Object) FOO));
+    }
+
+    @Test
     public void testSubstitutionChainStaticMethodInvocation() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
