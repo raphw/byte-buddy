@@ -8945,7 +8945,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         Map<Integer, Integer> offsets,
                                         Target target,
                                         MethodDescription instrumentedMethod) {
-                return target.isStaticDispatch() // TODO
+                return target.isStaticDispatch()
                         ? null
                         : new Source.Value(parameters.get(THIS_REFERENCE), offsets.get(THIS_REFERENCE));
             }
