@@ -20,6 +20,25 @@ Buddy allows the creation of arbitrary classes and is not limited to implementin
 proxies. Furthermore, Byte Buddy offers a convenient API for changing classes either manually, using a Java agent or
 during a build.
 
+Java version compatibility
+==========================
+
+These are the minimal versions of Byte Buddy you'll need to use a certain java version.
+
+| ByteBuddy Version | Max Supported Java Version |
+|-------------------|----------------------------|
+| 1.15.4            | 24                         |
+| 1.14.12           | 23                         |
+| 1.14.8            | 22                         |
+| 1.14.3            | 21                         |
+| 1.12.18           | 20                         |
+| 1.12.9            | 19                         |
+| 1.11.6            | 18                         |
+| 1.10.19           | 17                         |
+
+Usage
+=====
+
 In order to use Byte Buddy, one does not require an understanding of Java byte code or
 the [class file format](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html). In contrast, Byte Buddy’s API
 aims for code that is concise and easy to understand for everybody. Nevertheless, Byte Buddy remains fully customizable
