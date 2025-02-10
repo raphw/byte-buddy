@@ -23,7 +23,8 @@ during a build.
 Java version compatibility
 ==========================
 
-These are the minimal versions of Byte Buddy you'll need to use a certain java version.
+These are the minimal versions of Byte Buddy you'll need to use a certain Java version.
+The min supported Java version is Java 5.
 
 | ByteBuddy Version | Max Supported Java Version |
 |-------------------|----------------------------|
