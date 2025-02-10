@@ -23,19 +23,21 @@ during a build.
 Java version compatibility
 ==========================
 
-These are the minimal versions of Byte Buddy you'll need to use a certain Java version.
-The min supported Java version is Java 5.
+The following table lists the minimal versions of Byte Buddy that is required need to support a certain Java 
+class file version without experimental support. The oldest supported Java version is Java 5, whereas class files
+of any older version can be transformed.
 
-| ByteBuddy Version | Max Supported Java Version |
-|-------------------|----------------------------|
-| 1.15.4            | 24                         |
-| 1.14.12           | 23                         |
-| 1.14.8            | 22                         |
-| 1.14.3            | 21                         |
-| 1.12.18           | 20                         |
-| 1.12.9            | 19                         |
-| 1.11.6            | 18                         |
-| 1.10.19           | 17                         |
+| Byte Buddy version | Supported Java version |
+|--------------------|------------------------|
+| 1.17.0             | 25+                    |
+| 1.15.4             | 24                     |
+| 1.14.12            | 23                     |
+| 1.14.8             | 22                     |
+| 1.14.3             | 21                     |
+| 1.12.18            | 20                     |
+| 1.12.9             | 19                     |
+| 1.11.6             | 18                     |
+| 1.10.19            | 17                     |
 
 Usage
 =====
