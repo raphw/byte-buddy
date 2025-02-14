@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. February 2025: version 1.17.1
+
+- Fix bug in `MemberSubstitution` were argument indices were resolved by one digit off.
+- Update Class File API integration to avoid that parameter annotations are lost.
+
 ### 29. January 2025: version 1.17.0
 
 - Assure that implicit choice for class reader and class writer are always symmetric with regard to internal representation.
