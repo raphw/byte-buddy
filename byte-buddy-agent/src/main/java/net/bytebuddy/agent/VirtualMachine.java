@@ -1678,7 +1678,10 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher) throws IOException {
-            File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, dispatcher.getTemporaryFolder(processId)), ".com_ibm_tools_attach");
+            String temporary = System.getProperty(IBM_TEMPORARY_FOLDER);
+            File directory = temporary == null
+                    ? new File(dispatcher.getTemporaryFolder(processId), ".com_ibm_tools_attach")
+                    : new File(temporary);
             long userId = dispatcher.userId();
             RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
             try {
