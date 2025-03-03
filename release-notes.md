@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. March 2025: version 1.17.2
+
+- Update Class File API integration to include support for several omitted byte codes.
+- Adjust attach API emulation for OpenJ9 to not create subfolder if temporary folder is set explicitly.
+
 ### 14. February 2025: version 1.17.1
 
 - Fix bug in `MemberSubstitution` were argument indices were resolved by one digit off.
