@@ -172,7 +172,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param matcher The matcher to determine what access to byte code elements to substitute.
      * @return A specification that allows to determine how to substitute any interaction with byte code elements that match the supplied matcher.
      */
-    public WithoutSpecification element(ElementMatcher<? super ByteCodeElement.Member> matcher) {
+    public WithoutSpecification<Target.ForMember> element(ElementMatcher<? super ByteCodeElement.Member> matcher) {
         return new WithoutSpecification.ForMatchedByteCodeElement(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
@@ -202,7 +202,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param matcher The matcher to determine what constructors to substitute.
      * @return A specification that allows to determine how to substitute any constructor invocations that match the supplied matcher.
      */
-    public WithoutSpecification constructor(ElementMatcher<? super MethodDescription> matcher) {
+    public WithoutSpecification<Target.ForMember> constructor(ElementMatcher<? super MethodDescription> matcher) {
         return invokable(isConstructor().and(matcher));
     }
 
@@ -212,7 +212,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param matcher The matcher to determine what method or constructors to substitute.
      * @return A specification that allows to determine how to substitute any constructor invocations that match the supplied matcher.
      */
-    public WithoutSpecification invokable(ElementMatcher<? super MethodDescription> matcher) {
+    public WithoutSpecification<Target.ForMember> invokable(ElementMatcher<? super MethodDescription> matcher) {
         return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
@@ -310,7 +310,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * A member substitution that lacks a specification for how to substitute the matched members references within a method body.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    public abstract static class WithoutSpecification {
+    public abstract static class WithoutSpecification<T extends Target> {
 
         /**
          * The method graph compiler to use.
@@ -516,7 +516,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param step The steps to apply for a substitution.
          * @return A member substitution that replaces any matched byte code element with the provided substitution chain.
          */
-        public MemberSubstitution replaceWithChain(Substitution.Chain.Step.Factory... step) {
+        public final MemberSubstitution replaceWithChain(Substitution.Chain.Step.Factory<? super T>... step) {
             return replaceWithChain(Arrays.asList(step));
         }
 
@@ -527,8 +527,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param steps The steps to apply for a substitution.
          * @return A member substitution that replaces any matched byte code element with the provided substitution chain.
          */
-        public MemberSubstitution replaceWithChain(List<? extends Substitution.Chain.Step.Factory> steps) {
-            return replaceWith(Substitution.Chain.withDefaultAssigner().executing(steps));
+        public MemberSubstitution replaceWithChain(List<? extends Substitution.Chain.Step.Factory<? super T>> steps) {
+            return replaceWith(Substitution.Chain.<T>withDefaultAssigner().executing(steps));
         }
 
         /**
@@ -537,13 +537,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param factory The substitution factory to use for creating the applied substitution.
          * @return A member substitution that replaces any matched byte code element with the supplied substitution.
          */
-        public abstract MemberSubstitution replaceWith(Substitution.Factory factory);
+        public abstract MemberSubstitution replaceWith(Substitution.Factory<? super T> factory);
 
         /**
          * A member substitution for an invokedynamic instruction.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        public static class ForMatchedDynamicInvocation extends WithoutSpecification {
+        public static class ForMatchedDynamicInvocation extends WithoutSpecification<Target.ForDynamicInvocation> {
 
             /**
              * A matcher for an invokedynamic bootstrap method.
@@ -649,7 +649,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             @Override
-            public MemberSubstitution replaceWith(Substitution.Factory substitutionFactory) {
+            public MemberSubstitution replaceWith(Substitution.Factory<? super Target.ForDynamicInvocation> substitutionFactory) {
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
@@ -666,7 +666,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Describes a member substitution that requires a specification for how to replace a byte code element.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        protected static class ForMatchedByteCodeElement extends WithoutSpecification {
+        protected static class ForMatchedByteCodeElement extends WithoutSpecification<Target.ForMember> {
 
             /**
              * A matcher for any byte code elements that should be substituted.
@@ -696,7 +696,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public MemberSubstitution replaceWith(Substitution.Factory substitutionFactory) {
+            public MemberSubstitution replaceWith(Substitution.Factory<? super Target.ForMember> substitutionFactory) {
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
@@ -709,7 +709,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Describes a member substitution that requires a specification for how to replace a field.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        public static class ForMatchedField extends WithoutSpecification {
+        public static class ForMatchedField extends WithoutSpecification<Target.ForMember> {
 
             /**
              * A matcher for any field that should be substituted.
@@ -776,7 +776,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @return This instance with the limitation that only read access to the matched field is substituted.
              */
-            public WithoutSpecification onRead() {
+            public WithoutSpecification<Target.ForMember> onRead() {
                 return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher, true, false);
             }
 
@@ -785,14 +785,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @return This instance with the limitation that only write access to the matched field is substituted.
              */
-            public WithoutSpecification onWrite() {
+            public WithoutSpecification<Target.ForMember> onWrite() {
                 return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher, false, true);
             }
 
             /**
              * {@inheritDoc}
              */
-            public MemberSubstitution replaceWith(Substitution.Factory substitutionFactory) {
+            public MemberSubstitution replaceWith(Substitution.Factory<? super Target.ForMember> substitutionFactory) {
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
@@ -805,7 +805,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Describes a member substitution that requires a specification for how to replace a method or constructor.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        public static class ForMatchedMethod extends WithoutSpecification {
+        public static class ForMatchedMethod extends WithoutSpecification<Target.ForMember> {
 
             /**
              * A matcher for any method or constructor that should be substituted.
@@ -872,7 +872,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @return This specification where only virtual methods are matched if they are not invoked as a virtual call.
              */
-            public WithoutSpecification onVirtualCall() {
+            public WithoutSpecification<Target.ForMember> onVirtualCall() {
                 return new ForMatchedMethod(methodGraphCompiler,
                         typePoolResolver,
                         strict,
@@ -888,7 +888,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @return This specification where only virtual methods are matched if they are not invoked as a super call.
              */
-            public WithoutSpecification onSuperCall() {
+            public WithoutSpecification<Target.ForMember> onSuperCall() {
                 return new ForMatchedMethod(methodGraphCompiler,
                         typePoolResolver,
                         strict,
@@ -902,7 +902,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public MemberSubstitution replaceWith(Substitution.Factory substitutionFactory) {
+            public MemberSubstitution replaceWith(Substitution.Factory<? super Target.ForMember> substitutionFactory) {
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
@@ -1178,12 +1178,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
     /**
      * A substitution replaces or enhances an interaction with a field or method within an instrumented method.
      */
-    public interface Substitution {
+    public interface Substitution<T extends Target> {
 
         /**
          * Resolves this substitution into a stack manipulation.
          *
-         * @param target            The target member of invokedynamic invocation.
+         * @param target            The targeted member that is substituted.
          * @param parameters        All parameters that serve as input to this access.
          * @param result            The result that is expected from the interaction or {@code void} if no result is expected.
          * @param methodHandle      A method handle describing the substituted expression.
@@ -1191,7 +1191,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param freeOffset        The first free offset of the local variable array that can be used for storing values.
          * @return A stack manipulation that represents the access.
          */
-        StackManipulation resolve(Target target,
+        StackManipulation resolve(T target,
                                   TypeList.Generic parameters,
                                   TypeDescription.Generic result,
                                   JavaConstant.MethodHandle methodHandle,
@@ -1201,7 +1201,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * A factory for creating a substitution for an instrumented method.
          */
-        interface Factory {
+        interface Factory<T extends Target> {
 
             /**
              * Creates a substitution for an instrumented method.
@@ -1211,14 +1211,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param typePool           The type pool being used.
              * @return The substitution to apply within the instrumented method.
              */
-            Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool);
+            Substitution<? super T> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool);
         }
 
         /**
          * A substitution that drops any field or method access and returns the expected return
          * type's default value, i.e {@code null} or zero for primitive types.
          */
-        enum Stubbing implements Substitution, Factory {
+        enum Stubbing implements Substitution<Target>, Factory<Target> {
 
             /**
              * The singleton instance.
@@ -1228,7 +1228,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+            public Substitution<Target> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                 return this;
             }
 
@@ -1253,7 +1253,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * A substitution that loads a fixed value.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class ForValue implements Substitution, Factory {
+        class ForValue implements Substitution<Target>, Factory<Target> {
 
             /**
              * The stack manipulation to load the value that represents the substitution.
@@ -1279,7 +1279,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+            public Substitution<Target> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                 return this;
             }
 
@@ -1307,7 +1307,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * A substitution with a field access.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class ForFieldAccess implements Substitution {
+        class ForFieldAccess implements Substitution<Target> {
 
             /**
              * The instrumented type.
@@ -1462,7 +1462,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * A factory for a substitution that substitutes with a given field.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public static class OfGivenField implements Factory {
+            public static class OfGivenField implements Factory<Target> {
 
                 /**
                  * The field to substitute with.
@@ -1481,7 +1481,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                public Substitution<Target> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                     return new ForFieldAccess(instrumentedType, new FieldResolver.Simple(fieldDescription));
                 }
             }
@@ -1490,7 +1490,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * A factory for a substitution that locates a field on the receiver type using a matcher.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public static class OfMatchedField implements Factory {
+            public static class OfMatchedField implements Factory<Target> {
 
                 /**
                  * The matcher to apply.
@@ -1509,7 +1509,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                public Substitution<Target> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                     return new ForFieldAccess(instrumentedType, new FieldResolver.ForElementMatcher(instrumentedType, matcher));
                 }
             }
@@ -1519,7 +1519,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * A substitution with a method invocation.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class ForMethodInvocation implements Substitution {
+        class ForMethodInvocation implements Substitution<Target> {
 
             /**
              * The instrumented type.
@@ -1673,7 +1673,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A factory for a substitution that invokes the instrumented method.
              */
-            enum OfInstrumentedMethod implements Factory {
+            enum OfInstrumentedMethod implements Factory<Target> {
 
                 /**
                  * The singleton instance.
@@ -1683,7 +1683,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                public Substitution<Target> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                     return new ForMethodInvocation(instrumentedType, new MethodResolver.Simple(instrumentedMethod));
                 }
             }
@@ -1692,7 +1692,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * A factory for a substitution that invokes a given method.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public static class OfGivenMethod implements Factory {
+            public static class OfGivenMethod implements Factory<Target> {
 
                 /**
                  * The method to invoke.
@@ -1711,7 +1711,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                public Substitution<Target> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                     return new ForMethodInvocation(instrumentedType, new MethodResolver.Simple(methodDescription));
                 }
             }
@@ -1720,7 +1720,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * A factory for a substitution that locates a method on the receiver type using a matcher.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public static class OfMatchedMethod implements Factory {
+            public static class OfMatchedMethod implements Factory<Target> {
 
                 /**
                  * The matcher for locating the method to substitute with.
@@ -1746,7 +1746,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                public Substitution<Target> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                     return new ForMethodInvocation(instrumentedType, new MethodResolver.Matching(instrumentedType, methodGraphCompiler, matcher));
                 }
             }
@@ -1756,7 +1756,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * A substitution chain allows for chaining multiple substitution steps for a byte code element being replaced.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class Chain implements Substitution {
+        class Chain<T extends Target> implements Substitution<T> {
 
             /**
              * The assigner to use.
@@ -1771,7 +1771,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * The substitution steps to apply.
              */
-            private final List<Step> steps;
+            private final List<Step<? super T>> steps;
 
             /**
              * Creates a new substitution chain.
@@ -1780,7 +1780,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param typing   The typing of the assignment to use.
              * @param steps    The substitution steps to apply.
              */
-            protected Chain(Assigner assigner, Assigner.Typing typing, List<Step> steps) {
+            protected Chain(Assigner assigner, Assigner.Typing typing, List<Step<? super T>> steps) {
                 this.assigner = assigner;
                 this.typing = typing;
                 this.steps = steps;
@@ -1791,7 +1791,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @return A new substitution chain.
              */
-            public static Chain.Factory withDefaultAssigner() {
+            public static <T extends Target> Chain.Factory<T> withDefaultAssigner() {
                 return with(Assigner.DEFAULT, Assigner.Typing.STATIC);
             }
 
@@ -1802,14 +1802,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param typing   The typing of the assignment to use.
              * @return A new substitution chain.
              */
-            public static Chain.Factory with(Assigner assigner, Assigner.Typing typing) {
-                return new Chain.Factory(assigner, typing, Collections.<Step.Factory>emptyList());
+            public static <T extends Target> Chain.Factory<T> with(Assigner assigner, Assigner.Typing typing) {
+                return new Chain.Factory<T>(assigner, typing, Collections.<Step.Factory<? super T>>emptyList());
             }
 
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(Target target,
+            public StackManipulation resolve(T target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
                                              JavaConstant.MethodHandle methodHandle,
@@ -1826,7 +1826,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
                 stackManipulations.add(DefaultValue.of(result));
                 TypeDescription.Generic current = result;
-                for (Step step : steps) {
+                for (Step<? super T> step : steps) {
                     Step.Resolution resolution = step.resolve(target,
                             parameters,
                             result,
@@ -1849,7 +1849,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * Represents a step of a substitution chain.
              */
-            public interface Step {
+            public interface Step<T extends Target> {
 
                 /**
                  * Resolves this step of a substitution chain.
@@ -1864,7 +1864,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param freeOffset        The first free offset in the local variable array.
                  * @return A resolved substitution step for the supplied inputs.
                  */
-                Resolution resolve(Target target,
+                Resolution resolve(T target,
                                    TypeList.Generic parameters,
                                    TypeDescription.Generic result,
                                    JavaConstant.MethodHandle methodHandle,
@@ -1896,7 +1896,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Resolves a substitution for an instrumented method.
                  */
-                interface Factory {
+                interface Factory<T extends Target> {
 
                     /**
                      * Creates a substitution step for an instrumented method.
@@ -1907,13 +1907,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param instrumentedMethod The instrumented method.
                      * @return The substitution step to apply.
                      */
-                    Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+                    Step<T> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod);
                 }
 
                 /**
                  * A step that executes the original method invocation or field access.
                  */
-                enum OfOriginalExpression implements Step, Factory {
+                enum OfOriginalExpression implements Step<Target>, Factory<Target> {
 
                     /**
                      * The singleton instance.
@@ -1988,7 +1988,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                         return this;
                     }
                 }
@@ -1997,7 +1997,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * A simple substitution step within a substitution chain.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class Simple implements Step, Resolution, Factory {
+                class Simple implements Step<Target>, Factory<Target>, Resolution {
 
                     /**
                      * The stack manipulation to apply.
@@ -2036,7 +2036,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param value The compile-time constant to resolve.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory of(Object value) {
+                    public static Step.Factory<Target> of(Object value) {
                         ConstantValue constant = ConstantValue.Simple.wrap(value);
                         return new Simple(constant.toStackManipulation(), constant.getTypeDescription().asGenericType());
                     }
@@ -2044,7 +2044,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                         return this;
                     }
 
@@ -2083,7 +2083,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * A step within a substitution chain that converts the current type to another type by casting.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class ForAssignment implements Step {
+                class ForAssignment implements Step<Target> {
 
                     /**
                      * The result type or {@code null} if the type of the substitution result should be targeted.
@@ -2114,7 +2114,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param type The type that should be cast to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory castTo(Type type) {
+                    public static Step.Factory<Target> castTo(Type type) {
                         return new Factory(TypeDefinition.Sort.describe(type));
                     }
 
@@ -2124,7 +2124,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param typeDescription The description of the type that should be cast to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory castTo(TypeDescription.Generic typeDescription) {
+                    public static Step.Factory<Target> castTo(TypeDescription.Generic typeDescription) {
                         return new Factory(typeDescription);
                     }
 
@@ -2133,7 +2133,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      *
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory castToSubstitutionResult() {
+                    public static Step.Factory<Target> castToSubstitutionResult() {
                         return new Factory(null);
                     }
 
@@ -2159,7 +2159,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * A factory for creating a step for a dynamic type assignment.
                      */
                     @HashCodeAndEqualsPlugin.Enhance
-                    protected static class Factory implements Step.Factory {
+                    protected static class Factory implements Step.Factory<Target> {
 
                         /**
                          * The result type or {@code null} if the type of the substitution result should be targeted.
@@ -2180,7 +2180,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                        public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return new ForAssignment(result, assigner);
                         }
                     }
@@ -2190,7 +2190,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * A step that substitutes an argument of a given index with a compatible type.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class ForArgumentSubstitution implements Step {
+                class ForArgumentSubstitution implements Step<Target> {
 
                     /**
                      * The stack manipulation that loads the substituted argument.
@@ -2241,7 +2241,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param index The index of the substituted argument.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory of(Object value, int index) {
+                    public static Step.Factory<Target> of(Object value, int index) {
                         if (index < 0) {
                             throw new IllegalArgumentException("Index cannot be negative: " + index);
                         }
@@ -2274,7 +2274,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * A factory to create an argument substitution step.
                      */
                     @HashCodeAndEqualsPlugin.Enhance
-                    public static class Factory implements Step.Factory {
+                    public static class Factory implements Step.Factory<Target> {
 
                         /**
                          * The stack manipulation that loads the substituted argument.
@@ -2318,7 +2318,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                        public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return new ForArgumentSubstitution(stackManipulation, typeDescription, index, assigner, typing);
                         }
                     }
@@ -2328,7 +2328,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * A step that loads an argument to a method as the current chain value.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class ForArgumentLoading implements Step, Factory {
+                class ForArgumentLoading implements Step<Target>, Factory<Target> {
 
                     /**
                      * The index of the argument to substitute.
@@ -2350,7 +2350,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param index The index to load.
                      * @return An appropriate factory.
                      */
-                    public static Factory ofTarget(int index) {
+                    public static Factory<Target> ofTarget(int index) {
                         if (index < 0) {
                             throw new IllegalArgumentException("Argument index cannot be negative: " + index);
                         }
@@ -2363,7 +2363,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param index The index to load.
                      * @return An appropriate factory.
                      */
-                    public static Factory ofInstrumentedMethod(int index) {
+                    public static Factory<Target> ofInstrumentedMethod(int index) {
                         if (index < 0) {
                             throw new IllegalArgumentException("Argument index cannot be negative: " + index);
                         }
@@ -2375,14 +2375,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      *
                      * @return An appropriate factory.
                      */
-                    public static Factory ofThis() {
+                    public static Factory<Target> ofThis() {
                         return OfInstrumentedMethodThis.INSTANCE;
                     }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                         return this;
                     }
 
@@ -2406,7 +2406,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * A factory that resolves the {@code this} reference of the instrumented method.
                      */
-                    protected enum OfInstrumentedMethodThis implements Factory {
+                    protected enum OfInstrumentedMethodThis implements Factory<Target> {
 
                         /**
                          * The singleton instance.
@@ -2416,7 +2416,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner,
+                        public Step<Target> make(Assigner assigner,
                                          Assigner.Typing typing,
                                          TypeDescription instrumentedType,
                                          MethodDescription instrumentedMethod) {
@@ -2431,7 +2431,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * A factory that resolves a given argument of the instrumented method.
                      */
                     @HashCodeAndEqualsPlugin.Enhance
-                    protected static class OfInstrumentedMethod implements Factory {
+                    protected static class OfInstrumentedMethod implements Factory<Target> {
 
                         /**
                          * The index of the argument to load.
@@ -2450,7 +2450,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner,
+                        public Step<Target> make(Assigner assigner,
                                          Assigner.Typing typing,
                                          TypeDescription instrumentedType,
                                          MethodDescription instrumentedMethod) {
@@ -2467,7 +2467,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Creates a step for a field access.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                abstract class ForField implements Step {
+                abstract class ForField implements Step<Target> {
 
                     /**
                      * The field description accessed in this step.
@@ -2567,7 +2567,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * A factory for creating a field read step in a chain.
                          */
                         @HashCodeAndEqualsPlugin.Enhance
-                        public static class Factory implements Step.Factory {
+                        public static class Factory implements Step.Factory<Target> {
 
                             /**
                              * A description of the field being read.
@@ -2595,7 +2595,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * {@inheritDoc}
                              */
-                            public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                            public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                                 return new Read(fieldDescription, assigner, typing);
                             }
                         }
@@ -2650,7 +2650,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * A factory for creating a step to write to a field.
                          */
                         @HashCodeAndEqualsPlugin.Enhance
-                        public static class Factory implements Step.Factory {
+                        public static class Factory implements Step.Factory<Target> {
 
                             /**
                              * A description of the field to write to.
@@ -2686,7 +2686,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * {@inheritDoc}
                              */
-                            public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                            public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                                 return new Write(fieldDescription, assigner, typing, index);
                             }
                         }
@@ -2698,7 +2698,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * Arguments are loaded from the intercepted byte code element with a possibility of substitution.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class ForInvocation implements Step {
+                class ForInvocation implements Step<Target> {
 
                     /**
                      * The invoked method or constructor.
@@ -2780,7 +2780,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * A factory to create a step for a method invocation.
                      */
                     @HashCodeAndEqualsPlugin.Enhance
-                    public static class Factory implements Step.Factory {
+                    public static class Factory implements Step.Factory<Target> {
 
                         /**
                          * The invoked method or constructor.
@@ -2856,7 +2856,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                        public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return new ForInvocation(methodDescription, substitutions, assigner, typing);
                         }
                     }
@@ -2866,7 +2866,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * A step that invokes a delegation method based on annotations on the parameters of the targeted method.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class ForDelegation implements Step {
+                class ForDelegation implements Step<Target> {
 
                     /**
                      * The type on top of the stack after the delegation is complete.
@@ -2900,7 +2900,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param method The method to delegate to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory to(Method method) {
+                    public static Step.Factory<Target> to(Method method) {
                         return to(new MethodDescription.ForLoadedMethod(method));
                     }
 
@@ -2910,7 +2910,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param constructor The constructor to delegate to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory to(Constructor<?> constructor) {
+                    public static Step.Factory<Target> to(Constructor<?> constructor) {
                         return to(new MethodDescription.ForLoadedConstructor(constructor));
                     }
 
@@ -2920,7 +2920,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param methodDescription A description of the method or constructor to delegate to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory to(MethodDescription.InDefinedShape methodDescription) {
+                    public static Step.Factory<Target> to(MethodDescription.InDefinedShape methodDescription) {
                         if (methodDescription.isTypeInitializer()) {
                             throw new IllegalArgumentException("Cannot delegate to a type initializer: " + methodDescription);
                         }
@@ -2935,8 +2935,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param userFactories     Factories for custom annotation bindings.
                      * @return An appropriate step factory.
                      */
-                    @SuppressWarnings("unchecked")
-                    private static Step.Factory to(MethodDescription.InDefinedShape delegate, Dispatcher.Factory dispatcherFactory, List<? extends OffsetMapping.Factory<?>> userFactories) {
+                    private static Step.Factory<Target> to(MethodDescription.InDefinedShape delegate, Dispatcher.Factory dispatcherFactory, List<? extends OffsetMapping.Factory<?>> userFactories) {
                         if (delegate.isTypeInitializer()) {
                             throw new IllegalArgumentException("Cannot delegate to type initializer: " + delegate);
                         }
@@ -2998,7 +2997,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * A factory for creating a delegating step during a member substitution.
                      */
                     @HashCodeAndEqualsPlugin.Enhance
-                    protected static class Factory implements Step.Factory {
+                    protected static class Factory implements Step.Factory<Target> {
 
                         /**
                          * A description of the method or constructor to delegate to.
@@ -3070,7 +3069,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                        public Step<Target> make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             List<OffsetMapping.Resolved> targets = new ArrayList<OffsetMapping.Resolved>(offsetMappings.size());
                             for (OffsetMapping offsetMapping : offsetMappings) {
                                 targets.add(offsetMapping.resolve(assigner, typing, instrumentedType, instrumentedMethod));
@@ -7148,7 +7147,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param method The method to delegate to.
                          * @return An appropriate step factory.
                          */
-                        public Step.Factory to(Method method) {
+                        public Step.Factory<Target> to(Method method) {
                             return to(new MethodDescription.ForLoadedMethod(method));
                         }
 
@@ -7158,7 +7157,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param constructor the constructor to delegate to.
                          * @return An appropriate step factory.
                          */
-                        public Step.Factory to(Constructor<?> constructor) {
+                        public Step.Factory<Target> to(Constructor<?> constructor) {
                             return to(new MethodDescription.ForLoadedConstructor(constructor));
                         }
 
@@ -7168,7 +7167,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param methodDescription A description of the method or constructor to delegate to.
                          * @return An appropriate step factory.
                          */
-                        public Step.Factory to(MethodDescription.InDefinedShape methodDescription) {
+                        public Step.Factory<Target> to(MethodDescription.InDefinedShape methodDescription) {
                             return ForDelegation.to(methodDescription, dispatcherFactory, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()));
                         }
                     }
@@ -7179,7 +7178,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * A factory for creating a substitution chain.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public static class Factory implements Substitution.Factory {
+            public static class Factory<T extends Target> implements Substitution.Factory<T> {
 
                 /**
                  * The assigner to use.
@@ -7194,7 +7193,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * The substitution steps to apply.
                  */
-                private final List<Step.Factory> steps;
+                private final List<Step.Factory<? super T>> steps;
 
                 /**
                  * Creates a new factory for a substitution chain.
@@ -7203,7 +7202,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param typing   The typing of the assignment to use.
                  * @param steps    The substitution steps to apply.
                  */
-                protected Factory(Assigner assigner, Assigner.Typing typing, List<Step.Factory> steps) {
+                protected Factory(Assigner assigner, Assigner.Typing typing, List<Step.Factory<? super T>> steps) {
                     this.assigner = assigner;
                     this.typing = typing;
                     this.steps = steps;
@@ -7212,15 +7211,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                public Substitution<? super T> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                     if (steps.isEmpty()) {
                         return Stubbing.INSTANCE;
                     }
-                    List<Step> steps = new ArrayList<Step>(this.steps.size());
-                    for (Step.Factory step : this.steps) {
+                    List<Step<? super T>> steps = new ArrayList<Step<? super T>>(this.steps.size());
+                    for (Step.Factory<? super T> step : this.steps) {
                         steps.add(step.make(assigner, typing, instrumentedType, instrumentedMethod));
                     }
-                    return new Chain(assigner, typing, steps);
+                    return new Chain<T>(assigner, typing, steps);
                 }
 
                 /**
@@ -7229,7 +7228,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param step The steps to append.
                  * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
                  */
-                public Factory executing(Step.Factory... step) {
+                public Factory<T> executing(Step.Factory<? super T>... step) {
                     return executing(Arrays.asList(step));
                 }
 
@@ -7239,8 +7238,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param steps The steps to append.
                  * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
                  */
-                public Factory executing(List<? extends Step.Factory> steps) {
-                    return new Factory(assigner, typing, CompoundList.of(this.steps, steps));
+                public Factory<T> executing(List<? extends Step.Factory<? super  T>> steps) {
+                    return new Factory<T>(assigner, typing, CompoundList.of(this.steps, steps));
                 }
             }
         }
@@ -7373,7 +7372,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * The substitution to apply.
                  */
-                private final Substitution substitution;
+                private final Substitution<? super Target.ForMember> substitution;
 
                 /**
                  * Creates a new resolved binding.
@@ -7382,7 +7381,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param member       The field or method that was accessed.
                  * @param substitution The substitution to apply.
                  */
-                protected ForMember(TypeDescription receiver, ByteCodeElement.Member member, Substitution substitution) {
+                protected ForMember(TypeDescription receiver, ByteCodeElement.Member member, Substitution<? super Target.ForMember> substitution) {
                     this.receiver = receiver;
                     this.member = member;
                     this.substitution = substitution;
@@ -7436,7 +7435,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * The substitution to apply.
                  */
-                private final Substitution substitution;
+                private final Substitution<? super Target.ForDynamicInvocation> substitution;
 
                 /**
                  * Creates a resolved binding for an invokedynamic expression.
@@ -7446,7 +7445,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param arguments    The constant arguments supplied to the bootstrap method.
                  * @param substitution The substitution to apply.
                  */
-                public ForDynamicInvocation(JavaConstant.MethodType methodType, String name, List<JavaConstant> arguments, Substitution substitution) {
+                protected ForDynamicInvocation(JavaConstant.MethodType methodType, String name, List<JavaConstant> arguments, Substitution<? super Target.ForDynamicInvocation> substitution) {
                     this.methodType = methodType;
                     this.name = name;
                     this.arguments = arguments;
@@ -7691,7 +7690,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * The substitution to trigger if a member is matched.
              */
-            private final Substitution substitution;
+            private final Substitution<? super Target.ForMember> substitution;
 
             /**
              * Creates a new replacement that triggers a substitution based on a row of matchers.
@@ -7710,7 +7709,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                          boolean matchFieldWrite,
                                          boolean includeVirtualCalls,
                                          boolean includeSuperCalls,
-                                         Substitution substitution) {
+                                         Substitution<? super Target.ForMember> substitution) {
                 this.fieldMatcher = fieldMatcher;
                 this.methodMatcher = methodMatcher;
                 this.matchFieldRead = matchFieldRead;
@@ -7797,7 +7796,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * The substitution factory to create a substitution from.
                  */
-                private final Substitution.Factory substitutionFactory;
+                private final Substitution.Factory<? super Target.ForMember> substitutionFactory;
 
                 /**
                  * Creates a new replacement that triggers a substitution based on a row of matchers.
@@ -7816,7 +7815,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                   boolean matchFieldWrite,
                                   boolean includeVirtualCalls,
                                   boolean includeSuperCalls,
-                                  Substitution.Factory substitutionFactory) {
+                                  Substitution.Factory<? super Target.ForMember> substitutionFactory) {
                     this.fieldMatcher = fieldMatcher;
                     this.methodMatcher = methodMatcher;
                     this.matchFieldRead = matchFieldRead;
@@ -7833,7 +7832,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param factory The substitution factory to create a substitution from.
                  * @return An appropriate replacement factory for the supplied matcher and substitution factory.
                  */
-                protected static Replacement.Factory of(ElementMatcher<? super ByteCodeElement.Member> matcher, Substitution.Factory factory) {
+                protected static Replacement.Factory of(ElementMatcher<? super ByteCodeElement.Member> matcher, Substitution.Factory<? super Target.ForMember> factory) {
                     return new Factory(matcher, matcher, true, true, true, true, factory);
                 }
 
@@ -7846,7 +7845,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param factory         The substitution factory to apply for fields that match the specified criteria.
                  * @return An appropriate replacement factory.
                  */
-                protected static Replacement.Factory ofField(ElementMatcher<? super FieldDescription> matcher, boolean matchFieldRead, boolean matchFieldWrite, Substitution.Factory factory) {
+                protected static Replacement.Factory ofField(ElementMatcher<? super FieldDescription> matcher, boolean matchFieldRead, boolean matchFieldWrite, Substitution.Factory<? super Target.ForMember> factory) {
                     return new Factory(matcher, none(), matchFieldRead, matchFieldWrite, false, false, factory);
                 }
 
@@ -7859,7 +7858,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param factory             The substitution factory to apply for methods and constructors that match the specified criteria.
                  * @return An appropriate replacement factory.
                  */
-                protected static Replacement.Factory ofMethod(ElementMatcher<? super MethodDescription> matcher, boolean includeVirtualCalls, boolean includeSuperCalls, Substitution.Factory factory) {
+                protected static Replacement.Factory ofMethod(ElementMatcher<? super MethodDescription> matcher, boolean includeVirtualCalls, boolean includeSuperCalls, Substitution.Factory<? super Target.ForMember> factory) {
                     return new Factory(none(), matcher, false, false, includeVirtualCalls, includeSuperCalls, factory);
                 }
 
@@ -7907,7 +7906,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * The substitution to apply.
              */
-            private final Substitution substitution;
+            private final Substitution<? super Target.ForDynamicInvocation> substitution;
 
             /**
              * Creates a replacement for an invokedynamic instruction.
@@ -7922,7 +7921,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                            ElementMatcher.Junction<? super String> nameMatcher,
                                            ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
                                            ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher,
-                                           Substitution substitution) {
+                                           Substitution<? super Target.ForDynamicInvocation> substitution) {
                 this.handleMatcher = handleMatcher;
                 this.nameMatcher = nameMatcher;
                 this.typeMatcher = typeMatcher;
@@ -7999,7 +7998,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * A factory for creating a substitution.
                  */
-                private final Substitution.Factory substitutionFactory;
+                private final Substitution.Factory<? super Target.ForDynamicInvocation> substitutionFactory;
 
                 /**
                  * Creates a factory for a replacement for a replacement for an invokedynamic instruction.
@@ -8014,7 +8013,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                   ElementMatcher.Junction<? super String> nameMatcher,
                                   ElementMatcher.Junction<? super JavaConstant.MethodType> typeMatcher,
                                   ElementMatcher.Junction<? super List<JavaConstant>> argumentsMatcher,
-                                  Substitution.Factory substitutionFactory) {
+                                  Substitution.Factory<? super Target.ForDynamicInvocation> substitutionFactory) {
                     this.handleMatcher = handleMatcher;
                     this.nameMatcher = nameMatcher;
                     this.typeMatcher = typeMatcher;
