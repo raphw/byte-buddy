@@ -33,6 +33,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testArgumentToElement() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ArgumentSample.class)
@@ -54,6 +55,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testArgumentToMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ArgumentSample.class)
@@ -75,6 +77,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testArgumentOptional() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ArgumentSample.class)
@@ -96,6 +99,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testArgumentNone() throws Exception {
         new ByteBuddy()
                 .redefine(ArgumentSample.class)
@@ -107,6 +111,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testThisReferenceToElement() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ThisReferenceSample.class)
@@ -128,6 +133,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testThisReferenceToMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ThisReferenceSample.class)
@@ -149,6 +155,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testThisReferenceOptional() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ThisReferenceSample.class)
@@ -172,6 +179,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testThisReferenceNone() throws Exception {
         new ByteBuddy()
                 .redefine(ThisReferenceSample.class)
@@ -183,6 +191,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testAllArgumentsToElement() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(AllArgumentsSample.class)
@@ -204,6 +213,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testAllArgumentsToMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(AllArgumentsSample.class)
@@ -225,6 +235,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testAllArgumentsSelf() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(AllArgumentsSample.class)
@@ -248,6 +259,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testAllArgumentsEmpty() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(AllArgumentsSample.class)
@@ -269,6 +281,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testAllArgumentsIllegal() throws Exception {
         new ByteBuddy()
                 .redefine(ThisReferenceSample.class)
@@ -281,6 +294,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSelfCallHandle() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SelfCallHandleSample.class)
@@ -298,6 +312,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = HandleSample.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testHandle() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(HandleSample.class)
@@ -314,6 +329,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testDynamicConstantInvokedynamic() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionDynamicConstant");
         Class<?> type = new ByteBuddy()
@@ -331,6 +347,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 11)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testDynamicConstant() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v11.MemberSubstitutionDynamicConstant");
         Class<?> type = new ByteBuddy()
@@ -348,6 +365,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSelfCallHandleHierarchy() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SelfCallHandleSample.class)
@@ -366,6 +384,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldValueNamedImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldValueTest.class)
@@ -381,6 +400,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldValueNamedExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldValueTest.class)
@@ -396,6 +416,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldValueAccessor() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldValueTest.class)
@@ -411,6 +432,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldValueProvided() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldValueTest.class)
@@ -429,6 +451,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = FieldGetterHandlerTest.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldGetterHandleNamedImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldGetterHandlerTest.class)
@@ -445,6 +468,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = FieldGetterHandlerTest.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldGetterHandleNamedExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldGetterHandlerTest.class)
@@ -461,6 +485,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = FieldGetterHandlerTest.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldGetterHandleAccessor() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldGetterHandlerTest.class)
@@ -477,6 +502,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = FieldSetterHandlerTest.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldSetterHandleNamedImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldSetterHandlerTest.class)
@@ -494,6 +520,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = FieldSetterHandlerTest.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldSetterHandleNamedExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldSetterHandlerTest.class)
@@ -511,6 +538,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = FieldSetterHandlerTest.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testFieldSetterHandleAccessor() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldSetterHandlerTest.class)
@@ -527,6 +555,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testUnused() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(UnusedTest.class)
@@ -543,6 +572,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testStubValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StubValueTest.class)
@@ -559,6 +589,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testStubValueIllegal() throws Exception {
         new ByteBuddy()
                 .redefine(StubValueTest.class)
@@ -570,6 +601,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginElementString() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(OriginTest.class)
@@ -585,6 +617,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginMethodString() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(OriginTest.class)
@@ -600,6 +633,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginElementField() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(OriginTest.class)
@@ -615,6 +649,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginMethodMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(OriginTest.class)
@@ -630,6 +665,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginElementType() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(OriginTest.class)
@@ -645,6 +681,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginMethodType() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(OriginTest.class)
@@ -661,6 +698,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(8) // Cannot resolve field types from method handles prior to Java 8
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginElementMethodHandle() throws Exception {
         Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodHandle");
         Class<?> type = new ByteBuddy()
@@ -678,6 +716,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginMethodMethodHandle() throws Exception {
         Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodHandle");
         Class<?> type = new ByteBuddy()
@@ -695,6 +734,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginElementMethodType() throws Exception {
         Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodType");
         Class<?> type = new ByteBuddy()
@@ -712,6 +752,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginMethodMethodType() throws Exception {
         Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodType");
         Class<?> type = new ByteBuddy()
@@ -729,6 +770,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testOriginLookup() throws Exception {
         Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodHandlesLookup");
         Class<?> type = new ByteBuddy()
@@ -745,6 +787,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testCurrent() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(CurrentTest.class)
@@ -763,6 +806,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSerializable() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SerializableSample.class)
@@ -781,6 +825,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = DynamicSample.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testAdviceDynamicInvocation() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(DynamicSample.class)
@@ -801,6 +846,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 8, target = DynamicSample.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testDynamicLambdaInvocation() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(DynamicSample.class)
@@ -818,6 +864,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = BootstrapSample.class)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testDelegationBootstrapped() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionBootstrap");
         Class<?> type = new ByteBuddy()

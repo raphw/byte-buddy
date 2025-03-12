@@ -516,6 +516,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param step The steps to apply for a substitution.
          * @return A member substitution that replaces any matched byte code element with the provided substitution chain.
          */
+        @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         public final MemberSubstitution replaceWithChain(Substitution.Chain.Step.Factory<? super T>... step) {
             return replaceWithChain(Arrays.asList(step));
         }
@@ -7228,6 +7229,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param step The steps to append.
                  * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
                  */
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                 public Factory<T> executing(Step.Factory<? super T>... step) {
                     return executing(Arrays.asList(step));
                 }
