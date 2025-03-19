@@ -797,6 +797,36 @@
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
+        <!-- Runs the build with compatibility for Java 25 JVMs. -->
+        <profile>
+            <id>java25-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>25</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 25 JVMs. -->
+        <profile>
+            <id>java25-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>25</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
