@@ -2954,7 +2954,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         if (delegate.isTypeInitializer()) {
                             throw new IllegalArgumentException("Cannot delegate to type initializer: " + delegate);
                         }
-                        return new Factory(delegate, dispatcherFactory.make(delegate), CompoundList.of(Arrays.asList(
+                        return new Factory(delegate, dispatcherFactory.make(delegate), CompoundList.of(Arrays.<OffsetMapping.Factory<?>>asList(
                                 OffsetMapping.ForArgument.Factory.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForAllArguments.Factory.INSTANCE,

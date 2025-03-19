@@ -69,7 +69,7 @@
         <pitest.target>net.bytebuddy</pitest.target>
         <nexus.url>https://s01.oss.sonatype.org</nexus.url>
         <version.asm>9.7.1</version.asm>
-        <version.asmjdkbridge>0.0.6</version.asmjdkbridge>
+        <version.asmjdkbridge>0.0.7</version.asmjdkbridge>
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
@@ -812,21 +812,6 @@
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
-        <!-- Runs the build with compatibility for Java 25 JVMs. -->
-        <profile>
-            <id>java25-compatibility</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>25</jdk>
-            </activation>
-            <properties>
-                <sourcecode.main.version>8</sourcecode.main.version>
-                <sourcecode.test.version>8</sourcecode.test.version>
-                <bytecode.main.version>8</bytecode.main.version>
-                <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
-            </properties>
-        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
@@ -1039,6 +1024,18 @@
             <properties>
                 <bytecode.main.version>24</bytecode.main.version>
                 <bytecode.test.version>24</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 25. -->
+        <profile>
+            <id>java25</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>25</bytecode.main.version>
+                <bytecode.test.version>25</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
