@@ -17,6 +17,7 @@ package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.build.SafeVarargsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -620,6 +621,7 @@ public interface Transformer<T> {
          *
          * @param transformer The list of transformers to apply in their application order.
          */
+        @SafeVarargsPlugin.Enhance
         @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         public Compound(Transformer<S>... transformer) {
             this(Arrays.asList(transformer));

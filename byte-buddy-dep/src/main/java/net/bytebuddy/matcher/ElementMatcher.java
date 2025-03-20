@@ -16,6 +16,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.build.SafeVarargsPlugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 
@@ -116,6 +117,7 @@ public interface ElementMatcher<T> {
              *
              * @param matcher The represented matchers in application order.
              */
+            @SafeVarargsPlugin.Enhance
             @SuppressWarnings("unchecked") // In absence of @SafeVarargs
             public Conjunction(ElementMatcher<? super W>... matcher) {
                 this(Arrays.asList(matcher));
@@ -184,6 +186,7 @@ public interface ElementMatcher<T> {
              *
              * @param matcher The represented matchers in application order.
              */
+            @SafeVarargsPlugin.Enhance
             @SuppressWarnings("unchecked") // In absence of @SafeVarargs
             public Disjunction(ElementMatcher<? super W>... matcher) {
                 this(Arrays.asList(matcher));

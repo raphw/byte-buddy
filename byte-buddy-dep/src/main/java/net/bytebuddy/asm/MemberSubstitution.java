@@ -18,6 +18,7 @@ package net.bytebuddy.asm;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.build.SafeVarargsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -518,6 +519,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param step The steps to apply for a substitution.
          * @return A member substitution that replaces any matched byte code element with the provided substitution chain.
          */
+        @SafeVarargsPlugin.Enhance
         @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         public final MemberSubstitution replaceWithChain(Substitution.Chain.Step.Factory<? super T>... step) {
             return replaceWithChain(Arrays.asList(step));
@@ -7245,8 +7247,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param step The steps to append.
                  * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
                  */
+                @SafeVarargsPlugin.Enhance
                 @SuppressWarnings("unchecked") // In absence of @SafeVarargs
-                public Factory<U> executing(Step.Factory<? super U>... step) {
+                public final Factory<U> executing(Step.Factory<? super U>... step) {
                     return executing(Arrays.asList(step));
                 }
 

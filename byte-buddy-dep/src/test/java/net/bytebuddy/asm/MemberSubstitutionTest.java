@@ -683,6 +683,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainEmpty() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
@@ -699,6 +700,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainSimple() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
@@ -716,6 +718,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainFieldReadOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
@@ -733,6 +736,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainFieldWriteOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
@@ -750,6 +754,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainFieldReadStaticOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
@@ -767,6 +772,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainFieldWriteStaticOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
@@ -784,6 +790,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainVirtualMethodInvocationOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(MethodInvokeSample.class)
@@ -801,6 +808,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainStaticMethodInvocationOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticMethodInvokeSample.class)
@@ -818,6 +826,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainSpecialMethodInvocationOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(VirtualMethodCallSubstitutionSample.Extension.class)
@@ -832,6 +841,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainConstructionOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ConstructorSubstitutionSample.class)
@@ -845,6 +855,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainArgumentLoaded() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ArgumentSample.class)
@@ -860,6 +871,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainArgumentInstrumentedMethodLoaded() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ArgumentSample.class)
@@ -875,6 +887,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainArgumentInstrumentedMethodLoadedThis() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ArgumentSample.class)
@@ -890,6 +903,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainFieldRead() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
@@ -908,6 +922,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainStaticFieldRead() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
@@ -925,6 +940,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainFieldWrite() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
@@ -943,6 +959,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainFieldStaticWrite() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
@@ -961,6 +978,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainMethodInvocation() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
@@ -979,6 +997,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainMethodInvocationWithArgument() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticMethodInvokeSample.class)
@@ -997,6 +1016,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainStaticMethodInvocation() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
@@ -1014,6 +1034,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainTypeAssignment() throws Exception{
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
@@ -1032,6 +1053,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainTypeAssignmentExplicit() throws Exception{
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
@@ -1072,6 +1094,7 @@ public class MemberSubstitutionTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testLambdaSubstitutionWithChainOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Class.forName("net.bytebuddy.test.precompiled.v8.LambdaSampleFactory"))

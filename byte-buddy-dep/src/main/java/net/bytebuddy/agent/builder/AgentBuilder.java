@@ -21,10 +21,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
-import net.bytebuddy.build.AccessControllerPlugin;
-import net.bytebuddy.build.EntryPoint;
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
-import net.bytebuddy.build.Plugin;
+import net.bytebuddy.build.*;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -5198,6 +5195,7 @@ public interface AgentBuilder {
              *
              * @param type The throwable types that should trigger a fallback.
              */
+            @SafeVarargsPlugin.Enhance
             @SuppressWarnings("unchecked") // In absence of @SafeVarargs
             public ByThrowableType(Class<? extends Throwable>... type) {
                 this(new HashSet<Class<? extends Throwable>>(Arrays.asList(type)));
@@ -6230,6 +6228,7 @@ public interface AgentBuilder {
                  *
                  * @param matcher The type matchers to apply in their application order.
                  */
+                @SafeVarargsPlugin.Enhance
                 @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                 public ForMatchedGrouping(ElementMatcher<? super TypeDescription>... matcher) {
                     this(new LinkedHashSet<ElementMatcher<? super TypeDescription>>(Arrays.asList(matcher)));

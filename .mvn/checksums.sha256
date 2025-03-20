@@ -42,10 +42,12 @@ codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.2 1293865e65f3f052f7af3f
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.4 75ca0b7212b1c89b10724ac58e40b1aea4ff884d46caff5a3ebf15a71bcee7b0
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.6 97bd5a7c83ab351f1c508db7af8ffa06f2db2a52a3c45050935df3386ae08ff5
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.7 bf8934314fe09ed280453300e202acbfaab58ae809489c6db1ceee8ab346812c
+codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.8 a4faa5f2b7fb7ce98b4bafaa822afc4b8c63655c4b29ed5e0e0332bf9d892fed
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.2 d0e77b3f8bbcae3fcc45cdbea534f10806bed4bcb21dbe9c92ec9bf2ea1fc2a6
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.4 d80b7c1c54b7490d60d2b0b768fc2e993b8b64807da4ccbec6c25a5878e79508
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.6 1274279e722893d5566dbfeb7944181ece51d708b0a032b06a8568d1ca748bca
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.7 0f03b065a7f8d2084213b36d7f60eb9b051d37d52dedf0c7b942bb2ae6e3b643
+codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.8 046c716ee03b45d5cd0b801183cc8dff1f2bf7e854c097457c0fee7afbce0d73
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:sources:0.0.2 681eb8c703ddd28797d7eaeb975ce3546068b8e49f5b47a841919689e7ca267f
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:sources:0.0.4 c76939fe1ecef6fe571d25ba2a3a7c708151152170083b27b01afe104283fa12
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:sources:0.0.6 3fca530e91539b7a006fb194dbfd31d61e97e6d64bcce5366b68f96cf44bbca0
@@ -54,6 +56,7 @@ codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.2 468f2b3560a0eb9f5be26679380c5
 codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.4 be89b2ca8b7646cd6b185364358aaf8dd7acff254b5e216763ad0b1acd14f37c
 codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.6 ab2d51e04abe912bad3855ed79435d7d7e851132bc751b2681d5c4152c00ae47
 codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.7 2a94fc897cbc7be6c21dad4a0fb29e4c851157ba1dc5a44bcd67c46e2d24210d
+codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.8 2d54f23119413bd43444ec94767f27818b31db2417a59db94c82b20c20126f13
 codes.rafael.bytecodeupdate:bytecode-update-maven-plugin:jar:1.0 cfa943b4e5f837c0028fbe3f6f9484f42dfed9174953b30ede0d84ec4aeaf2c9
 codes.rafael.bytecodeupdate:bytecode-update-maven-plugin:pom:1.0 6e783d2d272a5a86dc4831ca66bf3006108b42d2f0156513f0f2d86b6bbbf197
 codes.rafael.modulemaker:modulemaker-maven-plugin:jar:1.11 21873e7ae9bab90de820bc35108c1891f9c49b698ef300f19ed79232213c690f

@@ -16,6 +16,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.build.SafeVarargsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
@@ -270,6 +271,7 @@ public interface LatentMatcher<T> {
          *
          * @param matcher The matchers this conjunction represents.
          */
+        @SafeVarargsPlugin.Enhance
         @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         public Conjunction(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));
@@ -314,6 +316,7 @@ public interface LatentMatcher<T> {
          *
          * @param matcher The matchers this disjunction represents.
          */
+        @SafeVarargsPlugin.Enhance
         @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         public Disjunction(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));

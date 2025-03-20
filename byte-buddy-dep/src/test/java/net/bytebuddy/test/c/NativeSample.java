@@ -2,6 +2,7 @@ package net.bytebuddy.test.c;
 
 import java.io.*;
 
+@SuppressWarnings("restricted")
 public class NativeSample {
 
     static {

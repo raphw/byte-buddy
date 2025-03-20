@@ -4700,7 +4700,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param adviceMethod The exit advice method, annotated with {@link OnMethodExit}.
                  * @return An appropriate offset mapping factory.
                  */
-                @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                 @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                 protected static OffsetMapping.Factory<?> of(MethodDescription.InDefinedShape adviceMethod) {
                     return adviceMethod.getDeclaredAnnotations()
@@ -9805,7 +9804,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param classReader   A class reader to query for the class file of the advice method.
                      */
-                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              PostProcessor postProcessor,
@@ -11286,7 +11284,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param delegator     The delegator to use.
                      */
-                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              PostProcessor postProcessor,

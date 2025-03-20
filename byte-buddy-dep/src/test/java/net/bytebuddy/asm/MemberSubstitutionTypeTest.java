@@ -61,6 +61,7 @@ public class MemberSubstitutionTypeTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainSimple() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(this.type)
@@ -77,6 +78,7 @@ public class MemberSubstitutionTypeTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testSubstitutionChainReplaceArgument() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(this.type)

@@ -17,6 +17,7 @@ package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.build.SafeVarargsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -1030,6 +1031,7 @@ public class EqualsMethod implements Implementation {
          *
          * @param comparator All comparators to be applied in the application order.
          */
+        @SafeVarargsPlugin.Enhance
         @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         protected CompoundComparator(Comparator<? super FieldDescription.InDefinedShape>... comparator) {
             this(Arrays.asList(comparator));
