@@ -24,14 +24,11 @@ mvn package
     <p>
         Before you start to code, make sure that all test cases run successfully. This should be the case at all times
         for the <a href="https://github.com/raphw/byte-buddy/tree/master"><code>master</code></a> branch of Byte Buddy.
-        This is hopefully confirmed by our current <a href="https://travis-ci.org/">Travis</a> build which currently is
-        <a href="https://travis-ci.org/raphw/byte-buddy" class="social-link">
-            <img style="max-width:100%;"
-                 data-canonical-src="https://travis-ci.org/raphw/byte-buddy.svg"
-                 alt="Byte Buddy build status"
-                 src="https://travis-ci.org/raphw/byte-buddy.svg?branch=master">
+        This is hopefully confirmed by our current <a href="https://docs.github.com/en/actions">GitHub Action</a> build which currently is
+        <a href="https://github.com/raphw/byte-buddy/actions/workflows/main.yml" class="social-link">
+            <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/raphw/byte-buddy/main.yml">
         </a>
-        and which is constantly monitoring Byte Buddy's latest state. Travis is configured to compile and test the
+        and which is constantly monitoring Byte Buddy's latest state. The GitHub Action is configured to compile and test the
         project for the <a href="http://openjdk.java.net/">Open JDK</a> versions 6 and 7 and the
         <a href="http://www.oracle.com/technetwork/java/javase/downloads/index-jsp-138363.html">Oracle JDK</a> versions
         7 and 8. Since some of our tests are creating and loading Java classes, we make sure that the generated classes
