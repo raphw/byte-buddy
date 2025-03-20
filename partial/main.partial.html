@@ -291,7 +291,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             ASM has previously changed its public API but added a mechanism for API compatibility starting with version
             4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the
             ASM dependency into its own namespace. If you want to use ASM directly, use the <code>byte-buddy-dep</code>
-            artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you <b>must</b>
+            artifact that offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you <b>must</b>
             repackage <b>both</b> Byte Buddy and ASM into your namespace to avoid version conflicts.
         </p>
     </div>
