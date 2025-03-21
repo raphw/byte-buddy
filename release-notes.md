@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. March 2025: version 1.17.3
+
+- Fix bug in ASM to Class File API bridge handling tableswitch instructions.
+- Add plugin for adding `SafeVarargs` annotations.
+- Further generify `MemberSubstitution` API.
+
 ### 3. March 2025: version 1.17.2
 
 - Update Class File API integration to include support for several omitted byte codes.

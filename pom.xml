@@ -96,7 +96,7 @@
         <version.plugin.dependency>3.3.0</version.plugin.dependency>
         <version.plugin.help>3.2.0</version.plugin.help>
         <version.plugin.surefire>2.22.2</version.plugin.surefire>
-        <version.plugin.pitest>1.17.2</version.plugin.pitest>
+        <version.plugin.pitest>1.17.3</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.21</version.plugin.animal-sniffer>
         <version.plugin.enforcer>3.1.0</version.plugin.enforcer>
         <version.plugin.jacoco>0.8.12</version.plugin.jacoco>

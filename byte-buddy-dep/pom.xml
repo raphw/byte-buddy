@@ -132,7 +132,7 @@
             <plugin>
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>1.17.2</version>
+                <version>1.17.3</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>
@@ -148,7 +148,7 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.17.2</version>
+                                    <version>1.17.3</version>
                                     <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
                                     <arguments>
                                         <argument>
@@ -160,13 +160,13 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.17.2</version>
+                                    <version>1.17.3</version>
                                     <plugin>net.bytebuddy.build.CachedReturnPlugin</plugin>
                                 </transformation>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.17.2</version>
+                                    <version>1.17.3</version>
                                     <plugin>net.bytebuddy.build.AccessControllerPlugin</plugin>
                                     <arguments>
                                         <argument>
@@ -178,14 +178,20 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.17.2</version>
+                                    <version>1.17.3</version>
                                     <plugin>net.bytebuddy.build.DispatcherAnnotationPlugin</plugin>
                                 </transformation>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.17.2</version>
+                                    <version>1.17.3</version>
                                     <plugin>net.bytebuddy.build.RepeatedAnnotationPlugin</plugin>
+                                </transformation>
+                                <transformation>
+                                    <groupId>net.bytebuddy</groupId>
+                                    <artifactId>byte-buddy</artifactId>
+                                    <version>1.17.3</version>
+                                    <plugin>net.bytebuddy.build.SafeVarargsPlugin</plugin>
                                 </transformation>
                             </transformations>
                         </configuration>
@@ -392,7 +398,7 @@
                     <plugin>
                         <groupId>net.bytebuddy</groupId>
                         <artifactId>byte-buddy-maven-plugin</artifactId>
-                        <version>1.17.2</version>
+                        <version>1.17.3</version>
                         <executions>
                             <execution>
                                 <id>multi-release</id>
@@ -411,7 +417,7 @@
                                         <transformation>
                                             <groupId>net.bytebuddy</groupId>
                                             <artifactId>byte-buddy</artifactId>
-                                            <version>1.17.2</version>
+                                            <version>1.17.3</version>
                                             <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
                                             <arguments>
                                                 <argument>
@@ -423,13 +429,13 @@
                                         <transformation>
                                             <groupId>net.bytebuddy</groupId>
                                             <artifactId>byte-buddy</artifactId>
-                                            <version>1.17.2</version>
+                                            <version>1.17.3</version>
                                             <plugin>net.bytebuddy.build.CachedReturnPlugin</plugin>
                                         </transformation>
                                         <transformation>
                                             <groupId>net.bytebuddy</groupId>
                                             <artifactId>byte-buddy</artifactId>
-                                            <version>1.17.2</version>
+                                            <version>1.17.3</version>
                                             <plugin>net.bytebuddy.build.AccessControllerPlugin</plugin>
                                             <arguments>
                                                 <argument>
@@ -441,14 +447,20 @@
                                         <transformation>
                                             <groupId>net.bytebuddy</groupId>
                                             <artifactId>byte-buddy</artifactId>
-                                            <version>1.17.2</version>
+                                            <version>1.17.3</version>
                                             <plugin>net.bytebuddy.build.DispatcherAnnotationPlugin</plugin>
                                         </transformation>
                                         <transformation>
                                             <groupId>net.bytebuddy</groupId>
                                             <artifactId>byte-buddy</artifactId>
-                                            <version>1.17.2</version>
+                                            <version>1.17.3</version>
                                             <plugin>net.bytebuddy.build.RepeatedAnnotationPlugin</plugin>
+                                        </transformation>
+                                        <transformation>
+                                            <groupId>net.bytebuddy</groupId>
+                                            <artifactId>byte-buddy</artifactId>
+                                            <version>1.17.3</version>
+                                            <plugin>net.bytebuddy.build.SafeVarargsPlugin</plugin>
                                         </transformation>
                                     </transformations>
                                 </configuration>
