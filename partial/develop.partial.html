@@ -153,10 +153,10 @@ mvn package
     <p>
         In Byte Buddy, any type is constructed by registering properties to a <code>DynamicType.Builder</code>. The
         builder itself constructs an instance of <code>InstrumentedType</code> which extends
-        <code>TypeDescription</code> to allow Byte Buddy's other component to reflect over the instrumented type before
+        <code>TypeDescription</code> to allow other Byte Buddy's components to reflect over the instrumented type before
         its creation. Furthermore, method and field implementations are registered in a
         <code>MethodRegistry</code> or <code>FieldRegistry</code> accordingly. Finally, all implementations are applied on their matched method
-        descriptions by the dynamic type builder supplying all of its collected information to a
+        descriptions by the dynamic type builder, supplying all of its collected information to a
         <code>TypeWriter</code> which interacts with the ASM API for generating a class file.
     </p>
 
@@ -166,7 +166,7 @@ mvn package
         Byte Buddy aims for full immutability with the exception of mutable classes for interacting with the mostly
         mutable ASM library. Mutable components must however be isolated to the scope of interacting with ASM and
         must not be exposed to an end user. Neither should such instances ever be stored as the value of a field.
-        Furthermore, some components like for example Byte Buddy's class loaders are mutable by their nature of
+        Furthermore, some components, such as Byte Buddy's class loaders, are mutable by their nature of
         being class loaders. All collections within Byte Buddy should however be considered immutable and this property
         must also be enforced when a collection is returned from the public API.
     </p>
