@@ -50,29 +50,41 @@ mvn package
         Maven build.
     </p>
 
-    <p>
-        The project is organized in different modules. The root project <code>byte-buddy-parent</code> serves as a
-        common ground for the configuration of any Byte Buddy module. The project's implementation is found
+    <h3>Project modules</h3>
+    The project is organized in different modules.
+    <ul>
+        <li>The root project <code>byte-buddy-parent</code> serves as a
+        common ground for the configuration of any Byte Buddy module.</li>
+
+        <li>The project's implementation is found
         in the <code>byte-buddy-dev</code> module. This module is configured to rely on a direct dependency onto the
-        <a href="http://asm.ow2.org/">ASM</a> library, thus the <i>dev</i> qualifier in the module's name. Because the
-        ASM library does <a href="http://asm.ow2.org/doc/faq.html#Q15">not guarantee to respect
+        <a href="http://asm.ow2.org/">ASM</a> library, thus the <i>dev</i> qualifier in the module's name.</li>
+
+        <li>Because the ASM library does <a href="http://asm.ow2.org/doc/faq.html#Q15">not guarantee to respect
         backwards-compatibility</a>, the <code>byte-buddy</code> module repackages the ASM-dependency into Byte Buddy's
         own name space. In doing so, the ASM dependency is moved to <code>net.bytebuddy.jar.asm</code>. This
         dependency-free module does not define sources of its own but relies on the <code>byte-buddy-dev</code> module.
         On its build, all dependencies are resolved and a dependency-free deployment descriptor is created. Further
         information can be found in the section on <a href="#/dependency">how to define a dependency onto Byte Buddy</a>.
         In order to activate this repacking, you need to run the Maven build using the <code>extras</code> profile which
-        will furthermore cause the creation of artifacts for source code and javadoc. Maven
-        attempts to sign all artifacts. For this to be possible,
+        will furthermore cause the creation of artifacts for source code and javadoc.
+
+        <p>Maven attempts to sign all artifacts. For this to be possible,
         <a href="http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/">the gpg plugin must be
-            configured correctly</a> by the signer. As another module, <code>byte-buddy-benchmark</code> contains a
+            configured correctly</a> by the signer.</p>
+        </li>
+
+        <li>As another module, <code>byte-buddy-benchmark</code> contains a
         <a href="http://openjdk.java.net/projects/code-tools/jmh/">JMH</a> benchmark for measuring Byte Buddy's runtime
-        behavior compared to other code generation libraries. The <code>byte-buddy-agent</code> module supplies a
-        Java agent that allows to enhance Byte Buddy's general API. The <code>byte-buddy-android</code> module
-        contains a <code>ClassLoadingStrategy</code> that functions on the Android platform where
-        <code>byte-buddy-android-test</code> defines a test application to apply this strategy. It is only built
+        behavior compared to other code generation libraries.</li>
+
+        <li>The <code>byte-buddy-agent</code> module supplies a Java agent that allows to enhance Byte Buddy's general API.</li>
+        <li>The <code>byte-buddy-android</code> module
+        contains a <code>ClassLoadingStrategy</code> that functions on the Android platform.</li>
+        <li>Finally, <code>byte-buddy-android-test</code> defines a test application to apply that strategy. It is only built
         if the <code>android</code> profile is activated as building the module requires an Android SDK.
-    </p>
+        </li>
+    </ul>
 
     <h2>Architectural overview</h2>
 
