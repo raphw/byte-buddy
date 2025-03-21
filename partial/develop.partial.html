@@ -155,7 +155,7 @@ mvn package
         builder itself constructs an instance of <code>InstrumentedType</code> which extends
         <code>TypeDescription</code> to allow Byte Buddy's other component to reflect over the instrumented type before
         its creation. Furthermore, method and field implementations are registered in a
-        <code>FieldRegistry</code> or <code>MethodRegistry</code> accordingly. Finally, all implementations are applied on their matched method
+        <code>MethodRegistry</code> or <code>FieldRegistry</code> accordingly. Finally, all implementations are applied on their matched method
         descriptions by the dynamic type builder supplying all of its collected information to a
         <code>TypeWriter</code> which interacts with the ASM API for generating a class file.
     </p>
