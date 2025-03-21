@@ -57,13 +57,13 @@ mvn package
         common ground for the configuration of any Byte Buddy module.</li>
 
         <li>The project's implementation is found
-        in the <code>byte-buddy-dev</code> module. This module is configured to rely on a direct dependency onto the
+        in the <code>byte-buddy-dep</code> module. This module is configured to rely on a direct dependency onto the
         <a href="http://asm.ow2.org/">ASM</a> library, thus the <i>dev</i> qualifier in the module's name.</li>
 
         <li>Because the ASM library does <a href="http://asm.ow2.org/doc/faq.html#Q15">not guarantee to respect
         backwards-compatibility</a>, the <code>byte-buddy</code> module repackages the ASM-dependency into Byte Buddy's
         own name space. In doing so, the ASM dependency is moved to <code>net.bytebuddy.jar.asm</code>. This
-        dependency-free module does not define sources of its own but relies on the <code>byte-buddy-dev</code> module.
+        dependency-free module does not define sources of its own but relies on the <code>byte-buddy-dep</code> module.
         On its build, all dependencies are resolved and a dependency-free deployment descriptor is created. Further
         information can be found in the section on <a href="#/dependency">how to define a dependency onto Byte Buddy</a>.
         In order to activate this repacking, you need to run the Maven build using the <code>extras</code> profile which
