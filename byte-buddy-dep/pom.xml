@@ -142,6 +142,7 @@
                         <configuration>
                             <initialization>
                                 <entryPoint>REDEFINE</entryPoint>
+                                <validated>false</validated>
                             </initialization>
                             <transformations>
                                 <transformation>
@@ -404,6 +405,7 @@
                                     <target>${project.build.outputDirectory}/META-INF/versions/9</target>
                                     <initialization>
                                         <entryPoint>REDEFINE</entryPoint>
+                                        <validated>false</validated>
                                     </initialization>
                                     <transformations>
                                         <transformation>
