@@ -51,7 +51,8 @@ mvn package
     </p>
 
     <h3>Project modules</h3>
-    The project is organized in different modules.
+    The project is organized in different modules:
+    <p>
     <ul>
         <li>The root project <code>byte-buddy-parent</code> serves as a
         common ground for the configuration of any Byte Buddy module.</li>
@@ -85,6 +86,7 @@ mvn package
         if the <code>android</code> profile is activated as building the module requires an Android SDK.
         </li>
     </ul>
+    </p>
 
     <h2>Architectural overview</h2>
 
@@ -130,7 +132,7 @@ mvn package
         Auxiliary types represent helper types that are required to execute the method. An example of an auxiliary
         type would be a proxy class for invoking another method of the instrumented type as it is used by the
         <code>MethodDelegation</code> instrumentation for the <code>@SuperCall</code> annotation. The implementation
-        of implementation context is one of the few mutable classes within Byte Buddy as it accompanies ASM's
+        of <code>Implementation.Context</code> is one of the few mutable classes within Byte Buddy as it accompanies ASM's
         method visitor which is itself mutable. As implementation context is however not being exposed to the public
         API and should neither be exposed by a byte code appender.
     </p>
@@ -143,7 +145,7 @@ mvn package
         an instance of <code>Implementation.Target</code> that offers a way of accessing properties of the instrumented
         type that is agnostic of the way that a type is instrumented. For example, it is possible to query for a super
         method invocation on the instrumented type. If a user conducts a subclass instrumentation, this query returns
-        an invocation of the actual super method. If a user conducts a type-rebasement, the implementation target
+        an invocation of the actual super method. If a user conducts a type-rebasement, the <code>Implementation.Target</code>
         implementation will however invoke the original code of the rebased method which was copied into another method
         of the same class.
     </p>
@@ -152,8 +154,8 @@ mvn package
         In Byte Buddy, any type is constructed by registering properties to a <code>DynamicType.Builder</code>. The
         builder itself constructs an instance of <code>InstrumentedType</code> which extends
         <code>TypeDescription</code> to allow Byte Buddy's other component to reflect over the instrumented type before
-        its creation. Furthermore, method and field implementations are registered in a <code>FieldRegistry</code> or
-        <code>MethodRegistry</code> accordingly. Finally, all implementations are applied on their matched method
+        its creation. Furthermore, method and field implementations are registered in a
+        <code>FieldRegistry</code> or <code>MethodRegistry</code> accordingly. Finally, all implementations are applied on their matched method
         descriptions by the dynamic type builder supplying all of its collected information to a
         <code>TypeWriter</code> which interacts with the ASM API for generating a class file.
     </p>
