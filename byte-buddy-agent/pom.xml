@@ -131,7 +131,12 @@
                                 <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
                                 <Import-Package>
                                     ${attach.package.sun};resolution:="optional",
-                                    ${attach.package.ibm};resolution:="optional"
+                                    ${attach.package.ibm};resolution:="optional",
+                                    com.sun.jna;resolution:="optional",
+                                    com.sun.jna.platform;resolution:="optional",
+                                    com.sun.jna.platform.win32;resolution:="optional",
+                                    com.sun.jna.win32;resolution:="optional",
+                                    com.sun.jna.ptr;resolution:="optional"
                                 </Import-Package>
                                 <Export-Package>${packages.list}</Export-Package>
                             </instructions>
