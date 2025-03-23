@@ -27,7 +27,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
-import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -152,19 +151,7 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
     /**
      * A class visitor that removes members based on element matchers.
      */
-    protected static class MemberRemovingClassVisitor extends ClassVisitor {
-
-        /**
-         * Indicates the removal of a field.
-         */
-        @javax.annotation.Nonnull(when = javax.annotation.meta.When.NEVER)
-        private static final FieldVisitor REMOVE_FIELD = null;
-
-        /**
-         * Indicates the removal of a method.
-         */
-        @AlwaysNull
-        private static final MethodVisitor REMOVE_METHOD = null;
+    private static class MemberRemovingClassVisitor extends ClassVisitor {
 
         /**
          * The matcher that determines field removal.
@@ -195,11 +182,11 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
          * @param fields        A mapping of field names and descriptors to their description.
          * @param methods       A mapping of method names and descriptors to their description.
          */
-        protected MemberRemovingClassVisitor(ClassVisitor classVisitor,
-                                             ElementMatcher.Junction<FieldDescription.InDefinedShape> fieldMatcher,
-                                             ElementMatcher.Junction<MethodDescription> methodMatcher,
-                                             Map<String, FieldDescription.InDefinedShape> fields,
-                                             Map<String, MethodDescription> methods) {
+        private MemberRemovingClassVisitor(ClassVisitor classVisitor,
+                                           ElementMatcher.Junction<FieldDescription.InDefinedShape> fieldMatcher,
+                                           ElementMatcher.Junction<MethodDescription> methodMatcher,
+                                           Map<String, FieldDescription.InDefinedShape> fields,
+                                           Map<String, MethodDescription> methods) {
             super(OpenedClassReader.ASM_API, classVisitor);
             this.fieldMatcher = fieldMatcher;
             this.methodMatcher = methodMatcher;
@@ -212,7 +199,7 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
             FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
             return fieldDescription != null && fieldMatcher.matches(fieldDescription)
-                    ? REMOVE_FIELD
+                    ? null
                     : super.visitField(modifiers, internalName, descriptor, signature, value);
         }
 
@@ -221,7 +208,7 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
             MethodDescription methodDescription = methods.get(internalName + descriptor);
             return methodDescription != null && methodMatcher.matches(methodDescription)
-                    ? REMOVE_METHOD
+                    ? null
                     : super.visitMethod(modifiers, internalName, descriptor, signature, exception);
         }
     }
