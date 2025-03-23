@@ -169,7 +169,7 @@ public class AnnotationRemoval extends AsmVisitorWrapper.AbstractBase {
                 Map<Integer, Map<String, AnnotationDescription>> mappedParameterAnnotations = new HashMap<Integer, Map<String, AnnotationDescription>>();
                 for (ParameterDescription parameter : methodDescription.getParameters()) {
                     Map<String, AnnotationDescription> mappedAnnotations = new HashMap<String, AnnotationDescription>();
-                    for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
+                    for (AnnotationDescription annotation : parameter.getDeclaredAnnotations()) {
                         mappedAnnotations.put(annotation.getAnnotationType().getDescriptor(), annotation);
                     }
                     mappedParameterAnnotations.put(parameter.getIndex(), mappedAnnotations);

@@ -28,6 +28,7 @@ public class AnnotationRemovalTest {
         assertThat(type.getAnnotations().length, is(0));
         assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(0));
         assertThat(type.getDeclaredConstructor().getAnnotations().length, is(0));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(0));
         assertThat(type.getDeclaredMethod(BAR).getAnnotations().length, is(0));
     }
 
@@ -42,6 +43,7 @@ public class AnnotationRemovalTest {
         assertThat(type.getAnnotations().length, is(0));
         assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(1));
         assertThat(type.getDeclaredConstructor().getAnnotations().length, is(1));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(1));
         assertThat(type.getDeclaredMethod(BAR).getAnnotations().length, is(1));
     }
 
@@ -56,6 +58,7 @@ public class AnnotationRemovalTest {
         assertThat(type.getAnnotations().length, is(1));
         assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(0));
         assertThat(type.getDeclaredConstructor().getAnnotations().length, is(1));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(1));
         assertThat(type.getDeclaredMethod(BAR).getAnnotations().length, is(1));
     }
 
@@ -70,6 +73,7 @@ public class AnnotationRemovalTest {
         assertThat(type.getAnnotations().length, is(1));
         assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(1));
         assertThat(type.getDeclaredConstructor().getAnnotations().length, is(0));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(1));
         assertThat(type.getDeclaredMethod(BAR).getAnnotations().length, is(1));
     }
 
@@ -84,7 +88,23 @@ public class AnnotationRemovalTest {
         assertThat(type.getAnnotations().length, is(1));
         assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(1));
         assertThat(type.getDeclaredConstructor().getAnnotations().length, is(1));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(1));
         assertThat(type.getDeclaredMethod(BAR).getAnnotations().length, is(0));
+    }
+
+    @Test
+    public void testRemovalOnMethodParameter() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(AnnotationRemoval.strip(ElementMatchers.annotationType(named(SampleAnnotation.class.getName()))).onMethods(named(FOO)))
+                .make()
+                .load(SampleAnnotation.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST_PERSISTENT)
+                .getLoaded();
+        assertThat(type.getAnnotations().length, is(1));
+        assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(1));
+        assertThat(type.getDeclaredConstructor().getAnnotations().length, is(1));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(0));
+        assertThat(type.getDeclaredMethod(BAR).getAnnotations().length, is(1));
     }
 
     @SampleAnnotation
