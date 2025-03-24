@@ -62,7 +62,7 @@ mvn package
         in the <code>byte-buddy-dep</code> module. This module is configured to rely on a direct dependency onto the
         <a href="http://asm.ow2.org/">ASM</a> library, thus the <i>dev</i> qualifier in the module's name.</li>
 
-        <li>Because the ASM library does <a href="http://asm.ow2.org/doc/faq.html#Q15">not guarantee to respect
+        <li>Because the ASM library does <a href="https://asm.ow2.io/faq.html#Q15">not guarantee to respect
         backwards-compatibility</a>, the <code>byte-buddy</code> module repackages the ASM-dependency into Byte Buddy's
         own name space. In doing so, the ASM dependency is moved to <code>net.bytebuddy.jar.asm</code>. This
         dependency-free module does not define sources of its own but relies on the <code>byte-buddy-dep</code> module.
