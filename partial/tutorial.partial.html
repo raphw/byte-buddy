@@ -752,7 +752,9 @@ class Bar {
 </p>
 
 <pre class="prettyprint">
+// Requires byte-buddy-agent dependency
 ByteBuddyAgent.install();
+
 Foo foo = new Foo();
 new ByteBuddy()
   .redefine(Bar.class)
