@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 23. March 2025: version 1.17.4
+
+- Add `SafeVarargs` plugin.
+- Fix OSGi declaration for *byte-buddy-agent*.
+
 ### 21. March 2025: version 1.17.3
 
 - Fix bug in ASM to Class File API bridge handling tableswitch instructions.
