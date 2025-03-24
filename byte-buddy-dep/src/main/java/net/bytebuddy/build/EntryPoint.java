@@ -196,5 +196,10 @@ public interface EntryPoint extends Serializable {
                                                 MethodNameTransformer methodNameTransformer) {
             return delegate.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
         }
+
+        @Override
+        public String toString() {
+            return "Unvalidated:" + delegate;
+        }
     }
 }
