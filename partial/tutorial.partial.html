@@ -745,7 +745,9 @@ class Bar {
 </pre>
 
 <p>
-    Using Byte Buddy, we can now easily redefine the class <code>Foo</code> to become <code>Bar</code>. Using
+    Using Byte Buddy, we can now easily redefine the class <code>Foo</code> to become <code>Bar</code>.
+    The code below renames the class <code>Bar</code> to <code>Foo</code>.
+    After the redefinition, when we reference the latter, the former is referenced instead. Using
     HotSwap, this redefinition will even apply for preexisting instances:
 </p>
 
