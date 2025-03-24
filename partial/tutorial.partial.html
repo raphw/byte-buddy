@@ -118,8 +118,7 @@ class Service {
     application. By analyzing our source code, we could of course make sure that this will never happen. However,
     we can expect our application to grow and to be changed in the future. Therefore, we want to implement
     a tighter security model where the method invocation is guarded by an explicit check for the application's
-    current user. We will normally use a security framework for making sure that the method is never called by
-    anybody but by an administrator.
+    current user. We typically use a security framework to ensure that only an administrator can call the method.
 </p>
 
 <p>
@@ -146,7 +145,7 @@ interface Framework {
     accessed by a given user. The <code>UserHolder</code> is used for globally defining which user is
     currently logged into the application. The <code>Framework</code> interface allows for the creation of
     secured instances by calling the default constructor of a given type. Of course, this framework is overly
-    simple, but in principal this is how security frameworks like for example the popular
+    simple, but in principle this is how security frameworks like for example the popular
     <a href="http://projects.spring.io/spring-security/">Spring Security</a> work. A feature of this
     security framework is that we preserve the user's types. By the contract of our framework interface, we
     promise the user to return an instance of any type <code>T</code> it receives. Thanks to this,
