@@ -379,11 +379,14 @@ class HardcodedFrameworkImpl implements Framework {
     additional runtimes. This performance overhead is also visible in the other benchmarks for creating a class. Benchmark
     (2a) shows the measured runtime for creating (and loading) a class that implements a single interface with 18 methods,
     (2b) shows the execution time for the methods generated for this class. Similarly, (3a) shows a benchmark for extending a
-    class with the same 18 methods which are implemented. Byte Buddy provides two benchmarks, due to a possible optimization
+    class with the same 18 methods which are implemented.
+</p>
+<p>
+    Byte Buddy provides two benchmarks, due to an optimization
     that is possible for an interceptor that always executes the super method. Sacrificing some time during class creation,
     the execution time of a Byte Buddy-created classes typically reaches the baseline, meaning that the instrumentation creates
     no overhead at all. It should be noted that Byte Buddy outperforms any other code generation library also during class
-    creation, if the meta data processing was disabled. As the runtime of code generation is however so minimal compared to
+    creation, if the metadata processing was disabled. As the runtime of code generation is however so minimal compared to
     a program's total runtime, such an opt-out is not available as it would gain very little performance to the sacrifice
     of complicating the library code.
 </p>
@@ -392,9 +395,9 @@ class HardcodedFrameworkImpl implements Framework {
     Finally, note that our metrics measure the performance of Java code that was priorly optimized by a
     JVM's <a href="http://en.wikipedia.org/wiki/Just-in-time_compilation">just in time compiler</a>. If your code is
     only executed occasionally, the performance will be worse than it is suggested by the above metrics. In this
-    case, your code is however not performance-critical to begin with. The code for this metrics is distributed
+    case, your code is however not performance-critical to begin with. The code for these metrics is distributed
     together with Byte Buddy and you can run these metrics on your own computer where the above numbers might be scaled
-    depending on your machine's processing power. For this reason, do not interpret the above numbers absolutely but
+    depending on your machine's processing power. For this reason, do not interpret the above numbers absolutely, but
     consider them as a relative measure comparing different libraries. When further developing Byte Buddy, we want
     to monitor these metrics in order to avoid performance penalties when adding new features.
 </p>
