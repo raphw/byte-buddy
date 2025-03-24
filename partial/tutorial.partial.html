@@ -717,7 +717,8 @@ Class&lt;?&gt; type = new ByteBuddy()
     Note that when loading classes, the predefined class loading strategies are executed by applying the
     <code>ProtectionDomain</code> of the current execution context. Alternatively, all default strategies offer
     the specification of an explicit protection domain by calling the <code>with</code> method.
-    Defining an explicit protection domain is important when using security managers or when working with classes
+    Defining an explicit protection domain is important when using security managers
+    (<a href="https://openjdk.org/jeps/486">disabled in JDK 24 and marked for removal</a>) or when working with classes
     that are defined in signed jars.
 </p>
 
