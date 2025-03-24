@@ -804,7 +804,7 @@ assertThat(foo.m(), is("bar"));
     With this realization about the limits of Java's HotSwap feature, one might think that the only meaningful
     application of the <code>rebase</code> and <code>redefinition</code> instructions would be during build time.
     By applying build-time manipulation, one can assert that a processed class is not loaded before its initial
-    class loading simply because this class loading is accomplished in a different instance of the JVM. Byte Buddy
+    class loading, simply because this class loading is accomplished in a different instance of the JVM. Byte Buddy
     is however equally capable of working with classes that were not yet loaded. For this, Byte Buddy abstracts over
     Java's reflection API such that a <code>Class</code> instance is for example internally represented by an
     instance of a <code>TypeDescription</code>. As a matter of fact, Byte Buddy only knows how to process a provided
@@ -817,7 +817,7 @@ assertThat(foo.m(), is("bar"));
     Byte Buddy provides a canonical manner for getting hold of a class's <code>TypeDescription</code> using a
     <code>TypePool</code>. A default implementation of such a pool is of course also provided. This
     <code>TypePool.Default</code> implementation parses the binary format of a class and represents it as the
-    required <code>TypeDescription</code>. Similarly to a <code>ClassLoader</code> it maintains a cache for
+    required <code>TypeDescription</code>. Similarly to a <code>ClassLoader</code>, it maintains a cache for
     represented classes which is also customizable. Also, it normally retrieves the binary format of a class from
     a <code>ClassLoader</code>, however without instructing it to load this class.
 </p>
