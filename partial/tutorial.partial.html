@@ -871,8 +871,8 @@ class MyApplication {
     redefinitions <i>on demand</i>. Using a
     <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html">Java agent</a>,
     it is possible to directly intercept any class loading activity that is conducted within a Java application. A
-    Java agent is implemented as a simple <i>jar</i> file with an entry point that is specified in this jar file's
-    manifest file as it is described under the linked resource. Using Byte Buddy, the implementation of such an
+    Java agent is implemented as a simple <i>jar</i> file with an entry point that is specified in this jar's
+    manifest file, as it is described under the linked resource. Using Byte Buddy, the implementation of such an
     agent is straight forward by using an <code>AgentBuilder</code>. Assuming that we previously defined a simple
     annotation named <code>ToString</code>, it would be trivial to implement <code>toString</code> methods
     for all annotated classes simply by implementing the Agent's <code>premain</code> method as follows:
