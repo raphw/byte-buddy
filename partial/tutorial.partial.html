@@ -509,7 +509,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
 
 <pre class="prettyprint">
 ByteBuddy byteBuddy = new ByteBuddy();
-byteBuddy.withNamingStrategy(new NamingStrategy.SuffixingRandom("suffix"));
+byteBuddy.with(new NamingStrategy.SuffixingRandom("suffix"));
 DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).make();
 </pre>
 
@@ -517,7 +517,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
     You might expect the dynamic type to be generated using the custom naming strategy <code>new
     NamingStrategy.SuffixingRandom("suffix")</code> that was (allegedly) defined. Instead of mutating the
     instance that is stored in the <code>byteBuddy</code> variable, the invocation of the
-    <code>withNamingStrategy</code> method returns a customized <code>ByteBuddy</code> instance which is however
+    <code>with</code> method returns a customized <code>ByteBuddy</code> instance which is however
     lost. As a result, the dynamic type is created using the default configuration which was originally created.
 </p>
 
