@@ -896,6 +896,16 @@ class ToStringAgent {
 }
 </pre>
 
+<p>The code of the <code>premain</code> method can be even simplified by writing a Lambda Expression
+    if you are using JDK 8+:</p>
+
+<pre class="prettyprint">
+new AgentBuilder.Default()
+    .type(isAnnotatedWith(ToString.class))
+    .transform((builder, td, cl, jm, pd) -> builder.method(named("toString")).intercept(FixedValue.value("transformed")))
+    .installOn(instrumentation);
+</pre>
+
 <p>
     As a result of the applying the above <code>AgentBuilder.Transformer</code>, all <code>toString</code> methods
     of the annotated classes would now return <code>transformed</code>. We will learn all about Byte Buddy's
