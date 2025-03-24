@@ -525,7 +525,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).mak
 
 <p>
     So far, we only demonstrated how Byte Buddy can be used to create a subclass of an existing class. The same
-    API can however be use for enhancing existing classes. Such enhancement is available in two different
+    API can however be used for enhancing existing classes. Such enhancement is available in two different
     flavours:
 </p>
 
@@ -570,9 +570,9 @@ class Foo {
 
 <p>
     Any rebasing, redefinition or subclassing is performed using an identical API which is defined by the
-    <code>DynamicType.Builder</code> interface. This way, it is possible to for example define a class as a subclass
+    <code>DynamicType.Builder</code> interface. This way, it is possible, for example, to define a class as a subclass
     and to later alter the definition to represent a rebased class instead. This is achieved by merely changing a
-    single word of Byte Buddy's domain specific language. This way, applying either of the possible approaches
+    single word of Byte Buddy's domain specific language. Applying either of the possible approaches
 </p>
 
 <pre class="prettyprint">
@@ -582,7 +582,7 @@ new ByteBuddy().rebase(Foo.class)
 </pre>
 
 <p>
-    is handled transparently during further stages of the definition process which is explained throughout the remainder
+    is handled transparently during further stages of the definition process, which is explained throughout the remainder
     of this tutorial. Because a subclass definition is a familiar concept to Java developers, all of the following
     explanations and examples of Byte Buddy's domain specific language are demonstrated by creating subclasses.
     However, keep in mind that all classes could similarly be defined by redefinition or by rebasing.
@@ -655,7 +655,7 @@ new ByteBuddy().rebase(Foo.class)
     </span></li>
     <li><span>
         Whenever a class is loaded, its class loader will look up any type that is referenced in this class
-        once a code segment referencing another type is is resolved. This lookup delegates to the same class loader.
+        once a code segment referencing another type is resolved. This lookup delegates to the same class loader.
         Imagine a scenario where we dynamically created two classes <code>example.Foo</code> and <code>example.Bar</code>.
         If we injected <code>example.Foo</code> into an existent class loader, this class loader might attempt to
         locate <code>example.Bar</code>. This lookup would however fail since the latter class was created dynamically
@@ -679,9 +679,9 @@ new ByteBuddy().rebase(Foo.class)
 <p>
     After creating a <code>DynamicType.Unloaded</code>, this type can be loaded using a
     <code>ClassLoadingStrategy</code>. If no such strategy is provided, Byte Buddy infers such a strategy based on
-    the provided class loader and creates a new class loader only for the bootstrap class loader where no type can
-    be injected using reflection which is otherwise the default. Byte Buddy provides several class loadings strategies
-    out of the box where each follows one of the concepts that were described above. These strategies are defined in
+    the provided class loader. Then it creates a new class loader only for the bootstrap class loader, where no type can
+    be injected using reflection, which is otherwise the default. Byte Buddy provides several class loading strategies
+    out of the box, where each one follows the concepts described above. These strategies are defined in
     <code>ClassLoadingStrategy.Default</code> where the <code>WRAPPER</code> strategy creates a new, wrapping
     <code>ClassLoader</code>, where the <code>CHILD_FIRST</code> strategy creates a similar class loader with
     child-first semantics and where the <code>INJECTION</code> strategy injects a dynamic type using reflection.
@@ -689,7 +689,7 @@ new ByteBuddy().rebase(Foo.class)
     <i>manifest</i> versions where a type's binary format is preserved even after a class was loaded. These alternative
     versions make the binary representation of a class loader's classes accessible via the
     <code>ClassLoader::getResourceAsStream</code> method. However, note that this requires these class loaders to
-    maintain a reference to the full binary representation of a class what consumes space on a JVM's heap. Therefore,
+    maintain a reference to the full binary representation of a class, what consumes space on a JVM's heap. Therefore,
     you should only use the manifest versions if you plan to actually access the binary format. Since the
     <code>INJECTION</code> strategy works via reflection and without a possibility to change the semantics of the
     <code>ClassLoader::getResourceAsStream</code> method, it is naturally not available in a manifest version.
