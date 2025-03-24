@@ -75,7 +75,6 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
 
     .controller('socialMediaController', function ($scope) {
         $scope.icons = [
-            {name: 'Google', style: 'google', target: 'https://plus.google.com/share?url=http%3A%2F%2Fbytebuddy.net'},
             {
                 name: 'LinkedIn',
                 style: 'linkedin',
