@@ -79,7 +79,7 @@
         need to expose the reflection API to the library's user. After all, we do not know the user code during
         compilation and could not validate our library code against its types. Sometimes, it is however required to
         expose the reflection API to a user by for example letting a library invoke one of our own methods for us.
-        This is where using the reflection API becomes problematic as the Java compiler would have all the information
+        This is where using the reflection API becomes problematic, as the Java compiler would need to have all the information
         to validate our program's type safety. For example, when implementing a library for method-level security,
         a user of this library would want the library to invoke a method only after enforcing a security constraint.
         For this, the library would need to reflectively call a method after the user handed over the required
