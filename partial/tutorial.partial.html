@@ -1138,9 +1138,9 @@ Foo dynamicFoo = new ByteBuddy()
 </ul>
 
 <p>
-    Because of this organization, you should always register more specific method matchers last. Otherwise, any less
+    <b>Because of this organization, you should always register more specific method matchers last. Otherwise, any less
     specific method matcher that is registered afterward might prevent rules that you defined before from being
-    applied. Note that the <code>ByteBuddy</code> configuration allows to define an <code>ignoreMethod</code>
+    applied</b>. Note that the <code>ByteBuddy</code> configuration allows to define an <code>ignoreMethod</code>
     property. Methods that are successfully matched against this method matcher are never overridden. By default,
     Byte Buddy does not override any synthetic methods.
 </p>
