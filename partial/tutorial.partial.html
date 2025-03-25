@@ -973,19 +973,19 @@ However, that approach may not always work (check the <code>ByteBuddyAgent.insta
 <p>
     Byte Buddy is processing generic types as they are defined by the Java programming language. Generic types are
     not considered by the Java runtime which only processes the erasures of generic types. However, generic types
-    are still embedded into any Java class file and are exposed by the Java reflection API. Therefore, it sometime
+    are still embedded into any Java class file and are exposed by the Java reflection API. Therefore, it sometimes
     makes sense to include generic information into a generated class because the generic type information can effect
     the behavior of other libraries and frameworks. Embedding generic type information is also important when a class
     is persisted and processed as a library by the Java compiler.
 </p>
 
 <p>
-    When subclassing a class, implementing an interface or when declaring a field or method, Byte Buddy accepts
+    When creating a subclass, implementing an interface or declaring a field or method, Byte Buddy accepts
     a Java <code>Type</code> instead of an erased <code>Class</code> for the above reasons. Generic types can
     also be defined explicitly by using the <code>TypeDescription.Generic.Builder</code>. One important difference
     of Java generic types to type erasures is the contextual meaning of type variables. A type variable of a
-    certain name that is defined by some type does not necessarily denote the same type when another type declares
-    the same type variable by the same name. Therefore, Byte Buddy rebinds all generic types that denote type
+    certain name, defined by some type, does not necessarily denote the same type when another type declares
+    the same type variable with the same name. Therefore, Byte Buddy rebinds all generic types that denote type
     variables in the context of the generated type or method when a <code>Type</code> instance is handed to the
     library.
 </p>
@@ -996,7 +996,7 @@ However, that approach may not always work (check the <code>ByteBuddyAgent.insta
     transparently when a type is created. Bridge methods are resolved by a <code>MethodGraph.Compiler</code>
     which is a property of any <code>ByteBuddy</code> instance. The default method graph compiler behaves like
     the Java compiler and processes any class file's generic type information. For other languages than Java,
-    a differen method graph compiler might however be appropriate.
+    a different method graph compiler might however be appropriate.
 </p>
 
 </div>
@@ -1074,7 +1074,7 @@ named("toString").and(returns(String.class)).and(takesArguments(0))
     the implementation that should override all methods of the given selection. In order to know how to implement a
     method, this instruction requires a single argument of type <code>Implementation</code>. In the above example,
     we are making use of the <code>FixedValue</code> implementation which ships with Byte Buddy. As suggested by
-    this class's name, the implementation implements a method to always return a given value. We will have a more
+    this class's name, it implements a method that always return a given value. We will have a more
     detailed look at the <code>FixedValue</code> implementation a little later in this section. Right now, let us
     rather look a little closer at the method selection.
 </p>
@@ -1139,7 +1139,7 @@ Foo dynamicFoo = new ByteBuddy()
 
 <p>
     Because of this organization, you should always register more specific method matchers last. Otherwise, any less
-    specific method matcher that is registered afterwards might prevent rules that you defined before from being
+    specific method matcher that is registered afterward might prevent rules that you defined before from being
     applied. Note that the <code>ByteBuddy</code> configuration allows to define an <code>ignoreMethod</code>
     property. Methods that are successfully matched against this method matcher are never overridden. By default,
     Byte Buddy does not override any synthetic methods.
