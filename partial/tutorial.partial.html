@@ -786,9 +786,9 @@ assertThat(foo.m(), is("bar"));
 </p>
 
 <p>
-    Using Java's HotSwap feature, there is however one huge drawback. Current implementations of HotSwap require that
+    Using Java's HotSwap feature, there is however one huge drawback. <b>Current implementations of HotSwap require that
     the redefined classes apply the same class schema both before and after a class redefinition. This means that it
-    is not allowed to add methods or fields when reloading classes. We already discussed that Byte Buddy defines
+    is not allowed to add methods or fields when reloading classes.</b> We already discussed that Byte Buddy defines
     copies of the original methods for any rebased class such that class rebasing does not work for the
     <code>ClassReloadingStrategy</code>. Also, class redefinition does not work for classes with an explicit class
     initializer method (a static block within a class) because this initializer needs to be copied into an extra method
@@ -1163,7 +1163,7 @@ Foo dynamicFoo = new ByteBuddy()
 <p>
     With this knowledge on how methods are selected, we are ready to learn about how we can implement these methods.
     For this purpose, we now look at predefined <code>Implementation</code> implementations that ship with Byte Buddy.
-    Defining custom implementation is discussed in the its own section and is only intended for users that require
+    Defining custom implementation is discussed in its own section and is only intended for users that require
     very custom method implementations.
 </p>
 
@@ -1180,7 +1180,7 @@ Foo dynamicFoo = new ByteBuddy()
         The fixed value is written to a
         <a href="http://en.wikipedia.org/wiki/Java_class_file#The_constant_pool">class's constant pool</a>. The
         constant pool is a section within the Java class file format and contains numerous stateless values that
-        describe the properties of any class. The constant pool is mainly required to remember a class's properties
+        describe the properties of any class. The constant pool is mainly required to remember a class's property
         such as the class's name or the names of its methods. Besides these reflective properties, the constant
         pool has room for storing any string or primitive value that is used within a method or a field of the
         class. Besides strings and primitive values, the class pool can also store references to other types.
@@ -1191,7 +1191,7 @@ Foo dynamicFoo = new ByteBuddy()
         dynamically created class is accompanied by a <code>TypeInitializer</code> which can be configured to
         execute such explicit initialization. When you instruct a <code>DynamicType.Unloaded</code> to be loaded,
         Byte Buddy automatically triggers its type initializer such that the class is ready for use. Therefore,
-        you do not normally need to worry about type initializers. However, if you want to load dynamic classes to
+        you do not normally need to worry about type initializers. However, if you want dynamic classes to
         be loaded outside of Byte Buddy, it is important that you run their type initializers manually after these
         classes are loaded. Otherwise, a <code>FixedValue</code> implementation would for example return
         <code>null</code> instead of the required value because the static field was never assigned this value.
@@ -1203,8 +1203,8 @@ Foo dynamicFoo = new ByteBuddy()
 
 <p>
     When you implement a method by <code>FixedValue#value(Object)</code>, Byte Buddy analyzes the parameter's
-    type and define it to be stored in the class pool of the dynamic type if possible and otherwise store the value
-    in a static field. Note however that the instance that is returned by the selected methods might be of a
+    type and define it to be stored in (i) the class pool of the dynamic type if possible or (ii) in a static field otherwise.
+    Note however that the instance that is returned by the selected methods might be of a
     different object identity if the value was stored in the class pool. Therefore, you can instruct Byte Buddy to
     always store an object in a static field by using <code>FixedValue#reference(Object)</code>. The latter method
     is overloaded such that you can provide the field's name as a second argument. Otherwise, a field name is derived
@@ -1250,9 +1250,9 @@ new ByteBuddy()
 <p>
     In many scenarios, returning a fixed value from a method is of course insufficient. For more flexibility, Byte
     Buddy provides the <code>MethodDelegation</code> implementation which offers maximal freedom in reacting to method
-    calls. A method delegation defines a method of the dynamically created type to forward any call to another
-    method which may live outside of the dynamic type. This way, a dynamic class's logic can be represented using
-    plain Java while only the binding to another method is achieved by code generation. Before discussing the details,
+    calls. A method delegation makes a method of the dynamically created type to forward any call to another
+    method which may live outside the dynamic type. This way, a dynamic class's logic can be represented using
+    plain Java, while only the binding to another method is achieved by code generation. Before discussing the details,
     let us look at an example of using a <code>MethodDelegation</code>:
 </p>
 
@@ -1279,9 +1279,9 @@ String helloWorld = new ByteBuddy()
 
 <p>
     In the example, we are delegating invocations of the <code>Source#hello(String)</code> method to the
-    <code>Target</code> type such that the method returns <code>Hello World!</code> instead of <code>null</code>.
-    For this purpose, the <code>MethodDelegation</code> implementation identifies any invokable method of the
-    <code>Target</code> type and identifies a <i>best match</i> among those methods. In the above example, this is
+    <code>Target</code> type, such that the method returns <code>Hello World!</code> instead of <code>null</code>.
+    For this purpose, the <code>MethodDelegation</code> implementation identifies an invokable method of the
+    <code>Target</code> type that <i>best matches</i> the <code>Source</code> method. In the above example, this is
     trivial since the <code>Target</code> type only defines a single static method where the method's parameters,
     return type and name are conveniently identical to those of <code>Source#name(String)</code>.
 </p>
@@ -1304,7 +1304,7 @@ class Target {
     You might have noticed that the above methods are now all called <code>intercept</code>. Byte Buddy does not require
     target methods to be named equally to a source method. We will look closer into this matter shortly. More
     importantly, if you ran the former example with the altered definition of <code>Target</code>, you would
-    observe that the the <code>named(String)</code> method was bound to <code>intercept(String)</code>. But why
+    observe that the <code>hello(String)</code> method was bound to <code>intercept(String)</code>. But why
     is that? Obviously, the <code>intercept(int)</code> method cannot receive the <code>String</code> argument of the
     source method and is therefore not even considered as a possible match. However, this is not true for the
     <code>intercept(Object)</code> method which could be bound. In order to resolve this ambiguity, Byte Buddy once
@@ -1318,7 +1318,7 @@ class Target {
     However, we have not yet told the full story. So far we only observed another example of the convention over
     configuration principle which is open for change if the defaults do not fit the actual requirements. In reality,
     the <code>MethodDelegation</code> implementation works with annotations where a parameter's annotation decides
-    what value should be assigned to it. However, if no annotation is found, Byte Buddy treats a parameter as if
+    which value should be assigned to it. However, if no annotation is found, Byte Buddy treats a parameter as if
     it was annotated with <code>@Argument</code>. This latter annotation causes Byte Buddy to assign the <code>n</code>-th
     argument of the source method to the annotated target. When the annotation is not added explicitly, the value
     of <code>n</code> is set to the annotated parameter's index. According to this rule, Byte Buddy treats
@@ -1350,7 +1350,7 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
 <ul class="colored-list padded">
     <li><span>
         Parameters that carry the <code>@AllArguments</code> annotation must be of an array type and are assigned
-        an array containing all of the source method's arguments. For this purpose, all source method parameters must
+        an array containing all the source method's arguments. For this purpose, all source method parameters must
         be assignable to the array's component type. If this is not the case, the current target method is not
         considered as a candidate for being bound to the source method.
     </span></li>
@@ -1364,10 +1364,10 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
         instance's fields.
     </span></li>
     <li><span>
-        Parameters that are annotated with <code>@Origin</code> must be of used on any of the types <code>Method</code>,
+        Parameters that are annotated with <code>@Origin</code> must be used on any of the types <code>Method</code>,
         <code>Constructor</code>, <code>Executable</code>, <code>Class</code>, <code>MethodHandle</code>,
         <code>MethodType</code>, <code>String</code> or <code>int</code>. Depending on the parameter's type, it is
-        assigned a <code>Method</code> or <code>Constructor</code> reference to the original method or constuctor that
+        assigned a <code>Method</code> or <code>Constructor</code> reference to the original method or constructor that
         is now instrumented or a reference to the dynamically created <code>Class</code>. When using Java 8, it is also
         possible to receive either a method or constructor reference by using the <code>Executable</code> type in the
         interceptor. If the annotated parameter is a <code>String</code>, the parameter is assigned the value that the
@@ -1438,7 +1438,7 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
 </p>
 
 <p>
-    You might still wonder how this auxiliary type is able to call a super method of another type what is normally
+    You might still wonder how this auxiliary type is able to call a super method of another type, which is normally
     forbidden in Java. On closer inspection, this behavior is however quite common and resembles the compiled code
     that is generated when the following Java source code snippet gets compiled:
 </p>
@@ -1492,24 +1492,25 @@ class ChangingLoggerInterceptor {
     Note that the instance that is assigned to the parameter annotated with <code>@Super</code> is of a different
     identity to the actual instance of the dynamic type! Therefore, no instance field that is accessible by means of
     the parameter reflects the actual instance's field. Furthermore, non-overridable methods of the auxiliary instance
-    do not delegate their invocations but retain the original implementation what can result in absurd behavior when
-    they are invoked. Finally, in case that a parameter that is annotated with <code>@Super</code> does not represent
+    do not delegate their invocations. They retain the original implementation that can result in absurd behavior when
+    they are invoked. Finally, in case a parameter annotated with <code>@Super</code> does not represent
     a super type of the relevant dynamic type, the method is not considered as a binding target for any of its
     methods.
 </p>
 
 <p>
-    Because the <code>@Super</code> annotation allows for the use of any type, we might be required to provide
+    Because the <code>@Super</code> annotation allows the use of any type, we might be required to provide
     information on how this type can be constructed. By default, Byte Buddy attempts to use a class's default
     constructor. This always works for interfaces which implicitly extend the <code>Object</code> type. However,
     when extending a super class of the dynamic type, this class might not even provide a default constructor.
     If this is the case or if a specific constructor should be used for creating such an auxiliary type, the
     <code>@Super</code> annotation allows to identify a different constructor by setting its parameter types as
     the annotation's <code>constructorParameters</code> property. This constructor will then be called by assigning
-    the corresponding default value to each parameter. Alternatively, it is also possible to use the
-    <code>Super.Instantiation.UNSAFE</code> strategy for creating classes which makes use of Java internal classes for
-    creating the auxiliary type without invoking <i>any</i> constructor. However, note that this strategy is not
-    necessarily portable to non-Oracle JVMs and might not longer be available in future JVM releases. As of today,
+    the corresponding default value to each parameter.
+    Alternatively, it is also possible to set the <code>strategy</code> property to
+    <code>Super.Instantiation.UNSAFE</code> for instantiating the auxiliary type using Java internal mechanisms,
+    which does not invoke <i>any</i> constructor. However, note that this strategy is not
+    necessarily portable to non-Oracle JVMs and might no longer be available in future JVM releases. As of today,
     the internal classes that are used by this unsafe instantiation strategy are however found in almost any JVM
     implementation.
 </p>
@@ -1517,9 +1518,9 @@ class ChangingLoggerInterceptor {
 <p>
     Furthermore, you might already have noticed that the above <code>LoggerInterceptor</code> declares a
     <a href="http://docs.oracle.com/javase/tutorial/essential/exceptions/declaring.html">checked
-        <code>Exception</code></a>. On the other side, the instrumented source method which invokes this method does
+        <code>Exception</code></a>. On the other hand, the instrumented source method which invokes this method does
     <i>not</i> declare any checked exception. Usually, the Java compiler would refuse to compile such an invocation.
-    However, in contrast to the compiler the Java runtime does not treat checked exceptions differently than their
+    However, in contrast to the compiler, the Java runtime does not treat checked exceptions differently than their
     unchecked counterparts and permits this invocation. For this reason, we decided to ignore checked exceptions and
     grant full flexibility in their use. However, be careful when throwing undeclared checked exceptions
     from dynamically created methods since the encounter of such an exception might confuse the users of your
@@ -1543,7 +1544,7 @@ class Loop {
     Because the methods of the above class describe two similar signatures with incompatible types, you would not
     usually be able to instrument both methods by using a single interceptor method. Instead, you would have to provide
     two different target methods with different signatures only to satisfy the static type check. To overcome this
-    limitation, Byte Buddy allows to annotate methods and method parameters with <code>@RuntimeType</code> what
+    limitation, Byte Buddy allows to annotate methods and method parameters with <code>@RuntimeType</code>, which
     instructs Byte Buddy to suspend the strict type check in favor of a runtime type casting:
 </p>
 
@@ -1560,14 +1561,14 @@ class Interceptor {
 <p>
     Using the above target method, we are now able to provide a single interception method for both source methods.
     Note that Byte Buddy is also able to box and to unbox primitive values. However, be aware that the use of
-    <code>@RuntimeType</code> comes at the cost of abandoning type safety and you might end up with a
-    <code>ClassCastException</code> if you got incompatible types mixed up.
+    <code>@RuntimeType</code> comes at the cost of abandoning type safety, and you might end up with a
+    <code>ClassCastException</code> if you get incompatible types mixed up.
 </p>
 
 <p>
     As an equivalent to <code>@SuperCall</code>, Byte Buddy comes with a <code>@DefaultCall</code> annotation which
     allows the invocation of a default method instead of calling a method's super method. A method with this parameter
-    annotation is only considered for binding if the intercepted method is as a matter of fact declared as a default
+    annotation is only considered for binding if the intercepted method is, as a matter of fact, declared as a default
     method by an interface that is directly implemented by the instrumented type. Similarly, a <code>@SuperCall</code>
     annotation prevents a method's binding if the instrumented method does not define a non-abstract super method. If
     you however want to invoke a default method on a specific type, you can specify the <code>@DefaultCall</code>'s
@@ -1581,7 +1582,7 @@ class Interceptor {
 
 <p>
     We already mentioned that you can define and register custom annotations with any <code>MethodDelegation</code>.
-    Byte Buddy comes with one annotation that is ready for use but still needs to be <i>installed</i> and registered
+    Byte Buddy comes with one annotation that is ready for use, but still needs to be <i>installed</i> and registered
     explicitly. By using the <code>@Pipe</code> annotation, you can forward an intercepted method invocation to another
     instance. The <code>@Pipe</code> annotation is not preregistered with the <code>MethodDelegation</code> because
     the Java class library does not come with a suitable interface type before Java 8 which defines the
@@ -1591,7 +1592,7 @@ class Interceptor {
     if you are using Java 8, the <code>Function</code> type is a feasible option. When invoking the method on the
     parameter's argument, Byte Buddy casts the parameter to the method's declaring type and invokes the intercepted
     method with the same arguments as the original method call. Before we look at an example, let us however define
-    a custom type which you can use with Java 6 and upwards:
+    a custom type which you can use with Java {{javaVersion}} to 7 (since from Java 8+ you can use the <code>Function</code> interface):
 </p>
 
 <pre class="prettyprint">
