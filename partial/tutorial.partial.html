@@ -873,8 +873,16 @@ class MyApplication {
     it is possible to directly intercept any class loading activity that is conducted within a Java application. A
     Java agent is implemented as a simple <i>jar</i> file with an entry point that is specified in this jar's
     manifest file, as it is described under the linked resource. Using Byte Buddy, the implementation of such an
-    agent is straight forward by using an <code>AgentBuilder</code>. Assuming that we previously defined a simple
-    annotation named <code>ToString</code>, it would be trivial to implement <code>toString</code> methods
+    agent is straight forward by using an <code>AgentBuilder</code>. Assuming that we defined a simple
+    annotation named <code>ToString</code> as below:
+
+<pre class="prettyprint">
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ToString {
+}
+</pre>
+
+<p>It would be trivial to implement <code>toString</code> methods
     for all annotated classes simply by implementing the Agent's <code>premain</code> method as follows:
 </p>
 
@@ -914,6 +922,21 @@ new AgentBuilder.Default()
     powerful tool for easily implementing aspect-oriented programing.
 </p>
 
+<p>Annotate the <code>Bar</code> class we created before (or any other one) with <code>@ToString</code> so that we can try our agent.
+Now you can add a regular <code>main</code> method to the <code>ToStringAgent</code> class,
+that manually calls the <code>premain</code> method, getting an <code>Instrumentation</code> instance
+from <code>ByteBuddyAgent.install()</code>:</p>
+
+<pre class="prettyprint">
+public static void main(String[] args) {
+    premain("", ByteBuddyAgent.install());
+    System.out.println(new Bar());
+}
+</pre>
+
+<p>This way, it tries to install the agent in a running JVM, without requiring you to pass the <code>-javaagent</code> parameter to the JVM.
+However, that approach may not always work (check the <code>ByteBuddyAgent.install()</code> docs for details).</p>
+
 <p>
     Note that it is also possible to instrument classes that were loaded by the bootstrap class loader when using an
     agent. However, this requires some preparation. First of all, the bootstrap class loader is represented by the
@@ -922,7 +945,7 @@ new AgentBuilder.Default()
     class's implementation. In order to load classes into the bootstrap class loader, Byte Buddy can create jar files
     and add these files to the bootstrap class loader's load path. To make this possible, it is however required to
     save these classes to disk. A folder for these classes can be specified using the
-    <code>ClassReloadingStrategy.enableBootstrapInjection</code> method which also takes an instance of the <code>Instrumentation</code>
+    <code>ClassReloadingStrategy.enableBootstrapInjection</code> method, which also takes an instance of the <code>Instrumentation</code>
     interface in order to append the classes. Note that all user classes that are used by the instrumented class are
     also required to be put on the bootstrap search path which is possible using the <code>Instrumentation</code>
     interface.
