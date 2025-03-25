@@ -1147,7 +1147,7 @@ Foo dynamicFoo = new ByteBuddy()
 
 <p>
     In some scenarios, you might want to define a new method that does not override a method of a super type or an
-    interface. This is also possible using Byte Buddy. For this purpose, you can call <code>defineMethod</code> where
+    interface. This is also possible using Byte Buddy. For this purpose, you can call <code>define(Method)</code> where
     you are able to define a signature. After defining a method, you are asked to provide an
     <code>Implementation</code> just as with a method that was identified by a method matcher. Note that method
     matchers that are registered after a method's definition might supersede this implementation by the stacking
