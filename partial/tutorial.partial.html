@@ -955,7 +955,8 @@ However, that approach may not always work (check the <code>ByteBuddyAgent.insta
 
 <p>
     Android uses a different class file format using <i>dex</i> files which are not in the layout of the Java class
-    file format. Furthermore, with the <i>ART</i> runtime which succeeds the Dalvik virtual machine, Android
+    file format. Furthermore, with the <a href="https://en.wikipedia.org/wiki/Android_Runtime"><i>ART</i></a> runtime
+    which succeeds the <a href="https://en.wikipedia.org/wiki/Dalvik_(software)">Dalvik virtual machine</a>, Android
     applications are compiled into native machine code before being installed on an Android device. As a result,
     Byte Buddy cannot longer redefine or rebase classes as long as an applications is not explicitly deployed
     together with its Java sources as there is otherwise no intermediate code representation to interpret. Byte
