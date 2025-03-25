@@ -9,7 +9,7 @@
     </div>
     <div class="clearfix"></div>
 </div>
-<div class="row" id="welcome">
+<div class="row" id="welcome" ng-controller="dataController">
     <div class="col-md-7 col-md-offset-3">
         <div class="row">
             <div class="col-md-8 col-xs-12">
@@ -30,7 +30,7 @@
         </div>
         <p>
             In order to use Byte Buddy, one does not require an understanding of Java byte code or the
-            <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">class file format</a>.
+            <a data-ng-href="{{classFileFormatUrl}}">class file format</a>.
             In contrast, Byte Buddy's API aims for code that is concise and easy to understand for
             everybody. Nevertheless, Byte Buddy remains fully customizable down to the possibility of defining custom
             byte code. Furthermore, the API was designed to be as non-intrusive as possible and as a result, Byte
@@ -40,9 +40,9 @@
         </p>
 
         <p>
-            Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
+            Byte Buddy is written in Java {{javaVersion}} but supports the generation of classes for any Java version. Byte Buddy is a
             light-weight library and only depends on the visitor API of the Java byte code parser library
-            <a href="https://asm.ow2.org/">ASM</a> which does itself
+            <a data-ng-href="{{classFileFormatUrl}}">ASM</a> which does itself
             <a href="https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom">not require any
                 further dependencies</a>.
         </p>
@@ -165,7 +165,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         </p>
     </div>
 </div>
-<div class="row" id="getbytebuddy">
+<div class="row" id="getbytebuddy" ng-controller="dataController">
     <div class="col-md-7 col-md-offset-3">
         <h2>Getting Byte Buddy</h2>
         <dl>
@@ -212,7 +212,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
                 Byte Buddy is an open source project distributed under the liberal and business-friendly
                 <a href="https://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 licence</a>. Its source code is
                 <a href="https://github.com/raphw/byte-buddy">freely available on GitHub</a>. Please note that Byte
-                Buddy depends on <a href="https://asm.ow2.io/license.html">the ASM library which is distributed under
+                Buddy depends on <a href="{{asmUrl}}/license.html">the ASM library which is distributed under
                 a 3-clause BSD license</a>.
             </dd>
         </dl>
@@ -274,12 +274,12 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
     </div>
 </div>
 
-<div class="row" id="dependency">
+<div class="row" id="dependency" ng-controller="dataController">
     <div class="col-md-7 col-md-offset-3">
         <h2>Dependency maintenance</h2>
 
         <p>
-            Byte Buddy is written on top of <a href="https://asm.ow2.org">ASM</a>, a mature and well-tested
+            Byte Buddy is written on top of <a data-ng-href="{{asmUrl}}">ASM</a>, a mature and well-tested
             library for reading and writing compiled Java classes. In order to allow for advanced type
             manipulations, Byte Buddy is intentionally exposing the ASM API to its users. Of course, the direct
             use of ASM remains fully optional and most users will most likely never require it. This choice was

@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class="col-md-8 col-md-offset-1" id="affixComponent">
+<div class="col-md-8 col-md-offset-1" id="affixComponent" ng-controller="dataController">
 
     <select class="lang" ng-model="lang" ng-change="changeLang()">
         <option value="cn">中文</option>
@@ -1796,14 +1796,14 @@ new ByteBuddy()
 
 <p>
     在前面的部分，我们描述了 Byte Buddy 的标准 API。目前为止前面描述的特性都不需要 Java 字节码的知识和显式表示。然而，如果你需要创建自定义的字节码，
-    你可以通过直接访问<a href="http://asm.ow2.org/"> ASM </a>的 API 来实现，它是一个底层的字节码类库，Byte Buddy是在它上面构建的。
+    你可以通过直接访问<a data-ng-href="{{asmUrl}}"> ASM </a>的 API 来实现，它是一个底层的字节码类库，Byte Buddy是在它上面构建的。
     但是，注意 ASM 不同版本之间是不兼容的，这样当你发布代码时，你需要将 Byte Buddy 重新打包到你的命名空间。否则，当另一个依赖要求基于不同版本 ASM
     构建的 Byte Buddy 时，你的应用可能导致不兼容Byte Buddy的其它用途。你可以在 Byte Buddy <a href="/#dependency">首页</a>找到维护
     Byte Buddy 依赖的详情。
 </p>
 
 <p>
-    ASM 类库带有一份极好的关于 Java 字节码和类库使用的<a href="https://asm.ow2.io/asm4-guide.pdf">文档</a>。因此，
+    ASM 类库带有一份极好的关于 Java 字节码和类库使用的<a href="{{asmUrl}}/asm4-guide.pdf">文档</a>。因此，
     如果你想深入了解 Java 字节码和 ASM 的 API，我们希望你参考此文档。相反，我们只是简单介绍 JVM 的执行模型和 Byte Buddy 对 ASM 的 API 的适配。
 </p>
 
