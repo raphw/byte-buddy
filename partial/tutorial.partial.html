@@ -1365,15 +1365,44 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
         which is discussed below. A typical reason for using the <code>@This</code> annotation is to gain access to an
         instance's fields.
     </span></li>
-    <li><span>
-        Parameters that are annotated with <code>@Origin</code> must be used on any of the types <code>Method</code>,
-        <code>Constructor</code>, <code>Executable</code>, <code>Class</code>, <code>MethodHandle</code>,
-        <code>MethodType</code>, <code>String</code> or <code>int</code>. Depending on the parameter's type, it is
-        assigned a <code>Method</code> or <code>Constructor</code> reference to the original method or constructor that
-        is now instrumented or a reference to the dynamically created <code>Class</code>. When using Java 8, it is also
-        possible to receive either a method or constructor reference by using the <code>Executable</code> type in the
-        interceptor. If the annotated parameter is a <code>String</code>, the parameter is assigned the value that the
-        <code>Method</code>'s <code>toString</code> method would have returned. In general, we recommend the use of
+    <li>
+        <span>
+        Parameters that are annotated with <code>@Origin</code> must be declared using one of the following types:
+        <code>Method</code>, <code>Constructor</code>, <code>Class</code>, <code>Executable</code>,
+        <code>MethodHandle</code>, <code>MethodType</code>, <code>String</code> or <code>int</code>.
+        Depending on the parameter's type, it is assigned a different value to it, as described in the table below.
+        </span>
+
+        <table>
+            <tr><th>Parameter type</th><th>Assigned value</th></tr>
+            <tr>
+                <td><code>Method</code>, <code>Constructor</code> or <code>Class</code></td>
+                <td>Reference to the original method or constructor (that
+                is now instrumented) or the dynamically created class.
+                </td>
+            </tr>
+            <tr>
+                <td><code>Executable</code></td>
+                <td>A method or constructor reference (requires Java 8+).</td>
+            </tr>
+            <tr>
+                <td><code>String</code></td>
+                <td>The value that the <code>Method#toString()</code> would have returned.</td>
+            </tr>
+            <tr>
+                <td><code>MethodHandle</code></td>
+                <td>An object that enables calling the original method.</td>
+            </tr>
+            <tr>
+                <td><code>MethodType</code></td><td>An object that represents the signature of the <code>MethodHandle</code>.</td>
+            </tr>
+            <tr>
+                <td><code>int</code></td><td>The modifier of the instrumented method.</td>
+            </tr>
+        </table>
+
+        <span>
+        In general, we recommend the use of
         these <code>String</code> values as method identifiers wherever possible and discourage the use of
         <code>Method</code> objects as their lookup introduces a significant runtime overhead. To avoid this overhead,
         the <code>@Origin</code> annotation also offers a property for caching such instances for reuse. Note that
