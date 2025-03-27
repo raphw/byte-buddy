@@ -1350,7 +1350,8 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
 
 <ul class="colored-list padded">
     <li><span>
-        Parameters that carry the <code>@AllArguments</code> annotation must be of an array type and are assigned
+        Parameters that carry the <code>@AllArguments</code> annotation (from <code>net.bytebuddy.implementation.bind.annotation</code>)
+         must be of an array type and are assigned
         an array containing all the source method's arguments. For this purpose, all source method parameters must
         be assignable to the array's component type. If this is not the case, the current target method is not
         considered as a candidate for being bound to the source method.
