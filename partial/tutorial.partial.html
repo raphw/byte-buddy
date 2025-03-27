@@ -857,7 +857,7 @@ class MyApplication {
     built-in class loading. This way, the redefined definition of <code>foo.Bar</code> is loaded and used throughout
     our application's runtime. Note however that we do not reference the class by a class literal when we use the
     <code>TypePool</code> to provide a description. If we did use a class literal for <code>foo.Bar</code>, the JVM
-    would have loaded this class before we had a chance to redefine it and our redefinition attempt would be without
+    would have loaded this class before we had a chance to redefine it, and our redefinition attempt would be without
     effect. Also, note that when working with unloaded classes, we further need to specify a
     <code>ClassFileLocator</code> which allows to locate a class's <code>.class</code> file. In the example above, we simply
     create a class file locator which scans the running application's class path for such files.
@@ -1203,7 +1203,7 @@ Foo dynamicFoo = new ByteBuddy()
 
 <p>
     When you implement a method by <code>FixedValue#value(Object)</code>, Byte Buddy analyzes the parameter's
-    type and define it to be stored in (i) the class pool of the dynamic type if possible or (ii) in a static field otherwise.
+    type and define it to be stored in (i) the class pool of the dynamic type, if possible, or (ii) in a static field otherwise.
     Note however that the instance that is returned by the selected methods might be of a
     different object identity if the value was stored in the class pool. Therefore, you can instruct Byte Buddy to
     always store an object in a static field by using <code>FixedValue#reference(Object)</code>. The latter method
@@ -1317,7 +1317,7 @@ class Target {
 <p>
     With the information so far, you might consider the method binding algorithm to be of a rather rigid nature.
     However, we have not yet told the full story. So far we only observed another example of the convention over
-    configuration principle which is open for change if the defaults do not fit the actual requirements. In reality,
+    configuration principle, which is open for change if the defaults do not fit the actual requirements. In reality,
     the <code>MethodDelegation</code> implementation works with annotations where a parameter's annotation decides
     which value should be assigned to it. However, if no annotation is found, Byte Buddy treats a parameter as if
     it was annotated with <code>@Argument</code>. This latter annotation causes Byte Buddy to assign the <code>n</code>-th
@@ -1360,9 +1360,9 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
         The <code>@This</code> annotation induces the assignment of the dynamic type's instance on which the
         intercepted method is currently invoked. If the annotated parameter is not assignable to an instance of
         the dynamic type, the current method is not considered as a candidate for being bound to the source method.
-        Note that calling any methods on this instance will result in calling a potentially instrumented method
-        implementation. For calling overridden implementations, you need to use the <code>@Super</code> annotation
-        which is discussed below. A typical reason for using the <code>@This</code> annotation to gain access to an
+        Note that calling any methods on this instance will result in calling a potentially instrumented method.
+        For calling the original implementations, you need to use the <code>@Super</code> annotation
+        which is discussed below. A typical reason for using the <code>@This</code> annotation is to gain access to an
         instance's fields.
     </span></li>
     <li><span>
@@ -1380,9 +1380,9 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
         the <code>MethodHandle</code> and <code>MethodType</code> are stored in a class's constant pool such that
         classes using these constants must at least be of Java version 7. Instead of using reflection for reflectively
         invoking an intercepted method on another object, we furthermore recommend the use of the <code>@Pipe</code>
-        annotation which is discussed later in this section. When using the <code>@Origin</code> annotation on a
-        parameter of type <code>int</code>, it is assigned the modifier of the instrumented method.
-    </span></li>
+        annotation which is discussed later in this section.
+        </span>
+    </li>
 </ul>
 
 <p>
