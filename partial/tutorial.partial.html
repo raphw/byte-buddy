@@ -1415,7 +1415,7 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
 </ul>
 
 <p>
-    Besides using the predefined annotations, Byte Buddy allows you to define your own annotations by registering
+    Byte Buddy also allows you to define your own annotations by registering
     one or several <code>ParameterBinder</code>s. We will look into such customization in the last section of this
     tutorial.
 </p>
@@ -1502,7 +1502,7 @@ class LoggingMemoryDatabase extends MemoryDatabase {
     the method's original invocation. This is also possible in Byte Buddy by using the <code>@Super</code> annotation.
     This annotation triggers the creation of another <code>AuxiliaryType</code> which now extends a super class or
     an interface of the dynamic type in question. Similar to before, the auxiliary type overrides all methods to
-    call their super implementations on the dynamic type. This way, the example logger interceptor from the previous
+    call their super implementations on the dynamic type. This way, the logger interceptor from the previous
     example can be implemented to change the actual invocation:
 </p>
 
@@ -1591,7 +1591,7 @@ class Interceptor {
 
 <p>
     Using the above target method, we are now able to provide a single interception method for both source methods.
-    Note that Byte Buddy is also able to box and to unbox primitive values. However, be aware that the use of
+    Note that Byte Buddy is also able to box and unbox primitive values. However, be aware that the use of
     <code>@RuntimeType</code> comes at the cost of abandoning type safety, and you might end up with a
     <code>ClassCastException</code> if you get incompatible types mixed up.
 </p>
