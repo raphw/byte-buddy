@@ -1251,7 +1251,8 @@ new ByteBuddy()
     In many scenarios, returning a fixed value from a method is of course insufficient. For more flexibility, Byte
     Buddy provides the <code>MethodDelegation</code> implementation which offers maximal freedom in reacting to method
     calls. A method delegation makes a method of the dynamically created type to forward any call to another
-    method which may live outside the dynamic type. This way, a dynamic class's logic can be represented using
+    method which may live outside the dynamic type. The target method, where we want to forward the source
+    call to, must be static for the delegation to work. This way, a dynamic class's logic can be represented using
     plain Java, while only the binding to another method is achieved by code generation. Before discussing the details,
     let us look at an example of using a <code>MethodDelegation</code>:
 </p>
