@@ -1639,8 +1639,9 @@ interface Forwarder&lt;T, S&gt; {
 
 <pre class="prettyprint">
 class ForwardingLoggerInterceptor {
+  private final MemoryDatabase memoryDatabase;
 
-  private final MemoryDatabase memoryDatabase; // constructor omitted
+  // constructor omitted
 
   public List&lt;String&gt; log(@Pipe Forwarder&lt;List&lt;String&gt;, MemoryDatabase&gt; pipe) {
     System.out.println("Calling database");
@@ -1653,14 +1654,16 @@ class ForwardingLoggerInterceptor {
 }
 
 MemoryDatabase loggingDatabase = new ByteBuddy()
-  .subclass(MemoryDatabase.class)
-  .method(named("load")).intercept(MethodDelegation.withDefaultConfiguration()
-    .withBinders(Pipe.Binder.install(Forwarder.class)))
-    .to(new ForwardingLoggerInterceptor(new MemoryDatabase()))
-  .make()
-  .load(getClass().getClassLoader())
-  .getLoaded()
-  .newInstance();
+                .subclass(MemoryDatabase.class)
+                .method(named("load")).intercept(MethodDelegation.withDefaultConfiguration()
+                                                                 .withBinders(Pipe.Binder.install(Forwarder.class))
+                .to(new ForwardingLoggerInterceptor(new MemoryDatabase())))
+                .make()
+                .load(getClass().getClassLoader())
+                .getLoaded()
+                .newInstance();
+
+loggingDatabase.load("Hello");
 </pre>
 
 <p>
