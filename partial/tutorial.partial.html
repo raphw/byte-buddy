@@ -1723,8 +1723,8 @@ loggingDatabase.load("Hello");
         By calling <code>MethodDelegation.to(new Target())</code>, it is possible to delegate method invocations
         to any of the instance methods of the <code>Target</code> class. Note that this includes methods that
         are defined anywhere in the instance's class hierarchy, including the methods that are defined in the
-        <code>Object</code> class. You might want to restrict the range of candidate methods what is possible by
-        applying a filter to a method delegation by calling <code>filter(ElementMatcher)</code> on any
+        <code>Object</code> class. You might want to filter the range of possible candidate methods
+        by calling <code>filter(ElementMatcher)</code> on any
         <code>MethodDelegation</code>. The <code>ElementMatcher</code> type is the same that was used before for
         selecting source methods within Byte Buddy's domain specific language. The instance which is the target of the
         method delegation is stored in a static field. Similarly to the definition of fixed values, this requires the
