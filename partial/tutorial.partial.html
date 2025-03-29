@@ -1551,7 +1551,7 @@ class ChangingLoggerInterceptor {
 
 <h5>Checked exceptions</h5>
 <p>
-    Furthermore, you might already have noticed that the above <code>LoggerInterceptor</code> declares a
+    You might already have noticed that the above <code>LoggerInterceptor</code> declares a
     <a href="http://docs.oracle.com/javase/tutorial/essential/exceptions/declaring.html">checked
         <code>Exception</code></a>. On the other hand, the instrumented source method which invokes this method does
     <i>not</i> declare any checked exception. Usually, the Java compiler would refuse to compile such an invocation.
@@ -1684,7 +1684,7 @@ loggingDatabase.load("Hello");
 <p>
     So far, we have seen a great deal of the <code>MethodDelegation</code> implementation. But before we proceed,
     we want to take a more detailed look on how Byte Buddy selects a target method. We already described how Byte
-    Buddy resolves a <i>most specific</i> method by comparing parameter types but there is more to it. After Byte Buddy
+    Buddy resolves a <i>most specific</i> method by comparing parameter types, but there is more to it. After Byte Buddy
     identified candidate methods that qualified for a binding to a given source method, it delegates the resolution
     to a chain of <code>AmbiguityResolver</code>s. Again, you are free to implement your own ambiguity resolvers that
     can complement or even replace Byte Buddy's defaults. Without such alterations, the ambiguity resolver chain
@@ -1704,7 +1704,7 @@ loggingDatabase.load("Hello");
     </span></li>
     <li><span>
         If two methods bind the same parameters of a source method by using <code>@Argument</code>, the method with
-        the most specific parameter types is considered. In this context, it does not matter if a the annotation
+        the most specific parameter types is considered. In this context, it does not matter if the annotation
         is provided explicitly or implicitly by not annotating a parameter. The resolution algorithm works similar
         to the Java compiler's algorithm for resolving calls to overloaded methods. If two types are equally
         specific, the method that binds more arguments is considered as a target. If a parameter should be
@@ -1756,7 +1756,7 @@ loggingDatabase.load("Hello");
     way dependent on Byte Buddy. Instead, the Java runtime simply ignores annotation types that cannot be found on
     the class path when a class is loaded. This implies that Byte Buddy is no longer required after a dynamic class
     is created. This means that you could load the dynamic classes and the types to which it delegates its method calls
-    in another JVM process even without having Byte Buddy on the class path.
+    in another JVM process, even without having Byte Buddy on the class path.
 </p>
 
 <h5>Other MethodDelegation annotations</h5>
@@ -1795,7 +1795,7 @@ loggingDatabase.load("Hello");
         <code>@Morph</code>: This annotation works very similar to the <code>@SuperCall</code> annotation. However,
         using this annotation allows to specify the arguments that should be used for invoking the super method.
         Note that you should only use this annotation when you need to invoke a super method with different arguments
-        than the original invocation as using the <code>@Morph</code> annotation requires a boxing and unboxing of
+        than the original invocation, since using the <code>@Morph</code> annotation requires a boxing and unboxing of
         all arguments. If you want to invoke a specific super method, consider using the <code>@Super</code>
         annotation for creating a type-safe proxy. Before this annotation can be used, it needs to be installed and
         registered explicitly, similarly to the <code>@Pipe</code> annotation.
@@ -1822,7 +1822,7 @@ loggingDatabase.load("Hello");
     since this will not change an implementation but only replicate existent logic. However, by overriding a method,
     you are able to change the annotations of a method and its parameters, something we will look into in the next
     section. Another rationale for calling a super method in Java is however the definition of a constructor which must
-    always invoke another constructor of either its super type or of its own type.
+    always invoke another constructor of either its super type or its own type.
 </p>
 
 <p>
@@ -1850,10 +1850,10 @@ new ByteBuddy()
 
 <p>
     where a <code>ConstructorStrategy</code> is responsible for creating a set of predefined constructors for any given
-    class. Besides the above strategy which copies each visible constructor of a dynamic type's direct super class,
-    there exist three other predefined strategies: one that does not create any constructor at all, one that creates a
-    default constructor which is invoking the direct super class's default constructor and throws an exception if no
-    such constructor exists and one that only imitates public constructors of the super type.
+    class. Besides the above strategy, which copies each visible constructor of a dynamic type's direct super class,
+    there exist three other predefined strategies: (i) one that does not create any constructor at all,
+    (ii) one that creates a default constructor, which is invoking the direct super class's default constructor
+    and throws an exception if no such constructor exists, and (iii) one that only imitates public constructors of the super type.
 </p>
 
 <p>
@@ -1871,7 +1871,7 @@ new ByteBuddy()
 </p>
 
 <p>
-    For class rebasing and class redefinition, constructors are of course simply retained what makes the specification
+    For class rebasing and class redefinition, constructors are of course simply retained, which makes the specification
     of a <code>ConstructorStrategy</code> obsolete. Instead, for copying these retained constructors' (and methods')
     implementations, it is required to specify a <code>ClassFileLocator</code> which allows a lookup of the original
     class file that contains these constructor definitions. Byte Buddy does its best to identify the location of the
