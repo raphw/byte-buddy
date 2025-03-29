@@ -1889,7 +1889,7 @@ new ByteBuddy()
     In Java, a default method invocation is expressed by a similar syntax to the invocation of a super method. As an
     only disparity, a default method invocation names the interface that defines the method. This is necessary because
     a default method invocation can be ambiguous if two interfaces define a method with identical signature.
-    Accordingly, Byte Buddy's <code>DefaultMethodCall</code> implementation takes a list of <i>prioritized</i>
+    Accordingly, Byte Buddy's <code>DefaultMethodCall</code> implementation (do not confuse this class with the <code>@DefaultCall</code> annotation) takes a list of <i>prioritized</i>
     interfaces. When intercepting a method, the <code>DefaultMethodCall</code> invokes a default method on the
     first-mentioned interface. As an example, assume that we wanted to implement the two following interfaces:
 </p>
