@@ -1927,7 +1927,7 @@ new ByteBuddy(ClassFileVersion.JAVA_V8)
     method compared to the Java programming language. Byte Buddy only requires a default method's interface to be
     implemented by the most-specific class in a type's hierarchy. Other than the Java programming language, it does not
     require this interface to be the most specific interface that is implemented by any super class. Finally, if you do
-    not expect a ambiguous default method definitions, you can always use
+    not expect an ambiguous default method definitions, you can always use
     <code>DefaultMethodCall.unambiguousOnly()</code> for receiving an implementation which throws an exception on the
     discovery of an ambiguous default method invocation. This same behavior is displayed by a prioritizing
     <code>DefaultMethodCall</code> where a default method call is ambiguous between non-prioritized interfaces and no
@@ -1959,9 +1959,10 @@ public class SampleClass {
 <pre class="prettyprint">
 new ByteBuddy()
   .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-  .defineConstructor(Arrays.&lt;Class&lt;?&gt;&gt;asList(int.class), Visibility.PUBLIC)
+  .defineConstructor(Visibility.PUBLIC)
+  .withParameters(int.class)
   .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
-  .make()
+  .make();
 </pre>
 
 <p>
