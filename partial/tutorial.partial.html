@@ -1992,11 +1992,11 @@ new ByteBuddy()
         Have a signature similar to <code>void setBar(Foo f)</code> to define a field setter. The setter will normally
         access a field named <code>bar</code>, as it is conventional in the
         <a href="http://www.oracle.com/technetwork/java/javase/documentation/spec-136004.html">Java bean
-            specification</a>. In this context, the parameter type <code>Foo</code> must be a sub type this field's
+            specification</a>. In this context, the parameter type <code>Foo</code> must be a subtype of this field's
         type.
     </span></li>
     <li><span>
-        Have a signature similar to <code>Foo getBar()</code> to define a field getter. The setter will normally
+        Have a signature similar to <code>Foo getBar()</code> to define a field getter. The getter will normally
         access a field named <code>bar</code>, as it is conventional in the Java bean specification. For this to be
         possible, the method's return type <code>Foo</code> must be a super type of the field's type.
     </span></li>
@@ -2020,7 +2020,7 @@ new ByteBuddy()
     <code>Interceptor</code> for each instance which is represented by an interface. This way, we are able to provide
     different implementations according to our actual requirement. This latter implementation should then be
     exchangeable by calling methods of the <code>InterceptionAccessor</code> interface on the corresponding instance.
-    In order to create instances of this dynamic type, we further do not want to use reflection but call a method of
+    In order to create instances of this dynamic type, we further do not want to use reflection, but call a method of
     an <code>InstanceCreator</code> which serves as an object factory. The following types resemble this setup:
 </p>
 
