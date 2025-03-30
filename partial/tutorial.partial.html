@@ -2073,7 +2073,7 @@ Class&lt;? extends UserType&gt; dynamicUserType = new ByteBuddy()
 InstanceCreator factory = new ByteBuddy()
   .subclass(InstanceCreator.class)
     .method(not(isDeclaredBy(Object.class)))
-    .intercept(MethodDelegation.construct(dynamicUserType))
+    .intercept(MethodDelegation.toConstructor(dynamicUserType))
   .make()
   .load(dynamicUserType.getClassLoader())
   .getLoaded().newInstance();
