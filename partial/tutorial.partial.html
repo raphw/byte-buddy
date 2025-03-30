@@ -2267,7 +2267,7 @@ new ByteBuddy()
   .subclass(AnnotatedMethod.class)
   .method(named("bar"))
   .intercept(StubMethod.INSTANCE)
-  .attribute(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE)
+  .attribute(MethodAttributeAppender.ForInstrumentedMethod.INCLUDING_RECEIVER)
 </pre>
 
 <p>
