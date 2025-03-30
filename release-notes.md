@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 30. March 2025: version 1.17.5
+
+- Update ASM to version 8.4 to support Java 25 using ASM reader and writer.
+- Include `AnnotationRemoval` visitor for removing or replacing annotations.
+
 ### 23. March 2025: version 1.17.4
 
 - Add `SafeVarargs` plugin.
