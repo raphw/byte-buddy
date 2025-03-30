@@ -2229,8 +2229,9 @@ new ByteBuddy()
 
     <p>
         Sometimes, it is desirable to not load an annotation type or the types of any of its properties when defining
-        a class. For this purpose, it is possible to use the <code>AnnotationDescription.Builder</code> which
-        offers a fluent interface for defining an annotation without triggering class loading but at the costs
+        a class. For this purpose, it is possible to use the <code>AnnotationDescription.Builder</code>
+        (as a parameter to <code>annotateType()</code>, <code>annotateMethod()</code> or <code>annotateField()</code> methods),
+        which offers a fluent interface for defining an annotation without triggering class loading, but at the costs
         of type safety. All annotation properties are however evaluated at runtime.
     </p>
 
