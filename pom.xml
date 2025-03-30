@@ -232,6 +232,7 @@
                     <sourceDirectories>
                         <sourceDirectory>${project.basedir}/byte-buddy-dep/src/main/java-6</sourceDirectory>
                     </sourceDirectories>
+                    <failOnServiceError>false</failOnServiceError>
                 </configuration>
             </plugin>
             <!-- Also allow for manual spotbugs execution. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
