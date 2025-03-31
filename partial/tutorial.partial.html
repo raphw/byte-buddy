@@ -2696,26 +2696,28 @@ new ByteBuddy()
 enum StringValueBinder
     implements TargetMethodAnnotationDrivenBinder.ParameterBinder&lt;StringValue&gt; {
 
-  INSTANCE; // singleton
+    INSTANCE; // singleton
 
-  @Override
-  public Class&lt;StringValue&gt; getHandledType() {
-    return StringValue.class;
-  }
-
-  @Override
-  public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(AnnotationDescription.Loaded&lt;StringValue&gt; annotation,
-                                                         MethodDescription source,
-                                                         ParameterDescription target,
-                                                         Implementation.Target implementationTarget,
-                                                         Assigner assigner,
-                                                         Assigner.Typing typing) {
-    if (!target.getType().asErasure().represents(String.class)) {
-      throw new IllegalStateException(target + " makes illegal use of @StringValue");
+    @Override
+    public Class&lt;StringValue&gt; getHandledType() {
+        return StringValue.class;
     }
-    StackManipulation constant = new TextConstant(annotation.loadSilent().value());
-    return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
-  }
+
+    @Override
+    public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(
+        AnnotationDescription.Loadable&lt;StringValue&gt; annotation,
+        MethodDescription source,
+        ParameterDescription target,
+        Implementation.Target implementationTarget,
+        Assigner assigner,
+        Assigner.Typing typing)
+    {
+        if (!target.getType().asErasure().represents(String.class)) {
+            throw new IllegalStateException(target + " makes illegal use of @StringValue");
+        }
+        StackManipulation constant = new TextConstant(annotation.load().value());
+        return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
+    }
 }
 </pre>
 
