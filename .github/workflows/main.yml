@@ -23,7 +23,7 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Build project
-        run: ./mvnw verify -Pjava24
+        run: ./mvnw verify -Pjava25
         continue-on-error: false
   hotspot-supported:
     name: Any (supported)
