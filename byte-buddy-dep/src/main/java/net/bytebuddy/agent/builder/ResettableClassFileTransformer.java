@@ -869,9 +869,10 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressWarnings({"unchecked", "rawtypes"})
                     public ResettableClassFileTransformer make(ResettableClassFileTransformer classFileTransformer,
                                                                Callback<?> callback) {
-                        return new WithCallback<>(classFileTransformer, callback);
+                        return new WithCallback(classFileTransformer, callback);
                     }
                 }
             }
