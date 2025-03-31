@@ -708,6 +708,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @return The binary representation of the transformed class file or {@code null} if no transformation should be applied.
              * @throws IllegalClassFormatException If the class file was found invalid.
              */
             @MaybeNull
@@ -735,6 +736,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @return The binary representation of the transformed class file or {@code null} if no transformation should be applied.
              * @throws IllegalClassFormatException If the class file was found invalid.
              */
             @MaybeNull
@@ -756,6 +758,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                  * Creates a new substitutable class file transformer.
                  *
                  * @param classFileTransformer The class file transformer to wrap.
+                 * @param callback             The callback to invoke.
                  * @return The wrapping class file transformer.
                  */
                 ResettableClassFileTransformer make(ResettableClassFileTransformer classFileTransformer, Callback<?> callback);
