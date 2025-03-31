@@ -2687,8 +2687,8 @@ new ByteBuddy()
 
 <p>
     With our custom annotation, we need to create a corresponding <code>ParameterBinder</code> which is able to create
-    a <code>StackManipulation</code> which expresses the binding for this parameter. This parameter binder is invoked
-    each time, its corresponding annotation is discovered on a parameter by the <code>MethodDelegation</code>.
+    a <code>StackManipulation</code> which expresses the binding for this parameter. This parameter binder is invoked,
+    by the <code>MethodDelegation</code>, each time its corresponding annotation is discovered on a parameter.
     Implementing a custom parameter binder for our example annotation is straight forward:
 </p>
 
