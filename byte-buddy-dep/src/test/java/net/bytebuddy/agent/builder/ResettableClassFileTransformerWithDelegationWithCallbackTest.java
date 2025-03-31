@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.Type;
 
-import java.lang.Module;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
