@@ -7,7 +7,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
+import org.mockito.stubbing.Answer;
 import org.objectweb.asm.Type;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -43,7 +45,12 @@ public class ResettableClassFileTransformerWithDelegationWithCallbackTest {
                 Type.getInternalName(Foo.class),
                 Foo.class,
                 Foo.class.getProtectionDomain(),
-                new byte[]{1, 2, 3})).thenReturn(new byte[]{4, 5, 6});
+                new byte[]{1, 2, 3})).thenAnswer(new Answer<byte[]>() { // Avoids Java 6 bug.
+            @Override
+            public byte[] answer(InvocationOnMock invocationOnMock) {
+                return new byte[]{4, 5, 6};
+            }
+        });
         when(callback.onBeforeTransform(null,
                 Foo.class.getClassLoader(),
                 Type.getInternalName(Foo.class),
