@@ -2620,10 +2620,10 @@ enum ToStringAssigner implements Assigner {
         .getDeclaredMethods()
         .filter(named("toString"))
         .getOnly();
-      return MethodInvocation.invoke(toStringMethod).virtual(sourceType);
-    } else {
-      return StackManipulation.Illegal.INSTANCE;
+      return MethodInvocation.invoke(toStringMethod).virtual(sourceType.asErasure());
     }
+
+    return StackManipulation.Illegal.INSTANCE;
   }
 }
 </pre>
