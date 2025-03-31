@@ -2763,7 +2763,7 @@ new ByteBuddy()
     Note that by specifying the <code>StringValueBinder</code> as the only parameter binder, we replace all defaults.
     Alternatively, we could have appended the parameter binder to those that are already registered. With only one
     possible target method in the <code>ToStringInterceptor</code>, the dynamic class's intercepted
-    <code>toString</code> method is bound to the latter method's invocation. When the target method is invoked,
+    <code>toString</code> method is bound to the <code>makeString</code> invocation. When the target method is invoked,
     Byte Buddy assigns the annotation's string value as the target method's only parameter.
 </p>
 
