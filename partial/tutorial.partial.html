@@ -1148,7 +1148,7 @@ Foo dynamicFoo = new ByteBuddy()
 <p>
     In some scenarios, you might want to define a new method that does not override a method of a super type or an
     interface. This is also possible using Byte Buddy. For this purpose, you can call <code>define(Method)</code>
-    or <code>defineMethod(name, ...) where
+    or <code>defineMethod(name, ...)</code> where
     you are able to define a signature. After defining a method, you are asked to provide an
     <code>Implementation</code> just as with a method that was identified by a method matcher. Note that method
     matchers that are registered after a method's definition might supersede this implementation by the stacking
@@ -2294,7 +2294,7 @@ new ByteBuddy()
 
 <p>
     In the previous sections, we described Byte Buddy's standard API. None of the features described so far
-    requires knowledge or the explicit expression of Java byte code. However, if you require to create custom
+    requires knowledge or the explicit expression of Java byte code. However, if you need to create custom
     byte code, you can do so by directly accessing the API of <a data-ng-href="{{asmUrl}}">ASM</a>, a
     low-level byte code library on top of which Byte Buddy is built. However, note that different versions of ASM
     are not compatible to another such that you need to repackage Byte Buddy into your own namespace when releasing
@@ -2320,13 +2320,13 @@ new ByteBuddy()
 <ul class="colored-list padded">
     <li><span>
         <b>Base data</b>: A class file references the class's name as well as the name of its superclass and its
-        implemented interfaces. Additionally, a class file contains different meta data as for example the class's
+        implemented interfaces. Additionally, a class file contains different metadata, as for example the class's
         Java version number, its annotations or the name of the source file the compiler processed for creating
         the class.
     </span></li>
     <li><span>
         <b>Constant pool</b>: A class's constant pool is a collection of values that are referenced by a member or
-        an annotation of this class. Among those values, the constant pool stores for example primitive values and
+        an annotation of this class. Among those values, the constant pool stores, for example, primitive values and
         strings that are created by some literal expression in the class's source code. Furthermore, the constant pool
         stores the names of all types and methods that are used within the class.
     </span></li>
@@ -2345,7 +2345,7 @@ new ByteBuddy()
 <p>
     Fortunately, the ASM library takes full responsibility of establishing an applicable constant pool when creating a
     class. With this, the only non-trivial element remains the description of a method's implementation which is
-    represented by an array of execution instructions, each encoded as a single byte. These instructions are processed
+    represented by an array of execution instructions, each one encoded as a single byte. These instructions are processed
     by a virtual <a href="http://en.wikipedia.org/wiki/Stack_machine">stack machine</a> on the method's invocation. For
     a simple example, let us consider a method that calculates and returns the sum of the two primitive integers
     <code>10</code> and <code>50</code>. This method's Java byte code would look as follows:
@@ -2363,9 +2363,9 @@ IRETURN     // stack is empty
     Java byte code</a> starts off by pushing both numbers onto the stack by using the <code>LDC</code> instruction.
     Note how this execution order differs from the order that is expressed in Java source code where the addition would
     be written as the infix notation <code>10 + 50</code>. However, the latter order cannot be processed by a stack
-    machine where any instruction like <code>+</code> can only access the upper most values that are currently found on
-    the stack. This addition is expressed by <code>IADD</code> which consumes the two upmost stack values which it both
-    expects to be primitive integers. In the process, it adds these two values and pushes the result back onto the top
+    machine where any instruction like <code>+</code> can only access the uppermost values that are currently found on
+    the stack. This addition is expressed by <code>IADD</code>, which consumes the two upmost stack values that are
+    expected to be primitive integers. In the process, it adds these two values and pushes the result back onto the top
     of the stack. Finally, the <code>IRETURN</code> statement consumes this calculation result and returns it from the
     method, leaving us with an empty stack.
 </p>
@@ -2433,9 +2433,9 @@ enum IntegerSum implements StackManipulation {
     From the above <code>apply</code> method, we learn that this stack manipulation executes the <code>IADD</code>
     instruction by invoking the related method on ASM's method visitor. Furthermore, the method expresses that the
     instruction reduces the current stack <code>Size</code> by one slot. The second argument of the created
-    <code>Size</code> instance is <code>0</code> what expresses that this instruction does not require a specific
+    <code>Size</code> instance is <code>0</code>, which expresses that this instruction does not require a specific
     minimal stack size for calculating interim results. Furthermore, any <code>StackManipulation</code> can express to
-    be invalid. This behavior can be used for more complex stack manipulation as for example object assignments which
+    be invalid. This behavior can be used for more complex stack manipulation, such as object assignments which
     might break a type constraint. We will look at an example of an invalid stack manipulation later in this section.
     Finally, note that we describe the stack manipulation as a
     <a href="http://en.wikipedia.org/wiki/Singleton_pattern#The_Enum_way">singleton enumeration</a>. Using such
@@ -2484,14 +2484,14 @@ enum SumMethod implements ByteCodeAppender {
     calculation result. By wrapping all these instructions with a compound stack manipulation, we can conclusively
     retrieve the aggregated stack size that is required to perform this chain of stack manipulations. Finally, we
     return the overall size requirements of this method. The first argument of the returned
-    <code>ByteCodeAppender.Size</code> reflects the required size for the execution stack which we just mentioned to
+    <code>ByteCodeAppender.Size</code> reflects the required size for the execution stack, which we just mentioned to
     be contained by the <code>StackManipulation.Size</code>. Additionally, the second argument reflects the required
-    size for the local variable array which here simply resembles the required size for the method's parameters and
-    a possible <code>this</code> reference since we did not define any local variables of our own.
+    size for the local variable array. Here it simply resembles the required size for the method's parameters and
+    a possible <code>this</code> reference, since we did not define any local variables of our own.
 </p>
 
 <p>
-    With this implementation of our summation method, we are now ready to provide a custom <code>Implementation</code>
+    With this implementation of our summation method, we are now ready to write a custom <code>Implementation</code>
     for this method which we can provide to Byte Buddy's domain specific language:
 </p>
 
@@ -2518,7 +2518,7 @@ enum SumImplementation implements Implementation {
     the preparation allows an implementation to register a <code>TypeInitializer</code> which we learned about in
     a previous section. If no such preparations are required, it suffices to return the unaltered
     <code>InstrumentedType</code> which is provided as the argument. Note that an <code>Implementation</code> should
-    not normally return an individual instance of an instrumented type but should call the instrumented type's appender
+    not normally return an individual instance of an instrumented type, but call the instrumented type's appender
     methods which are all prefixed by <code>with</code>. After any <code>Implementation</code> for a particular class
     creation is prepared, the <code>appender</code> method is invoked for retrieving a <code>ByteCodeAppender</code>.
     This appender is then queried for any method that was selected for interception by the given implementation and
@@ -2527,7 +2527,7 @@ enum SumImplementation implements Implementation {
 
 <p>
     Note that Byte Buddy only invokes each <code>Implementation</code>'s <code>prepare</code> and <code>appender</code>
-    methods a single time during the creation process of any class. This is guaranteed no matter how many times an
+    methods a single time, during the creation process of any class. This is guaranteed, no matter how many times an
     implementation is registered for use in a class's creation. This way, an <code>Implementation</code> can avoid to
     verify if a field or method is already defined. In the process, Byte Buddy compares <code>Implementation</code>s
     instances by their <code>hashCode</code> and <code>equals</code> methods. In general, any class that is used by
@@ -2559,24 +2559,32 @@ new ByteBuddy()
     looking forward to hearing from you!
 </p>
 
+<h3>Jump instructions</h3>
 <p>
     Before we move on to customizing some other components of Byte Buddy, we should briefly discuss the use of jump
-    instructions and the matter of the so-called Java stack frames. Since Java 6, any jump instruction which are used
-    to implement for example the <code>if</code> or the <code>while</code> statements require some additional
+    instructions and the matter of the so-called Java stack frames. Since Java 6, any jump instruction, which are used
+    to implement statements such as <code>if</code> or <code>while</code>, require some additional
     information in order to accelerate the JVM's verification process. This additional information is called a
     <i>stack map frame</i>. A stack map frame contains information about all values that are found on the execution
-    stack at any target of a jump instruction. By providing this information, the JVM's verifier saves some work
-    which is now however now left to us. For more complex jump instructions, providing correct stack map frames is a
+    stack at any target of a jump instruction. By providing this information, the JVM's verifier saves some work,
+    which is now however left to us.
+</p>
+<p>
+    For more complex jump instructions, providing correct stack map frames is a
     rather difficult task and many code generation frameworks have quite some trouble to always create correct stack
-    map frames. So how do we deal with this matter? As a matter of fact, we simply don't. It is Byte Buddy's philosophy
+    map frames. So, how do we deal with this matter? As a matter of fact, we simply don't. It is Byte Buddy's philosophy
     that code generation should only be used as the glue between a type hierarchy that is unknown at compile time and
     custom code that needs to be injected into these types. The actual code that is generated should therefore remain
-    as confined as possible. Wherever possible, conditional statements should rather be implemented and compiled in a
+    as confined as possible.
+</p>
+
+<p>
+    Wherever possible, conditional statements should rather be implemented and compiled in a
     JVM language of your choice and then be bound to a given method by using a minimalistic implementation. A nice
     side effect of this approach is that Byte Buddy's users can work with normal Java code and use their accustomed
     tools like debuggers or IDE code navigators. None of this would be possible with generated code which does not have
     a source code representation. However, if you really need to create byte code with jump instructions, make sure to
-    add the correct stack map frames using ASM since Byte Buddy will not automatically include them for you.
+    add the correct stack map frames using ASM, since Byte Buddy will not automatically include them for you.
 </p>
 
 <h4>Creating a custom assigner</h4>
@@ -2584,10 +2592,10 @@ new ByteBuddy()
 <p>
     In a previous section, we discussed that Byte Buddy's built in <code>Implementation</code>s rely on an
     <code>Assigner</code> in order to assign values to variables. In this process, an <code>Assigner</code> is able to
-    apply a transformation of one value to another by emitting an appropriate <code>StackManipulation</code>. Doing so,
-    Byte Buddy's built-in assigners provide for example auto-boxing of primitive values and their wrapper types.
+    apply a transformation of one value to another, by emitting an appropriate <code>StackManipulation</code>. Doing so,
+    Byte Buddy's built-in assigners provide, for example, auto-boxing of primitive values and their wrapper types.
     In the most trivial case, a value is assignable to a variable <i>as is</i>. In some cases, an assignment may
-    however not be possible at all what can be expressed by returning an invalid <code>StackManipulation</code> from an
+    however not be possible at all, which can be expressed by returning an invalid <code>StackManipulation</code> from an
     assigner. A canonical implementation of an invalid assignment is provided by Byte Buddy's
     <code>IllegalStackManipulation</code> class.
 </p>
@@ -2626,7 +2634,7 @@ enum ToStringAssigner implements Assigner {
     emits an <code>IllegalStackManipulation</code> to render the attempted assignment invalid. Otherwise, we identify
     the <code>Object</code> type's <code>toString</code> method by its name. We then use Byte Buddy's
     <code>MethodInvocation</code> to create a <code>StackManipulation</code> that calls this method virtually on the
-    source type. Finally, we can integrate this custom <code>Assigner</code> with for example Byte Buddy's
+    source type. Finally, we can integrate this custom <code>Assigner</code> with, for example, Byte Buddy's
     <code>FixedValue</code> implementation as follows:
 </p>
 
@@ -2716,11 +2724,11 @@ enum StringValueBinder
     <code>String</code> type. If this is not the case, we will throw an exception to inform the annotation's user
     of his illegal placing of this annotation. Otherwise, we simply create a <code>TextConstant</code> which represents
     the loading of a constant pool string onto the execution stack. This <code>StackManipulation</code> is then wrapped
-    as an anonymous <code>ParameterBinding</code> which is finally returned from the method. Alternatively, you could
+    as an anonymous <code>ParameterBinding</code>, which is finally returned from the method. Alternatively, you could
     have provided either a <code>Unique</code> or an <code>Illegal</code> parameter binding. A unique binding is
     identified by any object which allows to retrieve this binding from an <code>AmbiguityResolver</code>. In a later
-    step, such a resolver is able to look up if a parameter binding was registered with some unique identifier and can
-    then decide if this binding is superior to another successfully bound method. With an illegal binding, one can
+    step, such a resolver is able to look up if a parameter binding was registered with some unique identifier,
+    then it can decide if this binding is superior to another successfully bound method. With an illegal binding, one can
     instruct Byte Buddy that a specific pair of a <code>source</code> and a <code>target</code> method is incompatible
     and cannot be bound together.
 </p>
@@ -2728,7 +2736,7 @@ enum StringValueBinder
 <p>
     This already is all the information that is required for using a custom annotation with a
     <code>MethodDelegation</code> implementation. After receiving a <code>ParameterBinding</code>, it makes sure that
-    its value is bound to the correct parameter or it will discard the current pair of a <code>source</code> and
+    its value is bound to the correct parameter, or it will discard the current pair of a <code>source</code> and
     <code>target</code> method as unbindable. Furthermore, it will allow <code>AmbiguityResolver</code>s to look up
     unique bindings. Finally, let us put this custom annotation in action:
 </p>
