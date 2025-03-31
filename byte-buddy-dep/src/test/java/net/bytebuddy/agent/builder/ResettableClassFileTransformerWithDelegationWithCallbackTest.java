@@ -100,7 +100,7 @@ public class ResettableClassFileTransformerWithDelegationWithCallbackTest {
                 Type.getInternalName(Foo.class),
                 Foo.class,
                 Foo.class.getProtectionDomain(),
-                new byte[]{1, 2, 3}), is(new byte[]{4, 5, 6}));
+                new byte[]{1, 2, 3}), is((Object) new byte[]{4, 5, 6}));
         verify(callback).onBeforeTransform(JavaModule.ofType(Foo.class),
                 Foo.class.getClassLoader(),
                 Type.getInternalName(Foo.class),
