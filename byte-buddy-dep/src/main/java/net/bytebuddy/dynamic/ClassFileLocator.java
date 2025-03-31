@@ -1976,7 +1976,11 @@ public interface ClassFileLocator extends Closeable {
              */
             @MaybeNull
             @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not modified by class contract.")
-            public byte[] transform(@MaybeNull ClassLoader classLoader, @MaybeNull String internalName, @MaybeNull Class<?> redefinedType, ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
+            public byte[] transform(@MaybeNull ClassLoader classLoader,
+                                    @MaybeNull String internalName,
+                                    @MaybeNull Class<?> redefinedType,
+                                    @MaybeNull ProtectionDomain protectionDomain,
+                                    byte[] binaryRepresentation) {
                 if (internalName != null && isChildOf(this.classLoader).matches(classLoader) && typeName.equals(internalName.replace('/', '.'))) {
                     this.binaryRepresentation = binaryRepresentation.clone();
                 }

@@ -22,7 +22,9 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.nullability.MaybeNull;
@@ -36,8 +38,7 @@ import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.Iterator;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArgument;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A class file transformer that can reset its transformation.
@@ -316,9 +317,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
          * {@inheritDoc}
          */
         public boolean reset(Instrumentation instrumentation, AgentBuilder.RedefinitionStrategy redefinitionStrategy) {
-            return reset(instrumentation,
-                    redefinitionStrategy,
-                    AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE);
+            return reset(instrumentation, redefinitionStrategy, AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE);
         }
 
         /**
@@ -327,10 +326,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
         public boolean reset(Instrumentation instrumentation,
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
-            return reset(instrumentation,
-                    redefinitionStrategy,
-                    redefinitionBatchAllocator,
-                    AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
+            return reset(instrumentation, redefinitionStrategy, redefinitionBatchAllocator, AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
         }
 
         /**
@@ -339,10 +335,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
         public boolean reset(Instrumentation instrumentation,
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy) {
-            return reset(instrumentation,
-                    redefinitionStrategy,
-                    redefinitionDiscoveryStrategy,
-                    AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
+            return reset(instrumentation, redefinitionStrategy, redefinitionDiscoveryStrategy, AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
         }
 
         /**
@@ -352,11 +345,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                              AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy) {
-            return reset(instrumentation,
-                    redefinitionStrategy,
-                    redefinitionDiscoveryStrategy,
-                    redefinitionBatchAllocator,
-                    AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
+            return reset(instrumentation, redefinitionStrategy, redefinitionDiscoveryStrategy, redefinitionBatchAllocator, AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
         }
 
         /**
@@ -366,11 +355,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
                              AgentBuilder.RedefinitionStrategy.Listener redefinitionListener) {
-            return reset(instrumentation,
-                    redefinitionStrategy,
-                    redefinitionDiscoveryStrategy,
-                    AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
-                    redefinitionListener);
+            return reset(instrumentation, redefinitionStrategy, redefinitionDiscoveryStrategy, AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE, redefinitionListener);
         }
 
         /**
@@ -380,11 +365,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                              AgentBuilder.RedefinitionStrategy.Listener redefinitionListener) {
-            return reset(instrumentation,
-                    redefinitionStrategy,
-                    AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE,
-                    redefinitionBatchAllocator,
-                    redefinitionListener);
+            return reset(instrumentation, redefinitionStrategy, AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE, redefinitionBatchAllocator, redefinitionListener);
         }
 
         /**
@@ -395,12 +376,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                              AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
                              AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                              AgentBuilder.RedefinitionStrategy.Listener redefinitionListener) {
-            return reset(instrumentation,
-                    this,
-                    redefinitionStrategy,
-                    redefinitionDiscoveryStrategy,
-                    redefinitionBatchAllocator,
-                    redefinitionListener);
+            return reset(instrumentation, this, redefinitionStrategy, redefinitionDiscoveryStrategy, redefinitionBatchAllocator, redefinitionListener);
         }
     }
 
@@ -423,6 +399,31 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
          */
         protected WithDelegation(ResettableClassFileTransformer classFileTransformer) {
             this.classFileTransformer = classFileTransformer;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
+        }
+
+        /**
+         * Creates a resettable class file transformer that wraps another transformer and adds a callback to the
+         * beginning and end of each transformation. If the module system is supported on the current JVM, the supplied
+         * module is retained.
+         *
+         * @param classFileTransformer The class file transformer to delegate to.
+         * @param callback             The callback to invoke.
+         * @return A resettable class file transformer that delegates while also invoking the callback.
+         */
+        public static ResettableClassFileTransformer of(ResettableClassFileTransformer classFileTransformer, Callback<?> callback) {
+            return WithCallback.DISPATCHER.make(classFileTransformer, callback);
         }
 
         /**
@@ -476,18 +477,6 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
              */
             protected Substitutable(ResettableClassFileTransformer classFileTransformer) {
                 this.classFileTransformer = classFileTransformer;
-            }
-
-            /**
-             * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
-             *
-             * @param action The action to execute from a privileged context.
-             * @param <T>    The type of the action's resolved value.
-             * @return The action's resolved value.
-             */
-            @AccessControllerPlugin.Enhance
-            private static <T> T doPrivileged(PrivilegedAction<T> action) {
-                return action.run();
             }
 
             /**
@@ -548,7 +537,11 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
             /**
              * {@inheritDoc}
              */
-            public byte[] transform(ClassLoader classLoader, String internalName, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] binaryRepresentation) throws IllegalClassFormatException {
+            public byte[] transform(@MaybeNull ClassLoader classLoader,
+                                    @MaybeNull String internalName,
+                                    @MaybeNull Class<?> classBeingRedefined,
+                                    @MaybeNull ProtectionDomain protectionDomain,
+                                    byte[] binaryRepresentation) throws IllegalClassFormatException {
                 return classFileTransformer.transform(classLoader, internalName, classBeingRedefined, protectionDomain, binaryRepresentation);
             }
 
@@ -583,10 +576,10 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                         try {
                             return new ForJava9CapableVm(new ByteBuddy()
                                     .with(TypeValidation.DISABLED)
-                                    .subclass(WithDelegation.Substitutable.class)
+                                    .subclass(WithDelegation.Substitutable.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                                     .name(WithDelegation.Substitutable.class.getName() + "$ByteBuddy$ModuleSupport")
                                     .method(named("transform").and(takesArgument(0, JavaType.MODULE.load())))
-                                    .intercept(MethodCall.invoke(ClassFileTransformer.class.getDeclaredMethod("transform",
+                                    .intercept(MethodCall.invoke(ClassFileTransformer.class.getMethod("transform",
                                             JavaType.MODULE.load(),
                                             ClassLoader.class,
                                             String.class,
@@ -597,7 +590,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                                     .load(WithDelegation.Substitutable.class.getClassLoader(),
                                             ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(WithDelegation.Substitutable.class.getProtectionDomain()))
                                     .getLoaded()
-                                    .getDeclaredConstructor(ResettableClassFileTransformer.class));
+                                    .getConstructor(ResettableClassFileTransformer.class));
                         } catch (Exception ignored) {
                             return ForLegacyVm.INSTANCE;
                         }
@@ -658,6 +651,275 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     }
                 }
             }
+        }
+
+        /**
+         * A class file transformer with a callback.
+         *
+         * @param <T> The type of the value that is passed between the callback methods.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class WithCallback<T> extends WithDelegation {
+
+            /**
+             * The dispatcher that creates the wrapper instance.
+             */
+            private static final Factory DISPATCHER = doPrivileged(Factory.CreationAction.INSTANCE);
+
+            /**
+             * The callback to invoke.
+             */
+            private final Callback<T> callback;
+
+            /**
+             * Creates a delegating class file transformer with callback.
+             *
+             * @param classFileTransformer The class file transformer to delegate to.
+             * @param callback             The callback to invoke.
+             */
+            protected WithCallback(ResettableClassFileTransformer classFileTransformer, Callback<T> callback) {
+                super(classFileTransformer);
+                this.callback = callback;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @MaybeNull
+            public byte[] transform(@MaybeNull ClassLoader classLoader,
+                                    @MaybeNull String internalName,
+                                    @MaybeNull Class<?> classBeingRedefined,
+                                    @MaybeNull ProtectionDomain protectionDomain,
+                                    byte[] binaryRepresentation) throws IllegalClassFormatException {
+                T value = callback.onBeforeTransform(null, classLoader, internalName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                try {
+                    return classFileTransformer.transform(classLoader, internalName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                } finally {
+                    callback.onAfterTransform(value, null, classLoader, internalName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                }
+            }
+
+            /**
+             * A method to delegate to when the module system is supported on the current JVM.
+             *
+             * @param rawModule            The instrumented class's {@code java.lang.Module}.
+             * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+             * @param internalName         The internal name of the instrumented class.
+             * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
+             * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @throws IllegalClassFormatException If the class file was found invalid.
+             */
+            @MaybeNull
+            protected byte[] transform(Object rawModule,
+                                       @MaybeNull ClassLoader classLoader,
+                                       @MaybeNull String internalName,
+                                       @MaybeNull Class<?> classBeingRedefined,
+                                       @MaybeNull ProtectionDomain protectionDomain,
+                                       byte[] binaryRepresentation) throws IllegalClassFormatException {
+                JavaModule module = JavaModule.of(rawModule);
+                T value = callback.onBeforeTransform(module, classLoader, internalName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                try {
+                    return doTransform(rawModule, classLoader, internalName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                } finally {
+                    callback.onAfterTransform(value, module, classLoader, internalName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                }
+            }
+
+            /**
+             * Callback between the transformation callbacks.
+             *
+             * @param rawModule            The instrumented class's {@code java.lang.Module}.
+             * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+             * @param internalName         The internal name of the instrumented class.
+             * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
+             * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @throws IllegalClassFormatException If the class file was found invalid.
+             */
+            @MaybeNull
+            protected byte[] doTransform(Object rawModule,
+                                         @MaybeNull ClassLoader classLoader,
+                                         @MaybeNull String internalName,
+                                         @MaybeNull Class<?> classBeingRedefined,
+                                         @MaybeNull ProtectionDomain protectionDomain,
+                                         byte[] binaryRepresentation) throws IllegalClassFormatException {
+                throw new UnsupportedOperationException();
+            }
+
+            /**
+             * A factory that creates a resettable class file transformer depending on the availability of the module system.
+             */
+            interface Factory {
+
+                /**
+                 * Creates a new substitutable class file transformer.
+                 *
+                 * @param classFileTransformer The class file transformer to wrap.
+                 * @return The wrapping class file transformer.
+                 */
+                ResettableClassFileTransformer make(ResettableClassFileTransformer classFileTransformer, Callback<?> callback);
+
+                /**
+                 * An action to create a suitable factory.
+                 */
+                enum CreationAction implements PrivilegedAction<Factory> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
+                    public Factory run() {
+                        try {
+                            return new Factory.ForJava9CapableVm(new ByteBuddy()
+                                    .with(TypeValidation.DISABLED)
+                                    .subclass(WithCallback.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                                    .name(WithCallback.class.getName() + "$ByteBuddy$ModuleSupport")
+                                    .method(named("transform").and(takesArguments(JavaType.MODULE.load(),
+                                            ClassLoader.class,
+                                            String.class,
+                                            Class.class,
+                                            ProtectionDomain.class,
+                                            byte[].class)))
+                                    .intercept(MethodCall.invoke(WithCallback.class.getDeclaredMethod("transform",
+                                            Object.class,
+                                            ClassLoader.class,
+                                            String.class,
+                                            Class.class,
+                                            ProtectionDomain.class,
+                                            byte[].class)).withAllArguments())
+                                    .method(named("doTransform").and(takesArguments(Object.class,
+                                            ClassLoader.class,
+                                            String.class,
+                                            Class.class,
+                                            ProtectionDomain.class,
+                                            byte[].class)))
+                                    .intercept(MethodCall.invoke(ClassFileTransformer.class.getMethod("transform",
+                                            JavaType.MODULE.load(),
+                                            ClassLoader.class,
+                                            String.class,
+                                            Class.class,
+                                            ProtectionDomain.class,
+                                            byte[].class)).onField("classFileTransformer").withAllArguments().withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                                    .make()
+                                    .load(WithCallback.class.getClassLoader(),
+                                            ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(WithCallback.class.getProtectionDomain()))
+                                    .getLoaded()
+                                    .getConstructor(ResettableClassFileTransformer.class, Callback.class));
+                        } catch (Exception ignored) {
+                            return Factory.ForLegacyVm.INSTANCE;
+                        }
+                    }
+                }
+
+                /**
+                 * A factory for creating a substitutable class file transformer when the module system is supported.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForJava9CapableVm implements Factory {
+
+                    /**
+                     * The constructor to invoke.
+                     */
+                    private final Constructor<? extends ResettableClassFileTransformer> withCallback;
+
+                    /**
+                     * Creates a new Java 9 capable factory.
+                     *
+                     * @param withCallback The constructor to invoke.
+                     */
+                    protected ForJava9CapableVm(Constructor<? extends ResettableClassFileTransformer> withCallback) {
+                        this.withCallback = withCallback;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ResettableClassFileTransformer make(ResettableClassFileTransformer classFileTransformer, Callback<?> callback) {
+                        try {
+                            return withCallback.newInstance(classFileTransformer, callback);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access " + withCallback, exception);
+                        } catch (InstantiationException exception) {
+                            throw new IllegalStateException("Cannot instantiate " + withCallback.getDeclaringClass(), exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Cannot invoke " + withCallback, exception.getTargetException());
+                        }
+                    }
+                }
+
+                /**
+                 * A factory for a substitutable class file transformer when the module system is not supported.
+                 */
+                enum ForLegacyVm implements Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ResettableClassFileTransformer make(ResettableClassFileTransformer classFileTransformer,
+                                                               Callback<?> callback) {
+                        return new WithCallback<>(classFileTransformer, callback);
+                    }
+                }
+            }
+        }
+
+        /**
+         * A callback that is invoked upon class file transformation.
+         *
+         * @param <T> The type of the value that is passed between the callback methods.
+         */
+        public interface Callback<T> {
+
+            /**
+             * Invoked before the transformation is applied.
+             *
+             * @param module               The instrumented class's Java module or {@code null} if the module system is not supported.
+             * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+             * @param internalName         The internal name of the instrumented class.
+             * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
+             * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @return A value to pass to the method that is invoked after transformation or {@code null}.
+             * @throws IllegalClassFormatException If the class file was found invalid.
+             */
+            @MaybeNull
+            T onBeforeTransform(@MaybeNull JavaModule module,
+                                @MaybeNull ClassLoader classLoader,
+                                @MaybeNull String internalName,
+                                @MaybeNull Class<?> classBeingRedefined,
+                                @MaybeNull ProtectionDomain protectionDomain,
+                                byte[] binaryRepresentation) throws IllegalClassFormatException;
+
+            /**
+             * Invoked after the transformation is applied.
+             *
+             * @param value                The value that was returned before transformation.
+             * @param module               The instrumented class's Java module or {@code null} if the module system is not supported.
+             * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+             * @param internalName         The internal name of the instrumented class.
+             * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
+             * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @throws IllegalClassFormatException If the class file was found invalid.
+             */
+            void onAfterTransform(@MaybeNull T value,
+                                  @MaybeNull JavaModule module,
+                                  @MaybeNull ClassLoader classLoader,
+                                  @MaybeNull String internalName,
+                                  @MaybeNull Class<?> classBeingRedefined,
+                                  @MaybeNull ProtectionDomain protectionDomain,
+                                  byte[] binaryRepresentation) throws IllegalClassFormatException;
         }
     }
 }

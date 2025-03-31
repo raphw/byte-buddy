@@ -12560,14 +12560,14 @@ public interface AgentBuilder {
              */
             @MaybeNull
             public byte[] transform(@MaybeNull ClassLoader classLoader,
-                                    @MaybeNull String internalTypeName,
+                                    @MaybeNull String internalName,
                                     @MaybeNull Class<?> classBeingRedefined,
                                     @MaybeNull ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
                 if (circularityLock.acquire()) {
                     try {
                         return doPrivileged(new LegacyVmDispatcher(classLoader,
-                                internalTypeName,
+                                internalName,
                                 classBeingRedefined,
                                 protectionDomain,
                                 binaryRepresentation), accessControlContext);
@@ -12585,7 +12585,7 @@ public interface AgentBuilder {
              *
              * @param rawModule            The instrumented class's Java {@code java.lang.Module}.
              * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
-             * @param internalTypeName     The internal name of the instrumented class.
+             * @param internalName     The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
@@ -12594,7 +12594,7 @@ public interface AgentBuilder {
             @MaybeNull
             protected byte[] transform(Object rawModule,
                                        @MaybeNull ClassLoader classLoader,
-                                       @MaybeNull String internalTypeName,
+                                       @MaybeNull String internalName,
                                        @MaybeNull Class<?> classBeingRedefined,
                                        @MaybeNull ProtectionDomain protectionDomain,
                                        byte[] binaryRepresentation) {
@@ -12602,7 +12602,7 @@ public interface AgentBuilder {
                     try {
                         return doPrivileged(new Java9CapableVmDispatcher(rawModule,
                                 classLoader,
-                                internalTypeName,
+                                internalName,
                                 classBeingRedefined,
                                 protectionDomain,
                                 binaryRepresentation), accessControlContext);
@@ -12619,7 +12619,7 @@ public interface AgentBuilder {
              *
              * @param module               The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
              * @param classLoader          The instrumented class's class loader.
-             * @param internalTypeName     The internal name of the instrumented class.
+             * @param internalName     The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
@@ -12628,14 +12628,14 @@ public interface AgentBuilder {
             @MaybeNull
             private byte[] transform(@MaybeNull JavaModule module,
                                      @MaybeNull ClassLoader classLoader,
-                                     @MaybeNull String internalTypeName,
+                                     @MaybeNull String internalName,
                                      @MaybeNull Class<?> classBeingRedefined,
                                      @MaybeNull ProtectionDomain protectionDomain,
                                      byte[] binaryRepresentation) {
-                if (internalTypeName == null || !lambdaInstrumentationStrategy.isInstrumented(classBeingRedefined)) {
+                if (internalName == null || !lambdaInstrumentationStrategy.isInstrumented(classBeingRedefined)) {
                     return NO_TRANSFORMATION;
                 }
-                String name = internalTypeName.replace('/', '.');
+                String name = internalName.replace('/', '.');
                 try {
                     if (resubmissionEnforcer.isEnforced(name, classLoader, module, classBeingRedefined)) {
                         return NO_TRANSFORMATION;
@@ -13019,7 +13019,7 @@ public interface AgentBuilder {
                  */
                 @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
-                private final String internalTypeName;
+                private final String internalName;
 
                 /**
                  * The class being redefined or {@code null} if no such class exists.
@@ -13044,18 +13044,18 @@ public interface AgentBuilder {
                  * Creates a new type transformation dispatcher.
                  *
                  * @param classLoader          The type's class loader or {@code null} if the bootstrap class loader is represented.
-                 * @param internalTypeName     The type's internal name or {@code null} if no such name exists.
+                 * @param internalName     The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
                  * @param protectionDomain     The type's protection domain or {@code null} if not available.
                  * @param binaryRepresentation The type's binary representation.
                  */
                 protected LegacyVmDispatcher(@MaybeNull ClassLoader classLoader,
-                                             @MaybeNull String internalTypeName,
+                                             @MaybeNull String internalName,
                                              @MaybeNull Class<?> classBeingRedefined,
                                              @MaybeNull ProtectionDomain protectionDomain,
                                              byte[] binaryRepresentation) {
                     this.classLoader = classLoader;
-                    this.internalTypeName = internalTypeName;
+                    this.internalName = internalName;
                     this.classBeingRedefined = classBeingRedefined;
                     this.protectionDomain = protectionDomain;
                     this.binaryRepresentation = binaryRepresentation;
@@ -13068,7 +13068,7 @@ public interface AgentBuilder {
                 public byte[] run() {
                     return transform(JavaModule.UNSUPPORTED,
                             classLoader,
-                            internalTypeName,
+                            internalName,
                             classBeingRedefined,
                             protectionDomain,
                             binaryRepresentation);
@@ -13098,7 +13098,7 @@ public interface AgentBuilder {
                  */
                 @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
-                private final String internalTypeName;
+                private final String internalName;
 
                 /**
                  * The class being redefined or {@code null} if no such class exists.
@@ -13124,20 +13124,20 @@ public interface AgentBuilder {
                  *
                  * @param rawModule            The type's {@code java.lang.Module}.
                  * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
-                 * @param internalTypeName     The type's internal name or {@code null} if no such name exists.
+                 * @param internalName     The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
                  * @param protectionDomain     The type's protection domain or {@code null} if not available.
                  * @param binaryRepresentation The type's binary representation.
                  */
                 protected Java9CapableVmDispatcher(Object rawModule,
                                                    @MaybeNull ClassLoader classLoader,
-                                                   @MaybeNull String internalTypeName,
+                                                   @MaybeNull String internalName,
                                                    @MaybeNull Class<?> classBeingRedefined,
                                                    @MaybeNull ProtectionDomain protectionDomain,
                                                    byte[] binaryRepresentation) {
                     this.rawModule = rawModule;
                     this.classLoader = classLoader;
-                    this.internalTypeName = internalTypeName;
+                    this.internalName = internalName;
                     this.classBeingRedefined = classBeingRedefined;
                     this.protectionDomain = protectionDomain;
                     this.binaryRepresentation = binaryRepresentation;
@@ -13150,7 +13150,7 @@ public interface AgentBuilder {
                 public byte[] run() {
                     return transform(JavaModule.of(rawModule),
                             classLoader,
-                            internalTypeName,
+                            internalName,
                             classBeingRedefined,
                             protectionDomain,
                             binaryRepresentation);
