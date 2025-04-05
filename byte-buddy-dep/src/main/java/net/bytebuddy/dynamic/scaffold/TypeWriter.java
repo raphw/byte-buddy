@@ -1250,6 +1250,9 @@ public interface TypeWriter<T> {
                     Set<MethodDescription.TypeToken> compatibleBridgeTypes = new HashSet<MethodDescription.TypeToken>();
                     for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
                         if (bridgeTarget.isBridgeCompatible(bridgeType)) {
+                            Object o = instrumentedType.getDeclaredMethods().filter(named(bridgeTarget.getInternalName())
+                                    .and(takesArguments(bridgeType.getParameterTypes()))
+                                    .and(returns(bridgeType.getReturnType())));
                             compatibleBridgeTypes.add(bridgeType);
                         }
                     }
@@ -4951,6 +4954,16 @@ public interface TypeWriter<T> {
                     private boolean retainDeprecationModifiers;
 
                     /**
+                     * A set of keys for fields that were previosuly visited.
+                     */
+                    private final Set<SignatureKey> fieldKeys = new HashSet<SignatureKey>();
+
+                    /**
+                     * A set of keys for methods that were previosuly visited.
+                     */
+                    private final Set<SignatureKey> methodsKeys = new HashSet<SignatureKey>();
+
+                    /**
                      * Creates a class visitor which is capable of redefining an existent class on the fly.
                      *
                      * @param classVisitor    The underlying class visitor to which writes are delegated.
@@ -5149,7 +5162,9 @@ public interface TypeWriter<T> {
                                                         String descriptor,
                                                         @MaybeNull String genericSignature,
                                                         @MaybeNull Object value) {
-                        FieldDescription fieldDescription = declarableFields.remove(new SignatureKey(internalName, descriptor));
+                        SignatureKey key = new SignatureKey(internalName, descriptor);
+                        fieldKeys.add(key);
+                        FieldDescription fieldDescription = declarableFields.remove(key);
                         if (fieldDescription != null) {
                             FieldPool.Record record = fieldPool.target(fieldDescription);
                             if (!record.isImplicit()) {
@@ -5202,7 +5217,9 @@ public interface TypeWriter<T> {
                                     (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6),
                                     (readerFlags & ClassReader.EXPAND_FRAMES) != 0));
                         } else {
-                            MethodDescription methodDescription = declarableMethods.remove(new SignatureKey(internalName, descriptor));
+                            SignatureKey key = new SignatureKey(internalName, descriptor);
+                            methodsKeys.add(key);
+                            MethodDescription methodDescription = declarableMethods.remove(key);
                             return methodDescription == null
                                     ? cv.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
                                     : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0, modifiers, genericSignature);
@@ -5334,10 +5351,12 @@ public interface TypeWriter<T> {
                             recordComponentPool.target(recordComponent).apply(cv, annotationValueFilterFactory);
                         }
                         for (FieldDescription fieldDescription : declarableFields.values()) {
-                            fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
+                            fieldPool.target(fieldDescription).apply(new DeduplicatingClassVisitor(cv), annotationValueFilterFactory);
                         }
                         for (MethodDescription methodDescription : declarableMethods.values()) {
-                            methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
+                            methodPool.target(methodDescription).apply(new DeduplicatingClassVisitor(cv),
+                                    implementationContext,
+                                    annotationValueFilterFactory);
                         }
                         initializationHandler.complete(cv, implementationContext);
                         cv.visitEnd();
@@ -5355,6 +5374,52 @@ public interface TypeWriter<T> {
                         return retainDeprecationModifiers && (modifiers & Opcodes.ACC_DEPRECATED) != 0
                                 ? Opcodes.ACC_DEPRECATED
                                 : ModifierContributor.EMPTY_MASK;
+                    }
+
+                    /**
+                     * A class visitor that deduplicates fields and methods, mostly when access bridge methods are
+                     * previously declared, but incomplete.
+                     */
+                    protected class DeduplicatingClassVisitor extends ClassVisitor {
+
+                        /**
+                         * Creates a new method deduplicating class visitor.
+                         *
+                         * @param classVisitor The class visitor to delegate to.
+                         */
+                        protected DeduplicatingClassVisitor(ClassVisitor classVisitor) {
+                            super(OpenedClassReader.ASM_API, classVisitor);
+                        }
+
+                        @Override
+                        @MaybeNull
+                        public FieldVisitor visitField(int access,
+                                                       String internalName,
+                                                       String descriptor,
+                                                       @MaybeNull String signature,
+                                                       @MaybeNull Object value) {
+                            if (fieldKeys.contains(new SignatureKey(internalName, descriptor))) {
+                                throw new IllegalStateException("Field already defined: " + internalName + descriptor);
+                            }
+                            return super.visitField(access, internalName, descriptor, signature, value);
+                        }
+
+                        @Override
+                        @MaybeNull
+                        public MethodVisitor visitMethod(int access,
+                                                         String internalName,
+                                                         String descriptor,
+                                                         @MaybeNull String signature,
+                                                         @MaybeNull String[] exception) {
+                            if (methodsKeys.contains(new SignatureKey(internalName, descriptor))) {
+                                if ((access & Opcodes.ACC_BRIDGE) != 0) {
+                                    return null;
+                                } else {
+                                    throw new IllegalStateException("Method already defined: " + internalName + descriptor);
+                                }
+                            }
+                            return super.visitMethod(access, internalName, descriptor, signature, exception);
+                        }
                     }
 
                     /**
