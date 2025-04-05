@@ -1250,9 +1250,6 @@ public interface TypeWriter<T> {
                     Set<MethodDescription.TypeToken> compatibleBridgeTypes = new HashSet<MethodDescription.TypeToken>();
                     for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
                         if (bridgeTarget.isBridgeCompatible(bridgeType)) {
-                            Object o = instrumentedType.getDeclaredMethods().filter(named(bridgeTarget.getInternalName())
-                                    .and(takesArguments(bridgeType.getParameterTypes()))
-                                    .and(returns(bridgeType.getReturnType())));
                             compatibleBridgeTypes.add(bridgeType);
                         }
                     }
