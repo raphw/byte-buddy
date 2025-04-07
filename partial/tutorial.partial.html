@@ -1733,8 +1733,8 @@ loggingDatabase.load("Hello");
         to any of the instance methods of the <code>Target</code> class. Note that this includes methods that
         are defined anywhere in the instance's class hierarchy, including the methods that are defined in the
         <code>Object</code> class. You might want to filter the range of possible candidate methods
-        by calling <code>filter(ElementMatcher)</code> on any
-        <code>MethodDelegation</code>. The <code>ElementMatcher</code> type is the same that was used before for
+        by calling <code>MethodDelegation.withDefaultConfiguration().filter(ElementMatcher)</code>.
+        The <code>ElementMatcher</code> type is the same that was used before for
         selecting source methods within Byte Buddy's domain specific language. The instance which is the target of the
         method delegation is stored in a static field. Similarly to the definition of fixed values, this requires the
         definition of a <code>TypeInitializer</code>. Instead of storing a delegation in a static field, you can
