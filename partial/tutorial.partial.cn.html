@@ -1659,8 +1659,8 @@ UserType userType = (UserType) factory.makeInstance();
         <code>ExceptionMethod</code>能用来实现一个只抛出异常的方法。如前所述，可以从任何方法抛出已检查异常，即使这个方法没有声明这个异常。
     </span></li>
     <li><span>
-        <code>Forwarding</code>实现允许简单地将方法调用转发到另一个与拦截方法的声明类型相同类型的实例。用<code>MethodDelegation</code>可以达到相同的效果。
-        然而，通过<code>Forwarding</code>，应用更简单的委托模型，该模型可以覆盖不需要目标方法发现的用例。
+        <code>MethodCall</code>实现允许简单地将方法调用转发到另一个与拦截方法的声明类型相同类型的实例。用<code>MethodDelegation</code>可以达到相同的效果。
+        然而，通过<code>MethodCall</code>，应用更简单的委托模型，该模型可以覆盖不需要目标方法发现的用例。
     </span></li>
     <li><span>
         <code>InvocationHandlerAdapter</code>允许使用 Java 类库自带的<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html"
