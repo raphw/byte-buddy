@@ -1461,9 +1461,10 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
 
 <p>
     From the above example, it is obvious that the super method is called by injecting some instance of a
-    <code>Callable</code> into the <code>LoggerInterceptor</code> which invokes the original, non-overridden
-    implementation of <code>MemoryDatabase#load(String)</code> from its <code>call</code> method. This helper
-    class is called an <code>AuxiliaryType</code> within Byte Buddy's terminology. Auxiliary types are created
+    <code>Callable</code> into the <code>LoggerInterceptor</code>, which invokes the original non-overridden
+    implementation of <code>MemoryDatabase#load(String)</code> from its <code>call</code> method.
+    Byte Buddy creates a helper class that implements <code>Callable</code>.
+    This class is called an <code>AuxiliaryType</code> within Byte Buddy's terminology. Auxiliary types are created
     on demand by Byte Buddy and are directly accessible from the <code>DynamicType</code> interface after a
     class was created. Because of such auxiliary types, the manual creation of one dynamic type might
     result in the creation of several additional types which aid the implementation of the original class. Finally,
