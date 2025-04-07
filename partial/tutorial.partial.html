@@ -375,7 +375,7 @@ class HardcodedFrameworkImpl implements Framework {
     The first benchmark in the above table measures a library's runtime for subclassing <code>Object</code> without
     implementing or overriding any methods. This gives us an impression of a library's general overhead in code generation.
     In this benchmark, Java proxies perform better than other libraries due to optimizations that are only possible when
-    assuming to always extend an interface. Byte Buddy also checks classes for generic types and annotations what causes
+    assuming to always extend an interface. Byte Buddy also checks classes for generic types and annotations, which causes
     additional runtimes. This performance overhead is also visible in the other benchmarks for creating a class. Benchmark
     (2a) shows the measured runtime for creating (and loading) a class that implements a single interface with 18 methods,
     (2b) shows the execution time for the methods generated for this class. Similarly, (3a) shows a benchmark for extending a
@@ -651,7 +651,7 @@ new ByteBuddy().rebase(Foo.class)
         packages. This means that a class <code>example.Foo</code> is not able to access package-private
         methods of another class <code>example.Bar</code> if both classes were not loaded with the same class loader.
         Also, if <code>example.Bar</code> extended <code>example.Foo</code>, any overridden package-private methods
-        would become inoperative but would delegate to the original implementations.
+        would become inoperative, but still delegate to the original implementations.
     </span></li>
     <li><span>
         Whenever a class is loaded, its class loader will look up any type that is referenced in this class
@@ -2107,7 +2107,7 @@ UserType userType = (UserType) factory.makeInstance();
 <h4>Miscellaneous</h4>
 
 <p>
-    Additionally to the <code>Implementation</code>s we discussed so far, Byte Buddy includes several other
+    Additionally, to the <code>Implementation</code>s we discussed so far, Byte Buddy includes several other
     implementations:
 </p>
 
