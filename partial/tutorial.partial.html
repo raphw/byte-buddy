@@ -2241,7 +2241,8 @@ new ByteBuddy()
     <p>
         By default, Byte Buddy includes any property of an annotation into a class file, including default properties
         that are specified implicitly by a <code>default</code> value. This behavior can however be customized by
-        providing an <code>AnnotationFilter</code> to a <code>ByteBuddy</code> instance.
+        providing an <code>AnnotationRetention</code> to a <code>ByteBuddy</code> instance, by calling for instance
+        <code>new ByteBuddy().with(AnnotationRetention.DISABLED)</code>.
     </p>
 
 <h3>Type annotations</h3>
