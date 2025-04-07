@@ -1713,7 +1713,7 @@ new ByteBuddy()
         只要这个行为通过定义为一个<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html"><code>@Inherited</code></a>注解被显式要求。
         用 Byte Buddy，通过调用 Byte Buddy 领域特定语言的<code>attribute(属性)</code>方法，创建返回它的基类注解的子类代理很容易。
         这个方法要求一个<code>TypeAttributeAppender</code>作为参数。类型属性追加器提供了一种灵活的方式定义基于其基类动态创建的类的注解。
-        例如，通过传递一个<code>TypeAttributeAppender.ForSuperType</code>，一个类的注解会被复制到它动态创建的子类中。注意，注解和类属性追加器是附加的，
+        例如，通过传递一个<code>TypeAttributeAppender.ForInstrumentedType</code>，一个类的注解会被复制到它动态创建的子类中。注意，注解和类属性追加器是附加的，
         任何类都不能多次定义注解类型。
     </p>
 

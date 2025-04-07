@@ -2191,10 +2191,10 @@ new ByteBuddy()
         for its subclasses as long as this behavior is explicitly required by defining an annotation to be
         <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html"><code>@Inherited</code></a>.
         Using Byte Buddy, creating subclass proxies that retain their base class's annotations is easy by invoking
-        the <code>attribute</code> method of Byte Buddy's domain specific language. This methods expects a
+        the <code>attribute</code> method of Byte Buddy's domain specific language. This method expects a
         <code>TypeAttributeAppender</code> as its argument. A type attribute appender offers a flexible way for defining
         the annotations of a dynamically created class, based on its base class. For example, by passing a
-        <code>TypeAttributeAppender.ForSuperType</code>, a class's annotations are copied to its dynamically created
+        <code>TypeAttributeAppender.ForInstrumentedType</code>, a class's annotations are copied to its dynamically created
         subclasses. Note that annotations and type attribute appenders are additive and no annotation type must be
         defined more than once for any class.
     </p>
