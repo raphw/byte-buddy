@@ -75,7 +75,6 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
 
     .controller('socialMediaController', function ($scope) {
         $scope.icons = [
-            {name: 'Google', style: 'google', target: 'https://plus.google.com/share?url=http%3A%2F%2Fbytebuddy.net'},
             {
                 name: 'LinkedIn',
                 style: 'linkedin',
@@ -174,5 +173,13 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         }
     })
 
+    // Data to be shared between different pages
+    .controller('dataController', function ($scope) {
+        $scope.javaVersion = '5'; // minimum JDK version required
+        $scope.classFileFormatUrl = 'https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html';
+        $scope.asmUrl = 'https://asm.ow2.io';
+    })
+
     .controller('developController', function ($scope) {
     });
+

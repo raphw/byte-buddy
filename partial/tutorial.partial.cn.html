@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class="col-md-8 col-md-offset-1" id="affixComponent">
+<div class="col-md-8 col-md-offset-1" id="affixComponent" ng-controller="dataController">
 
     <select class="lang" ng-model="lang" ng-change="changeLang()">
         <option value="cn">中文</option>
@@ -638,7 +638,7 @@ assertThat(foo.m(), is("bar"));
     HotSwap只能用<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/instrument/package-summary.html">所谓的
     Java agent </a>访问。这样的代理可以通过在虚拟机启动时使用<code>-javaagent</code>参数指定它来安装，其中 javaagent 的参数得是 Byte Buddy
     的代理jar，它可以从<a href="https://search.maven.org/search?q=a:byte-buddy-agent">从 Maven 仓库下载</a>。
-    然而，当 Java 应用从虚拟机的一个JDK运行时，即使应用启动后，Byte Buddy 也可以通过<code>ByteBuddyAgent.installOnOpenJDK()</code>加载 Java 代理。
+    然而，当 Java 应用从虚拟机的一个JDK运行时，即使应用启动后，Byte Buddy 也可以通过<code>ByteBuddyAgent.install()</code>加载 Java 代理。
     因为类重定义主要用在工具和测试的实现上，这可能是一个非常方便的可选方案。从 Java 9 开始，在没有JDK的情况下，运行时安装代理成为可能。
 </p>
 
@@ -1659,8 +1659,8 @@ UserType userType = (UserType) factory.makeInstance();
         <code>ExceptionMethod</code>能用来实现一个只抛出异常的方法。如前所述，可以从任何方法抛出已检查异常，即使这个方法没有声明这个异常。
     </span></li>
     <li><span>
-        <code>Forwarding</code>实现允许简单地将方法调用转发到另一个与拦截方法的声明类型相同类型的实例。用<code>MethodDelegation</code>可以达到相同的效果。
-        然而，通过<code>Forwarding</code>，应用更简单的委托模型，该模型可以覆盖不需要目标方法发现的用例。
+        <code>MethodCall</code>实现允许简单地将方法调用转发到另一个与拦截方法的声明类型相同类型的实例。用<code>MethodDelegation</code>可以达到相同的效果。
+        然而，通过<code>MethodCall</code>，应用更简单的委托模型，该模型可以覆盖不需要目标方法发现的用例。
     </span></li>
     <li><span>
         <code>InvocationHandlerAdapter</code>允许使用 Java 类库自带的<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html"
@@ -1713,7 +1713,7 @@ new ByteBuddy()
         只要这个行为通过定义为一个<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html"><code>@Inherited</code></a>注解被显式要求。
         用 Byte Buddy，通过调用 Byte Buddy 领域特定语言的<code>attribute(属性)</code>方法，创建返回它的基类注解的子类代理很容易。
         这个方法要求一个<code>TypeAttributeAppender</code>作为参数。类型属性追加器提供了一种灵活的方式定义基于其基类动态创建的类的注解。
-        例如，通过传递一个<code>TypeAttributeAppender.ForSuperType</code>，一个类的注解会被复制到它动态创建的子类中。注意，注解和类属性追加器是附加的，
+        例如，通过传递一个<code>TypeAttributeAppender.ForInstrumentedType</code>，一个类的注解会被复制到它动态创建的子类中。注意，注解和类属性追加器是附加的，
         任何类都不能多次定义注解类型。
     </p>
 
@@ -1750,7 +1750,7 @@ new ByteBuddy()
 
     <p>
         默认情况下，Byte Buddy 将注解的任何属性都包含到类文件里，包括通过<code>default</code>值隐式指定的默认属性。但是，
-        可以通过为<code>ByteBuddy</code>实例提供一个<code>AnnotationFilter</code>来自定义这个行为。
+        可以通过为<code>ByteBuddy</code>实例提供一个<code>AnnotationRetention</code>来自定义这个行为。
     </p>
 
 <h4>类型注解</h4>
@@ -1796,14 +1796,14 @@ new ByteBuddy()
 
 <p>
     在前面的部分，我们描述了 Byte Buddy 的标准 API。目前为止前面描述的特性都不需要 Java 字节码的知识和显式表示。然而，如果你需要创建自定义的字节码，
-    你可以通过直接访问<a href="http://asm.ow2.org/"> ASM </a>的 API 来实现，它是一个底层的字节码类库，Byte Buddy是在它上面构建的。
+    你可以通过直接访问<a data-ng-href="{{asmUrl}}"> ASM </a>的 API 来实现，它是一个底层的字节码类库，Byte Buddy是在它上面构建的。
     但是，注意 ASM 不同版本之间是不兼容的，这样当你发布代码时，你需要将 Byte Buddy 重新打包到你的命名空间。否则，当另一个依赖要求基于不同版本 ASM
     构建的 Byte Buddy 时，你的应用可能导致不兼容Byte Buddy的其它用途。你可以在 Byte Buddy <a href="/#dependency">首页</a>找到维护
     Byte Buddy 依赖的详情。
 </p>
 
 <p>
-    ASM 类库带有一份极好的关于 Java 字节码和类库使用的<a href="https://asm.ow2.io/asm4-guide.pdf">文档</a>。因此，
+    ASM 类库带有一份极好的关于 Java 字节码和类库使用的<a href="{{asmUrl}}/asm4-guide.pdf">文档</a>。因此，
     如果你想深入了解 Java 字节码和 ASM 的 API，我们希望你参考此文档。相反，我们只是简单介绍 JVM 的执行模型和 Byte Buddy 对 ASM 的 API 的适配。
 </p>
 
