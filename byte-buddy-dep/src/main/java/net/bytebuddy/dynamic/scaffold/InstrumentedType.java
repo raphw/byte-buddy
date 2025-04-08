@@ -1650,7 +1650,7 @@ public interface InstrumentedType extends TypeDescription {
             } else if (nestHost.isArray() || nestHost.isPrimitive()) {
                 throw new IllegalStateException("Cannot define array type or primitive type " + nestHost + " + as nest host for " + this);
             } else if (!nestHost.isSamePackage(this)) {
-                throw new IllegalStateException("Cannot define nest host " + nestHost + " + within different package then " + this);
+                throw new IllegalStateException("Cannot define nest host " + nestHost + " within different package then " + this);
             }
             for (TypeDescription permittedSubclass : getPermittedSubtypes()) {
                 if (!permittedSubclass.isAssignableTo(this) || permittedSubclass.equals(this)) {
