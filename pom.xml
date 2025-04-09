@@ -67,7 +67,7 @@
         <bytecode.main.version>1.5</bytecode.main.version>
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
-        <nexus.url>https://s01.oss.sonatype.org</nexus.url>
+        <nexus.url>https://central.sonatype.com</nexus.url>
         <version.asm>9.8</version.asm>
         <version.asmjdkbridge>0.0.9</version.asmjdkbridge>
         <version.jna>5.12.1</version.jna>
@@ -78,7 +78,7 @@
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
         <version.plugin.install>3.0.1</version.plugin.install>
         <version.plugin.deploy>3.0.0</version.plugin.deploy>
-        <version.plugin.staging>1.7.0</version.plugin.staging>
+        <version.plugin.staging>0.7.0</version.plugin.staging>
         <version.plugin.versions>2.18.0</version.plugin.versions>
         <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
         <version.plugin.source>3.2.1</version.plugin.source>
@@ -289,18 +289,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Setup plugin for deployment to Maven Central. -->
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>${version.plugin.staging}</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>central</serverId>
-                    <nexusUrl>${nexus.url}</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
             <!-- Allow for automated version updates. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -447,6 +435,27 @@
     </distributionManagement>
 
     <profiles>
+        <profile>
+            <id>publish</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.7.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <autoPublish>true</autoPublish>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- Runs the build with compatibility for Java 6 JVMs. -->
         <profile>
             <id>java6-compatibility</id>
@@ -461,7 +470,7 @@
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
                 <version.plugin.install>2.5.2</version.plugin.install>
                 <version.plugin.deploy>2.8.2</version.plugin.deploy>
-                <version.plugin.staging>1.6.8</version.plugin.staging>
+                <version.plugin.publishing>0.7.0</version.plugin.publishing>
                 <version.plugin.versions>2.4</version.plugin.versions>
                 <version.plugin.source>2.4</version.plugin.source>
                 <version.plugin.gpg>1.6</version.plugin.gpg>
@@ -542,7 +551,6 @@
                 <version.plugin.clean>3.1.0</version.plugin.clean>
                 <version.plugin.bundle>3.5.1</version.plugin.bundle>
                 <version.plugin.compiler>3.8.1</version.plugin.compiler>
-                <version.plugin.staging>1.6.8</version.plugin.staging>
                 <version.plugin.versions>2.8.1</version.plugin.versions>
                 <version.plugin.jxr>3.1.1</version.plugin.jxr>
                 <version.plugin.buildhelper>3.2.0</version.plugin.buildhelper>
@@ -1272,7 +1280,9 @@
                                     <skip>${japicmp.skip}</skip>
                                     <newVersion>
                                         <file>
-                                            <path>${project.build.directory}/${project.artifactId}-${project.version}.jar</path>
+                                            <path>
+                                                ${project.build.directory}/${project.artifactId}-${project.version}.jar
+                                            </path>
                                         </file>
                                     </newVersion>
                                     <parameter>
@@ -1311,7 +1321,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <echo level="info" message="Checksum collection is enabled (only if using mvnw)." />
+                                        <echo level="info"
+                                              message="Checksum collection is enabled (only if using mvnw)."/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -1342,7 +1353,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <echo level="info" message="Checksum enforcement is enabled (only if using mvnw)." />
+                                        <echo level="info"
+                                              message="Checksum enforcement is enabled (only if using mvnw)."/>
                                     </target>
                                 </configuration>
                             </execution>
