@@ -30,7 +30,7 @@ import java.security.PrivilegedAction;
 
 /**
  * A wrapper object for representing a validated class file version in the format that is specified by the
- * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
+ * <a href="https://docs.oracle.com/javase/specs/jvms/se24/html/jvms-4.html">JVMS</a>.
  */
 public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializable {
 
@@ -40,7 +40,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     private static final long serialVersionUID = 1L;
 
     /**
-     * Returns the minimal version number that is legal.
+     * The minimal class file major version number that is legal.
      */
     protected static final int BASE_VERSION = 44;
 
@@ -165,7 +165,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V24 = new ClassFileVersion(Opcodes.V24);
 
     /**
-     * The class file version of Java 24.
+     * The class file version of Java 25.
      */
     public static final ClassFileVersion JAVA_V25 = new ClassFileVersion(Opcodes.V25);
 
@@ -268,8 +268,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     }
 
     /**
-     * Creates a class file version for a given major release of Java. Currently, all versions reaching from
-     * Java 1 to Java 9 are supported.
+     * Creates a class file version for a given major release of Java.
      *
      * @param javaVersion The Java version.
      * @return A wrapper for the given Java class file version.
