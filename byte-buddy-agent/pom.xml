@@ -173,7 +173,8 @@
                             <static-requires>
                                 jdk.attach,
                                 com.sun.jna,
-                                com.sun.jna.platform
+                                com.sun.jna.platform,
+                                com.github.spotbugs.annotations
                             </static-requires>
                         </configuration>
                     </execution>
