@@ -274,32 +274,26 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
 
                     private AsmClassReader make(final AsmClassReader delegate) {
                         return new AsmClassReader() {
-                            @Override
                             public <T> T unwrap(Class<T> type) {
                                 return delegate.unwrap(type);
                             }
 
-                            @Override
                             public int getModifiers() {
                                 return delegate.getModifiers();
                             }
 
-                            @Override
                             public String getInternalName() {
                                 return delegate.getInternalName();
                             }
 
-                            @Override
                             public String getSuperClassInternalName() {
                                 return delegate.getSuperClassInternalName();
                             }
 
-                            @Override
                             public List<String> getInterfaceInternalNames() {
                                 return delegate.getInterfaceInternalNames();
                             }
 
-                            @Override
                             public void accept(ClassVisitor classVisitor, int flags) {
                                 throw new AssertionError();
                             }
