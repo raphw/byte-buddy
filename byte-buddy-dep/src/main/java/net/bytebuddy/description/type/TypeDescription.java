@@ -8603,6 +8603,26 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                public boolean isAbstract() {
+                    return delegate().isAbstract();
+                }
+
+                @Override
+                public boolean isEnum() {
+                    return delegate().isEnum();
+                }
+
+                @Override
+                public boolean isInterface() {
+                    return delegate().isInterface();
+                }
+
+                @Override
+                public boolean isAnnotation() {
+                    return delegate().isAnnotation();
+                }
+
+                @Override
                 @MaybeNull
                 public String getGenericSignature() {
                     // Embrace use of native generic signature by direct delegation.

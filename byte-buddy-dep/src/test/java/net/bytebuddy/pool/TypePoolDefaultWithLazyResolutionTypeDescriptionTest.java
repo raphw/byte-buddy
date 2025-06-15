@@ -7,15 +7,19 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.utility.AsmClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.objectweb.asm.ClassVisitor;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -249,6 +253,66 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     public void testSimpleName() throws Exception {
         super.testSimpleName();
         assertThat(describe($DollarInName.class).getSimpleName(), CoreMatchers.is($DollarInName.class.getSimpleName()));
+    }
+
+    @Test
+    public void testClassFileIsNotParsedForExtendedProperties() throws Exception {
+        if (lazinessMode == TypePool.Default.WithLazyResolution.LazinessMode.NAME) {
+            return;
+        }
+        TypeDescription typeDescription = new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Simple(),
+                ClassFileLocator.ForClassLoader.of(NonGenericType.class.getClassLoader()),
+                TypePool.Default.ReaderMode.EXTENDED,
+                new AsmClassReader.Factory() {
+                    public AsmClassReader make(byte[] binaryRepresentation) {
+                        return make(Default.IMPLICIT.make(binaryRepresentation));
+                    }
+
+                    public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
+                        return make(Default.IMPLICIT.make(binaryRepresentation, experimental));
+                    }
+
+                    private AsmClassReader make(final AsmClassReader delegate) {
+                        return new AsmClassReader() {
+                            @Override
+                            public <T> T unwrap(Class<T> type) {
+                                return delegate.unwrap(type);
+                            }
+
+                            @Override
+                            public int getModifiers() {
+                                return delegate.getModifiers();
+                            }
+
+                            @Override
+                            public String getInternalName() {
+                                return delegate.getInternalName();
+                            }
+
+                            @Override
+                            public String getSuperClassInternalName() {
+                                return delegate.getSuperClassInternalName();
+                            }
+
+                            @Override
+                            public List<String> getInterfaceInternalNames() {
+                                return delegate.getInterfaceInternalNames();
+                            }
+
+                            @Override
+                            public void accept(ClassVisitor classVisitor, int flags) {
+                                throw new AssertionError();
+                            }
+                        };
+                    }
+                },
+                lazinessMode).describe(NonGenericType.class.getName()).resolve();
+        assertThat(typeDescription.getSuperClass().asErasure().getName(), CoreMatchers.is(NonGenericType.class.getSuperclass().getName()));
+        assertThat(typeDescription.getInterfaces().get(0).asErasure().getName(), CoreMatchers.is(NonGenericType.class.getInterfaces()[0].getName()));
+        assertThat(typeDescription.isAbstract(), CoreMatchers.is(Modifier.isAbstract(NonGenericType.class.getModifiers())));
+        assertThat(typeDescription.isInterface(), CoreMatchers.is(Modifier.isInterface(NonGenericType.class.getModifiers())));
+        assertThat(typeDescription.isAnnotation(), CoreMatchers.is(Modifier.isInterface(NonGenericType.class.getModifiers())));
+        assertThat(typeDescription.isEnum(), CoreMatchers.is(NonGenericType.class.isEnum()));
     }
 
     private static class SuperClass {
