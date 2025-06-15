@@ -311,7 +311,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         assertThat(typeDescription.getInterfaces().get(0).asErasure().getName(), CoreMatchers.is(NonGenericType.class.getInterfaces()[0].getName()));
         assertThat(typeDescription.isAbstract(), CoreMatchers.is(Modifier.isAbstract(NonGenericType.class.getModifiers())));
         assertThat(typeDescription.isInterface(), CoreMatchers.is(Modifier.isInterface(NonGenericType.class.getModifiers())));
-        assertThat(typeDescription.isAnnotation(), CoreMatchers.is(Modifier.isInterface(NonGenericType.class.getModifiers())));
+        assertThat(typeDescription.isAnnotation(), CoreMatchers.is(NonGenericType.class.isAnnotation()));
         assertThat(typeDescription.isEnum(), CoreMatchers.is(NonGenericType.class.isEnum()));
     }
 
