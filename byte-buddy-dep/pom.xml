@@ -489,7 +489,7 @@
                                             </fileset>
                                         </copy>
                                         <delete file="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar"/>
-                                        <zip basedir="${project.build.directory}/sources-copy" destfile="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar"/>
+                                        <zip basedir="${project.build.directory}/sources-copy" destfile="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar" modificationtime="${project.build.outputTimestamp}"/>
                                     </target>
                                 </configuration>
                             </execution>
