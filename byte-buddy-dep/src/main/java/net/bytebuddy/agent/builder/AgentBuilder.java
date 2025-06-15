@@ -25,18 +25,10 @@ import net.bytebuddy.build.*;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.modifier.FieldManifestation;
-import net.bytebuddy.description.modifier.MethodManifestation;
-import net.bytebuddy.description.modifier.Ownership;
-import net.bytebuddy.description.modifier.TypeManifestation;
-import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.NexusAccessor;
-import net.bytebuddy.dynamic.TypeResolutionStrategy;
-import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
+import net.bytebuddy.dynamic.*;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
@@ -74,19 +66,10 @@ import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import org.objectweb.asm.ConstantDynamic;
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.io.*;
-import java.lang.instrument.ClassDefinition;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
-import java.lang.instrument.Instrumentation;
-import java.lang.instrument.UnmodifiableClassException;
+import java.lang.instrument.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -94,48 +77,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
-import java.util.AbstractSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static net.bytebuddy.matcher.ElementMatchers.any;
-import static net.bytebuddy.matcher.ElementMatchers.hasMethodName;
-import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.isExtensionClassLoader;
-import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
-import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.not;
-import static net.bytebuddy.matcher.ElementMatchers.returns;
-import static net.bytebuddy.matcher.ElementMatchers.supportsModules;
-import static net.bytebuddy.matcher.ElementMatchers.takesArgument;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * <p>
@@ -2756,8 +2705,8 @@ public interface AgentBuilder {
             protected boolean doAcquire() {
                 try {
                     return time == 0
-                        ? lock.tryLock()
-                        : lock.tryLock(time, timeUnit);
+                            ? lock.tryLock()
+                            : lock.tryLock(time, timeUnit);
                 } catch (InterruptedException ignored) {
                     return false;
                 }
@@ -3463,7 +3412,7 @@ public interface AgentBuilder {
                 /**
                  * Creates a lazy dynamic type.
                  *
-                 * @param typeDescription A description of the class to inject.
+                 * @param typeDescription  A description of the class to inject.
                  * @param classFileLocator The class file locator to use.
                  */
                 protected LazyDynamicType(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
@@ -3581,6 +3530,67 @@ public interface AgentBuilder {
                 return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(),
                         classFileLocator,
                         readerMode));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name) {
+                return typePool(classFileLocator, classLoader);
+            }
+        }
+
+        /**
+         * <p>
+         * A default type locator that resolves types only if any property that is not the type's name is requested.
+         * Additionally, the class file of a class is only parsed when a property that is not the modifiers, the
+         * super class or the interface types is requeste.
+         * </p>
+         * <p>
+         * The returned type pool uses a {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and the
+         * {@link ClassFileLocator} that is provided by the builder's {@link LocationStrategy}.
+         * </p>
+         */
+        enum ExtraLazy implements PoolStrategy {
+
+            /**
+             * A type locator that parses the code segment of each method for extracting information about parameter
+             * names even if they are not explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#EXTENDED
+             */
+            EXTENDED(TypePool.Default.ReaderMode.EXTENDED),
+
+            /**
+             * A type locator that skips the code segment of each method and does therefore not extract information
+             * about parameter names. Parameter names are still included if they are explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#FAST
+             */
+            FAST(TypePool.Default.ReaderMode.FAST);
+
+            /**
+             * The reader mode to apply by this type locator.
+             */
+            private final TypePool.Default.ReaderMode readerMode;
+
+            /**
+             * Creates a new type locator.
+             *
+             * @param readerMode The reader mode to apply by this type locator.
+             */
+            ExtraLazy(TypePool.Default.ReaderMode readerMode) {
+                this.readerMode = readerMode;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
+                return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(),
+                        classFileLocator,
+                        readerMode,
+                        TypePool.Default.WithLazyResolution.LazinessMode.EXTENDED));
             }
 
             /**
@@ -3724,19 +3734,35 @@ public interface AgentBuilder {
             protected final TypePool.Default.ReaderMode readerMode;
 
             /**
+             * The laziness mode to use for when to parse a class file.
+             */
+            protected final TypePool.Default.WithLazyResolution.LazinessMode lazinessMode;
+
+            /**
              * Creates a new type locator that creates {@link TypePool}s but provides a custom {@link net.bytebuddy.pool.TypePool.CacheProvider}.
              *
              * @param readerMode The reader mode to use for parsing a class file.
              */
             protected WithTypePoolCache(TypePool.Default.ReaderMode readerMode) {
+                this(readerMode, TypePool.Default.WithLazyResolution.LazinessMode.NAME);
+            }
+
+            /**
+             * Creates a new type locator that creates {@link TypePool}s but provides a custom {@link net.bytebuddy.pool.TypePool.CacheProvider}.
+             *
+             * @param readerMode   The reader mode to use for parsing a class file.
+             * @param lazinessMode The laziness mode to use for when to parse a class file.
+             */
+            protected WithTypePoolCache(TypePool.Default.ReaderMode readerMode, TypePool.Default.WithLazyResolution.LazinessMode lazinessMode) {
                 this.readerMode = readerMode;
+                this.lazinessMode = lazinessMode;
             }
 
             /**
              * {@inheritDoc}
              */
             public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
-                return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode));
+                return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode, lazinessMode));
             }
 
             /**
@@ -3745,7 +3771,7 @@ public interface AgentBuilder {
             public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name) {
                 return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(name),
                         new TypePool.CacheProvider.Simple(),
-                        locate(classLoader)), classFileLocator, readerMode));
+                        locate(classLoader)), classFileLocator, readerMode, lazinessMode));
             }
 
             /**
@@ -12585,7 +12611,7 @@ public interface AgentBuilder {
              *
              * @param rawModule            The instrumented class's Java {@code java.lang.Module}.
              * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
-             * @param internalName     The internal name of the instrumented class.
+             * @param internalName         The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
@@ -12619,7 +12645,7 @@ public interface AgentBuilder {
              *
              * @param module               The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
              * @param classLoader          The instrumented class's class loader.
-             * @param internalName     The internal name of the instrumented class.
+             * @param internalName         The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
@@ -13044,7 +13070,7 @@ public interface AgentBuilder {
                  * Creates a new type transformation dispatcher.
                  *
                  * @param classLoader          The type's class loader or {@code null} if the bootstrap class loader is represented.
-                 * @param internalName     The type's internal name or {@code null} if no such name exists.
+                 * @param internalName         The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
                  * @param protectionDomain     The type's protection domain or {@code null} if not available.
                  * @param binaryRepresentation The type's binary representation.
@@ -13124,7 +13150,7 @@ public interface AgentBuilder {
                  *
                  * @param rawModule            The type's {@code java.lang.Module}.
                  * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
-                 * @param internalName     The type's internal name or {@code null} if no such name exists.
+                 * @param internalName         The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
                  * @param protectionDomain     The type's protection domain or {@code null} if not available.
                  * @param binaryRepresentation The type's binary representation.

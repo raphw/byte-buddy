@@ -9,24 +9,44 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
+@RunWith(Parameterized.class)
 public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends AbstractTypeDescriptionTest {
+
+    private final TypePool.Default.WithLazyResolution.LazinessMode lazinessMode;
+
+    public TypePoolDefaultWithLazyResolutionTypeDescriptionTest(TypePool.Default.WithLazyResolution.LazinessMode lazinessMode) {
+        this.lazinessMode = lazinessMode;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {TypePool.Default.WithLazyResolution.LazinessMode.NAME},
+                {TypePool.Default.WithLazyResolution.LazinessMode.EXTENDED}
+        });
+    }
 
     protected TypeDescription describe(Class<?> type) {
         return describe(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()), TypePool.CacheProvider.NoOp.INSTANCE);
     }
 
-    private static TypeDescription describe(Class<?> type, ClassFileLocator classFileLocator, TypePool.CacheProvider cacheProvider) {
+    private TypeDescription describe(Class<?> type, ClassFileLocator classFileLocator, TypePool.CacheProvider cacheProvider) {
         return new TypePool.Default.WithLazyResolution(cacheProvider,
                 classFileLocator,
-                TypePool.Default.ReaderMode.EXTENDED).describe(type.getName()).resolve();
+                TypePool.Default.ReaderMode.EXTENDED,
+                lazinessMode).describe(type.getName()).resolve();
     }
 
     protected TypeDescription.Generic describeType(Field field) {

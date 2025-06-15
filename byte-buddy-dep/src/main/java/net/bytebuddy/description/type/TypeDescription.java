@@ -8502,6 +8502,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @MaybeNull
                 public Generic getSuperClass() {
                     return delegate().getSuperClass();
                 }

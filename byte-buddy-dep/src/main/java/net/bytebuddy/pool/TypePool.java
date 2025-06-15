@@ -17,7 +17,6 @@ package net.bytebuddy.pool;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.utility.AsmClassReader;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.TypeVariableSource;
@@ -31,33 +30,19 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.PackageDescription;
-import net.bytebuddy.description.type.RecordComponentDescription;
-import net.bytebuddy.description.type.RecordComponentList;
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.AsmClassReader;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.RecordComponentVisitor;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.TypePath;
-import org.objectweb.asm.TypeReference;
+import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
@@ -67,20 +52,12 @@ import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.MalformedParameterizedTypeException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static net.bytebuddy.matcher.ElementMatchers.hasDescriptor;
-import static net.bytebuddy.matcher.ElementMatchers.hasMethodName;
-import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A type pool allows the retrieval of {@link TypeDescription} by its name.
@@ -893,7 +870,7 @@ public interface TypePool {
             try {
                 ClassFileLocator.Resolution resolution = classFileLocator.locate(name);
                 return resolution.isResolved()
-                        ? new Resolution.Simple(doParse(resolution.resolve()))
+                        ? new Resolution.Simple(doParse(classReaderFactory.make(resolution.resolve())))
                         : new Resolution.Illegal(name);
             } catch (IOException exception) {
                 throw new IllegalStateException("Error while reading class file", exception);
@@ -902,12 +879,11 @@ public interface TypePool {
 
         /**
          * Parses the supplied binary representation and returns a corresponding type description.
-         * @param binaryRepresentation The binrary representation to parse.
          *
+         * @param classReader The ASM class reader to process.
          * @return An appropriate type description.
          */
-        protected TypeDescription doParse(byte[] binaryRepresentation) {
-            AsmClassReader classReader = classReaderFactory.make(binaryRepresentation);
+        protected TypeDescription doParse(AsmClassReader classReader) {
             TypeExtractor typeExtractor = new TypeExtractor();
             classReader.accept(typeExtractor, readerMode.getFlags());
             return typeExtractor.toTypeDescription();
@@ -989,7 +965,7 @@ public interface TypePool {
              * @param readerMode       The reader mode to apply by this default type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
-                this(cacheProvider, classFileLocator, readerMode, LazinessMode.NAME_ONLY);
+                this(cacheProvider, classFileLocator, readerMode, LazinessMode.NAME);
             }
 
             /**
@@ -1001,7 +977,7 @@ public interface TypePool {
              * @param parentPool       The parent type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool) {
-                this(cacheProvider, classFileLocator, readerMode, parentPool, LazinessMode.NAME_ONLY);
+                this(cacheProvider, classFileLocator, readerMode, parentPool, LazinessMode.NAME);
             }
 
             /**
@@ -1013,7 +989,7 @@ public interface TypePool {
              * @param classReaderFactory The class reader factory to use.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory) {
-                this(cacheProvider, classFileLocator, readerMode, classReaderFactory, LazinessMode.NAME_ONLY);
+                this(cacheProvider, classFileLocator, readerMode, classReaderFactory, LazinessMode.NAME);
             }
 
             /**
@@ -1026,7 +1002,7 @@ public interface TypePool {
              * @param parentPool         The parent type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool) {
-                this(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool, LazinessMode.NAME_ONLY);
+                this(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool, LazinessMode.NAME);
             }
 
             /**
@@ -1138,9 +1114,14 @@ public interface TypePool {
                 return new LazyResolution(name);
             }
 
-            /**
-             * {@inheritDoc}
-             */
+            @Override
+            protected TypeDescription doParse(AsmClassReader classReader) {
+                return lazinessMode == LazinessMode.EXTENDED
+                        ? new ExtendedLazyTypeDescription(classReader)
+                        : super.doParse(classReader);
+            }
+
+            @Override
             protected Resolution doCache(String name, Resolution resolution) {
                 return resolution;
             }
@@ -1167,13 +1148,13 @@ public interface TypePool {
                 /**
                  * Only resolves the name lazily, but resolves the full class file otherwise.
                  */
-                NAME_ONLY,
+                NAME,
 
                 /**
                  * Resolves the name lazily, and does not parse the entire class file as long as only the non-generic
                  * names of super class and interfaces, as well as class flags are read.
                  */
-                BASIC_PROPERTIES
+                EXTENDED
             }
 
             /**
@@ -1240,13 +1221,317 @@ public interface TypePool {
                 @Override
                 @CachedReturnPlugin.Enhance("delegate")
                 protected TypeDescription delegate() {
-                    switch (lazinessMode) {
-                        case NAME_ONLY:
-                            return doResolve(name).resolve();
-                        case BASIC_PROPERTIES:
-                            return null; // TODO:
-                        default:
-                            throw new IllegalStateException();
+                    return doResolve(name).resolve();
+                }
+            }
+
+            /**
+             * Represents a type description where the class file is only fully parsed if a complex property is resolved.
+             */
+            protected class ExtendedLazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation {
+
+                /**
+                 * The current delegate for resolving possibly short-wired class files.
+                 */
+                private Delegate delegate;
+
+                /**
+                 * Creates a new extended lazy type resolution.
+                 *
+                 * @param classReader The ASM class reader to represent.
+                 */
+                protected ExtendedLazyTypeDescription(AsmClassReader classReader) {
+                    delegate = new UnresolvedDelegate(classReader);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getName() {
+                    return delegate.getName();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return delegate.getModifiers();
+                }
+
+                @Override
+                @MaybeNull
+                public Generic getSuperClass() {
+                    return delegate.getSuperClass();
+                }
+
+                @Override
+                public TypeList.Generic getInterfaces() {
+                    return delegate.getInterfaces();
+                }
+
+                @Override
+                protected TypeDescription delegate() {
+                    ResolvedDelegate delegate = this.delegate.resolve();
+                    this.delegate = delegate;
+                    return delegate.getTypeDescription();
+                }
+
+                /**
+                 * A delegate representing a possibly unparsed class file.
+                 */
+                private abstract class Delegate {
+
+                    /**
+                     * Returns the name of the represented class.
+                     *
+                     * @return The name of the represented class.
+                     */
+                    protected abstract String getName();
+
+                    /**
+                     * Returns the modifiers of the represented class.
+                     *
+                     * @return The modifiers of the represented class.
+                     */
+                    protected abstract int getModifiers();
+
+                    /**
+                     * Returns the generic super class of the represented class or {@code null} if none exists.
+                     *
+                     * @return The generic super class of the represented class or {@code null} if none exists.
+                     */
+                    @MaybeNull
+                    protected abstract Generic getSuperClass();
+
+                    /**
+                     * Returns a list of generic interfaces of the represented class.
+                     *
+                     * @return A list of generic interfaces of the represented class.
+                     */
+                    protected abstract TypeList.Generic getInterfaces();
+
+                    /**
+                     * Returns a resolved version of this delegate.
+                     *
+                     * @return A resolved version of this delegate.
+                     */
+                    protected abstract ResolvedDelegate resolve();
+                }
+
+                /**
+                 * A unresolved delegate that has not parsed the class file.
+                 */
+                private class UnresolvedDelegate extends Delegate {
+
+                    /**
+                     * The represented ASM class reader.
+                     */
+                    private final AsmClassReader classReader;
+
+                    /**
+                     * Creates an unresolved delegated.
+                     *
+                     * @param classReader The represented ASM class reader.
+                     */
+                    private UnresolvedDelegate(AsmClassReader classReader) {
+                        this.classReader = classReader;
+                    }
+
+                    @Override
+                    public String getName() {
+                        return classReader.getInternalName().replace('/', '.');
+                    }
+
+                    @Override
+                    public int getModifiers() {
+                        return classReader.getModifiers() & ~(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SYNTHETIC);
+                    }
+
+                    @Override
+                    @MaybeNull
+                    public Generic getSuperClass() {
+                        String superClassInternalName = classReader.getSuperClassInternalName();
+                        return superClassInternalName == null
+                                ? null
+                                : new LazySuperClass(superClassInternalName.replace('/', '.'));
+                    }
+
+                    @Override
+                    public TypeList.Generic getInterfaces() {
+                        return new LazyInterfaceList(classReader.getInterfaceInternalNames());
+                    }
+
+                    @Override
+                    protected ResolvedDelegate resolve() {
+                        return new ResolvedDelegate(WithLazyResolution.super.doParse(classReader));
+                    }
+                }
+
+                /**
+                 * A resolved version of a delegate where the class file was fully parsed.
+                 */
+                private class ResolvedDelegate extends Delegate {
+
+                    /**
+                     * The represented type description.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * Creates a new resolved version of a delegate.
+                     *
+                     * @param typeDescription The represented type description.
+                     */
+                    private ResolvedDelegate(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    public TypeDescription getTypeDescription() {
+                        return typeDescription;
+                    }
+
+                    @Override
+                    public String getName() {
+                        return typeDescription.getName();
+                    }
+
+                    @Override
+                    public int getModifiers() {
+                        return typeDescription.getModifiers();
+                    }
+
+                    @Override
+                    @MaybeNull
+                    public Generic getSuperClass() {
+                        return typeDescription.getSuperClass();
+                    }
+
+                    @Override
+                    public TypeList.Generic getInterfaces() {
+                        return typeDescription.getInterfaces();
+                    }
+
+                    @Override
+                    protected ResolvedDelegate resolve() {
+                        return this;
+                    }
+                }
+
+                /**
+                 * Represents a lazy super class of a type description with extended laziness.
+                 */
+                private class LazySuperClass extends Generic.LazyProjection.WithLazyNavigation {
+
+                    /**
+                     * The super class's internal name.
+                     */
+                    private final String internalName;
+
+                    /**
+                     * Creates a lazy super class.
+                     *
+                     * @param internalName The super class's internal name.
+                     */
+                    protected LazySuperClass(String internalName) {
+                        this.internalName = internalName;
+                    }
+
+                    @Override
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Cannot be null if super class was resolved directly.")
+                    protected Generic resolve() {
+                        return delegate().getSuperClass();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotationList getDeclaredAnnotations() {
+                        return resolve().getDeclaredAnnotations();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public TypeDescription asErasure() {
+                        return new LazyTypeDescription(internalName);
+                    }
+                }
+
+                /**
+                 * Represents a lazy interface of an extended lazy type description.
+                 */
+                private class LazyInterface extends Generic.LazyProjection.WithLazyNavigation {
+
+                    /**
+                     * The internal name of the represented interface.
+                     */
+                    private final String internalName;
+
+                    /**
+                     * The index of the interface as supplied by the enclosing lazy type description.
+                     */
+                    private final int index;
+
+                    /**
+                     * Creates a lazy interface of an extended lazy type description.
+                     *
+                     * @param internalName The internal name of the represented interface.
+                     * @param index        The index of the interface as supplied by the enclosing lazy type description.
+                     */
+                    protected LazyInterface(String internalName, int index) {
+                        this.internalName = internalName;
+                        this.index = index;
+                    }
+
+                    @Override
+                    protected Generic resolve() {
+                        return delegate().getInterfaces().get(index);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotationList getDeclaredAnnotations() {
+                        return resolve().getDeclaredAnnotations();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public TypeDescription asErasure() {
+                        return new LazyTypeDescription(internalName);
+                    }
+                }
+
+                /**
+                 * Creates a list of lazy interfaces of an extended lazy type description.
+                 */
+                private class LazyInterfaceList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The internal names of the extended lazy type description.
+                     */
+                    private final List<String> internalNames;
+
+                    /**
+                     * Creates a list of lazy interfaces of an extended lazy type description.
+                     *
+                     * @param internalNames The internal names of the extended lazy type description.
+                     */
+                    protected LazyInterfaceList(List<String> internalNames) {
+                        this.internalNames = internalNames;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Generic get(int index) {
+                        return new LazyInterface(internalNames.get(index), index);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public int size() {
+                        return internalNames.size();
                     }
                 }
             }
