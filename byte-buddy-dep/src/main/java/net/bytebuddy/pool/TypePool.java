@@ -1011,6 +1011,7 @@ public interface TypePool {
              * @param cacheProvider    The cache provider to be used.
              * @param classFileLocator The class file locator to be used.
              * @param readerMode       The reader mode to apply by this default type pool.
+             * @param lazinessMode     The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, LazinessMode lazinessMode) {
                 super(cacheProvider, classFileLocator, readerMode);
@@ -1024,6 +1025,7 @@ public interface TypePool {
              * @param classFileLocator The class file locator to be used.
              * @param readerMode       The reader mode to apply by this default type pool.
              * @param parentPool       The parent type pool.
+             * @param lazinessMode     The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool, LazinessMode lazinessMode) {
                 super(cacheProvider, classFileLocator, readerMode, parentPool);
@@ -1037,6 +1039,7 @@ public interface TypePool {
              * @param classFileLocator   The class file locator to be used.
              * @param readerMode         The reader mode to apply by this default type pool.
              * @param classReaderFactory The class reader factory to use.
+             * @param lazinessMode       The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, LazinessMode lazinessMode) {
                 super(cacheProvider, classFileLocator, readerMode, classReaderFactory);
@@ -1051,6 +1054,7 @@ public interface TypePool {
              * @param readerMode         The reader mode to apply by this default type pool.
              * @param classReaderFactory The class reader factory to use.
              * @param parentPool         The parent type pool.
+             * @param lazinessMode       The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool, LazinessMode lazinessMode) {
                 super(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool);
@@ -1384,6 +1388,11 @@ public interface TypePool {
                         this.typeDescription = typeDescription;
                     }
 
+                    /**
+                     * Returns the represented type description.
+                     *
+                     * @return The represented type description.
+                     */
                     public TypeDescription getTypeDescription() {
                         return typeDescription;
                     }

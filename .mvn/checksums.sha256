@@ -38,12 +38,14 @@ classworlds:classworlds:jar:1.1 4e3e0ad158ec60917e0de544c550f31cd65d5a97c3af1c19
 classworlds:classworlds:jar:1.1-alpha-2 2bf4e59f3acd106fea6145a9a88fe8956509f8b9c0fdd11eb96fee757269e3f3
 classworlds:classworlds:pom:1.1 25a1efc00bcd1f029fd20c44df843b8b12d1fa17485235470764f011d2f5cb29
 classworlds:classworlds:pom:1.1-alpha-2 0cc647963b74ad1d7a37c9868e9e5a8f474e49297e1863582253a08a4c719cb1
+codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.10 8d4e1ed640e59e2603351ddbacce5e908fdbcbc7f0d5224ce7116f4a08708466
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.2 1293865e65f3f052f7af3f789d1cdb8877148735ef1d6bd69cbd78a112315e97
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.4 75ca0b7212b1c89b10724ac58e40b1aea4ff884d46caff5a3ebf15a71bcee7b0
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.6 97bd5a7c83ab351f1c508db7af8ffa06f2db2a52a3c45050935df3386ae08ff5
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.7 bf8934314fe09ed280453300e202acbfaab58ae809489c6db1ceee8ab346812c
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.8 a4faa5f2b7fb7ce98b4bafaa822afc4b8c63655c4b29ed5e0e0332bf9d892fed
 codes.rafael.asmjdkbridge:asm-jdk-bridge-parent:pom:0.0.9 de7e8af37944eb06531e11e0ed95c4aa8fdf7343d084cc342af821dae9f0e7d4
+codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.10 272c864b1f5e41b1e92e6325c652e4d204ba0726565491d81fc46537b98dc0a7
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.2 d0e77b3f8bbcae3fcc45cdbea534f10806bed4bcb21dbe9c92ec9bf2ea1fc2a6
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.4 d80b7c1c54b7490d60d2b0b768fc2e993b8b64807da4ccbec6c25a5878e79508
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:0.0.6 1274279e722893d5566dbfeb7944181ece51d708b0a032b06a8568d1ca748bca
@@ -56,6 +58,7 @@ codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:sources:0.0.6 3fca530e91539b7a006fb
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:sources:0.0.7 a099a36af59eb146b43b078746763696e70d27e6109e9fbf88cb96b7b81b3f08
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:sources:0.0.8 06808a6164c32d182f817236d8361a77649430ddf8b84a1aab90d3c95921b29c
 codes.rafael.asmjdkbridge:asm-jdk-bridge:jar:sources:0.0.9 588e091e308a9d488201c79fc7f92315f8c291796d738b598453e8deb0c9a91e
+codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.10 5537f598d9d81fb3543a7fbf0444273df0ba946584fa5affd6727d8e44a7ca9d
 codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.2 468f2b3560a0eb9f5be26679380c5a2461ef520b242136c2642e7c548224a6a8
 codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.4 be89b2ca8b7646cd6b185364358aaf8dd7acff254b5e216763ad0b1acd14f37c
 codes.rafael.asmjdkbridge:asm-jdk-bridge:pom:0.0.6 ab2d51e04abe912bad3855ed79435d7d7e851132bc751b2681d5c4152c00ae47
