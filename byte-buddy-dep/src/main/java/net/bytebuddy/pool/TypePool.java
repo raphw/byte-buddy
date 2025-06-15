@@ -820,7 +820,6 @@ public interface TypePool {
             this(cacheProvider, classFileLocator, readerMode, classReaderFactory, Empty.INSTANCE);
         }
 
-
         /**
          * Creates a new default type pool.
          *
@@ -894,7 +893,7 @@ public interface TypePool {
             try {
                 ClassFileLocator.Resolution resolution = classFileLocator.locate(name);
                 return resolution.isResolved()
-                        ? new Resolution.Simple(parse(resolution.resolve()))
+                        ? new Resolution.Simple(doParse(resolution.resolve()))
                         : new Resolution.Illegal(name);
             } catch (IOException exception) {
                 throw new IllegalStateException("Error while reading class file", exception);
@@ -902,12 +901,12 @@ public interface TypePool {
         }
 
         /**
-         * Parses a binary representation and transforms it into a type description.
+         * Parses the supplied binary representation and returns a corresponding type description.
+         * @param binaryRepresentation The binrary representation to parse.
          *
-         * @param binaryRepresentation The binary data to be parsed.
-         * @return A type description of the binary data.
+         * @return An appropriate type description.
          */
-        private TypeDescription parse(byte[] binaryRepresentation) {
+        protected TypeDescription doParse(byte[] binaryRepresentation) {
             AsmClassReader classReader = classReaderFactory.make(binaryRepresentation);
             TypeExtractor typeExtractor = new TypeExtractor();
             classReader.accept(typeExtractor, readerMode.getFlags());
@@ -974,7 +973,13 @@ public interface TypePool {
          * {@link Resolution}s of this type pool are only fully resolved if a property that is not the type's name is required.
          * </p>
          */
+        @HashCodeAndEqualsPlugin.Enhance
         public static class WithLazyResolution extends Default {
+
+            /**
+             * The mode of lazy resolution.
+             */
+            private final LazinessMode lazinessMode;
 
             /**
              * Creates a new default type pool with lazy resolution and without a parent pool.
@@ -984,7 +989,7 @@ public interface TypePool {
              * @param readerMode       The reader mode to apply by this default type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
-                super(cacheProvider, classFileLocator, readerMode);
+                this(cacheProvider, classFileLocator, readerMode, LazinessMode.NAME_ONLY);
             }
 
             /**
@@ -996,7 +1001,7 @@ public interface TypePool {
              * @param parentPool       The parent type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool) {
-                super(cacheProvider, classFileLocator, readerMode, parentPool);
+                this(cacheProvider, classFileLocator, readerMode, parentPool, LazinessMode.NAME_ONLY);
             }
 
             /**
@@ -1008,7 +1013,7 @@ public interface TypePool {
              * @param classReaderFactory The class reader factory to use.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory) {
-                super(cacheProvider, classFileLocator, readerMode, classReaderFactory);
+                this(cacheProvider, classFileLocator, readerMode, classReaderFactory, LazinessMode.NAME_ONLY);
             }
 
             /**
@@ -1021,7 +1026,59 @@ public interface TypePool {
              * @param parentPool         The parent type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool) {
+                this(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool, LazinessMode.NAME_ONLY);
+            }
+
+            /**
+             * Creates a new default type pool with lazy resolution and without a parent pool.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param readerMode       The reader mode to apply by this default type pool.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, LazinessMode lazinessMode) {
+                super(cacheProvider, classFileLocator, readerMode);
+                this.lazinessMode = lazinessMode;
+            }
+
+            /**
+             * Creates a new default type pool with lazy resolution.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param readerMode       The reader mode to apply by this default type pool.
+             * @param parentPool       The parent type pool.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool, LazinessMode lazinessMode) {
+                super(cacheProvider, classFileLocator, readerMode, parentPool);
+                this.lazinessMode = lazinessMode;
+            }
+
+            /**
+             * Creates a new default type pool that uses an explicit class reader factory with lazy resolution.
+             *
+             * @param cacheProvider      The cache provider to be used.
+             * @param classFileLocator   The class file locator to be used.
+             * @param readerMode         The reader mode to apply by this default type pool.
+             * @param classReaderFactory The class reader factory to use.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, LazinessMode lazinessMode) {
+                super(cacheProvider, classFileLocator, readerMode, classReaderFactory);
+                this.lazinessMode = lazinessMode;
+            }
+
+            /**
+             * Creates a new default type pool that uses an explicit class reader factory with lazy resolution.
+             *
+             * @param cacheProvider      The cache provider to be used.
+             * @param classFileLocator   The class file locator to be used.
+             * @param readerMode         The reader mode to apply by this default type pool.
+             * @param classReaderFactory The class reader factory to use.
+             * @param parentPool         The parent type pool.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool, LazinessMode lazinessMode) {
                 super(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool);
+                this.lazinessMode = lazinessMode;
             }
 
             /**
@@ -1103,6 +1160,23 @@ public interface TypePool {
             }
 
             /**
+             * Describes the mode of lazy resolution to apply.
+             */
+            public enum LazinessMode {
+
+                /**
+                 * Only resolves the name lazily, but resolves the full class file otherwise.
+                 */
+                NAME_ONLY,
+
+                /**
+                 * Resolves the name lazily, and does not parse the entire class file as long as only the non-generic
+                 * names of super class and interfaces, as well as class flags are read.
+                 */
+                BASIC_PROPERTIES
+            }
+
+            /**
              * A lazy resolution of a type that the enclosing type pool attempts to resolve.
              */
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
@@ -1166,7 +1240,14 @@ public interface TypePool {
                 @Override
                 @CachedReturnPlugin.Enhance("delegate")
                 protected TypeDescription delegate() {
-                    return doResolve(name).resolve();
+                    switch (lazinessMode) {
+                        case NAME_ONLY:
+                            return doResolve(name).resolve();
+                        case BASIC_PROPERTIES:
+                            return null; // TODO:
+                        default:
+                            throw new IllegalStateException();
+                    }
                 }
             }
         }
