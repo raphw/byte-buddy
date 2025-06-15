@@ -31,6 +31,7 @@ import org.objectweb.asm.ClassWriter;
 
 import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
+import java.util.List;
 
 /**
  * A facade for creating a {@link ClassVisitor} that writes a class file.
@@ -257,7 +258,7 @@ public interface AsmClassWriter {
                  * {@inheritDoc}
                  */
                 @AlwaysNull
-                public <T> T unwrap(Class<T> type) {
+                public AsmClassWriter toWriter(int flags, TypePool typePool) {
                     return null;
                 }
 
@@ -265,8 +266,36 @@ public interface AsmClassWriter {
                  * {@inheritDoc}
                  */
                 @AlwaysNull
-                public AsmClassWriter toWriter(int flags, TypePool typePool) {
+                public <T> T unwrap(Class<T> type) {
                     return null;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getModifiers() {
+                    throw new UnsupportedOperationException();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getInternalName() {
+                    throw new UnsupportedOperationException();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getSuperClassInternalName() {
+                    throw new UnsupportedOperationException();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public List<String> getInterfaceInternalNames() {
+                    throw new UnsupportedOperationException();
                 }
 
                 /**
@@ -310,6 +339,35 @@ public interface AsmClassWriter {
                 @AlwaysNull
                 public AsmClassWriter toWriter(int flags, TypePool typePool) {
                     return null;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getModifiers() {
+                    return delegate.getModifiers();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getInternalName() {
+                    return delegate.getInternalName();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @MaybeNull
+                public String getSuperClassInternalName() {
+                    return delegate.getSuperClassInternalName();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public List<String> getInterfaceInternalNames() {
+                    return delegate.getInterfaceInternalNames();
                 }
 
                 /**

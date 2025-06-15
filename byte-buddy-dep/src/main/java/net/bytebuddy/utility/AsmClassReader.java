@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.utility;
 
-import jdk.internal.org.objectweb.asm.Opcodes;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
