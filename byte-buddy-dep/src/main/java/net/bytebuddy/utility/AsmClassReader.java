@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import jdk.internal.org.objectweb.asm.Opcodes;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -26,6 +27,9 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 
 import java.security.PrivilegedAction;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A facade for creating a class reader that accepts {@link ClassVisitor} instances and reader flags.
@@ -48,24 +52,37 @@ public interface AsmClassReader {
     <T> T unwrap(Class<T> type);
 
     /**
-     * Returns the internal name of the represented type's super class or {@code null} if there is none.
-     * The super class is - after possibility - read without parsing the entire class file.
-     *
-     * @return The internal name of the represented type's super class or {@code null} if there is none.
-     */
-    @MaybeNull
-    String getSuperClassName();
-
-    /**
-     * Returns an array of internal names of the represented type's interface types, or {@code null} if
-     * none are defined. The interface types are - after possibility - read without parsing the entire
+     * Returns the modifiers of the represented class. The property is read, if possible, without parsing the entire
      * class file.
      *
-     * @return An array of internal names of the represented type's interface types, or {@code null} if
-     * none are defined.
+     * @return The modifiers of the represented class.
+     */
+    int getModifiers();
+
+    /**
+     * Returns the internal name of the represented class. The property is read, if possible, without parsing
+     * the entire class file.
+     *
+     * @return The internal name of the represented class.
+     */
+    String getInternalName();
+
+    /**
+     * Returns the internal name of the represented class's super class, or {@code null} if no such class exists.
+     * The property is read, if possible, without parsing the entire class file.
+     *
+     * @return The internal name of the represented class's super class, or {@code null} if no such class exists.
      */
     @MaybeNull
-    String[] getInterfaceTypeName();
+    String getSuperClassInternalName();
+
+    /**
+     * Returns the internal names of the represented class's interfaces. The property is read, if possible,
+     * without parsing the entire class file.
+     *
+     * @return Returns the internal names of the represented class's interfaces.
+     */
+    List<String> getInterfaceInternalNames();
 
     /**
      * Accepts a class visitor to read a class.
@@ -241,6 +258,35 @@ public interface AsmClassReader {
         /**
          * {@inheritDoc}
          */
+        public int getModifiers() {
+            return classReader.getAccess();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getInternalName() {
+            return classReader.getClassName();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getSuperClassInternalName() {
+            return classReader.getSuperName();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<String> getInterfaceInternalNames() {
+            String[] value = classReader.getInterfaces();
+            return value == null ? Collections.emptyList() : Arrays.asList(value);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public void accept(ClassVisitor classVisitor, int flags) {
             classReader.accept(classVisitor, NO_ATTRIBUTES, flags);
         }
@@ -301,6 +347,52 @@ public interface AsmClassReader {
         /**
          * {@inheritDoc}
          */
+        public int getModifiers() {
+            return DISPATCHER.getAccess(classReader);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getInternalName() {
+            return DISPATCHER.getClassName(classReader);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public String getSuperClassInternalName() {
+            return DISPATCHER.getSuperClass(classReader);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<String> getInterfaceInternalNames() {
+            String[] value = DISPATCHER.getInterfaces(classReader);
+            return value == null ? Collections.emptyList() : Arrays.asList(value);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public String getSuperClassName() {
+            return DISPATCHER.getSuperClass(classReader);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public String[] getInterfaceTypeName() {
+            return DISPATCHER.getInterfaces(classReader);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public void accept(ClassVisitor classVisitor, int flags) {
             DISPATCHER.accept(classReader, classVisitor, flags);
         }
@@ -329,6 +421,40 @@ public interface AsmClassReader {
              */
             @JavaDispatcher.IsConstructor
             Object make(byte[] binaryRepresentation, Attribute[] attribute);
+
+            /**
+             * Returns the access flags of the underlying {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+             *
+             * @param classReader The class reader that is being queried.
+             * @return The access flags of the underlying {@code codes.rafael.asmjdkbridge.JdkClassReader}.
+             */
+            int getAccess(Object classReader);
+
+            /**
+             * Returns the internal name of the represented type.
+             *
+             * @param classReader The class reader that is being queried.
+             * @return The internal name of the represented type.
+             */
+            String getClassName(Object classReader);
+
+            /**
+             * Returns the internal name of the represented type's super class or {@code null} if there is none.
+             *
+             * @param classReader The class reader that is being queried.
+             * @return The internal name of the represented type's super class or {@code null} if there is none.
+             */
+            @MaybeNull
+            String getSuperClass(Object classReader);
+
+            /**
+             * Returns an array of internal names of the represented type's interface types, or {@code null} if none.
+             *
+             * @param classReader The class reader that is being queried.
+             * @return An array of internal names of the represented type's interface types, or {@code null} if none.
+             */
+            @MaybeNull
+            String[] getInterfaces(Object classReader);
 
             /**
              * Accepts a class reader to visit the represented class file.

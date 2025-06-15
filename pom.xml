@@ -70,7 +70,7 @@
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <version.asm>9.8</version.asm>
-        <version.asmjdkbridge>0.0.9</version.asmjdkbridge>
+        <version.asmjdkbridge>0.0.10</version.asmjdkbridge>
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
