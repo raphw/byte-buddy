@@ -280,7 +280,7 @@ public interface AsmClassReader {
          */
         public List<String> getInterfaceInternalNames() {
             String[] value = classReader.getInterfaces();
-            return value == null ? Collections.emptyList() : Arrays.asList(value);
+            return value == null ? Collections.<String>emptyList() : Arrays.asList(value);
         }
 
         /**
@@ -370,7 +370,7 @@ public interface AsmClassReader {
          */
         public List<String> getInterfaceInternalNames() {
             String[] value = DISPATCHER.getInterfaces(classReader);
-            return value == null ? Collections.emptyList() : Arrays.asList(value);
+            return value == null ? Collections.<String>emptyList() : Arrays.asList(value);
         }
 
         /**
