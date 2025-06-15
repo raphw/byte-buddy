@@ -467,6 +467,34 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <executions>
+                            <execution>
+                                <id>modify-source-jar</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${bytebuddy.original-sources}</skip>
+                                    <target>
+                                        <delete dir="${project.build.directory}/sources-copy" failonerror="false"/>
+                                        <unzip src="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar" dest="${project.build.directory}/sources-copy"/>
+                                        <copy todir="${project.build.directory}/sources-copy/META-INF/versions/9">
+                                            <fileset dir="${project.build.directory}/sources-copy">
+                                                <include name="net/bytebuddy/**/*.java"/>
+                                            </fileset>
+                                        </copy>
+                                        <delete file="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar"/>
+                                        <zip basedir="${project.build.directory}/sources-copy" destfile="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>

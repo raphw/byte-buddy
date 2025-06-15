@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-        child.project.url.inherit.append.path="false">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -60,6 +59,7 @@
     <properties>
         <copyright.holder>Rafael Winterhalter</copyright.holder>
         <bytebuddy.extras>false</bytebuddy.extras>
+        <bytebuddy.original-sources>true</bytebuddy.original-sources>
         <bytebuddy.integration>false</bytebuddy.integration>
         <bytebuddy.experimental>true</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1058,6 +1058,7 @@
             </activation>
             <properties>
                 <bytebuddy.extras>true</bytebuddy.extras>
+                <bytebuddy.original-sources>false</bytebuddy.original-sources>
             </properties>
             <build>
                 <plugins>
