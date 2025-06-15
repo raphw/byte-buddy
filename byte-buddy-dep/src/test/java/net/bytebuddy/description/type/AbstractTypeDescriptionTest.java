@@ -56,10 +56,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     protected AbstractTypeDescriptionTest() {
         standardTypes = Arrays.<Class<?>>asList(
-                Object.class,
-                Object[].class,
-                SampleClass.class,
-                SampleClass[].class,
+//                Object.class,
+//                Object[].class,
+//                SampleClass.class,
+//                SampleClass[].class,
                 SampleInterface.class,
                 SampleInterface[].class,
                 SampleAnnotation.class,

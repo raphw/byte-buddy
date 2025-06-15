@@ -1256,8 +1256,23 @@ public interface TypePool {
                 }
 
                 @Override
-                public int getModifiers() {
-                    return delegate.getModifiers();
+                public boolean isAbstract() {
+                    return (delegate.getModifiers() & Opcodes.ACC_ABSTRACT) == Opcodes.ACC_ABSTRACT;
+                }
+
+                @Override
+                public boolean isInterface() {
+                    return (delegate.getModifiers() & Opcodes.ACC_INTERFACE) == Opcodes.ACC_INTERFACE;
+                }
+
+                @Override
+                public boolean isEnum() {
+                    return (delegate.getModifiers() & Opcodes.ACC_ENUM) == Opcodes.ACC_ENUM;
+                }
+
+                @Override
+                public boolean isAnnotation() {
+                    return (delegate.getModifiers() & Opcodes.ACC_ANNOTATION) == Opcodes.ACC_ANNOTATION;
                 }
 
                 @Override
@@ -1346,16 +1361,16 @@ public interface TypePool {
 
                     @Override
                     public int getModifiers() {
-                        return classReader.getModifiers() & ~(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SYNTHETIC);
+                        return classReader.getModifiers();
                     }
 
                     @Override
                     @MaybeNull
                     public Generic getSuperClass() {
                         String superClassInternalName = classReader.getSuperClassInternalName();
-                        return superClassInternalName == null
-                                ? null
-                                : new LazySuperClass(superClassInternalName.replace('/', '.'));
+                        return superClassInternalName == null || isInterface()
+                                ? Generic.UNDEFINED
+                                : new LazySuperClass(superClassInternalName);
                     }
 
                     @Override
@@ -1460,7 +1475,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public TypeDescription asErasure() {
-                        return new LazyTypeDescription(internalName);
+                        return new LazyTypeDescription(internalName.replace('/', '.'));
                     }
                 }
 
@@ -1506,7 +1521,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public TypeDescription asErasure() {
-                        return new LazyTypeDescription(internalName);
+                        return new LazyTypeDescription(internalName.replace('/', '.'));
                     }
                 }
 
