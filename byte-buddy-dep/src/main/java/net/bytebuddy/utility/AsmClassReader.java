@@ -48,6 +48,26 @@ public interface AsmClassReader {
     <T> T unwrap(Class<T> type);
 
     /**
+     * Returns the internal name of the represented type's super class or {@code null} if there is none.
+     * The super class is - after possibility - read without parsing the entire class file.
+     *
+     * @return The internal name of the represented type's super class or {@code null} if there is none.
+     */
+    @MaybeNull
+    String getSuperClassName();
+
+    /**
+     * Returns an array of internal names of the represented type's interface types, or {@code null} if
+     * none are defined. The interface types are - after possibility - read without parsing the entire
+     * class file.
+     *
+     * @return An array of internal names of the represented type's interface types, or {@code null} if
+     * none are defined.
+     */
+    @MaybeNull
+    String[] getInterfaceTypeName();
+
+    /**
      * Accepts a class visitor to read a class.
      *
      * @param classVisitor The class visitor who should be used as a callback for a class file.
