@@ -153,9 +153,9 @@
         <url>https://github.com/raphw/byte-buddy/issues</url>
     </issueManagement>
 
-    <!-- These attributes specify that the URLs should be inherited by the modules as is, to avoid constructing
-        invalid URLs, see also https://maven.apache.org/ref/3.9.9/maven-model-builder/index.html#inheritance-assembly -->
-    <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
+    <!-- Cannot fix artifact appending, as this requires newer Maven what breaks builds on old JDKs.
+         https://maven.apache.org/ref/3.9.9/maven-model-builder/index.html#inheritance-assembly -->
+    <scm>
         <connection>scm:git:${repository.url}</connection>
         <developerConnection>scm:git:${repository.url}</developerConnection>
         <url>${repository.url}</url>
