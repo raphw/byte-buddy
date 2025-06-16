@@ -307,6 +307,10 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         assertThat(typeDescription.isInterface(), CoreMatchers.is(Modifier.isInterface(NonGenericType.class.getModifiers())));
         assertThat(typeDescription.isAnnotation(), CoreMatchers.is(NonGenericType.class.isAnnotation()));
         assertThat(typeDescription.isEnum(), CoreMatchers.is(NonGenericType.class.isEnum()));
+        assertThat(typeDescription.isAssignableTo(NonGenericType.class.getSuperclass()), CoreMatchers.is(true));
+        assertThat(typeDescription.isAssignableTo(NonGenericType.class.getInterfaces()[0]), CoreMatchers.is(true));
+        assertThat(typeDescription.isAssignableTo(Object.class), CoreMatchers.is(true));
+        assertThat(typeDescription.isAssignableTo(Void.class), CoreMatchers.is(false));
     }
 
     private static class SuperClass {
