@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.17.6-SNAPSHOT</version>
+        <version>1.17.6</version>
     </parent>
 
     <!--
@@ -481,15 +481,15 @@
                                 <configuration>
                                     <skip>${bytebuddy.original-sources}</skip>
                                     <target>
-                                        <delete dir="${project.build.directory}/sources-copy" failonerror="false"/>
-                                        <unzip src="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar" dest="${project.build.directory}/sources-copy"/>
+                                        <delete dir="${project.build.directory}/sources-copy" failonerror="false" />
+                                        <unzip src="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar" dest="${project.build.directory}/sources-copy" />
                                         <copy todir="${project.build.directory}/sources-copy/META-INF/versions/9">
                                             <fileset dir="${project.build.directory}/sources-copy">
-                                                <include name="net/bytebuddy/**/*.java"/>
+                                                <include name="net/bytebuddy/**/*.java" />
                                             </fileset>
                                         </copy>
-                                        <delete file="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar"/>
-                                        <zip basedir="${project.build.directory}/sources-copy" destfile="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar" modificationtime="${project.build.outputTimestamp}"/>
+                                        <delete file="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar" />
+                                        <zip basedir="${project.build.directory}/sources-copy" destfile="${project.build.directory}/byte-buddy-dep-${project.version}-sources.jar" modificationtime="${project.build.outputTimestamp}" />
                                     </target>
                                 </configuration>
                             </execution>
