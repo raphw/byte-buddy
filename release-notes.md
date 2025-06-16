@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. June 2025: version 1.17.6
+
+- Add convenience wrapper for `ResettableClassFileTransformer` that implicitly delegates to correct transformer method.
+- Add filter for deduplicate fields and methods in class file.
+- Add missing static requirement of Spotbugs annotations to module descriptors.
+- Add `LazinessMode` for `TypePool` and add convenience support to `AgentBuilder`.
+- Fix source jars for multi-version release to contain duplicated source.
+
 ### 30. March 2025: version 1.17.5
 
 - Update ASM to version 9.8 to support Java 25 using ASM reader and writer.
