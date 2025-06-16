@@ -25,7 +25,8 @@ Java version compatibility
 
 The following table lists the minimal versions of Byte Buddy that is required need to support a certain Java 
 class file version without experimental support. The oldest supported Java version is Java 5, whereas class files
-of any older version can be transformed.
+of any older version can be transformed. As of 1.17.0, support will extend to new Java versions unless previously
+unknown class file features are discovered. This is possible through Byte Buddy's support of the Class File API. 
 
 | Byte Buddy version | Supported Java version |
 |--------------------|------------------------|
