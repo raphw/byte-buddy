@@ -3822,6 +3822,18 @@ public interface AgentBuilder {
                 }
 
                 /**
+                 * Creates a new type locator that caches a cache provider per class loader in a concurrent map.
+                 *
+                 * @param readerMode     The reader mode to use for parsing a class file.
+                 * @param lazinessMode   The laziness mode to use for when to parse a class file.
+                 * @param cacheProviders The concurrent map that is used for storing a cache provider per class loader.
+                 */
+                public Simple(TypePool.Default.ReaderMode readerMode, TypePool.Default.WithLazyResolution.LazinessMode lazinessMode, ConcurrentMap<? super ClassLoader, TypePool.CacheProvider> cacheProviders) {
+                    super(readerMode, lazinessMode);
+                    this.cacheProviders = cacheProviders;
+                }
+
+                /**
                  * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
                  *
                  * @param action The action to execute from a privileged context.
