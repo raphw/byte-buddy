@@ -1672,7 +1672,7 @@ public interface InstrumentedType extends TypeDescription {
                 String fieldName = fieldDescription.getName();
                 if (!fieldSignatureTokens.add(fieldDescription.asSignatureToken())) {
                     throw new IllegalStateException("Duplicate field definition for " + fieldDescription);
-                } else if (!isValidIdentifier(fieldName)) {
+                } else if (!isValidUnqualifiedNameIdentifier(fieldName)) {
                     throw new IllegalStateException("Illegal field name for " + fieldDescription);
                 } else if ((fieldDescription.getModifiers() & ~ModifierContributor.ForField.MASK) != EMPTY_MASK) {
                     throw new IllegalStateException("Illegal field modifiers " + fieldDescription.getModifiers() + " for " + fieldDescription);
@@ -1742,7 +1742,7 @@ public interface InstrumentedType extends TypeDescription {
                     } else if (!returnType.getDeclaredAnnotations().isEmpty()) {
                         throw new IllegalStateException("The void non-type must not be annotated for " + methodDescription);
                     }
-                } else if (!isValidIdentifier(methodDescription.getInternalName())) {
+                } else if (!isValidMethodIdentifier(methodDescription.getInternalName())) {
                     throw new IllegalStateException("Illegal method name " + returnType + " for " + methodDescription);
                 } else if (!returnType.accept(Generic.Visitor.Validator.METHOD_RETURN)) {
                     throw new IllegalStateException("Illegal return type " + returnType + " for " + methodDescription);
@@ -1765,7 +1765,7 @@ public interface InstrumentedType extends TypeDescription {
                         String parameterName = parameterDescription.getName();
                         if (!parameterNames.add(parameterName)) {
                             throw new IllegalStateException("Duplicate parameter name of " + parameterDescription + " for " + methodDescription);
-                        } else if (!isValidIdentifier(parameterName)) {
+                        } else if (!isValidUnqualifiedNameIdentifier(parameterName)) {
                             throw new IllegalStateException("Illegal parameter name of " + parameterDescription + " for " + methodDescription);
                         }
                     }
@@ -1856,6 +1856,59 @@ public interface InstrumentedType extends TypeDescription {
             for (int index = 1; index < identifier.length(); index++) {
                 if (!(Character.isJavaIdentifierPart(identifier.charAt(index)) || Character.isUnicodeIdentifierPart(identifier.charAt(index)))) {
                     return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Checks if an identifier is a valid "Unqualified Name" for a field, a local variable or a formal parameter,
+         * per JVMS 4.2.2.
+         *
+         * @param identifier The identifier to check for validity.
+         * @return {@code true} if the given identifier is valid.
+         */
+        private static boolean isValidUnqualifiedNameIdentifier(String identifier) {
+            if (identifier.length() == 0)
+                return false;
+
+            for (int index = 0; index < identifier.length(); index++) {
+                char c = identifier.charAt(index);
+                switch (c) {
+                    case '.':
+                    case ';':
+                    case '[':
+                    case '/':
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Checks if an identifier is a valid "Unqualified Name" for a method, per JVMS 4.2.2.
+         *
+         * @param identifier The identifier to check for validity.
+         * @return {@code true} if the given identifier is valid.
+         */
+        private static boolean isValidMethodIdentifier(String identifier) {
+            if (identifier.length() == 0)
+                return false;
+
+            if (identifier.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME) ||
+                    identifier.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME))
+                return true;
+
+            for (int index = 0; index < identifier.length(); index++) {
+                char c = identifier.charAt(index);
+                switch (c) {
+                    case '.':
+                    case ';':
+                    case '[':
+                    case '/':
+                    case '<':
+                    case '>':
+                        return false;
                 }
             }
             return true;

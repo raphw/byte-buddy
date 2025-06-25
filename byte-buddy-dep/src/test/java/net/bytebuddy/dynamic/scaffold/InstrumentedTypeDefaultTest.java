@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 
 public class InstrumentedTypeDefaultTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", ILLEGAL_NAME = "<>";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", ILLEGAL_NAME = "the;name";
 
     private static final int ILLEGAL_MODIFIERS = -1, OTHER_MODIFIERS = 42;
 
