@@ -1869,12 +1869,11 @@ public interface InstrumentedType extends TypeDescription {
          * @return {@code true} if the given identifier is valid.
          */
         private static boolean isValidUnqualifiedNameIdentifier(String identifier) {
-            if (identifier.length() == 0)
+            if (identifier.length() == 0) {
                 return false;
-
+            }
             for (int index = 0; index < identifier.length(); index++) {
-                char c = identifier.charAt(index);
-                switch (c) {
+                switch (identifier.charAt(index)) {
                     case '.':
                     case ';':
                     case '[':
@@ -1892,16 +1891,15 @@ public interface InstrumentedType extends TypeDescription {
          * @return {@code true} if the given identifier is valid.
          */
         private static boolean isValidMethodIdentifier(String identifier) {
-            if (identifier.length() == 0)
+            if (identifier.length() == 0) {
                 return false;
-
-            if (identifier.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME) ||
-                    identifier.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME))
+            }
+            if (identifier.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
+                    || identifier.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
                 return true;
-
+            }
             for (int index = 0; index < identifier.length(); index++) {
-                char c = identifier.charAt(index);
-                switch (c) {
+                switch (identifier.charAt(index)) {
                     case '.':
                     case ';':
                     case '[':
