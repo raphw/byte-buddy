@@ -79,7 +79,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public boolean hasExplicitMetaData() {
-            for (ParameterDescription parameterDescription : this) {
+            // cache the size and make sure to avoid iterators here
+            // this pattern reduces the number of allocations and also the CPU usage
+            int size = size();
+            for (int i = 0; i < size; i++) {
+                ParameterDescription parameterDescription = get(i);
                 if (!parameterDescription.isNamed() || !parameterDescription.hasModifiers()) {
                     return false;
                 }
@@ -91,9 +95,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
-            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
-            for (ParameterDescription parameterDescription : this) {
-                tokens.add(parameterDescription.asToken(matcher));
+            // cache the size and make sure to avoid iterators here
+            // this pattern reduces the number of allocations and also the CPU usage
+            int size = size();
+            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size);
+            for (int i = 0; i < size; i++) {
+                tokens.add(get(i).asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(tokens);
         }
@@ -102,9 +109,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public TypeList.Generic asTypeList() {
-            List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(size());
-            for (ParameterDescription parameterDescription : this) {
-                types.add(parameterDescription.getType());
+            // cache the size and make sure to avoid iterators here
+            // this pattern reduces the number of allocations and also the CPU usage
+            int size = size();
+            List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(size);
+            for (int i = 0; i < size; i++) {
+                types.add(get(i).getType());
             }
             return new TypeList.Generic.Explicit(types);
         }
@@ -113,9 +123,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public ParameterList<ParameterDescription.InDefinedShape> asDefined() {
-            List<ParameterDescription.InDefinedShape> declaredForms = new ArrayList<ParameterDescription.InDefinedShape>(size());
-            for (ParameterDescription parameterDescription : this) {
-                declaredForms.add(parameterDescription.asDefined());
+            // cache the size and make sure to avoid iterators here
+            // this pattern reduces the number of allocations and also the CPU usage
+            int size = size();
+            List<ParameterDescription.InDefinedShape> declaredForms = new ArrayList<ParameterDescription.InDefinedShape>(size);
+            for (int i = 0; i < size; i++) {
+                declaredForms.add(get(i).asDefined());
             }
             return new Explicit<ParameterDescription.InDefinedShape>(declaredForms);
         }
@@ -144,6 +157,13 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         protected final T executable;
 
         /**
+         * The number of parameters of this executable.
+         * <p>
+         * It is important to cache it as calling getParameterCount() via the dispatcher has a high cost.
+         */
+        protected final int size;
+
+        /**
          * The parameter annotation source to query.
          */
         protected final ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource;
@@ -156,6 +176,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         protected ForLoadedExecutable(T executable, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
             this.executable = executable;
+            this.size = EXECUTABLE.getParameterCount(executable);
             this.parameterAnnotationSource = parameterAnnotationSource;
         }
 
@@ -223,7 +244,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public int size() {
-            return EXECUTABLE.getParameterCount(executable);
+            return size;
         }
 
         /**
@@ -563,6 +584,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         private final List<? extends ParameterDescription> parameterDescriptions;
 
         /**
+         * The number of parameters.
+         */
+        private final int size;
+
+        /**
          * The visitor to apply to the parameter types before returning them.
          */
         private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
@@ -579,6 +605,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                                 TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             this.declaringMethod = declaringMethod;
             this.parameterDescriptions = parameterDescriptions;
+            this.size = parameterDescriptions.size();
             this.visitor = visitor;
         }
 
@@ -593,7 +620,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public int size() {
-            return parameterDescriptions.size();
+            return size;
         }
     }
 
