@@ -154,9 +154,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         protected final ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource;
 
         /**
-         * The number of parameters of this executable, or -1, if the size was not yet computed. This avoids recomputation
-         * what can lead to an unreasonable performance impact if placed on a hot execution path. This field is not
-         * volatile as the result is stable and can be recomputed from different threads.
+         * The number of parameters of this executable, 0 if the size was not yet computed, or -1 if the list is empty.
+         * This avoids recomputation what can lead to an unreasonable performance impact if placed on a hot execution
+         * path. This field is not volatile as the result is stable and can be recomputed from different threads.
          */
         private int size;
 
@@ -169,7 +169,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         protected ForLoadedExecutable(T executable, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
             this.executable = executable;
             this.parameterAnnotationSource = parameterAnnotationSource;
-            size = -1;
         }
 
         /**
@@ -236,10 +235,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public int size() {
-            if (size == -1) {
-                size = EXECUTABLE.getParameterCount(executable);
+            if (size == 0) {
+                int size = EXECUTABLE.getParameterCount(executable);
+                this.size = size == 0 ? -1 : size;
             }
-            return size;
+            return size == -1 ? 0 : size;
         }
 
         /**
@@ -584,9 +584,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
-         * The number of parameters of this executable, or -1, if the size was not yet computed. This avoids recomputation
-         * what can lead to an unreasonable performance impact if placed on a hot execution path. This field is not
-         * volatile as the result is stable and can be recomputed from different threads.
+         * The number of parameters of this executable, 0 if the size was not yet computed, or -1 if the list is empty.
+         * This avoids recomputation what can lead to an unreasonable performance impact if placed on a hot execution
+         * path. This field is not volatile as the result is stable and can be recomputed from different threads.
          */
         private int size;
 
@@ -603,7 +603,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             this.declaringMethod = declaringMethod;
             this.parameterDescriptions = parameterDescriptions;
             this.visitor = visitor;
-            size = -1;
         }
 
         /**
@@ -617,10 +616,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public int size() {
-            if (size == -1) {
-                size = parameterDescriptions.size();
+            if (size == 0) {
+                int size = parameterDescriptions.size();
+                this.size = size == 0 ? -1 : size;
             }
-            return size;
+            return size == -1 ? 0 : size;
         }
     }
 
