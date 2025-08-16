@@ -235,9 +235,10 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public int size() {
+            int size = this.size;
             if (size == 0) {
-                int size = EXECUTABLE.getParameterCount(executable);
-                this.size = size == 0 ? -1 : size;
+                int actual = EXECUTABLE.getParameterCount(executable);
+                this.size = size = actual == 0 ? -1 : actual;
             }
             return size == -1 ? 0 : size;
         }
@@ -616,9 +617,10 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * {@inheritDoc}
          */
         public int size() {
+            int size = this.size;
             if (size == 0) {
-                int size = parameterDescriptions.size();
-                this.size = size == 0 ? -1 : size;
+                int actual = parameterDescriptions.size();
+                this.size = size = actual == 0 ? -1 : actual;
             }
             return size == -1 ? 0 : size;
         }
