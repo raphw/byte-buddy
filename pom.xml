@@ -5,7 +5,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.17.7</version>
+    <version>1.17.8-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -63,7 +63,7 @@
         <bytebuddy.integration>false</bytebuddy.integration>
         <bytebuddy.experimental>true</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>1755382877</project.build.outputTimestamp>
+        <project.build.outputTimestamp>1755382989</project.build.outputTimestamp>
         <sourcecode.main.version>1.5</sourcecode.main.version>
         <sourcecode.test.version>1.6</sourcecode.test.version>
         <bytecode.main.version>1.5</bytecode.main.version>
@@ -159,7 +159,7 @@
         <connection>scm:git:${repository.url}</connection>
         <developerConnection>scm:git:${repository.url}</developerConnection>
         <url>${repository.url}</url>
-        <tag>byte-buddy-1.17.7</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
