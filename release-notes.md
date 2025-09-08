@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. August 2025: version 1.17.7
+
+- Specify correct JVM environment for Android builds when using the Gradle plugin.
+- Avoid recomputing the size of a parameter list for performance reasons after measuring the significant impact.
+- Correct validation of JVM names to avoid breaking when Java names are not allowed while JVM names are, with Kotlin and others.
+
 ### 16. June 2025: version 1.17.6
 
 - Add convenience wrapper for `ResettableClassFileTransformer` that implicitly delegates to correct transformer method.
