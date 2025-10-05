@@ -76,31 +76,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public interface ClassInjector {
 
     /**
-     * A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
-     */
-    @MaybeNull
-    Permission SUPPRESS_ACCESS_CHECKS = suppressAccessChecks();
-
-    /**
      * Determines the default behavior for type injections when a type is already loaded.
      */
     boolean ALLOW_EXISTING_TYPES = false;
-
-    /**
-     * Creates a permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
-     *
-     * @return A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
-     */
-    @MaybeNull
-    static Permission suppressAccessChecks() {
-        try {
-            return (Permission) Class.forName("java.lang.reflect.ReflectPermission")
-                    .getConstructor(String.class)
-                    .newInstance("suppressAccessChecks");
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
 
     /**
      * Indicates if this class injector is available on the current VM.
@@ -147,6 +125,27 @@ public interface ClassInjector {
      * An abstract base implementation of a class injector.
      */
     abstract class AbstractBase implements ClassInjector {
+
+        /**
+         * A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
+         */
+        @MaybeNull
+        protected static final Permission SUPPRESS_ACCESS_CHECKS;
+
+        /*
+         * Resolves the permission for suppressing access checks.
+         */
+        static {
+            Permission suppressAccessChecks;
+            try {
+                suppressAccessChecks = (Permission) Class.forName("java.lang.reflect.ReflectPermission")
+                        .getConstructor(String.class)
+                        .newInstance("suppressAccessChecks");
+            } catch (Exception ignored) {
+                suppressAccessChecks = null;
+            }
+            SUPPRESS_ACCESS_CHECKS = suppressAccessChecks;
+        }
 
         /**
          * {@inheritDoc}
