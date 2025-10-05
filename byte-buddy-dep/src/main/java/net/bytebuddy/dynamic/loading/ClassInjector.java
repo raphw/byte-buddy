@@ -130,21 +130,23 @@ public interface ClassInjector {
          * A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
          */
         @MaybeNull
-        protected static final Permission SUPPRESS_ACCESS_CHECKS;
+        protected static final Permission SUPPRESS_ACCESS_CHECKS = toSuppressAccessChecks();
 
-        /*
-         * Resolves the permission for suppressing access checks.
+        /**
+         * Returns a permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
+         *
+         * @return A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
          */
-        static {
-            Permission suppressAccessChecks;
+        @MaybeNull
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown define null as value.")
+        private static Permission toSuppressAccessChecks() {
             try {
-                suppressAccessChecks = (Permission) Class.forName("java.lang.reflect.ReflectPermission")
+                return (Permission) Class.forName("java.lang.reflect.ReflectPermission")
                         .getConstructor(String.class)
                         .newInstance("suppressAccessChecks");
             } catch (Exception ignored) {
-                suppressAccessChecks = null;
+                return null;
             }
-            SUPPRESS_ACCESS_CHECKS = suppressAccessChecks;
         }
 
         /**
