@@ -170,6 +170,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V25 = new ClassFileVersion(Opcodes.V25);
 
     /**
+     * The class file version of Java 26.
+     */
+    public static final ClassFileVersion JAVA_V26 = new ClassFileVersion(Opcodes.V26);
+
+    /**
      * An array of class file versions in their sorting order.
      */
     private static final ClassFileVersion[] CLASS_FILE_VERSIONS = new ClassFileVersion[] {ClassFileVersion.JAVA_V1,
@@ -196,7 +201,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             ClassFileVersion.JAVA_V22,
             ClassFileVersion.JAVA_V23,
             ClassFileVersion.JAVA_V24,
-            ClassFileVersion.JAVA_V25};
+            ClassFileVersion.JAVA_V25,
+            ClassFileVersion.JAVA_V26};
 
     /**
      * A version locator for the executing JVM.
@@ -289,7 +295,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The latest officially supported Java version.
      */
     public static ClassFileVersion latest() {
-        return ClassFileVersion.JAVA_V25;
+        return ClassFileVersion.JAVA_V26;
     }
 
     /**
