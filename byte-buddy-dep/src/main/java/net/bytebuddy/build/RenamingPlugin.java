@@ -25,6 +25,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -271,6 +272,7 @@ public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Pl
          * @param renaming The renaming to apply.
          */
         protected RenamingRemapper(Renaming renaming) {
+            super(OpenedClassReader.ASM_API);
             this.renaming = renaming;
         }
 

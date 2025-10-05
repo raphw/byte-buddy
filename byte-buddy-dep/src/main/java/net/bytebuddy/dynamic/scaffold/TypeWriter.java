@@ -4240,7 +4240,7 @@ public interface TypeWriter<T> {
                     classVisitor = new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry, writerFlags, readerFlags);
                     return originalType.getName().equals(instrumentedType.getName())
                             ? classVisitor
-                            : new OpenedClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
+                            : new OpenedClassRemapper(classVisitor, new SimpleRemapper(OpenedClassReader.ASM_API, originalType.getInternalName(), instrumentedType.getInternalName()));
                 }
 
                 /**

@@ -232,7 +232,7 @@ public class ByteArrayClassLoaderChildFirstTest {
                                  MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
-            return new ClassRemapper(OpenedClassReader.ASM_API, classVisitor, new SimpleRemapper(oldName, newName)) {
+            return new ClassRemapper(OpenedClassReader.ASM_API, classVisitor, new SimpleRemapper(OpenedClassReader.ASM_API, oldName, newName)) {
                 /* only anonymous to define usage of Byte Buddy specific API version */
             };
         }
