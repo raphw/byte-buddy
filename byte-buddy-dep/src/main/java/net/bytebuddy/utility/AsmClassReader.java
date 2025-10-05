@@ -362,7 +362,7 @@ public interface AsmClassReader {
          */
         @MaybeNull
         public String getSuperClassInternalName() {
-            return DISPATCHER.getSuperClass(classReader);
+            return DISPATCHER.getSuperName(classReader);
         }
 
         /**
@@ -378,7 +378,7 @@ public interface AsmClassReader {
          */
         @MaybeNull
         public String getSuperClassName() {
-            return DISPATCHER.getSuperClass(classReader);
+            return DISPATCHER.getSuperName(classReader);
         }
 
         /**
@@ -444,7 +444,7 @@ public interface AsmClassReader {
              * @return The internal name of the represented type's super class or {@code null} if there is none.
              */
             @MaybeNull
-            String getSuperClass(Object classReader);
+            String getSuperName(Object classReader);
 
             /**
              * Returns an array of internal names of the represented type's interface types, or {@code null} if none.
