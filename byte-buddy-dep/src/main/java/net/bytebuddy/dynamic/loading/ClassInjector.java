@@ -46,7 +46,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.*;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.Permission;
 import java.security.PrivilegedAction;
@@ -73,14 +76,31 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public interface ClassInjector {
 
     /**
-     * A permission for the {@code suppressAccessChecks} permission.
+     * A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
      */
-    Permission SUPPRESS_ACCESS_CHECKS = new ReflectPermission("suppressAccessChecks");
+    @MaybeNull
+    Permission SUPPRESS_ACCESS_CHECKS = suppressAccessChecks();
 
     /**
      * Determines the default behavior for type injections when a type is already loaded.
      */
     boolean ALLOW_EXISTING_TYPES = false;
+
+    /**
+     * Creates a permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
+     *
+     * @return A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
+     */
+    @MaybeNull
+    static Permission suppressAccessChecks() {
+        try {
+            return (Permission) Class.forName("java.lang.reflect.ReflectPermission")
+                    .getConstructor(String.class)
+                    .newInstance("suppressAccessChecks");
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
 
     /**
      * Indicates if this class injector is available on the current VM.

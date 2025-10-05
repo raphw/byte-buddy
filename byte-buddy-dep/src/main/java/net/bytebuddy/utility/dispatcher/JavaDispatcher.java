@@ -181,9 +181,12 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         try {
             Object securityManager = System.class.getMethod("getSecurityManager").invoke(null);
             if (securityManager != null) {
+                Object permission = Class.forName("java.lang.RuntimePermission")
+                        .getConstructor(String.class)
+                        .newInstance("net.bytebuddy.createJavaDispatcher");
                 Class.forName("java.lang.SecurityManager")
                         .getMethod("checkPermission", Permission.class)
-                        .invoke(securityManager, new RuntimePermission("net.bytebuddy.createJavaDispatcher"));
+                        .invoke(securityManager, permission);
             }
         } catch (NoSuchMethodException ignored) {
             /* security manager not available on current VM */
@@ -198,6 +201,8 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             }
         } catch (IllegalAccessException exception) {
             throw new IllegalStateException("Failed to access security manager", exception);
+        } catch (InstantiationException exception) {
+            throw new IllegalStateException("Failed to instantiate runtime permission", exception);
         }
         Map<Method, Dispatcher> dispatchers = generate
                 ? new LinkedHashMap<Method, Dispatcher>()

@@ -52,7 +52,7 @@ public class Installer {
     /**
      * <p>
      * Returns the instrumentation that was loaded by the Byte Buddy agent. When a security manager is active,
-     * the {@link RuntimePermission} for {@code getInstrumentation} is required by the caller.
+     * the {@code RuntimePermission} for {@code getInstrumentation} is required by the caller.
      * </p>
      * <p>
      * <b>Important</b>: This method must only be invoked via the {@link ClassLoader#getSystemClassLoader()} where any
@@ -65,9 +65,12 @@ public class Installer {
         try {
             Object securityManager = System.class.getMethod("getSecurityManager").invoke(null);
             if (securityManager != null) {
+                Object permission = Class.forName("java.lang.RuntimePermission")
+                        .getConstructor(String.class)
+                        .newInstance("net.bytebuddy.agent.getInstrumentation");
                 Class.forName("java.lang.SecurityManager")
                         .getMethod("checkPermission", Permission.class)
-                        .invoke(securityManager, new RuntimePermission("net.bytebuddy.agent.getInstrumentation"));
+                        .invoke(securityManager, permission);
             }
         } catch (NoSuchMethodException ignored) {
             /* security manager not available on current VM */
@@ -82,6 +85,8 @@ public class Installer {
             }
         } catch (IllegalAccessException exception) {
             throw new IllegalStateException("Failed to access security manager", exception);
+        } catch (InstantiationException exception) {
+            throw new IllegalStateException("Failed to instantiate runtime permission", exception);
         }
         Instrumentation instrumentation = Installer.instrumentation;
         if (instrumentation == null) {
