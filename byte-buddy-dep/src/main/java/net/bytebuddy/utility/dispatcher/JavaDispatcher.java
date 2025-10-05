@@ -1317,7 +1317,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation.")
         protected static Invoker invoker() {
             ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
-            classWriter.visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(),
+            classWriter.visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
                     Opcodes.ACC_PUBLIC,
                     Type.getInternalName(Invoker.class) + "$Dispatcher",
                     null,
