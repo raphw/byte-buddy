@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. October 2025: version 1.17.8
+
+- Avoid use of types that are deprecated as of Java 26.
+- Include ASM 9.9 that offers ASM support for Java 26.
+- Make sure that generated code internal to Byte Buddy supports CDS if available.
+- Update version of ASM to JDK Class File API bridge to fix some minor bugs related to type annotations.
+
 ### 17. August 2025: version 1.17.7
 
 - Specify correct JVM environment for Android builds when using the Gradle plugin.
