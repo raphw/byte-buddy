@@ -78,6 +78,19 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    public void testIllegalResolutionDoesNotPersist() throws Exception {
+        TypePool typePool = new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Simple(),
+                ClassFileLocator.NoOp.INSTANCE,
+                TypePool.Default.ReaderMode.FAST,
+                lazinessMode);
+        String name = "foo.Bar";
+        TypePool.Resolution resolution = typePool.describe(name);
+        assertThat(resolution.resolve().getName(), CoreMatchers.is(name));
+        assertThat(resolution.isResolved(), CoreMatchers.is(false));
+        assertThat(typePool.describe(name).resolve().getName(), CoreMatchers.is(name));
+    }
+
+    @Test
     public void testTypeIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);

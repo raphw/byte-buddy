@@ -1,5 +1,6 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -80,6 +81,18 @@ public class TypePoolCacheProviderTest {
         discriminating.clear();
         verify(matched).clear();
         verify(unmatched).clear();
+    }
+
+    @Test
+    public void testWithIllegalResolutionReattempt() throws Exception {
+        TypePool.CacheProvider cacheProvider = TypePool.CacheProvider.WithIllegalResolutionReattempt.of(new TypePool.CacheProvider.Simple());
+        TypePool.Resolution illegal = new TypePool.Resolution.Illegal(FOO);
+        assertThat(cacheProvider.register(FOO, illegal), sameInstance(illegal));
+        assertThat(cacheProvider.find(FOO), nullValue(TypePool.Resolution.class));
+        TypePool.Resolution legal = new TypePool.Resolution.Simple(TypeDescription.ForLoadedType.of(Object.class));
+        assertThat(cacheProvider.register(FOO, legal), sameInstance(legal));
+        assertThat(cacheProvider.find(FOO), sameInstance(legal));
+        assertThat(TypePool.CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), sameInstance(cacheProvider));
     }
 
     @Test

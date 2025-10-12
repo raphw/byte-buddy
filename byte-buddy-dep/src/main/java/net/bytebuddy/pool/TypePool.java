@@ -407,6 +407,66 @@ public interface TypePool {
         }
 
         /**
+         * A cache provider wrapper that avoids caching illegal resolutions so that future lookups can be reattempted.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class WithIllegalResolutionReattempt implements CacheProvider {
+
+            /**
+             * The delegated cache provider.
+             */
+            private final CacheProvider delegate;
+
+            /**
+             * Creates a new cache provider that suppresses caching of illegal resolutions.
+             *
+             * @param delegate The cache provider to delegate to.
+             */
+            public WithIllegalResolutionReattempt(CacheProvider delegate) {
+                this.delegate = delegate;
+            }
+
+            /**
+             * Returns a cache provider that suppresses caching of illegal resolutions without wrapping twice.
+             *
+             * @param cacheProvider The cache provider to potentially wrap.
+             * @return A cache provider that does not store illegal resolutions.
+             */
+            public static CacheProvider of(CacheProvider cacheProvider) {
+                return cacheProvider instanceof WithIllegalResolutionReattempt
+                        ? cacheProvider
+                        : new WithIllegalResolutionReattempt(cacheProvider);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @MaybeNull
+            public Resolution find(String name) {
+                Resolution resolution = delegate.find(name);
+                return resolution != null && !resolution.isResolved()
+                        ? UNRESOLVED
+                        : resolution;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Resolution register(String name, Resolution resolution) {
+                return resolution.isResolved()
+                        ? delegate.register(name, resolution)
+                        : resolution;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void clear() {
+                delegate.clear();
+            }
+        }
+
+        /**
          * A discriminating cache provider that delegates a type name to one of two caches.
          */
         class Discriminating implements CacheProvider {
@@ -1014,7 +1074,7 @@ public interface TypePool {
              * @param lazinessMode     The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, LazinessMode lazinessMode) {
-                super(cacheProvider, classFileLocator, readerMode);
+                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode);
                 this.lazinessMode = lazinessMode;
             }
 
@@ -1028,7 +1088,7 @@ public interface TypePool {
              * @param lazinessMode     The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool, LazinessMode lazinessMode) {
-                super(cacheProvider, classFileLocator, readerMode, parentPool);
+                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode, parentPool);
                 this.lazinessMode = lazinessMode;
             }
 
@@ -1042,7 +1102,7 @@ public interface TypePool {
              * @param lazinessMode       The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, LazinessMode lazinessMode) {
-                super(cacheProvider, classFileLocator, readerMode, classReaderFactory);
+                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode, classReaderFactory);
                 this.lazinessMode = lazinessMode;
             }
 
@@ -1057,7 +1117,7 @@ public interface TypePool {
              * @param lazinessMode       The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool, LazinessMode lazinessMode) {
-                super(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool);
+                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode, classReaderFactory, parentPool);
                 this.lazinessMode = lazinessMode;
             }
 
