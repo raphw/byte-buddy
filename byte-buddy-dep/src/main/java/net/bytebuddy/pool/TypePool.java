@@ -214,7 +214,7 @@ public interface TypePool {
         /**
          * The value that is returned on a cache-miss.
          */
-        @MaybeNull
+        @AlwaysNull
         Resolution UNRESOLVED = null;
 
         /**
