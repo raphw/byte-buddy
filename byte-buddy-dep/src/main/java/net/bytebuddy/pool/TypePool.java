@@ -1074,7 +1074,7 @@ public interface TypePool {
              * @param lazinessMode     The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, LazinessMode lazinessMode) {
-                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode);
+                super(cacheProvider, classFileLocator, readerMode);
                 this.lazinessMode = lazinessMode;
             }
 
@@ -1088,7 +1088,7 @@ public interface TypePool {
              * @param lazinessMode     The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool, LazinessMode lazinessMode) {
-                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode, parentPool);
+                super(cacheProvider, classFileLocator, readerMode, parentPool);
                 this.lazinessMode = lazinessMode;
             }
 
@@ -1102,7 +1102,7 @@ public interface TypePool {
              * @param lazinessMode       The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, LazinessMode lazinessMode) {
-                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode, classReaderFactory);
+                super(cacheProvider, classFileLocator, readerMode, classReaderFactory);
                 this.lazinessMode = lazinessMode;
             }
 
@@ -1117,7 +1117,7 @@ public interface TypePool {
              * @param lazinessMode       The mode of lazy resolution.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, AsmClassReader.Factory classReaderFactory, TypePool parentPool, LazinessMode lazinessMode) {
-                super(CacheProvider.WithIllegalResolutionReattempt.of(cacheProvider), classFileLocator, readerMode, classReaderFactory, parentPool);
+                super(cacheProvider, classFileLocator, readerMode, classReaderFactory, parentPool);
                 this.lazinessMode = lazinessMode;
             }
 
