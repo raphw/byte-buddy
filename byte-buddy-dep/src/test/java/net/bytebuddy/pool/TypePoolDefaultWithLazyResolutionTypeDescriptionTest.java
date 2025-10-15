@@ -79,7 +79,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
 
     @Test
     public void testIllegalResolutionDoesNotPersist() throws Exception {
-        TypePool typePool = new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Simple(),
+        TypePool typePool = new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.WithIllegalResolutionReattempt.of(new TypePool.CacheProvider.Simple()),
                 ClassFileLocator.NoOp.INSTANCE,
                 TypePool.Default.ReaderMode.FAST,
                 lazinessMode);
