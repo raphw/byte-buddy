@@ -1,0 +1,181 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: "0 0 * * 1"
+permissions: read-all
+jobs:
+  hotspot-ea:
+    name: HotSpot (EA)
+    runs-on: ubuntu-24.04
+    needs: [ extended ]
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: 25-ea
+          distribution: temurin
+          cache: maven
+      - name: Build project
+        run: ./mvnw verify -Pjava25
+        continue-on-error: false
+  hotspot-supported:
+    name: Any (supported)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04, macos-14, windows-2022 ]
+        java: [ 8, 11, 17, 21 ]
+    runs-on: ${{ matrix.os }}
+    needs: [ extended ]
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+          architecture: x64
+          cache: maven
+      - name: Build project
+        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+  j9-supported:
+    name: Any (supported)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04, macos-14, windows-2022 ]
+        java: [ 8, 11 ]
+    runs-on: ${{ matrix.os }}
+    needs: [ extended ]
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: adopt-openj9
+          architecture: x64
+          cache: maven
+      - name: Build project
+        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+  hotspot-unsupported:
+    name: HotSpot (unsupported)
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 9, 10, 12, 13, 14, 15, 16, 18, 19, 20, 22, 23, 24 ]
+    runs-on: ubuntu-24.04
+    needs: [ extended ]
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: zulu
+          architecture: x64
+          cache: maven
+      - name: Build project
+        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+  hotspot-32:
+    name: HotSpot (32 bit)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04, windows-2022 ]
+        java: [ 8 ]
+    runs-on: ${{ matrix.os }}
+    needs: [ extended ]
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: zulu
+          architecture: x86
+          cache: maven
+      - name: Build project
+        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+  hotspot-legacy:
+    name: HotSpot (legacy)
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 6, 7 ]
+    runs-on: ubuntu-24.04
+    needs: [ extended ]
+    steps:
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-legacy-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-legacy-maven-
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: zulu
+          architecture: x64
+      - name: Build project
+        run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava${{ matrix.java }}
+  extended:
+    name: Extended build
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push'
+    steps:
+      - uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # V2.8.1
+        with:
+          egress-policy: block
+          disable-telemetry: true
+          allowed-endpoints: >
+            coveralls.io:443
+            dl.google.com:443
+            docs.gradle.org:443
+            docs.oracle.com:443
+            github.com:443
+            javadoc.io:443
+            jcenter.bintray.com:443
+            objects.githubusercontent.com:443
+            plugins-artifacts.gradle.org:443
+            plugins.gradle.org:443
+            raw.githubusercontent.com:443
+            repo.gradle.org:443
+            repo.maven.apache.org:443
+            repository.sonatype.org:443
+            services.gradle.org:443
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: 8
+          distribution: temurin
+          architecture: x64
+          cache: maven
+      - name: Build project
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pextras -Pchecks -Panalysis -Pintegration -Pmulti-release -Pchecksum-enforce
+  release:
+    name: Release new version
+    runs-on: ubuntu-24.04
+    needs: [ extended, hotspot-ea, hotspot-supported, j9-supported, hotspot-unsupported, hotspot-32, hotspot-legacy ]
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, '[release]')
+    permissions:
+      contents: write
+    steps:
+      - uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # V2.8.1
+        with:
+          egress-policy: audit # servers have changed, must be adjusted after next release
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+      - uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # v4.2.2
+        with:
+          java-version: 8
+          distribution: temurin
+          architecture: x64
+          gpg-private-key: ${{ secrets.gpg_secret }}
+      - name: Publish new version
+        run: |
+          git config user.name "${{ github.event.head_commit.committer.name }}"
+          git config user.email "${{ github.event.head_commit.committer.email }}"
+          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${{ github.actor }}:${{ secrets.github_token }}@github.com/${{ github.repository }}.git -Dcentral.username=${{ secrets.central_user }} -Dcentral.password=${{ secrets.central_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 -Dgradle.key=${{ secrets.gradle_key }} -Dgradle.secret=${{ secrets.gradle_secret }} -Pchecksum-enforce
