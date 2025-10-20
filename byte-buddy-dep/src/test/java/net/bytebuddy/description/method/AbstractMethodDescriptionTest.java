@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.junit.Assert.*;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -606,16 +607,36 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testExceptions() throws Exception {
-        assertThat(describe(firstMethod).getExceptionTypes(),
-                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(firstMethod.getExceptionTypes())));
-        assertThat(describe(secondMethod).getExceptionTypes(),
-                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(secondMethod.getExceptionTypes())));
-        assertThat(describe(thirdMethod).getExceptionTypes(),
-                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(thirdMethod.getExceptionTypes())));
-        assertThat(describe(firstConstructor).getExceptionTypes(),
-                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(firstConstructor.getExceptionTypes())));
-        assertThat(describe(secondConstructor).getExceptionTypes(),
-                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(secondConstructor.getExceptionTypes())));
+        TypeList.Generic firstMethodExecptions = describe(firstMethod).getExceptionTypes();
+        TypeList.Generic firstMethodLoaded = (TypeList.Generic) new TypeList.Generic.ForLoadedTypes(firstMethod.getExceptionTypes());
+        assertTrue(firstMethodExecptions.size() == firstMethodLoaded.size()
+                && firstMethodExecptions.containsAll(firstMethodLoaded)
+                && firstMethodLoaded.containsAll(firstMethodExecptions)
+        );
+        TypeList.Generic secondMethodExecptions = describe(secondMethod).getExceptionTypes();
+        TypeList.Generic secondMethodLoaded = (TypeList.Generic) new TypeList.Generic.ForLoadedTypes(secondMethod.getExceptionTypes());
+        assertTrue(secondMethodExecptions.size() == secondMethodLoaded.size()
+                && secondMethodExecptions.containsAll(secondMethodLoaded)
+                && secondMethodLoaded.containsAll(secondMethodExecptions)
+        );
+        TypeList.Generic thirdMethodExecptions = describe(thirdMethod).getExceptionTypes();
+        TypeList.Generic thirdMethodLoaded = (TypeList.Generic) new TypeList.Generic.ForLoadedTypes(thirdMethod.getExceptionTypes());
+        assertTrue(thirdMethodExecptions.size() == thirdMethodLoaded.size()
+                && thirdMethodExecptions.containsAll(thirdMethodLoaded)
+                && thirdMethodLoaded.containsAll(thirdMethodExecptions)
+        );
+        TypeList.Generic firstConstructorExecptions = describe(firstConstructor).getExceptionTypes();
+        TypeList.Generic firstConstructorLoaded = (TypeList.Generic) new TypeList.Generic.ForLoadedTypes(firstConstructor.getExceptionTypes());
+        assertTrue(firstConstructorExecptions.size() == firstConstructorLoaded.size()
+                && firstConstructorExecptions.containsAll(firstConstructorLoaded)
+                && firstConstructorLoaded.containsAll(firstConstructorExecptions)
+        );
+        TypeList.Generic secondConstructorExecptions = describe(secondConstructor).getExceptionTypes();
+        TypeList.Generic secondConstructorLoaded = (TypeList.Generic) new TypeList.Generic.ForLoadedTypes(secondConstructor.getExceptionTypes());
+        assertTrue(secondConstructorExecptions.size() == secondConstructorLoaded.size()
+                && secondConstructorExecptions.containsAll(secondConstructorLoaded)
+                && secondConstructorLoaded.containsAll(secondConstructorExecptions)
+        );
     }
 
     @Test
