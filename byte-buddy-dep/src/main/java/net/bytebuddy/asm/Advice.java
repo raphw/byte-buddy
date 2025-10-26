@@ -3559,8 +3559,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return ForInstrumentedType.INSTANCE;
                     } else if (target.getType().asErasure().represents(Method.class)) {
                         return ForInstrumentedMethod.METHOD;
-                    } else if (target.getType().asErasure().represents(Method.class)) {
-                        return ForInstrumentedMethod.METHOD;
+                    } else if (target.getType().asErasure().represents(Constructor.class)) {
+                        return ForInstrumentedMethod.CONSTRUCTOR;
                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
                         return ForInstrumentedMethod.EXECUTABLE;
                     } else if (target.getType().asErasure().represents(int.class)) {
