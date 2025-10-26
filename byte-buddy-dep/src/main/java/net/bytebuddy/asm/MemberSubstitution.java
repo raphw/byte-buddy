@@ -5746,6 +5746,21 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 },
 
                                 /**
+                                 * Represents the supplied value as a modifier as an integer.
+                                 */
+                                MODIFIERS {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement.Member member) {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement.Member member, List<TypeDescription> parameterTypes, TypeDescription returnType) {
+                                        return IntegerConstant.forValue(member.getModifiers());
+                                    }
+                                },
+
+                                /**
                                  * Represents the supplied value as a {@code java.lang.reflect.Executable}.
                                  */
                                 EXECUTABLE {
@@ -5909,6 +5924,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         sort = Sort.CONSTRUCTOR;
                                     } else if (target.getType().asErasure().represents(Field.class)) {
                                         sort = Sort.FIELD;
+                                    } else if (target.getType().asErasure().represents(int.class)) {
+                                        sort = Sort.MODIFIERS;
                                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
                                         sort = Sort.EXECUTABLE;
                                     } else if (JavaType.METHOD_HANDLE.getTypeStub().equals(target.getType().asErasure())) {
@@ -8880,6 +8897,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * instrumented method. This representation can be a string representation, a constant representing
      * the {@link Class}, a {@link Method}, {@link Constructor} or {@code java.lang.reflect.Executable}. It can also load
      * a {@code java.lang.invoke.MethodType}, a {@code java.lang.invoke.MethodHandle} or a {@code java.lang.invoke.MethodHandles$Lookup}.
+     * Finally, it can represent the origin's modifiers if the parameter is a primitive integer type.
      * </p>
      * <p>
      * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for

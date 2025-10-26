@@ -2321,6 +2321,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             },
 
+            /**
+             * A constant that must be an integer.
+             */
+            MODIFIERS {
+                @Override
+                protected boolean isRepresentable(MethodDescription instrumentedMethod) {
+                    return true;
+                }
+
+                @Override
+                protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
+                    return Target.ForStackManipulation.of(methodDescription.getModifiers());
+                }
+            },
+
 
             /**
              * A constant that must be a {@code java.lang.invoke.MethodHandle} instance.
@@ -3504,10 +3519,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return ForInstrumentedType.INSTANCE;
                     } else if (target.getType().asErasure().represents(Method.class)) {
                         return ForInstrumentedMethod.METHOD;
-                    } else if (target.getType().asErasure().represents(Constructor.class)) {
-                        return ForInstrumentedMethod.CONSTRUCTOR;
+                    } else if (target.getType().asErasure().represents(Method.class)) {
+                        return ForInstrumentedMethod.METHOD;
                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
                         return ForInstrumentedMethod.EXECUTABLE;
+                    } else if (target.getType().asErasure().represents(int.class)) {
+                        return ForInstrumentedMethod.MODIFIERS;
                     } else if (JavaType.METHOD_HANDLE.getTypeStub().equals(target.getType().asErasure())) {
                         return ForInstrumentedMethod.METHOD_HANDLE;
                     } else if (JavaType.METHOD_TYPE.getTypeStub().equals(target.getType().asErasure())) {
@@ -13300,7 +13317,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * a constant representing the {@link Class} declaring the adviced method or a {@link Method}, {@link Constructor}
      * or {@code java.lang.reflect.Executable} representing this method. It can also load the instrumented method's
      * {@code java.lang.invoke.MethodType}, {@code java.lang.invoke.MethodHandle} or
-     * {@code java.lang.invoke.MethodHandles$Lookup}.
+     * {@code java.lang.invoke.MethodHandles$Lookup}. Finally, it can be a primitive integer to represent the
+     * origin's modifiers.
      * </p>
      * <p>
      * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for
