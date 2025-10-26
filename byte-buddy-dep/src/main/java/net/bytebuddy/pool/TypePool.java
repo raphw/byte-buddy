@@ -3254,6 +3254,7 @@ public interface TypePool {
              * @param typeVariableBoundsAnnotationTokens A mapping of type annotations of the type variables' bounds' type annotations by their indices
              *                                           and each variable's index.
              * @param annotationTokens                   A list of tokens that represent the annotations of this type.
+             * @param moduleToken                        A token to represent module information or {@code null} if no module information is available.
              * @param fieldTokens                        A list of field tokens describing the field's of this type.
              * @param methodTokens                       A list of method tokens describing the method's of this type.
              * @param recordComponentTokens              A list of record component tokens describing the record components of this type.
