@@ -165,6 +165,19 @@ public interface ModifierReviewable {
     }
 
     /**
+     * A modifier reviewable for elements that can be mandated.
+     */
+    interface OfMandatable extends ModifierReviewable {
+
+        /**
+         * Specifies if the modifier described by this object is mandated.
+         *
+         * @return {@code true} if the modifier described by this object is mandated.
+         */
+        boolean isMandated();
+    }
+
+    /**
      * A modifier reviewable for a {@link net.bytebuddy.description.type.TypeDescription}.
      */
     interface ForTypeDefinition extends OfAbstraction, OfEnumeration {
@@ -290,14 +303,7 @@ public interface ModifierReviewable {
     /**
      * A modifier reviewable for a {@link net.bytebuddy.description.method.ParameterDescription}.
      */
-    interface ForParameterDescription extends ModifierReviewable {
-
-        /**
-         * CSpecifies if the modifier described by this object is mandated.
-         *
-         * @return {@code true} if the modifier described by this object is mandated.
-         */
-        boolean isMandated();
+    interface ForParameterDescription extends OfMandatable {
 
         /**
          * Returns this parameter's manifestation.
@@ -315,9 +321,47 @@ public interface ModifierReviewable {
     }
 
     /**
+     * Declares modifiers as they can be observed on a Java module.
+     */
+    interface ForModuleDescription extends ModifierReviewable {
+
+        /**
+         * Returns {@code true} if the module is open.
+         *
+         * @return {@code true} if the module is open.
+         */
+        boolean isOpen();
+    }
+
+    /**
+     * Declares modifiers as they can be observed on a module requirement declaration.
+     */
+    interface ForModuleRequirement extends OfMandatable {
+
+        /**
+         * Returns {@code true} if the module requirement is transitive.
+         *
+         * @return {@code true} if the module requirement is transitive.
+         */
+        boolean isTransitive();
+
+        /**
+         * Returns {@code true} if the module requirement is static.
+         *
+         * @return {@code true} if the module requirement is static.
+         */
+        boolean isStatic();
+    }
+
+    /**
      * An abstract base implementation of a {@link ModifierReviewable} class.
      */
-    abstract class AbstractBase implements ForTypeDefinition, ForFieldDescription, ForMethodDescription, ForParameterDescription {
+    abstract class AbstractBase implements ForTypeDefinition,
+            ForFieldDescription,
+            ForMethodDescription,
+            ForParameterDescription,
+            ForModuleDescription,
+            ForModuleRequirement {
 
         /**
          * {@inheritDoc}
@@ -457,6 +501,20 @@ public interface ModifierReviewable {
          */
         public boolean isVarArgs() {
             return matchesMask(Opcodes.ACC_VARARGS);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isOpen() {
+            return matchesMask(Opcodes.ACC_OPEN);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isTransitive() {
+            return matchesMask(Opcodes.ACC_TRANSITIVE);
         }
 
         /**

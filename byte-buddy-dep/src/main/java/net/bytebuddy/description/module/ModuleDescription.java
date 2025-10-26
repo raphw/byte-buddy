@@ -18,7 +18,7 @@ import java.util.Set;
  * Description of a named Java {@code java.lang.Module}.
  */
 public interface ModuleDescription extends NamedElement,
-        ModifierReviewable,
+        ModifierReviewable.ForModuleDescription,
         AnnotationSource {
 
     /**
@@ -36,13 +36,6 @@ public interface ModuleDescription extends NamedElement,
      */
     @MaybeNull
     String getMainClass();
-
-    /**
-     * Determines if this module is an open module.
-     *
-     * @return {@code true} if this is an open module, {@code false} otherwise.
-     */
-    boolean isOpen();
 
     /**
      * Returns all packages contained in this module.
@@ -90,7 +83,7 @@ public interface ModuleDescription extends NamedElement,
      * Represents an exported package declaration in a module. Exports control which packages
      * are accessible to other modules.
      */
-    interface Exports extends ModifierReviewable {
+    interface Exports extends ModifierReviewable.OfMandatable {
 
         /**
          * Returns the target modules that this package is exported to.
@@ -166,7 +159,7 @@ public interface ModuleDescription extends NamedElement,
      * Represents an opened package declaration in a module. Opens allow deep reflective access
      * to packages for other modules.
      */
-    interface Opens extends ModifierReviewable {
+    interface Opens extends ModifierReviewable.OfMandatable {
 
         /**
          * Returns the target modules that this package is opened to.
@@ -248,7 +241,7 @@ public interface ModuleDescription extends NamedElement,
      * Represents a module dependency declaration. Requires specify which modules this module
      * depends on for compilation and runtime.
      */
-    interface Requires extends ModifierReviewable {
+    interface Requires extends ModifierReviewable.ForModuleRequirement {
 
         /**
          * Returns the version of the required module.

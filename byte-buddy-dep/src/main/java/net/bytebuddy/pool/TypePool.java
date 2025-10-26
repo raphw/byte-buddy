@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -30,6 +31,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.RecordComponentList;
@@ -53,6 +55,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.Type;
@@ -68,11 +71,15 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -3195,6 +3202,12 @@ public interface TypePool {
             private final List<AnnotationToken> annotationTokens;
 
             /**
+             * A token to represent module information or {@code null} if no module information is available.
+             */
+            @MaybeNull
+            private final ModuleToken moduleToken;
+
+            /**
              * A list of field tokens describing the field's of this type.
              */
             private final List<FieldToken> fieldTokens;
@@ -3265,6 +3278,7 @@ public interface TypePool {
                                           Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
                                           Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundsAnnotationTokens,
                                           List<AnnotationToken> annotationTokens,
+                                          @MaybeNull ModuleToken moduleToken,
                                           List<FieldToken> fieldTokens,
                                           List<MethodToken> methodTokens,
                                           List<RecordComponentToken> recordComponentTokens,
@@ -3307,6 +3321,7 @@ public interface TypePool {
                 this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
                 this.typeVariableBoundsAnnotationTokens = typeVariableBoundsAnnotationTokens;
                 this.annotationTokens = annotationTokens;
+                this.moduleToken = moduleToken;
                 this.fieldTokens = fieldTokens;
                 this.methodTokens = methodTokens;
                 this.recordComponentTokens = recordComponentTokens;
@@ -6260,6 +6275,120 @@ public interface TypePool {
             }
 
             /**
+             * A token for module information.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class ModuleToken {
+
+                /**
+                 * The name of the module.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of the module.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The module version or {@code null} if no version was specified.
+                 */
+                @MaybeNull
+                private final String version;
+
+                /**
+                 * The module's main class or {@code null} if no main class was specified.
+                 */
+                @MaybeNull
+                private final String mainClass;
+
+                /**
+                 * The module's packages.
+                 */
+                private final Set<String> packages;
+
+                /**
+                 * The modules that this module requires.
+                 */
+                private final Map<String, ModuleDescription.Requires> requires;
+
+                /**
+                 * The packages that this module exports.
+                 */
+                private final Map<String, ModuleDescription.Exports> exports;
+
+                /**
+                 * The package that this module opens.
+                 */
+                private final Map<String, ModuleDescription.Opens> opens;
+
+                /**
+                 * The services that this module uses.
+                 */
+                private final Set<String> uses;
+
+                /**
+                 * The services that this module provides.
+                 */
+                private final Map<String, ModuleDescription.Provides> provides;
+
+                /**
+                 * Creates a new module token.
+                 *
+                 * @param name      The name of the module.
+                 * @param modifiers The modifiers of the module.
+                 * @param version   The module version or {@code null} if no version was specified.
+                 * @param mainClass The module's main class or {@code null} if no main class was specified.
+                 * @param packages  The module's packages.
+                 * @param requires  The modules that this module requires.
+                 * @param exports   The packages that this module exports.
+                 * @param opens     The package that this module opens.
+                 * @param uses      The services that this module uses.
+                 * @param provides  The services that this module provides.
+                 */
+                protected ModuleToken(String name,
+                                      int modifiers,
+                                      @MaybeNull String version,
+                                      @MaybeNull String mainClass,
+                                      Set<String> packages,
+                                      Map<String, ModuleDescription.Requires> requires,
+                                      Map<String, ModuleDescription.Exports> exports,
+                                      Map<String, ModuleDescription.Opens> opens,
+                                      Set<String> uses,
+                                      Map<String, ModuleDescription.Provides> provides) {
+                    this.name = name;
+                    this.modifiers = modifiers;
+                    this.version = version;
+                    this.mainClass = mainClass;
+                    this.packages = packages;
+                    this.requires = requires;
+                    this.exports = exports;
+                    this.opens = opens;
+                    this.uses = uses;
+                    this.provides = provides;
+                }
+
+                /**
+                 * Resolves this token to a module description.
+                 *
+                 * @param lazyTypeDescription The lazy type description that this token belongs to.
+                 * @return An appropriate lazy module description.
+                 */
+                private LazyModuleDescription toModuleDescription(LazyTypeDescription lazyTypeDescription) {
+                    return lazyTypeDescription.new LazyModuleDescription(name,
+                            modifiers,
+                            version,
+                            mainClass,
+                            packages,
+                            requires,
+                            exports,
+                            opens,
+                            uses,
+                            provides);
+                }
+            }
+
+            /**
              * A token for representing collected data on a field.
              */
             @HashCodeAndEqualsPlugin.Enhance
@@ -7730,6 +7859,179 @@ public interface TypePool {
             }
 
             /**
+             * A lazy description of a module.
+             */
+            private class LazyModuleDescription extends ModifierReviewable.AbstractBase implements ModuleDescription {
+
+                /**
+                 * The name of the module.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of the module.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The module version or {@code null} if no version was specified.
+                 */
+                @MaybeNull
+                private final String version;
+
+                /**
+                 * The module's main class or {@code null} if no main class was specified.
+                 */
+                @MaybeNull
+                private final String mainClass;
+
+                /**
+                 * The module's packages.
+                 */
+                private final Set<String> packages;
+
+                /**
+                 * The modules that this module requires.
+                 */
+                private final Map<String, ModuleDescription.Requires> requires;
+
+                /**
+                 * The packages that this module exports.
+                 */
+                private final Map<String, ModuleDescription.Exports> exports;
+
+                /**
+                 * The package that this module opens.
+                 */
+                private final Map<String, ModuleDescription.Opens> opens;
+
+                /**
+                 * The services that this module uses.
+                 */
+                private final Set<String> uses;
+
+                /**
+                 * The services that this module provides.
+                 */
+                private final Map<String, ModuleDescription.Provides> provides;
+
+                /**
+                 * Creates a new lazy module description.
+                 *
+                 * @param name      The name of the module.
+                 * @param modifiers The modifiers of the module.
+                 * @param version   The module version or {@code null} if no version was specified.
+                 * @param mainClass The module's main class or {@code null} if no main class was specified.
+                 * @param packages  The module's packages.
+                 * @param requires  The modules that this module requires.
+                 * @param exports   The packages that this module exports.
+                 * @param opens     The package that this module opens.
+                 * @param uses      The services that this module uses.
+                 * @param provides  The services that this module provides.
+                 */
+                protected LazyModuleDescription(String name,
+                                                int modifiers,
+                                                @MaybeNull String version,
+                                                @MaybeNull String mainClass,
+                                                Set<String> packages,
+                                                Map<String, ModuleDescription.Requires> requires,
+                                                Map<String, ModuleDescription.Exports> exports,
+                                                Map<String, ModuleDescription.Opens> opens,
+                                                Set<String> uses,
+                                                Map<String, ModuleDescription.Provides> provides) {
+                    this.name = name;
+                    this.modifiers = modifiers;
+                    this.version = version;
+                    this.mainClass = mainClass;
+                    this.packages = packages;
+                    this.requires = requires;
+                    this.exports = exports;
+                    this.opens = opens;
+                    this.uses = uses;
+                    this.provides = provides;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @MaybeNull
+                public String getVersion() {
+                    return version;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @MaybeNull
+                public String getMainClass() {
+                    return mainClass;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Set<String> getPackages() {
+                    return new LinkedHashSet<String>(packages);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Set<String> getUses() {
+                    return new LinkedHashSet<String>(uses);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Map<String, ModuleDescription.Exports> getExports() {
+                    return new LinkedHashMap<String, ModuleDescription.Exports>(exports);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Map<String, ModuleDescription.Opens> getOpens() {
+                    return new LinkedHashMap<String, ModuleDescription.Opens>(opens);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Map<String, ModuleDescription.Requires> getRequires() {
+                    return new LinkedHashMap<String, ModuleDescription.Requires>(requires);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Map<String, ModuleDescription.Provides> getProvides() {
+                    return new LinkedHashMap<String, ModuleDescription.Provides>(provides);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getModifiers() {
+                    return modifiers;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getActualName() {
+                    return name;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public AnnotationList getDeclaredAnnotations() {
+                    return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
+                }
+            }
+
+            /**
              * A lazy field description that only resolved type references when required.
              */
             private class LazyFieldDescription extends FieldDescription.InDefinedShape.AbstractBase {
@@ -8605,6 +8907,12 @@ public interface TypePool {
             private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
             /**
+             * A token that describes module information or {@code null} if no such information is available.
+             */
+            @MaybeNull
+            private LazyTypeDescription.ModuleToken moduleToken;
+
+            /**
              * A list of field tokens describing fields that are found on the visited type.
              */
             private final List<LazyTypeDescription.FieldToken> fieldTokens;
@@ -8809,6 +9117,11 @@ public interface TypePool {
             }
 
             @Override
+            public ModuleVisitor visitModule(String name, int access, @MaybeNull String version) {
+                return new ModuleExtractor(name, access, version);
+            }
+
+            @Override
             public void visitNestHost(String nestHost) {
                 this.nestHost = nestHost;
             }
@@ -8859,6 +9172,7 @@ public interface TypePool {
                         typeVariableAnnotationTokens,
                         typeVariableBoundsAnnotationTokens,
                         annotationTokens,
+                        moduleToken,
                         fieldTokens,
                         methodTokens,
                         recordComponentTokens,
@@ -8867,7 +9181,7 @@ public interface TypePool {
             }
 
             /**
-             * An annotation extractor reads an annotation found in a class field an collects data that
+             * An annotation extractor reads an annotation found in a class field and collects data that
              * is relevant to creating a related annotation description.
              */
             protected class AnnotationExtractor extends AnnotationVisitor {
@@ -9049,6 +9363,127 @@ public interface TypePool {
                         annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForAnnotationValue(Default.this,
                                 new LazyTypeDescription.AnnotationToken(descriptor, values)));
                     }
+                }
+            }
+
+            /**
+             * An extractor for collecting module data.
+             */
+            protected class ModuleExtractor extends ModuleVisitor {
+
+                /**
+                 * The name of the module.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of the module.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The module version or {@code null} if no version was specified.
+                 */
+                @MaybeNull
+                private final String version;
+
+                /**
+                 * The module's main class or {@code null} if no main class was specified.
+                 */
+                @MaybeNull
+                private String mainClass;
+
+                /**
+                 * The module's packages.
+                 */
+                private final Set<String> packages = new LinkedHashSet<String>();
+
+                /**
+                 * The modules that this module requires.
+                 */
+                private final Map<String, ModuleDescription.Requires> requires = new LinkedHashMap<String, ModuleDescription.Requires>();
+
+                /**
+                 * The packages that this module exports.
+                 */
+                private final Map<String, ModuleDescription.Exports> exports = new LinkedHashMap<String, ModuleDescription.Exports>();
+
+                /**
+                 * The package that this module opens.
+                 */
+                private final Map<String, ModuleDescription.Opens> opens = new LinkedHashMap<String, ModuleDescription.Opens>();
+
+                /**
+                 * The services that this module uses.
+                 */
+                private final Set<String> uses = new LinkedHashSet<String>();
+
+                /**
+                 * The services that this module provides.
+                 */
+                private final Map<String, ModuleDescription.Provides> provides = new LinkedHashMap<String, ModuleDescription.Provides>();
+
+                /**
+                 * Creates a new module token.
+                 *
+                 * @param name      The name of the module.
+                 * @param modifiers The modifiers of the module.
+                 * @param version   The module version or {@code null} if no version was specified.
+                 */
+                protected ModuleExtractor(String name, int modifiers, @MaybeNull String version) {
+                    super(OpenedClassReader.ASM_API);
+                    this.name = name;
+                    this.modifiers = modifiers;
+                    this.version = version;
+                }
+
+                @Override
+                public void visitMainClass(String mainClass) {
+                    this.mainClass = mainClass;
+                }
+
+                @Override
+                public void visitPackage(String aPackage) {
+                    super.visitPackage(aPackage);
+                }
+
+                @Override
+                public void visitRequire(String module, int access, @MaybeNull String version) {
+                    requires.put(module, new ModuleDescription.Requires.Simple(version, modifiers));
+                }
+
+                @Override
+                public void visitExport(String aPackage, int modifiers, String[] modules) {
+                    exports.put(aPackage, new ModuleDescription.Exports.Simple(new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
+                }
+
+                @Override
+                public void visitOpen(String aPackage, int modifiers, String[] modules) {
+                    opens.put(aPackage, new ModuleDescription.Opens.Simple(new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
+                }
+
+                @Override
+                public void visitUse(String service) {
+                    uses.add(service);
+                }
+
+                @Override
+                public void visitProvide(String service, String[] providers) {
+                    provides.put(service, new ModuleDescription.Provides.Simple(new LinkedHashSet<String>(Arrays.asList(providers))));
+                }
+
+                @Override
+                public void visitEnd() {
+                    moduleToken = new LazyTypeDescription.ModuleToken(name,
+                            modifiers,
+                            version,
+                            mainClass,
+                            packages,
+                            requires,
+                            exports,
+                            opens,
+                            uses,
+                            provides);
                 }
             }
 
