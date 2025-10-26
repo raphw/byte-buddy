@@ -8,7 +8,9 @@ import org.junit.Test;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassByImplementationBenchmarkTest {

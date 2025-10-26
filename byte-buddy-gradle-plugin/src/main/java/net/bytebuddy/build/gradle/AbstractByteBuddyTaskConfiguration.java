@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle;
 
 import groovy.lang.Closure;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -23,8 +24,6 @@ import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
-
-import net.bytebuddy.utility.nullability.MaybeNull;
 
 /**
  * An abstract configuration for a Byte Buddy task and extension.

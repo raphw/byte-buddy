@@ -37,7 +37,10 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * A visitor wrapper that removes annotations from the instrumented type.

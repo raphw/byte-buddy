@@ -25,7 +25,10 @@ import net.bytebuddy.description.type.TypeDescription;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * A latent matcher that resolves an {@link ElementMatcher} after supplying a type description.

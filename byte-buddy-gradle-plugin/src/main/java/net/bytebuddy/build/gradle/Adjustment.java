@@ -15,13 +15,18 @@
  */
 package net.bytebuddy.build.gradle;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
 
-import net.bytebuddy.utility.nullability.MaybeNull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Determines what tasks are considered for resolving compile task dependencies. If a compile task is a

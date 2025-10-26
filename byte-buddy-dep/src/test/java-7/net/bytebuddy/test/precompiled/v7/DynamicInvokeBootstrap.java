@@ -15,8 +15,6 @@
  */
 package net.bytebuddy.test.precompiled.v7;
 
-import java.lang.invoke.*;
-
 public class DynamicInvokeBootstrap extends ConstantCallSite {
 
     private static final String FOO = "foo";

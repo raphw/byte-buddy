@@ -15,7 +15,10 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Member;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class JavaTypeTest {

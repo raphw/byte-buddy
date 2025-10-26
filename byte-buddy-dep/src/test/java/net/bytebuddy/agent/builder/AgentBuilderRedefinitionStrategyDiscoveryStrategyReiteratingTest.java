@@ -10,7 +10,11 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 
 import java.lang.instrument.Instrumentation;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

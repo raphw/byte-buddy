@@ -22,7 +22,10 @@ import java.net.URLClassLoader;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ByteBuddyTest {

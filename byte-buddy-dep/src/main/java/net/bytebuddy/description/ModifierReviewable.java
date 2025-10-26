@@ -15,7 +15,18 @@
  */
 package net.bytebuddy.description;
 
-import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.modifier.EnumerationState;
+import net.bytebuddy.description.modifier.FieldManifestation;
+import net.bytebuddy.description.modifier.FieldPersistence;
+import net.bytebuddy.description.modifier.MethodManifestation;
+import net.bytebuddy.description.modifier.MethodStrictness;
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.ParameterManifestation;
+import net.bytebuddy.description.modifier.ProvisioningState;
+import net.bytebuddy.description.modifier.SynchronizationState;
+import net.bytebuddy.description.modifier.SyntheticState;
+import net.bytebuddy.description.modifier.TypeManifestation;
+import net.bytebuddy.description.modifier.Visibility;
 import org.objectweb.asm.Opcodes;
 
 /**

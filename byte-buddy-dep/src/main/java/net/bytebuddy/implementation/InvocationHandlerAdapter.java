@@ -41,7 +41,10 @@ import java.lang.reflect.InvocationHandler;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.fieldType;
+import static net.bytebuddy.matcher.ElementMatchers.genericFieldType;
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * An adapter for adapting an {@link java.lang.reflect.InvocationHandler}. The adapter allows the invocation handler

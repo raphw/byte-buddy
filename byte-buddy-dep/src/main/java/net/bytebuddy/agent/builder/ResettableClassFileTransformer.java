@@ -38,7 +38,9 @@ import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.Iterator;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.takesArgument;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 /**
  * A class file transformer that can reset its transformation.

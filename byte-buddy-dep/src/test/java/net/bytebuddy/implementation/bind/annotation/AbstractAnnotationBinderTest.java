@@ -23,7 +23,10 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends AbstractAnnotationTest<T> {
 

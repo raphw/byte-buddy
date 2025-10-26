@@ -4,7 +4,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.implementation.bind.annotation.DefaultMethod;
 import net.bytebuddy.implementation.bind.annotation.DefaultMethodHandle;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.test.utility.AccessControllerRule;
@@ -15,7 +14,6 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
 

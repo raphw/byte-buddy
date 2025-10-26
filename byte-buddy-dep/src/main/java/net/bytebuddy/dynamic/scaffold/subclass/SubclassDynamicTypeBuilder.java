@@ -22,7 +22,13 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
-import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.dynamic.scaffold.FieldRegistry;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.MethodRegistry;
+import net.bytebuddy.dynamic.scaffold.RecordComponentRegistry;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
@@ -37,7 +43,11 @@ import net.bytebuddy.utility.AsmClassWriter;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.isFinal;
+import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
+import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * A type builder that creates an instrumented type as a subclass, i.e. a type that is not based on an existing class file.

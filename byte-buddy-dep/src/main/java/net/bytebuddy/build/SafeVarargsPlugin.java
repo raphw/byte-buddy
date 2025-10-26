@@ -25,9 +25,14 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.declaresMethod;
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 
 /**
  * A plugin that allows for adding a {@code java.lang.SafeVarargs} annotation even if compiled prior to Java 7

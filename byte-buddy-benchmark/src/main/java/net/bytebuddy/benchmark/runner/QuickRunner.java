@@ -15,7 +15,11 @@
  */
 package net.bytebuddy.benchmark.runner;
 
-import net.bytebuddy.benchmark.*;
+import net.bytebuddy.benchmark.ClassByExtensionBenchmark;
+import net.bytebuddy.benchmark.ClassByImplementationBenchmark;
+import net.bytebuddy.benchmark.StubInvocationBenchmark;
+import net.bytebuddy.benchmark.SuperClassInvocationBenchmark;
+import net.bytebuddy.benchmark.TrivialClassCreationBenchmark;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;

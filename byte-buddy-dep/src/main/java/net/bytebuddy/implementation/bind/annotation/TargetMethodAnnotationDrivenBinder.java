@@ -33,7 +33,12 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} binds

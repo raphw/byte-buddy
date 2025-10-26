@@ -15,7 +15,10 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -24,7 +27,12 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class AnnotationAppenderDefaultTest {
 

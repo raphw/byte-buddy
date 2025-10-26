@@ -11,7 +11,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.ClassVisitor;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class TypeInitializerDrainDefaultTest {
 

@@ -2,7 +2,6 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;

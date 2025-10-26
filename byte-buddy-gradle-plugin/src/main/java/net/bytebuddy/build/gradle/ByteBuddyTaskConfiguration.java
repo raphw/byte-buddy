@@ -15,8 +15,8 @@
  */
 package net.bytebuddy.build.gradle;
 
-import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;

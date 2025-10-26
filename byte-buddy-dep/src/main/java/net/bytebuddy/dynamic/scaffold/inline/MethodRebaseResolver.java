@@ -33,7 +33,11 @@ import net.bytebuddy.utility.nullability.AlwaysNull;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.

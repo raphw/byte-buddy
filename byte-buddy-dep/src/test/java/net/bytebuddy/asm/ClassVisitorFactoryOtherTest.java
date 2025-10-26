@@ -5,7 +5,9 @@ import org.junit.Test;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassVisitorFactoryOtherTest {

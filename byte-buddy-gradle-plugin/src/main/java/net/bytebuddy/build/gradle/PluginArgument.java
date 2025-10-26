@@ -16,10 +16,9 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
-
-import net.bytebuddy.utility.nullability.MaybeNull;
 
 import javax.inject.Inject;
 import java.io.Serializable;

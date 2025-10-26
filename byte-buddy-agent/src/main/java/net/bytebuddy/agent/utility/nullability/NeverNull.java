@@ -18,7 +18,11 @@ package net.bytebuddy.agent.utility.nullability;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.TypeQualifierDefault;
 import javax.annotation.meta.TypeQualifierNickname;
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Indicates that a field, method or parameter can never be {@code null}. Typically, this does not need to

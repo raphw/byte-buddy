@@ -10,7 +10,9 @@ import org.mockito.junit.MockitoJUnit;
 import java.util.Collections;
 import java.util.jar.Manifest;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class PluginEngineErrorHandlerTest {
 

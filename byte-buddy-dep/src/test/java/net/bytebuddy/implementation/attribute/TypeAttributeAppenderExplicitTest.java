@@ -5,7 +5,9 @@ import net.bytebuddy.description.type.TypeList;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class TypeAttributeAppenderExplicitTest extends AbstractTypeAttributeAppenderTest {
 

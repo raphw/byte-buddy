@@ -10,7 +10,12 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
-import net.bytebuddy.description.type.*;
+import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.RecordComponentDescription;
+import net.bytebuddy.description.type.TypeDefinition;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.Implementation;
@@ -35,9 +40,20 @@ import java.util.Collections;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class InstrumentedTypeDefaultTest {
 

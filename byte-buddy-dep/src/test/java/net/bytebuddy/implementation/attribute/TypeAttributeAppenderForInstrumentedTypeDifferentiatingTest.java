@@ -9,7 +9,9 @@ import org.mockito.Mock;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 public class TypeAttributeAppenderForInstrumentedTypeDifferentiatingTest extends AbstractTypeAttributeAppenderTest {
 

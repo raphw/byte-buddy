@@ -18,7 +18,11 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Parameters that are annotated with this annotation will be assigned by also considering the runtime type of the

@@ -21,7 +21,12 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.PrivilegedAction;
 
 /**

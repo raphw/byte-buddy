@@ -20,15 +20,16 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Optional;
 import org.gradle.work.Incremental;
 import org.gradle.work.InputChanges;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A Byte Buddy task implementation that supports incremental compilation.
