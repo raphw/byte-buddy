@@ -3094,6 +3094,7 @@ public interface TypePool {
          * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
          * {@link AnnotationDescription} by querying a type pool at lookup time.
          */
+        @SuppressFBWarnings("URF_UNREAD_FIELD")
         protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
             /**
