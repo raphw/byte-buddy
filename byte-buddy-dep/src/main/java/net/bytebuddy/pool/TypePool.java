@@ -6295,12 +6295,14 @@ public interface TypePool {
                  * The module version or {@code null} if no version was specified.
                  */
                 @MaybeNull
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final String version;
 
                 /**
                  * The module's main class or {@code null} if no main class was specified.
                  */
                 @MaybeNull
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final String mainClass;
 
                 /**
@@ -6375,6 +6377,7 @@ public interface TypePool {
                  * @param lazyTypeDescription The lazy type description that this token belongs to.
                  * @return An appropriate lazy module description.
                  */
+                @SuppressFBWarnings("UPM_UNCALLED_PRIVATE_METHOD")
                 private LazyModuleDescription toModuleDescription(LazyTypeDescription lazyTypeDescription) {
                     return lazyTypeDescription.new LazyModuleDescription(name,
                             modifiers,
