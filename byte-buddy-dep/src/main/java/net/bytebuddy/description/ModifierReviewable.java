@@ -346,11 +346,11 @@ public interface ModifierReviewable {
         boolean isTransitive();
 
         /**
-         * Returns {@code true} if the module requirement is static.
+         * Returns {@code true} if the module requirement is during the static phase only.
          *
-         * @return {@code true} if the module requirement is static.
+         * @return {@code true} if the module requirement is during the static phase only.
          */
-        boolean isStatic();
+        boolean isStaticPhase();
     }
 
     /**
@@ -508,6 +508,13 @@ public interface ModifierReviewable {
          */
         public boolean isOpen() {
             return matchesMask(Opcodes.ACC_OPEN);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isStaticPhase() {
+            return matchesMask(Opcodes.ACC_STATIC_PHASE);
         }
 
         /**
