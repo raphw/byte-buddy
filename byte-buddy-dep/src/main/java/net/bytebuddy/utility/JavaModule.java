@@ -20,6 +20,7 @@ import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
@@ -210,6 +211,16 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      */
     public AnnotationList getDeclaredAnnotations() {
         return new AnnotationList.ForLoadedAnnotations(module.getDeclaredAnnotations());
+    }
+
+    /**
+     * Returns a description of the module if the current module is a named module. Otherwise,
+     * an exception is thrown.
+     *
+     * @return A description of the current module.
+     */
+    public ModuleDescription toDescription() {
+        return ModuleDescription.ForLoadedModule.of(module);
     }
 
     @Override

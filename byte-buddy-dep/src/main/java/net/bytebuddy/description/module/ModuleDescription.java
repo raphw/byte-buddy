@@ -15,176 +15,404 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Description of a named Java {@code java.lang.Module}.
+ */
 public interface ModuleDescription extends NamedElement,
         ModifierReviewable,
         AnnotationSource {
 
+    /**
+     * Returns the version of this module.
+     *
+     * @return The module's version or {@code null} if no version is specified.
+     */
     @MaybeNull
     String getVersion();
 
+    /**
+     * Returns the main class of this module.
+     *
+     * @return The module's main class or {@code null} if no main class is specified.
+     */
     @MaybeNull
     String getMainClass();
 
+    /**
+     * Determines if this module is an open module.
+     *
+     * @return {@code true} if this is an open module, {@code false} otherwise.
+     */
     boolean isOpen();
 
+    /**
+     * Returns all packages contained in this module.
+     *
+     * @return A set of all package names within this module.
+     */
     Set<String> getPackages();
 
+    /**
+     * Returns all service types that this module uses.
+     *
+     * @return A set of service class names that this module uses.
+     */
     Set<String> getUses();
 
+    /**
+     * Returns all package exports of this module.
+     *
+     * @return A mapping of package names to their export declarations.
+     */
     Map<String, Exports> getExports();
 
+    /**
+     * Returns all package opens of this module.
+     *
+     * @return A mapping of package names to their opens declarations.
+     */
     Map<String, Opens> getOpens();
 
+    /**
+     * Returns all module dependencies of this module.
+     *
+     * @return A mapping of module names to their require declarations.
+     */
     Map<String, Requires> getRequires();
 
+    /**
+     * Returns all service implementations provided by this module.
+     *
+     * @return A mapping of service names to their provider declarations.
+     */
     Map<String, Provides> getProvides();
 
+    /**
+     * Represents an exported package declaration in a module. Exports control which packages
+     * are accessible to other modules.
+     */
     interface Exports extends ModifierReviewable {
 
+        /**
+         * Returns the target modules that this package is exported to.
+         *
+         * @return A set of module names that can access this exported package, or an empty set if exported to all modules.
+         */
         Set<String> getTargets();
 
+        /**
+         * Determines if this export is qualified (exported to specific modules only).
+         *
+         * @return {@code true} if this export has specific target modules, {@code false} if exported to all modules.
+         */
         boolean isQualified();
 
+        /**
+         * An abstract base implementation of {@link Exports} that provides a default implementation
+         * for {@link #isQualified()}.
+         */
         abstract class AbstractBase extends ModifierReviewable.AbstractBase implements Exports {
 
+            /**
+             * {@inheritDoc}
+             */
             public boolean isQualified() {
                 return !getTargets().isEmpty();
             }
         }
 
+        /**
+         * A simple implementation of {@link Exports} that stores the target modules and modifiers.
+         */
         class Simple extends AbstractBase {
 
+            /**
+             * The target modules for this export.
+             */
             private final Set<String> targets;
 
+            /**
+             * The modifiers for this export.
+             */
             protected final int modifiers;
 
+            /**
+             * Creates a new simple export declaration.
+             *
+             * @param targets   The target modules for this export.
+             * @param modifiers The modifiers for this export.
+             */
             public Simple(Set<String> targets, int modifiers) {
                 this.targets = targets;
                 this.modifiers = modifiers;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public Set<String> getTargets() {
                 return targets;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public int getModifiers() {
                 return modifiers;
             }
-
-            // TODO: equals hash/code
         }
     }
 
+    /**
+     * Represents an opened package declaration in a module. Opens allow deep reflective access
+     * to packages for other modules.
+     */
     interface Opens extends ModifierReviewable {
 
+        /**
+         * Returns the target modules that this package is opened to.
+         *
+         * @return A set of module names that can reflectively access this opened package, or an empty set if opened to all modules.
+         */
         Set<String> getTargets();
 
+        /**
+         * Determines if this opens declaration is qualified (opened to specific modules only).
+         *
+         * @return {@code true} if this opens has specific target modules, {@code false} if opened to all modules.
+         */
         boolean isQualified();
 
+        /**
+         * An abstract base implementation of {@link Opens}.
+         */
         abstract class AbstractBase extends ModifierReviewable.AbstractBase implements Opens {
 
+            /**
+             * {@inheritDoc}
+             */
             public boolean isQualified() {
                 return !getTargets().isEmpty();
             }
         }
 
+        /**
+         * A simple implementation of {@link Opens}.
+         */
         class Simple extends AbstractBase {
 
+            /**
+             * The target modules for this opens declaration.
+             */
             private final Set<String> targets;
 
+            /**
+             * The modifiers for this opens declaration.
+             */
             protected final int modifiers;
 
+            /**
+             * Creates a new simple opens declaration.
+             *
+             * @param targets   The target modules for this opens declaration.
+             * @param modifiers The modifiers for this opens declaration.
+             */
             public Simple(Set<String> targets, int modifiers) {
                 this.targets = targets;
                 this.modifiers = modifiers;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public Set<String> getTargets() {
                 return targets;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public boolean isQualified() {
                 return !targets.isEmpty();
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public int getModifiers() {
                 return modifiers;
             }
-
-            // TODO: equals hash/code
         }
     }
 
+    /**
+     * Represents a module dependency declaration. Requires specify which modules this module
+     * depends on for compilation and runtime.
+     */
     interface Requires extends ModifierReviewable {
 
+        /**
+         * Returns the version of the required module.
+         *
+         * @return The required module's version or {@code null} if no specific version is required.
+         */
         @MaybeNull
         String getVersion();
 
+        /**
+         * A simple implementation of {@link Requires}.
+         */
         class Simple extends ModifierReviewable.AbstractBase implements Requires {
 
+            /**
+             * The version of the required module.
+             */
             @MaybeNull
             private final String version;
 
-            protected final int modifiers;
+            /**
+             * The modifiers for this requires declaration.
+             */
+            private final int modifiers;
 
+            /**
+             * Creates a new simple requires declaration.
+             *
+             * @param version   The version of the required module or {@code null} if no specific version is required.
+             * @param modifiers The modifiers for this requires declaration.
+             */
             public Simple(@MaybeNull String version, int modifiers) {
                 this.version = version;
                 this.modifiers = modifiers;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             @MaybeNull
             public String getVersion() {
                 return version;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public int getModifiers() {
                 return modifiers;
             }
         }
     }
 
+    /**
+     * Represents a service provider declaration in a module. Provides specify which service
+     * implementations this module offers to other modules.
+     */
     interface Provides {
 
+        /**
+         * Returns the implementation classes that provide the service.
+         *
+         * @return A set of class names that implement the service.
+         */
         Set<String> getProviders();
 
+        /**
+         * A simple implementation of {@link Provides}.
+         */
         class Simple implements Provides {
 
+            /**
+             * The implementation classes that provide the service.
+             */
             private final Set<String> providers;
 
+            /**
+             * Creates a new simple provides declaration.
+             *
+             * @param providers The implementation classes that provide the service.
+             */
             public Simple(Set<String> providers) {
                 this.providers = providers;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public Set<String> getProviders() {
                 return providers;
             }
         }
     }
 
+    /**
+     * A {@link ModuleDescription} implementation that represents a loaded Java module.
+     * This implementation uses reflection and Java dispatchers to access module information
+     * from the runtime module system.
+     */
     class ForLoadedModule extends ModifierReviewable.AbstractBase implements ModuleDescription {
 
+        /**
+         * A dispatcher for accessing {@code java.lang.Module} methods.
+         */
         protected static final Module MODULE = doPrivileged(JavaDispatcher.of(Module.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor} methods.
+         */
         protected static final ModuleDescriptor MODULE_DESCRIPTOR = doPrivileged(JavaDispatcher.of(ModuleDescriptor.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Exports} methods.
+         */
         protected static final ModuleDescriptor.Exports MODULE_DESCRIPTOR_EXPORTS = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Exports.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Exports.Modifier} methods.
+         */
         protected static final ModuleDescriptor.Exports.Modifier MODULE_DESCRIPTOR_EXPORTS_MODIFIER = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Exports.Modifier.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Opens} methods.
+         */
         protected static final ModuleDescriptor.Opens MODULE_DESCRIPTOR_OPENS = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Opens.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Opens.Modifier} methods.
+         */
         protected static final ModuleDescriptor.Opens.Modifier MODULE_DESCRIPTOR_OPENS_MODIFIER = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Opens.Modifier.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Requires} methods.
+         */
         protected static final ModuleDescriptor.Requires MODULE_DESCRIPTOR_REQUIRES = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Requires.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Requires.Modifier} methods.
+         */
         protected static final ModuleDescriptor.Requires.Modifier MODULE_DESCRIPTOR_REQUIRES_MODIFIER = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Requires.Modifier.class));
 
+        /**
+         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Provides} methods.
+         */
         protected static final ModuleDescriptor.Provides MODULE_DESCRIPTOR_PROVIDES = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Provides.class));
 
+        /**
+         * A dispatcher for accessing {@code java.util.Optional} methods.
+         */
         protected static final Optional OPTIONAL = doPrivileged(JavaDispatcher.of(Optional.class));
 
+        /**
+         * The module represented by this description.
+         */
         private final AnnotatedElement module;
 
+        /**
+         * Creates a module description for the supplied module.
+         *
+         * @param module The module to represent.
+         * @return A module description for the supplied module.
+         * @throws IllegalArgumentException If the supplied instance is not a module or if the module is unnamed.
+         */
         public static ForLoadedModule of(Object module) {
             if (!MODULE.isInstance(module)) {
                 throw new IllegalArgumentException("Not a Java module: " + module);
@@ -206,32 +434,55 @@ public interface ModuleDescription extends NamedElement,
             return action.run();
         }
 
+        /**
+         * Creates a new module description for the supplied module.
+         *
+         * @param module The module to represent.
+         */
         protected ForLoadedModule(AnnotatedElement module) {
             this.module = module;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @MaybeNull
         public String getVersion() {
             return (String) OPTIONAL.orElse(MODULE_DESCRIPTOR.rawVersion(MODULE.getDescriptor(module)), null);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @MaybeNull
         public String getMainClass() {
             return (String) OPTIONAL.orElse(MODULE_DESCRIPTOR.mainClass(MODULE.getDescriptor(module)), null);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public boolean isOpen() {
             return MODULE_DESCRIPTOR.isOpen(MODULE.getDescriptor(module));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Set<String> getPackages() {
             return MODULE_DESCRIPTOR.packages(MODULE.getDescriptor(module));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Set<String> getUses() {
             return MODULE_DESCRIPTOR.uses(MODULE.getDescriptor(module));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Map<String, Exports> getExports() {
             Map<String, Exports> exports = new LinkedHashMap<String, Exports>();
             for (Object export : MODULE_DESCRIPTOR.exports(MODULE.getDescriptor(module))) {
@@ -244,6 +495,9 @@ public interface ModuleDescription extends NamedElement,
             return exports;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Map<String, Opens> getOpens() {
             Map<String, Opens> opens = new LinkedHashMap<String, Opens>();
             for (Object open : MODULE_DESCRIPTOR.opens(MODULE.getDescriptor(module))) {
@@ -256,6 +510,9 @@ public interface ModuleDescription extends NamedElement,
             return opens;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Map<String, Requires> getRequires() {
             Map<String, Requires> requires = new LinkedHashMap<String, Requires>();
             for (Object require : MODULE_DESCRIPTOR.requires(MODULE.getDescriptor(module))) {
@@ -270,6 +527,9 @@ public interface ModuleDescription extends NamedElement,
             return requires;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Map<String, Provides> getProvides() {
             Map<String, Provides> provides = new LinkedHashMap<String, Provides>();
             for (Object require : MODULE_DESCRIPTOR.provides(MODULE.getDescriptor(module))) {
@@ -278,6 +538,9 @@ public interface ModuleDescription extends NamedElement,
             return provides;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             int modifiers = 0;
             for (Object modifier : MODULE_DESCRIPTOR.modifiers(module)) {
@@ -286,10 +549,16 @@ public interface ModuleDescription extends NamedElement,
             return modifiers;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public String getActualName() {
             return MODULE_DESCRIPTOR.name(MODULE.getDescriptor(module));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(module.getDeclaredAnnotations());
         }
@@ -347,88 +616,269 @@ public interface ModuleDescription extends NamedElement,
         @JavaDispatcher.Proxied("java.lang.ModuleDescriptor")
         protected interface ModuleDescriptor {
 
+            /**
+             * Returns the module's name.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's name.
+             */
             String name(Object value);
 
+            /**
+             * Returns the module's modifiers.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's modifiers.
+             */
             Set<?> modifiers(Object value);
 
+            /**
+             * Returns {@code true} if this is an open module.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return {@code true} if this is an open module.
+             */
             boolean isOpen(Object value);
 
+            /**
+             * Returns the module's requires declarations.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's requires declarations.
+             */
             Set<?> requires(Object value);
 
+            /**
+             * Returns the module's exports declarations.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's exports declarations.
+             */
             Set<?> exports(Object value);
 
+            /**
+             * Returns the module's opens declarations.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's opens declarations.
+             */
             Set<?> opens(Object value);
 
+            /**
+             * Returns the module's uses declarations.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's uses declarations.
+             */
             Set<String> uses(Object value);
 
+            /**
+             * Returns the module's provides declarations.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's provides declarations.
+             */
             Set<?> provides(Object value);
 
+            /**
+             * Returns the module's raw version.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's raw version as an {@code Optional}.
+             */
             Object rawVersion(Object value);
 
+            /**
+             * Returns the module's main class.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's main class as an {@code Optional}.
+             */
             Object mainClass(Object value);
 
+            /**
+             * Returns the module's packages.
+             *
+             * @param value The {@code java.lang.ModuleDescriptor} instance.
+             * @return The module's packages.
+             */
             Set<String> packages(Object value);
 
+            /**
+             * A proxy for interacting with {@code java.lang.ModuleDescriptor.Requires}.
+             */
             @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Requires")
             interface Requires {
 
+                /**
+                 * Returns the name of the required module.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Requires} instance.
+                 * @return The name of the required module.
+                 */
                 String name(Object value);
 
+                /**
+                 * Returns the modifiers of the requires declaration.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Requires} instance.
+                 * @return The modifiers of the requires declaration.
+                 */
                 Set<?> modifiers(Object value);
 
+                /**
+                 * Returns the raw compiled version of the required module.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Requires} instance.
+                 * @return The raw compiled version as an {@code Optional}.
+                 */
                 Object rawCompiledVersion(Object value);
 
+                /**
+                 * A proxy for interacting with {@code java.lang.ModuleDescriptor.Requires.Modifier}.
+                 */
                 @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Requires$Modifier")
                 interface Modifier {
 
+                    /**
+                     * Returns the mask value for this modifier.
+                     *
+                     * @param value The {@code java.lang.ModuleDescriptor.Requires.Modifier} instance.
+                     * @return The mask value for this modifier.
+                     */
                     int getMask(Object value);
                 }
             }
 
+            /**
+             * A proxy for interacting with {@code java.lang.ModuleDescriptor.Exports}.
+             */
             @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Exports")
             interface Exports {
 
+                /**
+                 * Returns the source package name for this export.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Exports} instance.
+                 * @return The source package name.
+                 */
                 String source(Object value);
 
+                /**
+                 * Returns the modifiers of the exports declaration.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Exports} instance.
+                 * @return The modifiers of the exports declaration.
+                 */
                 Set<?> modifiers(Object value);
 
+                /**
+                 * Returns the target modules for this export.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Exports} instance.
+                 * @return The target modules for this export.
+                 */
                 Set<String> targets(Object value);
 
+                /**
+                 * A proxy for interacting with {@code java.lang.ModuleDescriptor.Exports.Modifier}.
+                 */
                 @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Exports$Modifier")
                 interface Modifier {
 
+                    /**
+                     * Returns the mask value for this modifier.
+                     *
+                     * @param value The {@code java.lang.ModuleDescriptor.Exports.Modifier} instance.
+                     * @return The mask value for this modifier.
+                     */
                     int getMask(Object value);
                 }
             }
 
+            /**
+             * A proxy for interacting with {@code java.lang.ModuleDescriptor.Opens}.
+             */
             @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Opens")
             interface Opens {
 
+                /**
+                 * Returns the source package name for this opens declaration.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Opens} instance.
+                 * @return The source package name.
+                 */
                 String source(Object value);
 
+                /**
+                 * Returns the modifiers of the opens declaration.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Opens} instance.
+                 * @return The modifiers of the opens declaration.
+                 */
                 Set<?> modifiers(Object value);
 
+                /**
+                 * Returns the target modules for this opens declaration.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Opens} instance.
+                 * @return The target modules for this opens declaration.
+                 */
                 Set<String> targets(Object value);
 
+                /**
+                 * A proxy for interacting with {@code java.lang.ModuleDescriptor.Opens.Modifier}.
+                 */
                 @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Opens$Modifier")
                 interface Modifier {
 
+                    /**
+                     * Returns the mask value for this modifier.
+                     *
+                     * @param value The {@code java.lang.ModuleDescriptor.Opens.Modifier} instance.
+                     * @return The mask value for this modifier.
+                     */
                     int getMask(Object value);
                 }
             }
 
+            /**
+             * A proxy for interacting with {@code java.lang.ModuleDescriptor.Provides}.
+             */
             @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Provides")
             interface Provides {
 
+                /**
+                 * Returns the service interface name for this provides declaration.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Provides} instance.
+                 * @return The service interface name.
+                 */
                 String service(Object value);
 
+                /**
+                 * Returns the provider implementation class names for this provides declaration.
+                 *
+                 * @param value The {@code java.lang.ModuleDescriptor.Provides} instance.
+                 * @return The provider implementation class names.
+                 */
                 Set<String> provides(Object value);
             }
         }
 
+        /**
+         * A proxy for interacting with {@code java.util.Optional}.
+         */
         @JavaDispatcher.Proxied("java.lang.Optional")
         protected interface Optional {
 
+            /**
+             * Returns the value if present, otherwise returns the fallback value.
+             *
+             * @param value    The {@code java.util.Optional} instance.
+             * @param fallback The fallback value to return if the optional is empty.
+             * @return The value if present, otherwise the fallback value.
+             */
             @MaybeNull
             Object orElse(Object value, @MaybeNull Object fallback);
         }
