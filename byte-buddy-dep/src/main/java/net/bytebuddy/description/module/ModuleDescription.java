@@ -10,7 +10,6 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 
 import java.lang.reflect.AnnotatedElement;
 import java.security.PrivilegedAction;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
