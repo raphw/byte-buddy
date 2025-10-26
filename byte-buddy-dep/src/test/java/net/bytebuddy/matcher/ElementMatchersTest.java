@@ -938,9 +938,17 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsMain() throws Exception {
+        assertThat(ElementMatchers.isMain(false)
+                .matches(new MethodDescription.ForLoadedMethod(MainMethod.class.getDeclaredMethod("main", String[].class))), is(true));
         assertThat(ElementMatchers.isMain()
                 .matches(new MethodDescription.ForLoadedMethod(MainMethod.class.getDeclaredMethod("main", String[].class))), is(true));
-        assertThat(ElementMatchers.isFinalizer()
+        assertThat(ElementMatchers.isMain(false)
+                .matches(new MethodDescription.ForLoadedMethod(MainMethod.class.getDeclaredMethod("main"))), is(false));
+        assertThat(ElementMatchers.isMain()
+                .matches(new MethodDescription.ForLoadedMethod(MainMethod.class.getDeclaredMethod("main"))), is(true));
+        assertThat(ElementMatchers.isMain(false)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+        assertThat(ElementMatchers.isMain()
                 .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
 
@@ -1576,6 +1584,10 @@ public class ElementMatchersTest {
     }
 
     private static class MainMethod {
+
+        void main() {
+            /* empty */
+        }
 
         public static void main(String[] args) {
             /* empty */

@@ -1595,13 +1595,36 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a Java <i>main</i> method as an application entry point.
+     * Matches a Java <i>main</i> method as an application entry point. This method matches all methods that
+     * qualify as main method since Java 25.
      *
      * @param <T> The type of the matched object.
      * @return A matcher that matches a Java <i>main</i> method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isMain() {
-        return named("main").and(takesArguments(String[].class)).and(returns(TypeDescription.ForLoadedType.of(void.class)).and(isStatic()).and(isPublic()));
+        return isMain(true);
+    }
+
+    /**
+     * Matches a Java <i>main</i> method as an application entry point.
+     *
+     * @param modernized {@code true} if modernized main methods as specified since Java 25 should be matched.
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches a Java <i>main</i> method.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isMain(boolean modernized) {
+        if (modernized) {
+            return named("main")
+                    .and(takesArguments(String[].class).or(takesArguments(0)))
+                    .and(returns(TypeDescription.ForLoadedType.of(void.class)))
+                    .and(not(isPrivate()));
+        } else {
+            return named("main")
+                    .and(takesArguments(String[].class))
+                    .and(returns(TypeDescription.ForLoadedType.of(void.class)))
+                    .and(isStatic())
+                    .and(isPublic());
+        }
     }
 
     /**
