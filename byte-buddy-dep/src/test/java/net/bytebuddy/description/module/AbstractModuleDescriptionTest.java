@@ -1,14 +1,13 @@
 package net.bytebuddy.description.module;
 
-import jdk.internal.org.objectweb.asm.Type;
 import net.bytebuddy.utility.AsmClassWriter;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.io.File;
 import java.io.FileOutputStream;
