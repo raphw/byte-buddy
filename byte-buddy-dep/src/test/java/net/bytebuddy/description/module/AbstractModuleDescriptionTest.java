@@ -90,6 +90,15 @@ public abstract class AbstractModuleDescriptionTest {
                 new ModuleDescription.Requires.Simple(QUX + BAZ, 0))));
         assertThat(moduleDescription.hashCode(), is(toModuleDescription().hashCode()));
         assertThat(moduleDescription, is(toModuleDescription()));
+        assertThat(moduleDescription.getProvides().hashCode(), is(toModuleDescription().getProvides().hashCode()));
+        assertThat(moduleDescription.getProvides(), is(toModuleDescription().getProvides()));
+        assertThat(moduleDescription.getExports().hashCode(), is(toModuleDescription().getExports().hashCode()));
+        assertThat(moduleDescription.getExports(), is(toModuleDescription().getExports()));
+        assertThat(moduleDescription.getOpens().hashCode(), is(toModuleDescription().getOpens().hashCode()));
+        assertThat(moduleDescription.getOpens(), is(toModuleDescription().getOpens()));
+        assertThat(moduleDescription.getRequires().hashCode(), is(toModuleDescription().getRequires().hashCode()));
+        assertThat(moduleDescription.getRequires(), is(toModuleDescription().getRequires()));
+        assertThat(moduleDescription, is(toModuleDescription()));
         assertThat(moduleDescription.toString(), is("module " + moduleDescription.getActualName()));
     }
 }
