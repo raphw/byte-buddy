@@ -21,6 +21,7 @@ import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.TypePath;
 
@@ -28,6 +29,16 @@ import org.objectweb.asm.TypePath;
  * A class visitor that traces invocations of visitation methods and notifies if a nest host or outer class was not visited.
  */
 public abstract class MetadataAwareClassVisitor extends ClassVisitor {
+
+    /**
+     * {@code true} if the sources were not yet visited.
+     */
+    private boolean triggerSource;
+
+    /**
+     * {@code true} if the module information was not yet visited.
+     */
+    private boolean triggerModule;
 
     /**
      * {@code true} if the nest host was not yet visited.
@@ -52,9 +63,25 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      */
     protected MetadataAwareClassVisitor(int api, ClassVisitor classVisitor) {
         super(api, classVisitor);
+        triggerSource = true;
+        triggerModule = true;
         triggerNestHost = true;
         triggerOuterClass = true;
         triggerAttributes = true;
+    }
+
+    /**
+     * Invoked if the sources were not visited.
+     */
+    protected void onSource() {
+        /* do nothing */
+    }
+
+    /**
+     * Invoked if the module was not visited.
+     */
+    protected void onModule() {
+        /* do nothing */
     }
 
     /**
@@ -76,6 +103,26 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      */
     protected void onAfterAttributes() {
         /* do nothing */
+    }
+
+    /**
+     * Considers triggering a source visitation.
+     */
+    private void considerTriggerSource() {
+        if (triggerSource) {
+            triggerSource = false;
+            onSource();
+        }
+    }
+
+    /**
+     * Considers triggering a module visitation.
+     */
+    private void considerTriggerModule() {
+        if (triggerModule) {
+            triggerModule = false;
+            onModule();
+        }
     }
 
     /**
@@ -109,7 +156,46 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
+    public final void visitSource(@MaybeNull String source, @MaybeNull String debug) {
+        triggerSource = false;
+        onVisitSource(source, debug);
+    }
+
+    /**
+     * An order-sensitive invocation og {@link ClassVisitor#visitSource(String, String)}.
+     *
+     * @param source The name of the source file or {@code null} if not available.
+     * @param debug  Additional debug information or {@code null} if not available.
+     */
+    protected void onVisitSource(@MaybeNull String source, @MaybeNull String debug) {
+        super.visitSource(source, debug);
+    }
+
+    @Override
+    @MaybeNull
+    public final ModuleVisitor visitModule(String name, int access, @MaybeNull String version) {
+        considerTriggerSource();
+        triggerModule = false;
+        return onVisitModule(name, access, version);
+    }
+
+    /**
+     * An order-sensitive invocation og {@link ClassVisitor#visitModule(String, int, String)}.
+     *
+     * @param name      The name of the module
+     * @param modifiers The modifiers of the module.
+     * @param version   The module version or {@code null} if not available.
+     * @return A visitor for the module information or {@code null} if skipped.
+     */
+    @MaybeNull
+    protected ModuleVisitor onVisitModule(String name, int modifiers, @MaybeNull String version) {
+        return super.visitModule(name, modifiers, version);
+    }
+
+    @Override
     public final void visitNestHost(String nestHost) {
+        considerTriggerSource();
+        considerTriggerModule();
         triggerNestHost = false;
         onVisitNestHost(nestHost);
     }
@@ -125,6 +211,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     public final void visitOuterClass(String owner, @MaybeNull String name, @MaybeNull String descriptor) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         triggerOuterClass = false;
         onVisitOuterClass(owner, name, descriptor);
@@ -143,6 +231,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     public final void visitPermittedSubclass(String permittedSubclass) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -161,6 +251,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     @MaybeNull
     public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @MaybeNull String signature) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -183,6 +275,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     @MaybeNull
     public final AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         return onVisitAnnotation(descriptor, visible);
@@ -203,6 +297,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     @MaybeNull
     public final AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         return onVisitTypeAnnotation(typeReference, typePath, descriptor, visible);
@@ -224,6 +320,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     public final void visitAttribute(Attribute attribute) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         onVisitAttribute(attribute);
@@ -240,6 +338,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     public final void visitNestMember(String nestMember) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -257,6 +357,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     public final void visitInnerClass(String name, @MaybeNull String outerName, @MaybeNull String innerName, int modifiers) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -266,10 +368,10 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     /**
      * An order-sensitive invocation of {@link ClassVisitor#visitInnerClass(String, String, String, int)}.
      *
-     * @param internalName      The internal name of the inner class.
-     * @param outerName The internal name of the outer class or {@code null} for a member class.
-     * @param innerName The inner class's simple name or {@code null} for an anonymous class.
-     * @param modifiers The inner class's source code modifiers.
+     * @param internalName The internal name of the inner class.
+     * @param outerName    The internal name of the outer class or {@code null} for a member class.
+     * @param innerName    The inner class's simple name or {@code null} for an anonymous class.
+     * @param modifiers    The inner class's source code modifiers.
      */
     protected void onVisitInnerClass(String internalName, @MaybeNull String outerName, @MaybeNull String innerName, int modifiers) {
         super.visitInnerClass(internalName, outerName, innerName, modifiers);
@@ -278,6 +380,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     @MaybeNull
     public final FieldVisitor visitField(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -302,6 +406,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     @MaybeNull
     public final MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -325,6 +431,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     public final void visitEnd() {
+        considerTriggerSource();
+        considerTriggerModule();
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
