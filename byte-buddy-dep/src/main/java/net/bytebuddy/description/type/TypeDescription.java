@@ -32,6 +32,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -324,6 +325,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     @MaybeNull
     PackageDescription getPackage();
+
+    /**
+     * Returns a representation of a Java module that is represented by this type description, normally a
+     * {@code module-info.class} file. If there is no module meta-data attached to the current class, {@code null}
+     * is returned.
+     *
+     * @return A description of the module information of this type or {@code null} if no such information is available.
+     */
+    @MaybeNull
+    ModuleDescription toModuleDescription();
 
     /**
      * Returns the annotations that this type declares or inherits from super types.
@@ -8606,6 +8617,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @MaybeNull
+                public ModuleDescription toModuleDescription() {
+                    return delegate().toModuleDescription();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return delegate().getDeclaredAnnotations();
                 }
@@ -9068,6 +9087,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return new PackageDescription.ForLoadedPackage(aPackage);
                 }
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public ModuleDescription toModuleDescription() {
+            return ModuleDescription.UNDEFINED;
         }
 
         /**
@@ -9537,6 +9564,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @MaybeNull
+        public ModuleDescription toModuleDescription() {
+            return ModuleDescription.UNDEFINED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             String descriptor = componentType.getDescriptor();
             StringBuilder stringBuilder = new StringBuilder(descriptor.length() + arity);
@@ -9758,6 +9793,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @MaybeNull
+        public ModuleDescription toModuleDescription() {
+            return ModuleDescription.UNDEFINED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             throw new IllegalStateException("Cannot resolve declared annotations of a latent type description: " + this);
         }
@@ -9916,6 +9959,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public PackageDescription getPackage() {
             return packageDescription;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public ModuleDescription toModuleDescription() {
+            return ModuleDescription.UNDEFINED;
         }
 
         /**
@@ -10196,6 +10247,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @MaybeNull
         public PackageDescription getPackage() {
             return delegate.getPackage();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public ModuleDescription toModuleDescription() {
+            return delegate.toModuleDescription();
         }
 
         /**

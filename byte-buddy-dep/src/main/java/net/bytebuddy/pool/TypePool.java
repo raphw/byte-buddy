@@ -3094,7 +3094,6 @@ public interface TypePool {
          * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
          * {@link AnnotationDescription} by querying a type pool at lookup time.
          */
-        @SuppressFBWarnings("URF_UNREAD_FIELD")
         protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
             /**
@@ -3412,6 +3411,13 @@ public interface TypePool {
                 return new LazyPackageDescription(typePool, index == -1
                         ? EMPTY_NAME
                         : name.substring(0, index));
+            }
+
+            @MaybeNull
+            public ModuleDescription toModuleDescription() {
+                return moduleToken == null
+                        ? ModuleDescription.UNDEFINED
+                        : moduleToken.toModuleDescription(this);
             }
 
             /**
@@ -6378,7 +6384,6 @@ public interface TypePool {
                  * @param lazyTypeDescription The lazy type description that this token belongs to.
                  * @return An appropriate lazy module description.
                  */
-                @SuppressFBWarnings("UPM_UNCALLED_PRIVATE_METHOD")
                 private LazyModuleDescription toModuleDescription(LazyTypeDescription lazyTypeDescription) {
                     return lazyTypeDescription.new LazyModuleDescription(name,
                             modifiers,

@@ -26,6 +26,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.RecordComponentList;
@@ -1445,6 +1446,14 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @MaybeNull
+        public ModuleDescription toModuleDescription() {
+            return ModuleDescription.UNDEFINED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.Explicit(annotationDescriptions);
         }
@@ -2028,6 +2037,14 @@ public interface InstrumentedType extends TypeDescription {
         @MaybeNull
         public PackageDescription getPackage() {
             return typeDescription.getPackage();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public ModuleDescription toModuleDescription() {
+            return typeDescription.toModuleDescription();
         }
 
         /**
