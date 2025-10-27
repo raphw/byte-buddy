@@ -67,13 +67,6 @@ public interface ModuleDescription extends NamedElement,
     Set<String> getPackages();
 
     /**
-     * Returns all service types that this module uses.
-     *
-     * @return A set of service class names that this module uses.
-     */
-    Set<String> getUses();
-
-    /**
      * Returns all package exports of this module.
      *
      * @return A mapping of package names to their export declarations.
@@ -93,6 +86,13 @@ public interface ModuleDescription extends NamedElement,
      * @return A mapping of module names to their require declarations.
      */
     Map<String, Requires> getRequires();
+
+    /**
+     * Returns all service types that this module uses.
+     *
+     * @return A set of service class names that this module uses.
+     */
+    Set<String> getUses();
 
     /**
      * Returns all service implementations provided by this module.
@@ -132,6 +132,27 @@ public interface ModuleDescription extends NamedElement,
              */
             public boolean isQualified() {
                 return !getTargets().isEmpty();
+            }
+
+            @Override
+            public int hashCode() {
+                int hashCode = getModifiers();
+                return hashCode + 17 * getTargets().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (!(other instanceof Exports)) return false;
+                Exports exports = (Exports) other;
+                return getModifiers() == exports.getModifiers() && getTargets().equals(exports.getTargets());
+            }
+
+            @Override
+            public String toString() {
+                return "Opens{"
+                        + "targets=" + getTargets()
+                        + ",modifiers=" + getModifiers()
+                        + '}';
             }
         }
 
@@ -208,6 +229,27 @@ public interface ModuleDescription extends NamedElement,
             public boolean isQualified() {
                 return !getTargets().isEmpty();
             }
+
+            @Override
+            public int hashCode() {
+                int hashCode = getModifiers();
+                return hashCode + 17 * getTargets().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (!(other instanceof Opens)) return false;
+                Opens opens = (Opens) other;
+                return getModifiers() == opens.getModifiers() && getTargets().equals(opens.getTargets());
+            }
+
+            @Override
+            public String toString() {
+                return "Opens{"
+                        + "targets=" + getTargets()
+                        + ",modifiers=" + getModifiers()
+                        + '}';
+            }
         }
 
         /**
@@ -246,13 +288,6 @@ public interface ModuleDescription extends NamedElement,
             /**
              * {@inheritDoc}
              */
-            public boolean isQualified() {
-                return !targets.isEmpty();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
             public int getModifiers() {
                 return modifiers;
             }
@@ -274,9 +309,39 @@ public interface ModuleDescription extends NamedElement,
         String getVersion();
 
         /**
+         * An abstract base implementation of {@link Requires}.
+         */
+        abstract class AbstractBase extends ModifierReviewable.AbstractBase implements Requires {
+
+            @Override
+            public int hashCode() {
+                int hashCode = getModifiers();
+                String version = getVersion();
+                return version == null ? hashCode : (hashCode + 17 * version.hashCode());
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (!(other instanceof Requires)) return false;
+                Requires requires = (Requires) other;
+                String version = getVersion();
+                return getModifiers() == requires.getModifiers() && version == null ? requires.getVersion() == null : version.equals(requires.getVersion());
+            }
+
+            @Override
+            public String toString() {
+                String version = getVersion();
+                return "Requires{"
+                        + "version=" + (version == null ? "" : '"' + version + '\'')
+                        + ",modifiers=" + getModifiers()
+                        + '}';
+            }
+        }
+
+        /**
          * A simple implementation of {@link Requires}.
          */
-        class Simple extends ModifierReviewable.AbstractBase implements Requires {
+        class Simple extends AbstractBase {
 
             /**
              * The version of the required module.
@@ -331,9 +396,32 @@ public interface ModuleDescription extends NamedElement,
         Set<String> getProviders();
 
         /**
+         * An abstract base implementation of {@link Provides}.
+         */
+        abstract class AbstractBase implements Provides {
+
+            @Override
+            public int hashCode() {
+                return getProviders().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (!(other instanceof Provides)) return false;
+                Provides provides = (Provides) other;
+                return getProviders().equals(provides.getProviders());
+            }
+
+            @Override
+            public String toString() {
+                return "Provides{providers=" + getProviders() + '}';
+            }
+        }
+
+        /**
          * A simple implementation of {@link Provides}.
          */
-        class Simple implements Provides {
+        class Simple extends AbstractBase {
 
             /**
              * The implementation classes that provide the service.
@@ -359,11 +447,34 @@ public interface ModuleDescription extends NamedElement,
     }
 
     /**
+     * An abstract base implementation of a {@link ModuleDescription}.
+     */
+    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements ModuleDescription {
+
+        @Override
+        public int hashCode() {
+            return 17 * getActualName().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof ModuleDescription)) return false;
+            ModuleDescription module = (ModuleDescription) other;
+            return getActualName().equals(module.getActualName());
+        }
+
+        @Override
+        public String toString() {
+            return "module " + getActualName();
+        }
+    }
+
+    /**
      * A {@link ModuleDescription} implementation that represents a loaded Java module.
      * This implementation uses reflection and Java dispatchers to access module information
      * from the runtime module system.
      */
-    class ForLoadedModule extends ModifierReviewable.AbstractBase implements ModuleDescription {
+    class ForLoadedModule extends AbstractBase {
 
         /**
          * A dispatcher for accessing {@code java.lang.Module} methods.

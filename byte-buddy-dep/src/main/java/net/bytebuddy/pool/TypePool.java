@@ -7871,7 +7871,7 @@ public interface TypePool {
             /**
              * A lazy description of a module.
              */
-            private class LazyModuleDescription extends ModifierReviewable.AbstractBase implements ModuleDescription {
+            private class LazyModuleDescription extends ModuleDescription.AbstractBase {
 
                 /**
                  * The name of the module.
@@ -9454,7 +9454,7 @@ public interface TypePool {
 
                 @Override
                 public void visitPackage(String aPackage) {
-                    super.visitPackage(aPackage);
+                    packages.add(aPackage);
                 }
 
                 @Override
@@ -9463,13 +9463,17 @@ public interface TypePool {
                 }
 
                 @Override
-                public void visitExport(String aPackage, int modifiers, String[] modules) {
-                    exports.put(aPackage, new ModuleDescription.Exports.Simple(new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
+                public void visitExport(String aPackage, int modifiers, @MaybeNull String[] modules) {
+                    exports.put(aPackage, new ModuleDescription.Exports.Simple(modules == null
+                            ? Collections.<String>emptySet()
+                            : new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
                 }
 
                 @Override
-                public void visitOpen(String aPackage, int modifiers, String[] modules) {
-                    opens.put(aPackage, new ModuleDescription.Opens.Simple(new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
+                public void visitOpen(String aPackage, int modifiers, @MaybeNull String[] modules) {
+                    opens.put(aPackage, new ModuleDescription.Opens.Simple(modules == null
+                            ? Collections.<String>emptySet()
+                            : new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
                 }
 
                 @Override
