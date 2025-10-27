@@ -11,9 +11,9 @@ import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.junit.rules.Rule;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilderFactory;
