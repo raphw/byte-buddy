@@ -4,6 +4,7 @@ import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.io.Closeable;
@@ -38,6 +39,7 @@ public class ModuleDescriptionForLoadedModuleTest extends AbstractModuleDescript
         return ModuleDescription.ForLoadedModule.of(module);
     }
 
+    @Test
     @Override
     @JavaVersionRule.Enforce(9)
     public void testModuleDescription() throws Exception {
