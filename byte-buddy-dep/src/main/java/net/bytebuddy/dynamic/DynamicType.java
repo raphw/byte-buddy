@@ -1608,6 +1608,80 @@ public interface DynamicType extends ClassFileLocator {
          */
         TypeDescription toTypeDescription();
 
+        interface ModuleDefintion<S> extends Builder<S> {
+
+            ModuleDefintion<S> mainClass(Class<?> type);
+
+            ModuleDefintion<S> mainClass(TypeDescription typeDescription);
+
+            ModuleDefintion<S> mainClass(String name);
+
+            ModuleDefintion<S> packages(String... aPackage);
+
+            ModuleDefintion<S> packages(Collection<String> packages);
+
+            ModuleDefintion<S> requires(String... module);
+
+            ModuleDefintion<S> requires(Collection<String> modules);
+
+            RequiresDefinition<S> require(String module);
+
+            ModuleDefintion<S> exports(String... aPackage);
+
+            ModuleDefintion<S> exports(Collection<String> packages);
+
+            ExportsDefinition<S> export(String aPackage);
+
+            ModuleDefintion<S> opens(String... aPackage);
+
+            ModuleDefintion<S> opens(Collection<String> packages);
+
+            OpensDefinition<S> open(String aPackage);
+
+            ModuleDefintion<S> uses(Class<?>... service);
+
+            ModuleDefintion<S> uses(TypeDescription... service);
+
+            ModuleDefintion<S> uses(String... service);
+
+            ModuleDefintion<S> uses(Collection<String> services);
+
+            OpensDefinition<S> provides(Class<?> service, Class<?>... implementations);
+
+            ModuleDefintion<S> provides(Class<?> service, Collection<Class<?>> implementations);
+
+            OpensDefinition<S> provides(TypeDescription service, TypeDescription... implementations);
+
+            ModuleDefintion<S> provides(TypeDescription service, Collection<TypeDescription> implementations);
+
+            OpensDefinition<S> provides(String service, String... implementations);
+
+            ModuleDefintion<S> provides(String service, Collection<String> implementations);
+
+            interface RequiresDefinition<S> extends ModuleDefintion<S> {
+
+                RequiresDefinition<S> modifiers(int modifiers); // TODO: convenience
+            }
+
+            interface ExportsDefinition<S> extends ModuleDefintion<S> {
+
+                ExportsDefinition<S> modifiers(int modifiers); // TODO: convenience
+
+                ModuleDefintion<S> to(String... module);
+
+                ModuleDefintion<S> to(Collection<String> modules);
+            }
+
+            interface OpensDefinition<S> extends ModuleDefintion<S> {
+
+                OpensDefinition<S> modifiers(int modifiers); // TODO: convenience
+
+                ModuleDefintion<S> to(String... module);
+
+                ModuleDefintion<S> to(Collection<String> modules);
+            }
+        }
+
         /**
          * An inner type definition for defining a type that is contained within another type, method or constructor.
          *
