@@ -23,6 +23,7 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.AnnotatedElement;
 import java.security.PrivilegedAction;
@@ -494,29 +495,14 @@ public interface ModuleDescription extends NamedElement,
         protected static final ModuleDescriptor.Exports MODULE_DESCRIPTOR_EXPORTS = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Exports.class));
 
         /**
-         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Exports.Modifier} methods.
-         */
-        protected static final ModuleDescriptor.Exports.Modifier MODULE_DESCRIPTOR_EXPORTS_MODIFIER = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Exports.Modifier.class));
-
-        /**
          * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Opens} methods.
          */
         protected static final ModuleDescriptor.Opens MODULE_DESCRIPTOR_OPENS = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Opens.class));
 
         /**
-         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Opens.Modifier} methods.
-         */
-        protected static final ModuleDescriptor.Opens.Modifier MODULE_DESCRIPTOR_OPENS_MODIFIER = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Opens.Modifier.class));
-
-        /**
          * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Requires} methods.
          */
         protected static final ModuleDescriptor.Requires MODULE_DESCRIPTOR_REQUIRES = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Requires.class));
-
-        /**
-         * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Requires.Modifier} methods.
-         */
-        protected static final ModuleDescriptor.Requires.Modifier MODULE_DESCRIPTOR_REQUIRES_MODIFIER = doPrivileged(JavaDispatcher.of(ModuleDescriptor.Requires.Modifier.class));
 
         /**
          * A dispatcher for accessing {@code java.lang.ModuleDescriptor.Provides} methods.
@@ -615,7 +601,14 @@ public interface ModuleDescription extends NamedElement,
             for (Object export : MODULE_DESCRIPTOR.exports(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
                 for (Object modifier : MODULE_DESCRIPTOR_EXPORTS.modifiers(export)) {
-                    modifiers |= MODULE_DESCRIPTOR_EXPORTS_MODIFIER.mask(modifier);
+                    String name = ((Enum<?>) modifier).name();
+                    if (name.equals("SYNTHETIC")) {
+                        modifiers |= Opcodes.ACC_SYNTHETIC;
+                    } else if (name.equals("MANDATED")) {
+                        modifiers |= Opcodes.ACC_MANDATED;
+                    } else {
+                        throw new IllegalStateException("Unknown export modifier: " + name);
+                    }
                 }
                 exports.put(MODULE_DESCRIPTOR_EXPORTS.source(export), new Exports.Simple(MODULE_DESCRIPTOR_EXPORTS.targets(export), modifiers));
             }
@@ -630,7 +623,14 @@ public interface ModuleDescription extends NamedElement,
             for (Object open : MODULE_DESCRIPTOR.opens(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
                 for (Object modifier : MODULE_DESCRIPTOR_OPENS.modifiers(open)) {
-                    modifiers |= MODULE_DESCRIPTOR_OPENS_MODIFIER.mask(modifier);
+                    String name = ((Enum<?>) modifier).name();
+                    if (name.equals("SYNTHETIC")) {
+                        modifiers |= Opcodes.ACC_SYNTHETIC;
+                    } else if (name.equals("MANDATED")) {
+                        modifiers |= Opcodes.ACC_MANDATED;
+                    } else {
+                        throw new IllegalStateException("Unknown opens modifier: " + name);
+                    }
                 }
                 opens.put(MODULE_DESCRIPTOR_OPENS.source(open), new Opens.Simple(MODULE_DESCRIPTOR_OPENS.targets(open), modifiers));
             }
@@ -645,7 +645,18 @@ public interface ModuleDescription extends NamedElement,
             for (Object require : MODULE_DESCRIPTOR.requires(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
                 for (Object modifier : MODULE_DESCRIPTOR_REQUIRES.modifiers(require)) {
-                    modifiers |= MODULE_DESCRIPTOR_REQUIRES_MODIFIER.mask(modifier);
+                    String name = ((Enum<?>) modifier).name();
+                    if (name.equals("SYNTHETIC")) {
+                        modifiers |= Opcodes.ACC_SYNTHETIC;
+                    } else if (name.equals("MANDATED")) {
+                        modifiers |= Opcodes.ACC_MANDATED;
+                    } else if (name.equals("TRANSITIVE")) {
+                        modifiers |= Opcodes.ACC_TRANSITIVE;
+                    } else if (name.equals("STATIC")) {
+                        modifiers |= Opcodes.ACC_STATIC_PHASE;
+                    } else {
+                        throw new IllegalStateException("Unknown requires modifier: " + name);
+                    }
                 }
                 requires.put(MODULE_DESCRIPTOR_REQUIRES.name(require), new Requires.Simple(
                         (String) OPTIONAL.orElse(MODULE_DESCRIPTOR_REQUIRES.rawCompiledVersion(require), null),
@@ -671,7 +682,16 @@ public interface ModuleDescription extends NamedElement,
         public int getModifiers() {
             int modifiers = 0;
             for (Object modifier : MODULE_DESCRIPTOR.modifiers(module)) {
-                modifiers |= MODULE_DESCRIPTOR_REQUIRES_MODIFIER.mask(modifier);
+                String name = ((Enum<?>) modifier).name();
+                if (name.equals("SYNTHETIC")) {
+                    modifiers |= Opcodes.ACC_SYNTHETIC;
+                } else if (name.equals("MANDATED")) {
+                    modifiers |= Opcodes.ACC_MANDATED;
+                } else if (name.equals("OPEN")) {
+                    modifiers |= Opcodes.ACC_OPEN;
+                } else {
+                    throw new IllegalStateException("Unknown module modifier: " + name);
+                }
             }
             return modifiers;
         }
@@ -860,21 +880,6 @@ public interface ModuleDescription extends NamedElement,
                  * @return The raw compiled version as an {@code Optional}.
                  */
                 Object rawCompiledVersion(Object value);
-
-                /**
-                 * A proxy for interacting with {@code java.lang.ModuleDescriptor.Requires.Modifier}.
-                 */
-                @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Requires$Modifier")
-                interface Modifier {
-
-                    /**
-                     * Returns the mask value for this modifier.
-                     *
-                     * @param value The {@code java.lang.ModuleDescriptor.Requires.Modifier} instance.
-                     * @return The mask value for this modifier.
-                     */
-                    int mask(Object value);
-                }
             }
 
             /**
@@ -906,21 +911,6 @@ public interface ModuleDescription extends NamedElement,
                  * @return The target modules for this export.
                  */
                 Set<String> targets(Object value);
-
-                /**
-                 * A proxy for interacting with {@code java.lang.ModuleDescriptor.Exports.Modifier}.
-                 */
-                @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Exports$Modifier")
-                interface Modifier {
-
-                    /**
-                     * Returns the mask value for this modifier.
-                     *
-                     * @param value The {@code java.lang.ModuleDescriptor.Exports.Modifier} instance.
-                     * @return The mask value for this modifier.
-                     */
-                    int mask(Object value);
-                }
             }
 
             /**
@@ -952,21 +942,6 @@ public interface ModuleDescription extends NamedElement,
                  * @return The target modules for this opens declaration.
                  */
                 Set<String> targets(Object value);
-
-                /**
-                 * A proxy for interacting with {@code java.lang.ModuleDescriptor.Opens.Modifier}.
-                 */
-                @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Opens$Modifier")
-                interface Modifier {
-
-                    /**
-                     * Returns the mask value for this modifier.
-                     *
-                     * @param value The {@code java.lang.ModuleDescriptor.Opens.Modifier} instance.
-                     * @return The mask value for this modifier.
-                     */
-                    int mask(Object value);
-                }
             }
 
             /**

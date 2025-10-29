@@ -7973,35 +7973,51 @@ public interface TypePool {
                  */
                 @MaybeNull
                 public String getMainClass() {
-                    return mainClass;
+                    return mainClass == null ? null : mainClass.replace('/', '.');
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Set<String> getPackages() {
-                    return new LinkedHashSet<String>(packages);
+                    Set<String> packages = new LinkedHashSet<String>();
+                    for (String aPackage : this.packages) {
+                        packages.add(aPackage.replace('/', '.'));
+                    }
+                    return packages;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Set<String> getUses() {
-                    return new LinkedHashSet<String>(uses);
+                    Set<String> uses = new LinkedHashSet<String>();
+                    for (String use : this.uses) {
+                        uses.add(use.replace('/', '.'));
+                    }
+                    return uses;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Map<String, ModuleDescription.Exports> getExports() {
-                    return new LinkedHashMap<String, ModuleDescription.Exports>(exports);
+                    Map<String, ModuleDescription.Exports> exports = new LinkedHashMap<String, ModuleDescription.Exports>();
+                    for (Map.Entry<String, Exports> entry : this.exports.entrySet()) {
+                        exports.put(entry.getKey().replace('/', '.'), new Exports.Simple(new LinkedHashSet<String>(entry.getValue().getTargets()), entry.getValue().getModifiers()));
+                    }
+                    return exports;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Map<String, ModuleDescription.Opens> getOpens() {
-                    return new LinkedHashMap<String, ModuleDescription.Opens>(opens);
+                    Map<String, ModuleDescription.Opens> opens = new LinkedHashMap<String, ModuleDescription.Opens>();
+                    for (Map.Entry<String, Opens> entry : this.opens.entrySet()) {
+                        opens.put(entry.getKey().replace('/', '.'), new Opens.Simple(new LinkedHashSet<String>(entry.getValue().getTargets()), entry.getValue().getModifiers()));
+                    }
+                    return opens;
                 }
 
                 /**
@@ -8015,7 +8031,15 @@ public interface TypePool {
                  * {@inheritDoc}
                  */
                 public Map<String, ModuleDescription.Provides> getProvides() {
-                    return new LinkedHashMap<String, ModuleDescription.Provides>(provides);
+                    Map<String, ModuleDescription.Provides> provides = new LinkedHashMap<String, ModuleDescription.Provides>();
+                    for (Map.Entry<String, Provides> entry : this.provides.entrySet()) {
+                        Set<String> providers = new LinkedHashSet<String>();
+                        for (String provider : entry.getValue().getProviders()) {
+                            providers.add(provider.replace('/', '.'));
+                        }
+                        provides.put(entry.getKey().replace('/', '.'), new Provides.Simple(providers));
+                    }
+                    return provides;
                 }
 
                 /**
@@ -9457,7 +9481,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public void visitRequire(String module, int access, @MaybeNull String version) {
+                public void visitRequire(String module, int modifiers, @MaybeNull String version) {
                     requires.put(module, new ModuleDescription.Requires.Simple(version, modifiers));
                 }
 
