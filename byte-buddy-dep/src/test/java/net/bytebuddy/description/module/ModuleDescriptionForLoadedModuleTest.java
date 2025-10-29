@@ -27,6 +27,7 @@ public class ModuleDescriptionForLoadedModuleTest extends AbstractModuleDescript
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        classLoader = new URLClassLoader(new URL[]{jar.toURI().toURL()}, ClassLoader.getSystemClassLoader().getParent());
         Class<?> path = Class.forName("java.nio.file.Path");
         Class<?> moduleFinder = Class.forName("java.lang.module.ModuleFinder");
         Class<?> moduleLayer = Class.forName("java.lang.ModuleLayer");
@@ -37,10 +38,6 @@ public class ModuleDescriptionForLoadedModuleTest extends AbstractModuleDescript
         Object reference = ((Collection<?>) moduleFinder.getMethod("findAll").invoke(finder)).iterator().next();
         Object descriptor = reference.getClass().getMethod("descriptor").invoke(reference);
         String name = (String) descriptor.getClass().getMethod("name").invoke(descriptor);
-        classLoader = new URLClassLoader(
-                new URL[]{jar.toURI().toURL()},
-                ClassLoader.getSystemClassLoader().getParent()
-        );
         Object parent = moduleLayer.getMethod("boot").invoke(null);
         Class<?> configClass = Class.forName("java.lang.module.Configuration");
         Object config = configClass.getMethod(
