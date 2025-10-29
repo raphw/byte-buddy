@@ -30,6 +30,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.RecordComponentList;
@@ -79,6 +80,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.Type;
@@ -100,6 +102,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -6076,7 +6079,7 @@ public interface TypeWriter<T> {
                         fields,
                         methods,
                         asmVisitorWrapper.mergeWriter(writerFlags),
-                        asmVisitorWrapper.mergeReader(readerFlags)), implementationContext), implementationContext);
+                        asmVisitorWrapper.mergeReader(readerFlags)), implementationContext, instrumentedType.toModuleDescription()), implementationContext);
             }
 
             @Override
@@ -6108,6 +6111,10 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.ForLoadedType.of(Object.class)
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
+                ModuleDescription moduleDescription = instrumentedType.toModuleDescription();
+                if (moduleDescription != null) {
+                    moduleDescription.accept(classVisitor);
+                }
                 if (!instrumentedType.isNestHost()) {
                     classVisitor.visitNestHost(instrumentedType.getNestHost().getInternalName());
                 }
@@ -6182,6 +6189,12 @@ public interface TypeWriter<T> {
                 private final Implementation.Context.ExtractableView implementationContext;
 
                 /**
+                 * The underlying module information or {@code null} if no such information is provided.
+                 */
+                @MaybeNull
+                private final ModuleDescription moduleDescription;
+
+                /**
                  * The declared types that have been visited.
                  */
                 private final Set<String> declaredTypes = new HashSet<String>();
@@ -6201,10 +6214,29 @@ public interface TypeWriter<T> {
                  *
                  * @param classVisitor          The class visitor being wrapped.
                  * @param implementationContext The implementation context to apply.
+                 * @param moduleDescription     The underlying module information or {@code null} if no such information is provided.
                  */
-                protected CreationClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                protected CreationClassVisitor(ClassVisitor classVisitor,
+                                               Implementation.Context.ExtractableView implementationContext,
+                                               @MaybeNull ModuleDescription moduleDescription) {
                     super(OpenedClassReader.ASM_API, classVisitor);
                     this.implementationContext = implementationContext;
+                    this.moduleDescription = moduleDescription;
+                }
+
+                @Override
+                protected void onModule() {
+                    if (moduleDescription != null) {
+                        moduleDescription.accept(cv);
+                    }
+                }
+
+                @Override
+                @MaybeNull
+                protected ModuleVisitor onVisitModule(String name, int modifiers, @MaybeNull String version) {
+                    return moduleDescription == null ? null : new PatchingModuleVisitor(cv.visitModule(moduleDescription.getActualName(),
+                            moduleDescription.getModifiers(),
+                            moduleDescription.getVersion()), moduleDescription);
                 }
 
                 @Override
@@ -6260,6 +6292,181 @@ public interface TypeWriter<T> {
                             methodPool,
                             annotationValueFilterFactory), cv, annotationValueFilterFactory);
                     super.onVisitEnd();
+                }
+            }
+
+            /**
+             * A class visitor that applies the subclass creation as a wrapper.
+             */
+            protected static class PatchingModuleVisitor extends ModuleVisitor {
+
+                /**
+                 * The internal name of the main class or {@code null} if no main class is defined.
+                 */
+                @MaybeNull
+                private String mainClass;
+
+                /**
+                 * The internal name of all packages of the module.
+                 */
+                private final Set<String> packages;
+
+                /**
+                 * A mapping of required modules to their configuration.
+                 */
+                private final Map<String, ModuleDescription.Requires> requires;
+
+                /**
+                 * A mapping of the internal names of exported packages to their configuration.
+                 */
+                private final Map<String, ModuleDescription.Exports> exports;
+
+                /**
+                 * A mapping of the internal names of opened packages to their configuration.
+                 */
+                private final Map<String, ModuleDescription.Opens> opens;
+
+                /**
+                 * A collection of internal names of used services.
+                 */
+                private final Set<String> uses;
+
+                /**
+                 * A mapping of the internal names of provided services to the internal names of the provided implementations.
+                 */
+                private final Map<String, Set<String>> provides;
+
+                /**
+                 * Creates a module visitor that patches the module implementation.
+                 *
+                 * @param moduleVisitor     The module visitor to which the data is delegated to.
+                 * @param moduleDescription A description of the module.
+                 */
+                protected PatchingModuleVisitor(ModuleVisitor moduleVisitor, ModuleDescription moduleDescription) {
+                    super(OpenedClassReader.ASM_API, moduleVisitor);
+                    mainClass = moduleDescription.getMainClass();
+                    if (mainClass != null) {
+                        mainClass = mainClass.replace('.', '/');
+                    }
+                    packages = new LinkedHashSet<String>();
+                    for (String aPackage : moduleDescription.getPackages()) {
+                        packages.add(aPackage.replace('.', '/'));
+                    }
+                    requires = new LinkedHashMap<String, ModuleDescription.Requires>(moduleDescription.getRequires());
+                    exports = new LinkedHashMap<String, ModuleDescription.Exports>();
+                    for (Map.Entry<String, ModuleDescription.Exports> entry : moduleDescription.getExports().entrySet()) {
+                        exports.put(entry.getKey().replace('.', '/'), entry.getValue());
+                    }
+                    opens = new LinkedHashMap<String, ModuleDescription.Opens>();
+                    for (Map.Entry<String, ModuleDescription.Opens> entry : moduleDescription.getOpens().entrySet()) {
+                        opens.put(entry.getKey().replace('.', '/'), entry.getValue());
+                    }
+                    uses = new LinkedHashSet<String>();
+                    for (String use : moduleDescription.getUses()) {
+                        uses.add(use.replace('.', '/'));
+                    }
+                    provides = new LinkedHashMap<String, Set<String>>();
+                    for (Map.Entry<String, ModuleDescription.Provides> entry : moduleDescription.getProvides().entrySet()) {
+                        Set<String> providers = new LinkedHashSet<String>();
+                        for (String provider : entry.getValue().getProviders()) {
+                            providers.add(provider.replace('.', '/'));
+                        }
+                        provides.put(entry.getKey().replace('.', '/'), providers);
+                    }
+                }
+
+                @Override
+                public void visitMainClass(String mainClass) {
+                    if (this.mainClass != null) {
+                        super.visitMainClass(this.mainClass);
+                        this.mainClass = null;
+                    }
+                }
+
+                @Override
+                public void visitPackage(String aPackage) {
+                    super.visitPackage(aPackage);
+                    packages.remove(aPackage);
+                }
+
+                @Override
+                public void visitRequire(String module, int modifiers, @MaybeNull String version) {
+                    ModuleDescription.Requires requires = this.requires.remove(module);
+                    if (requires != null) {
+                        super.visitRequire(module, requires.getModifiers(), requires.getVersion());
+                    } else {
+                        super.visitRequire(module, modifiers, version);
+                    }
+                }
+
+                @Override
+                public void visitExport(String aPackage, int modifiers, @MaybeNull String... module) {
+                    ModuleDescription.Exports exports = this.exports.remove(aPackage);
+                    if (exports != null) {
+                        super.visitExport(aPackage, exports.getModifiers(), exports.getTargets().isEmpty()
+                                ? null
+                                : exports.getTargets().toArray(new String[0]));
+                    } else {
+                        super.visitExport(aPackage, modifiers, module);
+                    }
+                }
+
+                @Override
+                public void visitOpen(String aPackage, int modifiers, @MaybeNull String... module) {
+                    ModuleDescription.Opens opens = this.opens.remove(aPackage);
+                    if (opens != null) {
+                        super.visitOpen(aPackage, opens.getModifiers(), opens.getTargets().isEmpty()
+                                ? null
+                                : opens.getTargets().toArray(new String[0]));
+                    } else {
+                        super.visitOpen(aPackage, modifiers, module);
+                    }
+                }
+
+                @Override
+                public void visitUse(String service) {
+                    uses.remove(service);
+                    super.visitUse(service);
+                }
+
+                @Override
+                public void visitProvide(String service, String... provider) {
+                    Set<String> providers = this.provides.remove(service);
+                    if (providers != null) {
+                        super.visitProvide(service, providers.toArray(new String[0]));
+                    } else {
+                        super.visitProvide(service, provider);
+                    }
+                }
+
+                @Override
+                public void visitEnd() {
+                    if (mainClass != null) {
+                        super.visitMainClass(mainClass);
+                    }
+                    for (String aPackage : packages) {
+                        super.visitPackage(aPackage);
+                    }
+                    for (Map.Entry<String, ModuleDescription.Requires> entry : requires.entrySet()) {
+                        super.visitRequire(entry.getKey(), entry.getValue().getModifiers(), entry.getValue().getVersion());
+                    }
+                    for (Map.Entry<String, ModuleDescription.Exports> entry : exports.entrySet()) {
+                        super.visitExport(entry.getKey(),
+                                entry.getValue().getModifiers(),
+                                entry.getValue().getTargets().isEmpty() ? null : entry.getValue().getTargets().toArray(new String[0]));
+                    }
+                    for (Map.Entry<String, ModuleDescription.Opens> entry : opens.entrySet()) {
+                        super.visitOpen(entry.getKey(),
+                                entry.getValue().getModifiers(),
+                                entry.getValue().getTargets().isEmpty() ? null : entry.getValue().getTargets().toArray(new String[0]));
+                    }
+                    for (String use : uses) {
+                        super.visitUse(use);
+                    }
+                    for (Map.Entry<String, Set<String>> entry : provides.entrySet()) {
+                        super.visitProvide(entry.getKey(), entry.getValue().isEmpty() ? null : entry.getValue().toArray(new String[0]));
+                    }
+                    super.visitEnd();
                 }
             }
 

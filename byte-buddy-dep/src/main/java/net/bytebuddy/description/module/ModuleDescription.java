@@ -23,10 +23,13 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.AnnotatedElement;
 import java.security.PrivilegedAction;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,6 +48,13 @@ public interface ModuleDescription extends NamedElement,
      */
     @AlwaysNull
     ModuleDescription UNDEFINED = null;
+
+    /**
+     * Writes this module description as meta data to the provided {@link ClassVisitor}.
+     *
+     * @param classVisitor The class visitor to write to.
+     */
+    void accept(ClassVisitor classVisitor);
 
     /**
      * Returns the version of this module.
@@ -453,6 +463,49 @@ public interface ModuleDescription extends NamedElement,
      * An abstract base implementation of a {@link ModuleDescription}.
      */
     abstract class AbstractBase extends ModifierReviewable.AbstractBase implements ModuleDescription {
+
+        /**
+         * {@inheritDoc}
+         */
+        public void accept(ClassVisitor classVisitor) {
+            ModuleVisitor moduleVisitor = classVisitor.visitModule(getActualName(), getModifiers(), getVersion());
+            if (moduleVisitor != null) {
+                String mainClass = getMainClass();
+                if (mainClass != null) {
+                    moduleVisitor.visitMainClass(mainClass.replace('.', '/'));
+                }
+                for (String aPackage : getPackages()) {
+                    moduleVisitor.visitPackage(aPackage.replace('.', '/'));
+                }
+                for (Map.Entry<String, ModuleDescription.Requires> entry : getRequires().entrySet()) {
+                    moduleVisitor.visitRequire(entry.getKey(), entry.getValue().getModifiers(), entry.getValue().getVersion());
+                }
+                for (Map.Entry<String, ModuleDescription.Exports> entry : getExports().entrySet()) {
+                    moduleVisitor.visitExport(entry.getKey().replace('.', '/'),
+                            entry.getValue().getModifiers(),
+                            entry.getValue().getTargets().isEmpty() ? null : entry.getValue().getTargets().toArray(new String[0]));
+                }
+                for (Map.Entry<String, ModuleDescription.Opens> entry : getOpens().entrySet()) {
+                    moduleVisitor.visitOpen(entry.getKey().replace('.', '/'),
+                            entry.getValue().getModifiers(),
+                            entry.getValue().getTargets().isEmpty() ? null : entry.getValue().getTargets().toArray(new String[0]));
+                }
+                for (String use : getUses()) {
+                    moduleVisitor.visitUse(use.replace('.', '/'));
+                }
+                for (Map.Entry<String, ModuleDescription.Provides> entry : getProvides().entrySet()) {
+                    String[] provider = entry.getValue().getProviders().isEmpty() ? null : new String[entry.getValue().getProviders().size()];
+                    if (provider != null) {
+                        Iterator<String> iterator = entry.getValue().getProviders().iterator();
+                        for (int index = 0; index < provider.length; index++) {
+                            provider[index] = iterator.next().replace('.', '/');
+                        }
+                    }
+                    moduleVisitor.visitProvide(entry.getKey().replace('.', '/'), provider);
+                }
+                moduleVisitor.visitEnd();
+            }
+        }
 
         @Override
         public int hashCode() {
