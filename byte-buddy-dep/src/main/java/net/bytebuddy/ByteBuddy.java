@@ -38,7 +38,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
-import net.bytebuddy.dynamic.scaffold.ClassWriterStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
@@ -1451,7 +1450,7 @@ public class ByteBuddy {
      * @deprecated Use {@link ByteBuddy#with(AsmClassWriter.Factory)}.
      */
     @Deprecated
-    public ByteBuddy with(ClassWriterStrategy classWriterStrategy) {
+    public ByteBuddy with(net.bytebuddy.dynamic.scaffold.ClassWriterStrategy classWriterStrategy) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
@@ -1463,7 +1462,7 @@ public class ByteBuddy {
                 typeValidation,
                 visibilityBridgeStrategy,
                 classReaderFactory,
-                new ClassWriterStrategy.Delegating(classWriterStrategy),
+                new net.bytebuddy.dynamic.scaffold.ClassWriterStrategy.Delegating(classWriterStrategy),
                 ignoredMethods);
     }
 

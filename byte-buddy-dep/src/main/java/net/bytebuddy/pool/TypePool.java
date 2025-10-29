@@ -9462,14 +9462,14 @@ public interface TypePool {
                 }
 
                 @Override
-                public void visitExport(String aPackage, int modifiers, @MaybeNull String[] modules) {
+                public void visitExport(String aPackage, int modifiers, @MaybeNull String... modules) {
                     exports.put(aPackage, new ModuleDescription.Exports.Simple(modules == null
                             ? Collections.<String>emptySet()
                             : new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
                 }
 
                 @Override
-                public void visitOpen(String aPackage, int modifiers, @MaybeNull String[] modules) {
+                public void visitOpen(String aPackage, int modifiers, @MaybeNull String... modules) {
                     opens.put(aPackage, new ModuleDescription.Opens.Simple(modules == null
                             ? Collections.<String>emptySet()
                             : new LinkedHashSet<String>(Arrays.asList(modules)), modifiers));
@@ -9481,7 +9481,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public void visitProvide(String service, String[] providers) {
+                public void visitProvide(String service, String... providers) {
                     provides.put(service, new ModuleDescription.Provides.Simple(new LinkedHashSet<String>(Arrays.asList(providers))));
                 }
 
