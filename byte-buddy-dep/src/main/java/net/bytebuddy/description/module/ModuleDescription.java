@@ -600,8 +600,8 @@ public interface ModuleDescription extends NamedElement,
             Map<String, Exports> exports = new LinkedHashMap<String, Exports>();
             for (Object export : MODULE_DESCRIPTOR.exports(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
-                for (Object modifier : MODULE_DESCRIPTOR_EXPORTS.modifiers(export)) {
-                    String name = ((Enum<?>) modifier).name();
+                for (Enum<?> modifier : MODULE_DESCRIPTOR_EXPORTS.modifiers(export)) {
+                    String name = modifier.name();
                     if (name.equals("SYNTHETIC")) {
                         modifiers |= Opcodes.ACC_SYNTHETIC;
                     } else if (name.equals("MANDATED")) {
@@ -622,8 +622,8 @@ public interface ModuleDescription extends NamedElement,
             Map<String, Opens> opens = new LinkedHashMap<String, Opens>();
             for (Object open : MODULE_DESCRIPTOR.opens(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
-                for (Object modifier : MODULE_DESCRIPTOR_OPENS.modifiers(open)) {
-                    String name = ((Enum<?>) modifier).name();
+                for (Enum<?> modifier : MODULE_DESCRIPTOR_OPENS.modifiers(open)) {
+                    String name = modifier.name();
                     if (name.equals("SYNTHETIC")) {
                         modifiers |= Opcodes.ACC_SYNTHETIC;
                     } else if (name.equals("MANDATED")) {
@@ -644,8 +644,8 @@ public interface ModuleDescription extends NamedElement,
             Map<String, Requires> requires = new LinkedHashMap<String, Requires>();
             for (Object require : MODULE_DESCRIPTOR.requires(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
-                for (Object modifier : MODULE_DESCRIPTOR_REQUIRES.modifiers(require)) {
-                    String name = ((Enum<?>) modifier).name();
+                for (Enum<?> modifier : MODULE_DESCRIPTOR_REQUIRES.modifiers(require)) {
+                    String name = modifier.name();
                     if (name.equals("SYNTHETIC")) {
                         modifiers |= Opcodes.ACC_SYNTHETIC;
                     } else if (name.equals("MANDATED")) {
@@ -681,8 +681,8 @@ public interface ModuleDescription extends NamedElement,
          */
         public int getModifiers() {
             int modifiers = 0;
-            for (Object modifier : MODULE_DESCRIPTOR.modifiers(module)) {
-                String name = ((Enum<?>) modifier).name();
+            for (Enum<?> modifier : MODULE_DESCRIPTOR.modifiers(module)) {
+                String name = modifier.name();
                 if (name.equals("SYNTHETIC")) {
                     modifiers |= Opcodes.ACC_SYNTHETIC;
                 } else if (name.equals("MANDATED")) {
@@ -777,7 +777,7 @@ public interface ModuleDescription extends NamedElement,
              * @param value The {@code java.lang.ModuleDescriptor} instance.
              * @return The module's modifiers.
              */
-            Set<?> modifiers(Object value);
+            Set<Enum<?>> modifiers(Object value);
 
             /**
              * Returns {@code true} if this is an open module.
@@ -871,7 +871,7 @@ public interface ModuleDescription extends NamedElement,
                  * @param value The {@code java.lang.ModuleDescriptor.Requires} instance.
                  * @return The modifiers of the requires declaration.
                  */
-                Set<?> modifiers(Object value);
+                Set<Enum<?>> modifiers(Object value);
 
                 /**
                  * Returns the raw compiled version of the required module.
@@ -902,7 +902,7 @@ public interface ModuleDescription extends NamedElement,
                  * @param value The {@code java.lang.ModuleDescriptor.Exports} instance.
                  * @return The modifiers of the exports declaration.
                  */
-                Set<?> modifiers(Object value);
+                Set<Enum<?>> modifiers(Object value);
 
                 /**
                  * Returns the target modules for this export.
@@ -933,7 +933,7 @@ public interface ModuleDescription extends NamedElement,
                  * @param value The {@code java.lang.ModuleDescriptor.Opens} instance.
                  * @return The modifiers of the opens declaration.
                  */
-                Set<?> modifiers(Object value);
+                Set<Enum<?>> modifiers(Object value);
 
                 /**
                  * Returns the target modules for this opens declaration.
