@@ -671,7 +671,7 @@ public interface ModuleDescription extends NamedElement,
         public Map<String, Provides> getProvides() {
             Map<String, Provides> provides = new LinkedHashMap<String, Provides>();
             for (Object require : MODULE_DESCRIPTOR.provides(MODULE.getDescriptor(module))) {
-                provides.put(MODULE_DESCRIPTOR_PROVIDES.service(require), new Provides.Simple(new LinkedHashSet<>(MODULE_DESCRIPTOR_PROVIDES.providers(require))));
+                provides.put(MODULE_DESCRIPTOR_PROVIDES.service(require), new Provides.Simple(new LinkedHashSet<String>(MODULE_DESCRIPTOR_PROVIDES.providers(require))));
             }
             return provides;
         }
