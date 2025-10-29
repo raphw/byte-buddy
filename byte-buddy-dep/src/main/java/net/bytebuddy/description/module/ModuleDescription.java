@@ -27,6 +27,8 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import java.lang.reflect.AnnotatedElement;
 import java.security.PrivilegedAction;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -613,7 +615,7 @@ public interface ModuleDescription extends NamedElement,
             for (Object export : MODULE_DESCRIPTOR.exports(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
                 for (Object modifier : MODULE_DESCRIPTOR_EXPORTS.modifiers(export)) {
-                    modifiers |= MODULE_DESCRIPTOR_EXPORTS_MODIFIER.getMask(modifier);
+                    modifiers |= MODULE_DESCRIPTOR_EXPORTS_MODIFIER.mask(modifier);
                 }
                 exports.put(MODULE_DESCRIPTOR_EXPORTS.source(export), new Exports.Simple(MODULE_DESCRIPTOR_EXPORTS.targets(export), modifiers));
             }
@@ -628,7 +630,7 @@ public interface ModuleDescription extends NamedElement,
             for (Object open : MODULE_DESCRIPTOR.opens(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
                 for (Object modifier : MODULE_DESCRIPTOR_OPENS.modifiers(open)) {
-                    modifiers |= MODULE_DESCRIPTOR_OPENS_MODIFIER.getMask(modifier);
+                    modifiers |= MODULE_DESCRIPTOR_OPENS_MODIFIER.mask(modifier);
                 }
                 opens.put(MODULE_DESCRIPTOR_OPENS.source(open), new Opens.Simple(MODULE_DESCRIPTOR_OPENS.targets(open), modifiers));
             }
@@ -643,7 +645,7 @@ public interface ModuleDescription extends NamedElement,
             for (Object require : MODULE_DESCRIPTOR.requires(MODULE.getDescriptor(module))) {
                 int modifiers = 0;
                 for (Object modifier : MODULE_DESCRIPTOR_REQUIRES.modifiers(require)) {
-                    modifiers |= MODULE_DESCRIPTOR_REQUIRES_MODIFIER.getMask(modifier);
+                    modifiers |= MODULE_DESCRIPTOR_REQUIRES_MODIFIER.mask(modifier);
                 }
                 requires.put(MODULE_DESCRIPTOR_REQUIRES.name(require), new Requires.Simple(
                         (String) OPTIONAL.orElse(MODULE_DESCRIPTOR_REQUIRES.rawCompiledVersion(require), null),
@@ -658,7 +660,7 @@ public interface ModuleDescription extends NamedElement,
         public Map<String, Provides> getProvides() {
             Map<String, Provides> provides = new LinkedHashMap<String, Provides>();
             for (Object require : MODULE_DESCRIPTOR.provides(MODULE.getDescriptor(module))) {
-                provides.put(MODULE_DESCRIPTOR_PROVIDES.service(require), new Provides.Simple(MODULE_DESCRIPTOR_PROVIDES.provides(require)));
+                provides.put(MODULE_DESCRIPTOR_PROVIDES.service(require), new Provides.Simple(new LinkedHashSet<>(MODULE_DESCRIPTOR_PROVIDES.providers(require))));
             }
             return provides;
         }
@@ -669,7 +671,7 @@ public interface ModuleDescription extends NamedElement,
         public int getModifiers() {
             int modifiers = 0;
             for (Object modifier : MODULE_DESCRIPTOR.modifiers(module)) {
-                modifiers |= MODULE_DESCRIPTOR_REQUIRES_MODIFIER.getMask(modifier);
+                modifiers |= MODULE_DESCRIPTOR_REQUIRES_MODIFIER.mask(modifier);
             }
             return modifiers;
         }
@@ -738,7 +740,7 @@ public interface ModuleDescription extends NamedElement,
         /**
          * A proxy for interacting with {@code java.lang.ModuleDescriptor}.
          */
-        @JavaDispatcher.Proxied("java.lang.ModuleDescriptor")
+        @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor")
         protected interface ModuleDescriptor {
 
             /**
@@ -832,7 +834,7 @@ public interface ModuleDescription extends NamedElement,
             /**
              * A proxy for interacting with {@code java.lang.ModuleDescriptor.Requires}.
              */
-            @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Requires")
+            @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Requires")
             interface Requires {
 
                 /**
@@ -862,7 +864,7 @@ public interface ModuleDescription extends NamedElement,
                 /**
                  * A proxy for interacting with {@code java.lang.ModuleDescriptor.Requires.Modifier}.
                  */
-                @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Requires$Modifier")
+                @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Requires$Modifier")
                 interface Modifier {
 
                     /**
@@ -871,14 +873,14 @@ public interface ModuleDescription extends NamedElement,
                      * @param value The {@code java.lang.ModuleDescriptor.Requires.Modifier} instance.
                      * @return The mask value for this modifier.
                      */
-                    int getMask(Object value);
+                    int mask(Object value);
                 }
             }
 
             /**
              * A proxy for interacting with {@code java.lang.ModuleDescriptor.Exports}.
              */
-            @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Exports")
+            @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Exports")
             interface Exports {
 
                 /**
@@ -908,7 +910,7 @@ public interface ModuleDescription extends NamedElement,
                 /**
                  * A proxy for interacting with {@code java.lang.ModuleDescriptor.Exports.Modifier}.
                  */
-                @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Exports$Modifier")
+                @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Exports$Modifier")
                 interface Modifier {
 
                     /**
@@ -917,14 +919,14 @@ public interface ModuleDescription extends NamedElement,
                      * @param value The {@code java.lang.ModuleDescriptor.Exports.Modifier} instance.
                      * @return The mask value for this modifier.
                      */
-                    int getMask(Object value);
+                    int mask(Object value);
                 }
             }
 
             /**
              * A proxy for interacting with {@code java.lang.ModuleDescriptor.Opens}.
              */
-            @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Opens")
+            @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Opens")
             interface Opens {
 
                 /**
@@ -954,7 +956,7 @@ public interface ModuleDescription extends NamedElement,
                 /**
                  * A proxy for interacting with {@code java.lang.ModuleDescriptor.Opens.Modifier}.
                  */
-                @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Opens$Modifier")
+                @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Opens$Modifier")
                 interface Modifier {
 
                     /**
@@ -963,14 +965,14 @@ public interface ModuleDescription extends NamedElement,
                      * @param value The {@code java.lang.ModuleDescriptor.Opens.Modifier} instance.
                      * @return The mask value for this modifier.
                      */
-                    int getMask(Object value);
+                    int mask(Object value);
                 }
             }
 
             /**
              * A proxy for interacting with {@code java.lang.ModuleDescriptor.Provides}.
              */
-            @JavaDispatcher.Proxied("java.lang.ModuleDescriptor$Provides")
+            @JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor$Provides")
             interface Provides {
 
                 /**
@@ -987,14 +989,14 @@ public interface ModuleDescription extends NamedElement,
                  * @param value The {@code java.lang.ModuleDescriptor.Provides} instance.
                  * @return The provider implementation class names.
                  */
-                Set<String> provides(Object value);
+                List<String> providers(Object value);
             }
         }
 
         /**
          * A proxy for interacting with {@code java.util.Optional}.
          */
-        @JavaDispatcher.Proxied("java.lang.Optional")
+        @JavaDispatcher.Proxied("java.util.Optional")
         protected interface Optional {
 
             /**

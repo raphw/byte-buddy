@@ -29,33 +29,22 @@ public abstract class AbstractModuleDescriptionTest {
         jar = File.createTempFile("sample", ".jar");
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(jar));
         try {
-            {
-                outputStream.putNextEntry(new JarEntry("module-info.class"));
-                AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(0);
-                ClassVisitor classVisitor = classWriter.getVisitor();
-                classVisitor.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
-                ModuleVisitor moduleVisitor = classVisitor.visitModule(FOO, 0, BAR);
-                moduleVisitor.visitMainClass(QUX);
-                moduleVisitor.visitPackage(FOO);
-                moduleVisitor.visitUse(BAR);
-                moduleVisitor.visitProvide(QUX, BAZ);
-                moduleVisitor.visitExport(FOO, 0, BAR);
-                moduleVisitor.visitOpen(QUX, 0, BAZ);
-                moduleVisitor.visitRequire(FOO + BAR, 0, QUX + BAZ);
-                moduleVisitor.visitEnd();
-                classVisitor.visitEnd();
-                outputStream.write(classWriter.getBinaryRepresentation());
-                outputStream.closeEntry();
-            }
-            {
-                outputStream.putNextEntry(new JarEntry(FOO + "/" + BAR + ".class"));
-                AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(0);
-                ClassVisitor classVisitor = classWriter.getVisitor();
-                classVisitor.visit(Opcodes.V9, Opcodes.ACC_PUBLIC, FOO + "/" + BAR, null, Type.getInternalName(Object.class), null);
-                classVisitor.visitEnd();
-                outputStream.write(classWriter.getBinaryRepresentation());
-                outputStream.closeEntry();
-            }
+            outputStream.putNextEntry(new JarEntry("module-info.class"));
+            AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(0);
+            ClassVisitor classVisitor = classWriter.getVisitor();
+            classVisitor.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
+            ModuleVisitor moduleVisitor = classVisitor.visitModule(FOO + BAR, 0, QUX);
+            moduleVisitor.visitMainClass(FOO + "/" + QUX);
+            moduleVisitor.visitPackage(FOO);
+            moduleVisitor.visitUse(Type.getInternalName(Runnable.class));
+            moduleVisitor.visitProvide(FOO + "/" + BAZ, FOO + "/" + QUX + BAZ);
+            moduleVisitor.visitExport(FOO, 0, BAR);
+            moduleVisitor.visitOpen(FOO, 0, QUX);
+            moduleVisitor.visitRequire("java.base", Opcodes.ACC_MANDATED, null);
+            moduleVisitor.visitEnd();
+            classVisitor.visitEnd();
+            outputStream.write(classWriter.getBinaryRepresentation());
+            outputStream.closeEntry();
         } finally {
             outputStream.close();
         }
@@ -71,22 +60,22 @@ public abstract class AbstractModuleDescriptionTest {
     @Test
     public void testModuleDescription() throws Exception {
         ModuleDescription moduleDescription = toModuleDescription();
-        assertThat(moduleDescription.getActualName(), is(FOO));
-        assertThat(moduleDescription.getMainClass(), is(QUX));
+        assertThat(moduleDescription.getActualName(), is(FOO + BAR));
+        assertThat(moduleDescription.getMainClass(), is(FOO + "." + QUX));
         assertThat(moduleDescription.getPackages(), is(Collections.singleton(FOO)));
-        assertThat(moduleDescription.getUses(), is(Collections.singleton(BAR)));
+        assertThat(moduleDescription.getUses(), is(Collections.singleton(Runnable.class.getName())));
         assertThat(moduleDescription.getProvides(), is(Collections.<String, ModuleDescription.Provides>singletonMap(
-                QUX,
-                new ModuleDescription.Provides.Simple(Collections.singleton(BAZ)))));
+                FOO + "." + BAZ,
+                new ModuleDescription.Provides.Simple(Collections.singleton(FOO + "." + QUX + BAZ)))));
         assertThat(moduleDescription.getExports(), is(Collections.<String, ModuleDescription.Exports>singletonMap(
                 FOO,
                 new ModuleDescription.Exports.Simple(Collections.singleton(BAR), 0))));
         assertThat(moduleDescription.getOpens(), is(Collections.<String, ModuleDescription.Opens>singletonMap(
-                QUX,
-                new ModuleDescription.Opens.Simple(Collections.singleton(BAZ), 0))));
+                FOO,
+                new ModuleDescription.Opens.Simple(Collections.singleton(QUX), 0))));
         assertThat(moduleDescription.getRequires(), is(Collections.<String, ModuleDescription.Requires>singletonMap(
-                FOO + BAR,
-                new ModuleDescription.Requires.Simple(QUX + BAZ, 0))));
+                "java.base",
+                new ModuleDescription.Requires.Simple(null, Opcodes.ACC_MANDATED))));
         assertThat(moduleDescription.hashCode(), is(toModuleDescription().hashCode()));
         assertThat(moduleDescription, is(toModuleDescription()));
         assertThat(moduleDescription.getProvides().hashCode(), is(toModuleDescription().getProvides().hashCode()));
