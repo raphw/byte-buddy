@@ -51,7 +51,7 @@ public abstract class AbstractModuleDescriptionTest {
                 outputStream.putNextEntry(new JarEntry(FOO + "/" + BAR + ".class"));
                 AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(0);
                 ClassVisitor classVisitor = classWriter.getVisitor();
-                classVisitor.visit(Opcodes.V9, Opcodes.ACC_PUBLIC, FOO + "." + BAR, null, Type.getInternalName(Object.class), null);
+                classVisitor.visit(Opcodes.V9, Opcodes.ACC_PUBLIC, FOO + "/" + BAR, null, Type.getInternalName(Object.class), null);
                 classVisitor.visitEnd();
                 outputStream.write(classWriter.getBinaryRepresentation());
                 outputStream.closeEntry();
