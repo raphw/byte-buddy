@@ -8,18 +8,21 @@ import org.junit.Before;
 
 public class TypePoolModuleDescriptionTest extends AbstractModuleDescriptionTest {
 
+    private ClassFileLocator classFileLocator;
     private TypePool typePool;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        typePool = TypePool.Default.of(ClassFileLocator.ForJarFile.of(jar));
+        classFileLocator = ClassFileLocator.ForJarFile.of(jar);
+        typePool = TypePool.Default.of(classFileLocator);
     }
 
     @After
     public void tearDown() throws Exception {
-        super.tearDown();
         typePool.clear();
+        classFileLocator.close();
+        super.tearDown();
     }
 
     @Override
