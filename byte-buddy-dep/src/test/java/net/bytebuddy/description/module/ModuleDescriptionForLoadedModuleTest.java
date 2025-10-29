@@ -26,10 +26,10 @@ public class ModuleDescriptionForLoadedModuleTest extends AbstractModuleDescript
 
     @After
     public void tearDown() throws Exception {
-        super.tearDown();
         if (classLoader instanceof Closeable) {
             ((Closeable) classLoader).close();
         }
+        super.tearDown();
     }
 
     @Override
