@@ -63,6 +63,15 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 public interface InstrumentedType extends TypeDescription {
 
     /**
+     * Creates a new instrumented type that defines the provided module metadata or no such metadata
+     * if {@code null} is provided.
+     *
+     * @param moduleDescription The metadata to include or {@code null}.
+     * @return A new instrumented type that is equal to this instrumented type but with adjusted module metadata.
+     */
+    InstrumentedType withModuleDescription(@MaybeNull ModuleDescription moduleDescription);
+
+    /**
      * Creates a new instrumented type that includes a new field.
      *
      * @param token A token that represents the field's shape.
@@ -260,6 +269,11 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        InstrumentedType withModuleDescription(@MaybeNull ModuleDescription moduleDescription);
+
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withField(FieldDescription.Token token);
 
         /**
@@ -444,8 +458,9 @@ public interface InstrumentedType extends TypeDescription {
                 public InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription) {
                     return new InstrumentedType.Default(typeDescription.getName(),
                             typeDescription.getModifiers(),
-                            typeDescription.getSuperClass(),
+                            typeDescription.toModuleDescription(),
                             typeDescription.getTypeVariables().asTokenList(is(typeDescription)),
+                            typeDescription.getSuperClass(),
                             typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
                             typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
                             Collections.<String, Object>emptyMap(),
@@ -489,8 +504,9 @@ public interface InstrumentedType extends TypeDescription {
             public InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass) {
                 return new InstrumentedType.Default(name,
                         modifiers,
-                        superClass,
+                        ModuleDescription.UNDEFINED,
                         Collections.<TypeVariableToken>emptyList(),
+                        superClass,
                         Collections.<Generic>emptyList(),
                         Collections.<FieldDescription.Token>emptyList(),
                         Collections.<String, Object>emptyMap(),
@@ -544,6 +560,12 @@ public interface InstrumentedType extends TypeDescription {
          */
         @MaybeNull
         private final Generic superClass;
+
+        /**
+         * The module metadata that this type implies or {@code null}.
+         */
+        @MaybeNull
+        private final ModuleDescription moduleDescription;
 
         /**
          * The instrumented type's type variables in their tokenized form.
@@ -649,6 +671,7 @@ public interface InstrumentedType extends TypeDescription {
          *
          * @param name                   The binary name of the instrumented type.
          * @param modifiers              The modifiers of the instrumented type.
+         * @param moduleDescription      The module metadata that this type implies or {@code null}.
          * @param typeVariables          The instrumented type's type variables in their tokenized form.
          * @param superClass             The generic super type of the instrumented type.
          * @param interfaceTypes         A list of interfaces of the instrumented type.
@@ -672,8 +695,9 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected Default(String name,
                           int modifiers,
-                          @MaybeNull Generic superClass,
+                          @MaybeNull ModuleDescription moduleDescription,
                           List<? extends TypeVariableToken> typeVariables,
+                          @MaybeNull Generic superClass,
                           List<? extends Generic> interfaceTypes,
                           List<? extends FieldDescription.Token> fieldTokens,
                           Map<String, Object> auxiliaryFieldValues,
@@ -694,6 +718,7 @@ public interface InstrumentedType extends TypeDescription {
                           List<? extends TypeDescription> nestMembers) {
             this.name = name;
             this.modifiers = modifiers;
+            this.moduleDescription = moduleDescription;
             this.typeVariables = typeVariables;
             this.superClass = superClass;
             this.interfaceTypes = interfaceTypes;
@@ -746,8 +771,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withModifiers(int modifiers) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -774,8 +800,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withField(FieldDescription.Token token) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     CompoundList.of(fieldTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     auxiliaryFields,
@@ -814,8 +841,9 @@ public interface InstrumentedType extends TypeDescription {
             }
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     CompoundList.of(fieldTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     auxiliaryFields,
@@ -842,8 +870,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withMethod(MethodDescription.Token token) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -870,8 +899,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withRecordComponent(RecordComponentDescription.Token token) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -898,8 +928,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     CompoundList.of(this.interfaceTypes, interfaceTypes.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     fieldTokens,
                     auxiliaryFields,
@@ -926,8 +957,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -954,8 +986,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withNestHost(TypeDescription nestHost) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -984,8 +1017,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withNestMembers(TypeList nestMembers) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1012,8 +1046,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withEnclosingType(@MaybeNull TypeDescription enclosingType) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1040,8 +1075,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1068,8 +1104,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withDeclaringType(@MaybeNull TypeDescription declaringType) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1096,8 +1133,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withDeclaredTypes(TypeList declaredTypes) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1124,8 +1162,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withPermittedSubclasses(@MaybeNull TypeList permittedSubclasses) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1148,14 +1187,42 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
+        @Override
+        public WithFlexibleName withModuleDescription(@MaybeNull ModuleDescription moduleDescription) {
+            return new Default(name,
+                    modifiers,
+                    moduleDescription,
+                    typeVariables,
+                    superClass,
+                    interfaceTypes,
+                    fieldTokens,
+                    auxiliaryFields,
+                    methodTokens,
+                    recordComponentTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    permittedSubclasses,
+                    anonymousClass,
+                    localClass,
+                    record,
+                    nestHost,
+                    nestMembers);
+        }
+
         /**
          * {@inheritDoc}
          */
         public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     CompoundList.of(typeVariables, typeVariable.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1182,8 +1249,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withName(String name) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1217,8 +1285,9 @@ public interface InstrumentedType extends TypeDescription {
             }
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1245,8 +1314,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withLocalClass(boolean localClass) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1273,8 +1343,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withAnonymousClass(boolean anonymousClass) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1301,8 +1372,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withRecord(boolean record) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1331,8 +1403,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -1359,8 +1432,9 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
             return new Default(name,
                     modifiers,
-                    superClass,
+                    moduleDescription,
                     typeVariables,
+                    superClass,
                     interfaceTypes,
                     fieldTokens,
                     auxiliaryFields,
@@ -2133,6 +2207,13 @@ public interface InstrumentedType extends TypeDescription {
          */
         public TypeList getPermittedSubtypes() {
             return typeDescription.getPermittedSubtypes();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public InstrumentedType withModuleDescription(@MaybeNull ModuleDescription moduleDescription) {
+            throw new IllegalStateException("Cannot define module meta data for frozen type: " + typeDescription);
         }
 
         /**

@@ -44,6 +44,11 @@ public interface ModuleDescription extends NamedElement,
         AnnotationSource {
 
     /**
+     * The name of a Java class representing a module description.
+     */
+    String MODULE_CLASS_NAME = "module-info";
+
+    /**
      * Defines a module that is not resolved.
      */
     @AlwaysNull

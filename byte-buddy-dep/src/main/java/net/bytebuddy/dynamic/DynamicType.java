@@ -1608,77 +1608,85 @@ public interface DynamicType extends ClassFileLocator {
          */
         TypeDescription toTypeDescription();
 
-        interface ModuleDefintion<S> extends Builder<S> {
+        interface ModuleDefinition<S> extends Builder<S> {
 
-            ModuleDefintion<S> mainClass(Class<?> type);
+            ModuleDefinition<S> version(@MaybeNull String version);
 
-            ModuleDefintion<S> mainClass(TypeDescription typeDescription);
+            ModuleDefinition<S> modifiers(int modifiers); // TODO: convenience
 
-            ModuleDefintion<S> mainClass(String name);
+            ModuleDefinition<S> mainClass(Class<?> type);
 
-            ModuleDefintion<S> packages(String... aPackage);
+            ModuleDefinition<S> mainClass(TypeDescription typeDescription);
 
-            ModuleDefintion<S> packages(Collection<String> packages);
+            ModuleDefinition<S> mainClass(String name);
 
-            ModuleDefintion<S> requires(String... module);
+            ModuleDefinition<S> packages(String... aPackage);
 
-            ModuleDefintion<S> requires(Collection<String> modules);
+            ModuleDefinition<S> packages(Collection<String> packages);
+
+            ModuleDefinition<S> requires(String... module);
+
+            ModuleDefinition<S> requires(Collection<String> modules);
 
             RequiresDefinition<S> require(String module);
 
-            ModuleDefintion<S> exports(String... aPackage);
+            ModuleDefinition<S> exports(String... aPackage);
 
-            ModuleDefintion<S> exports(Collection<String> packages);
+            ModuleDefinition<S> exports(Collection<String> packages);
 
             ExportsDefinition<S> export(String aPackage);
 
-            ModuleDefintion<S> opens(String... aPackage);
+            ModuleDefinition<S> opens(String... aPackage);
 
-            ModuleDefintion<S> opens(Collection<String> packages);
+            ModuleDefinition<S> opens(Collection<String> packages);
 
             OpensDefinition<S> open(String aPackage);
 
-            ModuleDefintion<S> uses(Class<?>... service);
+            ModuleDefinition<S> uses(Class<?>... service);
 
-            ModuleDefintion<S> uses(TypeDescription... service);
+            ModuleDefinition<S> uses(TypeDescription... service);
 
-            ModuleDefintion<S> uses(String... service);
+            ModuleDefinition<S> uses(String... service);
 
-            ModuleDefintion<S> uses(Collection<String> services);
+            ModuleDefinition<S> uses(Collection<String> services);
 
             OpensDefinition<S> provides(Class<?> service, Class<?>... implementations);
 
-            ModuleDefintion<S> provides(Class<?> service, Collection<Class<?>> implementations);
+            ModuleDefinition<S> provides(Class<?> service, Collection<Class<?>> implementations);
 
             OpensDefinition<S> provides(TypeDescription service, TypeDescription... implementations);
 
-            ModuleDefintion<S> provides(TypeDescription service, Collection<TypeDescription> implementations);
+            ModuleDefinition<S> provides(TypeDescription service, Collection<TypeDescription> implementations);
 
             OpensDefinition<S> provides(String service, String... implementations);
 
-            ModuleDefintion<S> provides(String service, Collection<String> implementations);
+            ModuleDefinition<S> provides(String service, Collection<String> implementations);
 
-            interface RequiresDefinition<S> extends ModuleDefintion<S> {
+            interface RequiresDefinition<S> extends ModuleDefinition<S> {
 
                 RequiresDefinition<S> modifiers(int modifiers); // TODO: convenience
             }
 
-            interface ExportsDefinition<S> extends ModuleDefintion<S> {
+            interface ExportsDefinition<S> extends ModuleDefinition<S> {
 
                 ExportsDefinition<S> modifiers(int modifiers); // TODO: convenience
 
-                ModuleDefintion<S> to(String... module);
+                ModuleDefinition<S> to(String... module);
 
-                ModuleDefintion<S> to(Collection<String> modules);
+                ModuleDefinition<S> to(Collection<String> modules);
             }
 
-            interface OpensDefinition<S> extends ModuleDefintion<S> {
+            interface OpensDefinition<S> extends ModuleDefinition<S> {
 
                 OpensDefinition<S> modifiers(int modifiers); // TODO: convenience
 
-                ModuleDefintion<S> to(String... module);
+                ModuleDefinition<S> to(String... module);
 
-                ModuleDefintion<S> to(Collection<String> modules);
+                ModuleDefinition<S> to(Collection<String> modules);
+            }
+
+            abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements ModuleDefinition<U> {
+
             }
         }
 
@@ -4941,6 +4949,34 @@ public interface DynamicType extends ClassFileLocator {
                                                           AsmClassWriter.Factory classWriterFactory,
                                                           LatentMatcher<? super MethodDescription> ignoredMethods,
                                                           List<? extends DynamicType> auxiliaryTypes);
+
+                protected class ModuleDefinitionAdapter extends Builder.ModuleDefinition.AbstractBase.Delegator<U> {
+
+
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Adapter.this.materialize(instrumentedType.withTypeVariable(token),
+                                fieldRegistry,
+                                methodRegistry,
+                                recordComponentRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                visibilityBridgeStrategy,
+                                classReaderFactory,
+                                classWriterFactory,
+                                ignoredMethods,
+                                auxiliaryTypes);
+                    }
+                    }
+                }
 
                 /**
                  * An adapter for applying an inner type definition for an outer type.
