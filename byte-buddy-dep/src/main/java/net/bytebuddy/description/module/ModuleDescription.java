@@ -18,6 +18,7 @@ package net.bytebuddy.description.module;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
@@ -809,6 +810,7 @@ public interface ModuleDescription extends NamedElement,
 
             /**
              * Returns the module descriptor.
+             *
              * @param value The {@code java.lang.Module} to check for its descriptor.
              * @return The module's descriptor.
              */
@@ -1041,6 +1043,187 @@ public interface ModuleDescription extends NamedElement,
              */
             @MaybeNull
             Object orElse(Object value, @MaybeNull Object fallback);
+        }
+    }
+
+    /**
+     * A latent description of a module.
+     */
+    class Latent extends AbstractBase {
+
+        /**
+         * The name of the module.
+         */
+        private final String name;
+
+        /**
+         * The modifiers of the module.
+         */
+        private final int modifiers;
+
+        /**
+         * The module version or {@code null} if no version was specified.
+         */
+        @MaybeNull
+        private final String version;
+
+        /**
+         * The module's main class or {@code null} if no main class was specified.
+         */
+        @MaybeNull
+        private final String mainClass;
+
+        /**
+         * The module's packages.
+         */
+        private final Set<String> packages;
+
+        /**
+         * The modules that this module requires.
+         */
+        private final Map<String, ModuleDescription.Requires> requires;
+
+        /**
+         * The packages that this module exports.
+         */
+        private final Map<String, ModuleDescription.Exports> exports;
+
+        /**
+         * The package that this module opens.
+         */
+        private final Map<String, ModuleDescription.Opens> opens;
+
+        /**
+         * The services that this module uses.
+         */
+        private final Set<String> uses;
+
+        /**
+         * The services that this module provides.
+         */
+        private final Map<String, ModuleDescription.Provides> provides;
+
+        /**
+         * A list of annotations on the described module.
+         */
+        private final List<? extends AnnotationDescription> annotations;
+
+        /**
+         * Creates a new latent module description.
+         *
+         * @param name        The name of the module.
+         * @param modifiers   The modifiers of the module.
+         * @param version     The module version or {@code null} if no version was specified.
+         * @param mainClass   The module's main class or {@code null} if no main class was specified.
+         * @param packages    The module's packages.
+         * @param requires    The modules that this module requires.
+         * @param exports     The packages that this module exports.
+         * @param opens       The package that this module opens.
+         * @param uses        The services that this module uses.
+         * @param provides    The services that this module provides.
+         * @param annotations A list of annotations on the described module.
+         */
+        public Latent(String name,
+                      int modifiers,
+                      @MaybeNull String version,
+                      @MaybeNull String mainClass,
+                      Set<String> packages,
+                      Map<String, Requires> requires,
+                      Map<String, Exports> exports,
+                      Map<String, Opens> opens,
+                      Set<String> uses,
+                      Map<String, Provides> provides,
+                      List<? extends AnnotationDescription> annotations) {
+            this.name = name;
+            this.modifiers = modifiers;
+            this.version = version;
+            this.mainClass = mainClass;
+            this.packages = packages;
+            this.requires = requires;
+            this.exports = exports;
+            this.opens = opens;
+            this.uses = uses;
+            this.provides = provides;
+            this.annotations = annotations;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public String getVersion() {
+            return version;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @MaybeNull
+        public String getMainClass() {
+            return mainClass;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Set<String> getPackages() {
+            return packages;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Exports> getExports() {
+            return exports;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Opens> getOpens() {
+            return opens;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Requires> getRequires() {
+            return requires;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Set<String> getUses() {
+            return uses;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Provides> getProvides() {
+            return provides;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public int getModifiers() {
+            return modifiers;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getActualName() {
+            return name;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Explicit(annotations);
         }
     }
 }
