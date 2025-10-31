@@ -269,7 +269,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        InstrumentedType withModuleDescription(@MaybeNull ModuleDescription moduleDescription);
+        WithFlexibleName withModuleDescription(@MaybeNull ModuleDescription moduleDescription);
 
         /**
          * {@inheritDoc}
@@ -2212,7 +2212,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public InstrumentedType withModuleDescription(@MaybeNull ModuleDescription moduleDescription) {
+        public WithFlexibleName withModuleDescription(@MaybeNull ModuleDescription moduleDescription) {
             throw new IllegalStateException("Cannot define module meta data for frozen type: " + typeDescription);
         }
 

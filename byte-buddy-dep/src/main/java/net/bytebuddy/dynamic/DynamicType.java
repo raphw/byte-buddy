@@ -31,6 +31,7 @@ import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -1612,7 +1613,7 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> version(@MaybeNull String version);
 
-            ModuleDefinition<S> modifiers(int modifiers); // TODO: convenience
+            //ModuleDefinition<S> modifiers(int modifiers); // TODO: convenience and check
 
             ModuleDefinition<S> mainClass(Class<?> type);
 
@@ -1650,15 +1651,15 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> uses(Collection<String> services);
 
-            OpensDefinition<S> provides(Class<?> service, Class<?>... implementations);
+            ModuleDefinition<S> provides(Class<?> service, Class<?>... implementation);
 
             ModuleDefinition<S> provides(Class<?> service, Collection<Class<?>> implementations);
 
-            OpensDefinition<S> provides(TypeDescription service, TypeDescription... implementations);
+            ModuleDefinition<S> provides(TypeDescription service, TypeDescription... implementation);
 
             ModuleDefinition<S> provides(TypeDescription service, Collection<TypeDescription> implementations);
 
-            OpensDefinition<S> provides(String service, String... implementations);
+            ModuleDefinition<S> provides(String service, String... implementation);
 
             ModuleDefinition<S> provides(String service, Collection<String> implementations);
 
@@ -1685,8 +1686,173 @@ public interface DynamicType extends ClassFileLocator {
                 ModuleDefinition<S> to(Collection<String> modules);
             }
 
+            /**
+             * An abstract base implementation of a {@link ModuleDefinition}.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements ModuleDefinition<U> {
 
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> mainClass(Class<?> type) {
+                    return mainClass(TypeDescription.ForLoadedType.of(type));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> mainClass(TypeDescription typeDescription) {
+                    if (typeDescription.isArray() || typeDescription.isPrimitive()) {
+                        throw new IllegalArgumentException("Cannot use primitive types for main class: " + typeDescription);
+                    }
+                    return mainClass(typeDescription.getName());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> packages(String... aPackage) {
+                    return packages(Arrays.asList(aPackage));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> exports(String... aPackage) {
+                    return exports(Arrays.asList(aPackage));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> exports(Collection<String> packages) {
+                    ModuleDefinition<U> definition = this;
+                    for (String aPackage : packages) {
+                        definition = definition.export(aPackage);
+                    }
+                    return definition;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> opens(String... aPackage) {
+                    return opens(Arrays.asList(aPackage));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> opens(Collection<String> packages) {
+                    ModuleDefinition<U> definition = this;
+                    for (String aPackage : packages) {
+                        definition = definition.open(aPackage);
+                    }
+                    return definition;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> requires(String... module) {
+                    return requires(Arrays.asList(module));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> requires(Collection<String> modules) {
+                    ModuleDefinition<U> definition = this;
+                    for (String module : modules) {
+                        definition = definition.requires(module);
+                    }
+                    return definition;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> uses(Class<?>... service) {
+                    return uses(new TypeList.ForLoadedTypes(service));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> uses(TypeDescription... service) {
+                    return uses(Arrays.asList(service));
+                }
+
+                /**
+                 * Includes the provided type in the usage of the module description.
+                 *
+                 * @param services The services to use.
+                 * @return A module description where these services are included.
+                 */
+                private ModuleDefinition<U> uses(List<TypeDescription> services) {
+                    List<String> names = new ArrayList<String>(services.size());
+                    for (TypeDescription service : services) {
+                        if (service.isArray() || service.isPrimitive()) {
+                            throw new IllegalArgumentException("A service can only be provided by a regular class: " + service);
+                        }
+                        names.add(service.getName());
+                    }
+                    return uses(names);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> uses(String... service) {
+                    return uses(Arrays.asList(service));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> provides(Class<?> service, Class<?>... implementations) {
+                    return provides(service, Arrays.asList(implementations));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> provides(Class<?> service, Collection<Class<?>> implementations) {
+                    return provides(TypeDescription.ForLoadedType.of(service), new TypeList.ForLoadedTypes(new ArrayList<Class<?>>(implementations)));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> provides(TypeDescription service, TypeDescription... implementation) {
+                    return provides(service, Arrays.asList(implementation));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> provides(TypeDescription service, Collection<TypeDescription> implementations) {
+                    if (service.isArray() || service.isPrimitive()) {
+                        throw new IllegalArgumentException("Service must be a regular class: " + service);
+                    }
+                    List<String> names = new ArrayList<String>(implementations.size());
+                    for (TypeDescription implementation : implementations) {
+                        if (implementation.isArray() || implementation.isPrimitive() || implementation.isAbstract()) {
+                            throw new IllegalArgumentException("Service implementation must be a regular, non-abstract class: " + implementation);
+                        }
+                        names.add(implementation.getName());
+                    }
+                    return provides(service.getName(), names);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> provides(String service, String... implementations) {
+                    return provides(service, Arrays.asList(implementations));
+                }
             }
         }
 
@@ -4833,7 +4999,20 @@ public interface DynamicType extends ClassFileLocator {
                  * {@inheritDoc}
                  */
                 public Builder<U> annotateType(Collection<? extends AnnotationDescription> annotations) {
-                    return materialize(instrumentedType.withAnnotations(new ArrayList<AnnotationDescription>(annotations)),
+                    ModuleDescription moduleDescription = instrumentedType.toModuleDescription();
+                    return materialize(instrumentedType
+                                    .withAnnotations(new ArrayList<AnnotationDescription>(annotations))
+                                    .withModuleDescription(moduleDescription == null ? ModuleDescription.UNDEFINED : new ModuleDescription.Latent(moduleDescription.getActualName(),
+                                            moduleDescription.getModifiers(),
+                                            moduleDescription.getVersion(),
+                                            moduleDescription.getMainClass(),
+                                            moduleDescription.getPackages(),
+                                            moduleDescription.getRequires(),
+                                            moduleDescription.getExports(),
+                                            moduleDescription.getOpens(),
+                                            moduleDescription.getUses(),
+                                            moduleDescription.getProvides(),
+                                            CompoundList.of(instrumentedType.getDeclaredAnnotations(), new ArrayList<>(annotations)))),
                             fieldRegistry,
                             methodRegistry,
                             recordComponentRegistry,
@@ -4950,13 +5129,206 @@ public interface DynamicType extends ClassFileLocator {
                                                           LatentMatcher<? super MethodDescription> ignoredMethods,
                                                           List<? extends DynamicType> auxiliaryTypes);
 
-                protected class ModuleDefinitionAdapter extends Builder.ModuleDefinition.AbstractBase.Delegator<U> {
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                protected class ModuleDefinitionAdapter extends Builder.ModuleDefinition.AbstractBase<U> {
 
+                    /**
+                     * The name of the module.
+                     */
+                    private final String name;
 
+                    /**
+                     * The modifiers of the module.
+                     */
+                    private final int modifiers;
+
+                    /**
+                     * The module version or {@code null} if no version was specified.
+                     */
+                    @MaybeNull
+                    private final String version;
+
+                    /**
+                     * The module's main class or {@code null} if no main class was specified.
+                     */
+                    @MaybeNull
+                    private final String mainClass;
+
+                    /**
+                     * The module's packages.
+                     */
+                    private final Set<String> packages;
+
+                    /**
+                     * The modules that this module requires.
+                     */
+                    private final Map<String, ModuleDescription.Requires> requires;
+
+                    /**
+                     * The packages that this module exports.
+                     */
+                    private final Map<String, ModuleDescription.Exports> exports;
+
+                    /**
+                     * The packages that this module opens.
+                     */
+                    private final Map<String, ModuleDescription.Opens> opens;
+
+                    /**
+                     * The services that this module uses.
+                     */
+                    private final Set<String> uses;
+
+                    /**
+                     * The services that this module provides.
+                     */
+                    private final Map<String, ModuleDescription.Provides> provides;
+
+                    /**
+                     * Creates a new module definition adapter.
+                     *
+                     * @param name        The name of the module.
+                     * @param modifiers   The modifiers of the module.
+                     * @param version     The module version or {@code null} if no version was specified.
+                     * @param mainClass   The module's main class or {@code null} if no main class was specified.
+                     * @param packages    The module's packages.
+                     * @param requires    The modules that this module requires.
+                     * @param exports     The packages that this module exports.
+                     * @param opens       The packages that this module opens.
+                     * @param uses        The services that this module uses.
+                     * @param provides    The services that this module provides.
+                     */
+                    protected ModuleDefinitionAdapter(String name,
+                                                      int modifiers,
+                                                      @MaybeNull String version,
+                                                      @MaybeNull String mainClass,
+                                                      Set<String> packages,
+                                                      Map<String, ModuleDescription.Requires> requires,
+                                                      Map<String, ModuleDescription.Exports> exports,
+                                                      Map<String, ModuleDescription.Opens> opens,
+                                                      Set<String> uses,
+                                                      Map<String, ModuleDescription.Provides> provides) {
+                        this.name = name;
+                        this.modifiers = modifiers;
+                        this.version = version;
+                        this.mainClass = mainClass;
+                        this.packages = packages;
+                        this.requires = requires;
+                        this.exports = exports;
+                        this.opens = opens;
+                        this.uses = uses;
+                        this.provides = provides;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<U> version(@MaybeNull String version) {
+                        return new ModuleDefinitionAdapter(name,
+                                modifiers,
+                                version,
+                                mainClass,
+                                packages,
+                                requires,
+                                exports,
+                                opens,
+                                uses,
+                                provides);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<U> mainClass(@MaybeNull String name) {
+                        return new ModuleDefinitionAdapter(this.name,
+                                modifiers,
+                                version,
+                                name,
+                                packages,
+                                requires,
+                                exports,
+                                opens,
+                                uses,
+                                provides);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<U> packages(Collection<String> packages) {
+                        Set<String> merged = new LinkedHashSet<>(this.packages);
+                        merged.addAll(packages);
+                        return new ModuleDefinitionAdapter(name,
+                                modifiers,
+                                version,
+                                mainClass,
+                                merged,
+                                requires,
+                                exports,
+                                opens,
+                                uses,
+                                provides);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public RequiresDefinition<U> require(String module) {
+                        return null;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ExportsDefinition<U> export(String aPackage) {
+                        return null;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public OpensDefinition<U> open(String aPackage) {
+                        return null;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<U> uses(Collection<String> services) {
+                        Set<String> merged = new LinkedHashSet<>(this.packages);
+                        merged.addAll(packages);
+                        return new ModuleDefinitionAdapter(name,
+                                modifiers,
+                                version,
+                                mainClass,
+                                packages,
+                                requires,
+                                exports,
+                                opens,
+                                merged,
+                                provides);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<U> provides(String service, Collection<String> implementations) {
+                        return null;
+                    }
 
                     @Override
                     protected Builder<U> materialize() {
-                        return Adapter.this.materialize(instrumentedType.withTypeVariable(token),
+                        return Adapter.this.materialize(instrumentedType.withModuleDescription(new ModuleDescription.Latent(name,
+                                        modifiers,
+                                        version,
+                                        mainClass,
+                                        packages,
+                                        requires,
+                                        exports,
+                                        opens,
+                                        uses,
+                                        provides,
+                                        instrumentedType.getDeclaredAnnotations())), // TODO: update annotations on module description.
                                 fieldRegistry,
                                 methodRegistry,
                                 recordComponentRegistry,
@@ -4974,7 +5346,6 @@ public interface DynamicType extends ClassFileLocator {
                                 classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
-                    }
                     }
                 }
 
