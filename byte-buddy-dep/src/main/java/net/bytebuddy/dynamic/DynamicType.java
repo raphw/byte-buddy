@@ -1627,11 +1627,11 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> requires(Collection<String> modules);
 
-            ModuleDefinition<S> require(String module, ModifierContributor.ForModule.OfRequire... modifierContributor);
+            RequiresDefinition<S> require(String module, ModifierContributor.ForModule.OfRequire... modifierContributor);
 
-            ModuleDefinition<S> require(String module, Collection<? extends ModifierContributor.ForModule.OfRequire> modifierContributors);
+            RequiresDefinition<S> require(String module, Collection<? extends ModifierContributor.ForModule.OfRequire> modifierContributors);
 
-            ModuleDefinition<S> require(String module, int modifiers);
+            RequiresDefinition<S> require(String module, int modifiers);
 
             ModuleDefinition<S> exports(String... aPackage);
 
@@ -1673,18 +1673,62 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> provides(String service, Collection<String> implementations);
 
-            interface ExportsDefinition<S> extends ModuleDefinition<S> {
+            interface RequiresDefinition<U> extends ModuleDefinition<U> {
 
-                ModuleDefinition<S> to(String... module);
+                RequiresDefinition<U> version(@MaybeNull String version);
 
-                ModuleDefinition<S> to(Collection<String> modules);
+                /**
+                 * An abstract base implementation of a {@link RequiresDefinition}.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
+                abstract class AbstractBase<V> extends ModuleDefinition.AbstractBase<V> implements RequiresDefinition<V> {
+                    /* empty */
+                }
+            }
+
+            interface ExportsDefinition<U> extends ModuleDefinition<U> {
+
+                ExportsDefinition<U> to(String... module);
+
+                ExportsDefinition<U> to(Collection<String> modules);
+
+                /**
+                 * An abstract base implementation of a {@link OpensDefinition}.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
+                abstract class AbstractBase<V> extends ModuleDefinition.AbstractBase<V> implements ExportsDefinition<V> {
+
+                    /**
+                     * {@inheritDoc}ModuleDefinition
+                     */
+                    public ExportsDefinition<V> to(String... module) {
+                        return to(Arrays.asList(module));
+                    }
+                }
             }
 
             interface OpensDefinition<S> extends ModuleDefinition<S> {
 
-                ModuleDefinition<S> to(String... module);
+                OpensDefinition<S> to(String... module);
 
-                ModuleDefinition<S> to(Collection<String> modules);
+                OpensDefinition<S> to(Collection<String> modules);
+
+                /**
+                 * An abstract base implementation of a {@link OpensDefinition}.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
+                abstract class AbstractBase<V> extends ModuleDefinition.AbstractBase<V> implements OpensDefinition<V> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public OpensDefinition<V> to(String... module) {
+                        return to(Arrays.asList(module));
+                    }
+                }
             }
 
             /**
@@ -1739,14 +1783,14 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> require(String module, ModifierContributor.ForModule.OfRequire... modifierContributor) {
+                public RequiresDefinition<U> require(String module, ModifierContributor.ForModule.OfRequire... modifierContributor) {
                     return require(module, Arrays.asList(modifierContributor));
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> require(String module, Collection<? extends ModifierContributor.ForModule.OfRequire> modifierContributors) {
+                public RequiresDefinition<U> require(String module, Collection<? extends ModifierContributor.ForModule.OfRequire> modifierContributors) {
                     return require(module, ModifierContributor.Resolver.of(modifierContributors).resolve());
                 }
 
@@ -5316,7 +5360,7 @@ public interface DynamicType extends ClassFileLocator {
                     /**
                      * {@inheritDoc}
                      */
-                    public ModuleDefinition<U> require(String module, int modifiers) {
+                    public RequiresDefinition<U> require(String module, int modifiers) {
                         return null;
                     }
 

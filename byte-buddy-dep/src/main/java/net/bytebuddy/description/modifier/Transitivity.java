@@ -5,9 +5,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * Defines if a module requires another module also for its users.
  */
-public enum Transitivity implements ModifierContributor.ForModule.OfRequire,
-        ModifierContributor.ForModule.OfExport,
-        ModifierContributor.ForModule.OfOpen {
+public enum Transitivity implements ModifierContributor.ForModule.OfRequire {
 
     /**
      * Modifier for not marking a type member as synthetic. (This is the default modifier.)

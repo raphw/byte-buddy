@@ -5,9 +5,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * Describes when another module is considered as a requirement.
  */
-public enum RequiredPhase implements ModifierContributor.ForModule.OfRequire,
-        ModifierContributor.ForModule.OfExport,
-        ModifierContributor.ForModule.OfOpen {
+public enum RequiredPhase implements ModifierContributor.ForModule.OfRequire {
 
     /**
      * Modifier for requiring another module during all phases. (This is the default modifier.)
