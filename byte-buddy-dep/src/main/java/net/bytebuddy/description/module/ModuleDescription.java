@@ -740,7 +740,7 @@ public interface ModuleDescription extends NamedElement,
          */
         public int getModifiers() {
             int modifiers = 0;
-            for (Enum<?> modifier : MODULE_DESCRIPTOR.modifiers(module)) {
+            for (Enum<?> modifier : MODULE_DESCRIPTOR.modifiers(MODULE.getDescriptor(module))) {
                 String name = modifier.name();
                 if (name.equals("SYNTHETIC")) {
                     modifiers |= Opcodes.ACC_SYNTHETIC;

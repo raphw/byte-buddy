@@ -61,6 +61,7 @@ public abstract class AbstractModuleDescriptionTest {
     public void testModuleDescription() throws Exception {
         ModuleDescription moduleDescription = toModuleDescription();
         assertThat(moduleDescription.getActualName(), is(FOO + BAR));
+        assertThat(moduleDescription.getModifiers(), is(0));
         assertThat(moduleDescription.getMainClass(), is(FOO + "." + QUX));
         assertThat(moduleDescription.getPackages(), is(Collections.singleton(FOO)));
         assertThat(moduleDescription.getUses(), is(Collections.singleton(Runnable.class.getName())));

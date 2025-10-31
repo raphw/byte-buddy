@@ -10,6 +10,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -76,8 +77,9 @@ public class InstrumentedTypeDefaultTest {
     protected static InstrumentedType.WithFlexibleName makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
                 ModifierReviewable.EMPTY_MASK,
-                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                ModuleDescription.UNDEFINED,
                 Collections.<TypeVariableToken>emptyList(),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<String, Object>emptyMap(),
@@ -1575,8 +1577,9 @@ public class InstrumentedTypeDefaultTest {
     public void testTypeVariableOutOfScopeIsErased() throws Exception {
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
-                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(AbstractOuter.ExtendedInner.class),
+                ModuleDescription.UNDEFINED,
                 Collections.<TypeVariableToken>emptyList(),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(AbstractOuter.ExtendedInner.class),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<String, Object>emptyMap(),

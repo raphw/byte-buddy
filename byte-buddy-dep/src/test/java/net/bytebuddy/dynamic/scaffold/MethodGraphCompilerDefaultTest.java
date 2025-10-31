@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -1098,8 +1099,9 @@ public class MethodGraphCompilerDefaultTest {
     public void testVisibilityExtension() throws Exception {
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
-                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(VisibilityExtension.Base.class),
+                ModuleDescription.UNDEFINED,
                 Collections.<TypeVariableToken>emptyList(),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(VisibilityExtension.Base.class),
                 Collections.<TypeDescription.Generic>singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(VisibilityExtension.class)),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<String, Object>emptyMap(),
@@ -1138,8 +1140,9 @@ public class MethodGraphCompilerDefaultTest {
                 Collections.<TypeDescription>emptyList());
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
-                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                ModuleDescription.UNDEFINED,
                 Collections.<TypeVariableToken>emptyList(),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<String, Object>emptyMap(),

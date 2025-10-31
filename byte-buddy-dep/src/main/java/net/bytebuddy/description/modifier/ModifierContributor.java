@@ -72,6 +72,50 @@ public interface ModifierContributor {
     }
 
     /**
+     * A marker interface for modifiers that can be applied to modules.
+     */
+    interface ForModule extends ModifierContributor {
+
+        /**
+         * A mask for all legal modifiers of a Java module.
+         */
+        int MASK = Opcodes.ACC_OPEN | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+
+        /**
+         * A marker interface for modifiers that can be applied to module requirement.
+         */
+        interface OfRequire extends ModifierContributor {
+
+            /**
+             * A mask for all legal modifiers of a Java module requirement.
+             */
+            int MASK = Opcodes.ACC_TRANSITIVE | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+        }
+
+        /**
+         * A marker interface for modifiers that can be applied to module exports.
+         */
+        interface OfExport extends ModifierContributor {
+
+            /**
+             * A mask for all legal modifiers of a Java module export.
+             */
+            int MASK = Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+        }
+
+        /**
+         * A marker interface for modifiers that can be applied to module opening.
+         */
+        interface OfOpen extends ModifierContributor {
+
+            /**
+             * A mask for all legal modifiers of a Java module opening.
+             */
+            int MASK = Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+        }
+    }
+
+    /**
      * A marker interface for modifiers that can be applied to fields.
      */
     interface ForField extends ModifierContributor {
@@ -139,6 +183,46 @@ public interface ModifierContributor {
          * @return A resolver for the provided modifier contributors.
          */
         public static Resolver<ForType> of(ForType... modifierContributor) {
+            return of(Arrays.asList(modifierContributor));
+        }
+
+        /**
+         * Creates a new resolver for modifier contributors to a module.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
+        public static Resolver<ForModule> of(ForModule... modifierContributor) {
+            return of(Arrays.asList(modifierContributor));
+        }
+
+        /**
+         * Creates a new resolver for modifier contributors to a module requirement.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
+        public static Resolver<ForModule.OfRequire> of(ForModule.OfRequire... modifierContributor) {
+            return of(Arrays.asList(modifierContributor));
+        }
+
+        /**
+         * Creates a new resolver for modifier contributors to a module export.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
+        public static Resolver<ForModule.OfExport> of(ForModule.OfExport... modifierContributor) {
+            return of(Arrays.asList(modifierContributor));
+        }
+
+        /**
+         * Creates a new resolver for modifier contributors to a module opening.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
+        public static Resolver<ForModule.OfOpen> of(ForModule.OfOpen... modifierContributor) {
             return of(Arrays.asList(modifierContributor));
         }
 

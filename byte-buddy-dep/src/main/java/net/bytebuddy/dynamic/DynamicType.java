@@ -1613,8 +1613,6 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> version(@MaybeNull String version);
 
-            //ModuleDefinition<S> modifiers(int modifiers); // TODO: convenience and check
-
             ModuleDefinition<S> mainClass(Class<?> type);
 
             ModuleDefinition<S> mainClass(TypeDescription typeDescription);
@@ -1629,19 +1627,31 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> requires(Collection<String> modules);
 
-            RequiresDefinition<S> require(String module);
+            ModuleDefinition<S> require(String module, ModifierContributor.ForModule.OfRequire... modifierContributor);
+
+            ModuleDefinition<S> require(String module, Collection<? extends ModifierContributor.ForModule.OfRequire> modifierContributors);
+
+            ModuleDefinition<S> require(String module, int modifiers);
 
             ModuleDefinition<S> exports(String... aPackage);
 
             ModuleDefinition<S> exports(Collection<String> packages);
 
-            ExportsDefinition<S> export(String aPackage);
+            ModuleDefinition<S> export(String aPackage, ModifierContributor.ForModule.OfExport... modifierContributor);
+
+            ModuleDefinition<S> export(String aPackage, Collection<? extends ModifierContributor.ForModule.OfExport> modifierContributors);
+
+            ModuleDefinition<S> export(String aPackage, int modifiers);
 
             ModuleDefinition<S> opens(String... aPackage);
 
             ModuleDefinition<S> opens(Collection<String> packages);
 
-            OpensDefinition<S> open(String aPackage);
+            ModuleDefinition<S> open(String aPackage, ModifierContributor.ForModule.OfOpen... modifierContributor);
+
+            ModuleDefinition<S> open(String aPackage, Collection<? extends ModifierContributor.ForModule.OfOpen> modifierContributors);
+
+            ModuleDefinition<S> open(String aPackage, int modifiers);
 
             ModuleDefinition<S> uses(Class<?>... service);
 
@@ -1663,14 +1673,7 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> provides(String service, Collection<String> implementations);
 
-            interface RequiresDefinition<S> extends ModuleDefinition<S> {
-
-                RequiresDefinition<S> modifiers(int modifiers); // TODO: convenience
-            }
-
             interface ExportsDefinition<S> extends ModuleDefinition<S> {
-
-                ExportsDefinition<S> modifiers(int modifiers); // TODO: convenience
 
                 ModuleDefinition<S> to(String... module);
 
@@ -1678,8 +1681,6 @@ public interface DynamicType extends ClassFileLocator {
             }
 
             interface OpensDefinition<S> extends ModuleDefinition<S> {
-
-                OpensDefinition<S> modifiers(int modifiers); // TODO: convenience
 
                 ModuleDefinition<S> to(String... module);
 
@@ -1720,6 +1721,38 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
+                public ModuleDefinition<U> requires(String... module) {
+                    return requires(Arrays.asList(module));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> requires(Collection<String> modules) {
+                    ModuleDefinition<U> definition = this;
+                    for (String module : modules) {
+                        definition = definition.requires(module);
+                    }
+                    return definition;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> require(String module, ModifierContributor.ForModule.OfRequire... modifierContributor) {
+                    return require(module, Arrays.asList(modifierContributor));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> require(String module, Collection<? extends ModifierContributor.ForModule.OfRequire> modifierContributors) {
+                    return require(module, ModifierContributor.Resolver.of(modifierContributors).resolve());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public ModuleDefinition<U> exports(String... aPackage) {
                     return exports(Arrays.asList(aPackage));
                 }
@@ -1733,6 +1766,20 @@ public interface DynamicType extends ClassFileLocator {
                         definition = definition.export(aPackage);
                     }
                     return definition;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> export(String aPackage, ModifierContributor.ForModule.OfExport... modifierContributor) {
+                    return export(aPackage, Arrays.asList(modifierContributor));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> export(String aPackage, Collection<? extends ModifierContributor.ForModule.OfExport> modifierContributors) {
+                    return export(aPackage, ModifierContributor.Resolver.of(modifierContributors).resolve());
                 }
 
                 /**
@@ -1756,19 +1803,15 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> requires(String... module) {
-                    return requires(Arrays.asList(module));
+                public ModuleDefinition<U> open(String aPackage, ModifierContributor.ForModule.OfOpen... modifierContributor) {
+                    return open(aPackage, Arrays.asList(modifierContributor));
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> requires(Collection<String> modules) {
-                    ModuleDefinition<U> definition = this;
-                    for (String module : modules) {
-                        definition = definition.requires(module);
-                    }
-                    return definition;
+                public ModuleDefinition<U> open(String aPackage, Collection<? extends ModifierContributor.ForModule.OfOpen> modifierContributors) {
+                    return open(aPackage, ModifierContributor.Resolver.of(modifierContributors).resolve());
                 }
 
                 /**
@@ -5273,21 +5316,21 @@ public interface DynamicType extends ClassFileLocator {
                     /**
                      * {@inheritDoc}
                      */
-                    public RequiresDefinition<U> require(String module) {
+                    public ModuleDefinition<U> require(String module, int modifiers) {
                         return null;
                     }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public ExportsDefinition<U> export(String aPackage) {
+                    public ExportsDefinition<U> export(String aPackage, int modifiers) {
                         return null;
                     }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public OpensDefinition<U> open(String aPackage) {
+                    public OpensDefinition<U> open(String aPackage, int modifiers) {
                         return null;
                     }
 

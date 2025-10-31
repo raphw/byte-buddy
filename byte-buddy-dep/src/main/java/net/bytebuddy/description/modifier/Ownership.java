@@ -24,7 +24,7 @@ import org.objectweb.asm.Opcodes;
 public enum Ownership implements ModifierContributor.ForField, ModifierContributor.ForMethod, ModifierContributor.ForType {
 
     /**
-     * Modifier for a instance ownership of a type member. (This is the default modifier.)
+     * Modifier for an instance ownership of a type member. (This is the default modifier.)
      */
     MEMBER(EMPTY_MASK),
 

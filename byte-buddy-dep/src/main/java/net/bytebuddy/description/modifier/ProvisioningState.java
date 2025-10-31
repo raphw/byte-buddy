@@ -20,7 +20,11 @@ import org.objectweb.asm.Opcodes;
 /**
  * Describes if a method parameter is mandated, i.e. not explicitly specified in the source code.
  */
-public enum ProvisioningState implements ModifierContributor.ForParameter {
+public enum ProvisioningState implements ModifierContributor.ForModule,
+        ModifierContributor.ForModule.OfRequire,
+        ModifierContributor.ForModule.OfExport,
+        ModifierContributor.ForModule.OfOpen,
+        ModifierContributor.ForParameter {
 
     /**
      * Defines a parameter to not be mandated. (This is the default modifier.)
