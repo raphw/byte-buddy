@@ -1522,7 +1522,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         @MaybeNull
         public ModuleDescription toModuleDescription() {
-            return ModuleDescription.UNDEFINED;
+            return moduleDescription;
         }
 
         /**
@@ -1945,7 +1945,7 @@ public interface InstrumentedType extends TypeDescription {
                     || !(Character.isJavaIdentifierStart(identifier.charAt(0))
                     || Character.isUnicodeIdentifierStart(identifier.charAt(0)))) {
                 return false;
-            } else if (identifier.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
+            } else if (identifier.equals(PackageDescription.PACKAGE_CLASS_NAME) || identifier.equals(ModuleDescription.MODULE_CLASS_NAME)) {
                 return true;
             }
             for (int index = 1; index < identifier.length(); index++) {

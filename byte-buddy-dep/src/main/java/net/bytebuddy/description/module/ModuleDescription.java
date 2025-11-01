@@ -585,7 +585,7 @@ public interface ModuleDescription extends NamedElement,
          * @return A module description for the supplied module.
          * @throws IllegalArgumentException If the supplied instance is not a module or if the module is unnamed.
          */
-        public static ForLoadedModule of(Object module) {
+        public static ModuleDescription of(Object module) {
             if (!MODULE.isInstance(module)) {
                 throw new IllegalArgumentException("Not a Java module: " + module);
             } else if (!MODULE.isNamed(module)) {

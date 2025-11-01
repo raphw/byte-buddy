@@ -3,7 +3,9 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -218,6 +220,36 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(packageType.getDeclaredMethods().length, is(0));
         assertThat(packageType.getDeclaredAnnotations().length, is(1));
         assertThat(packageType.getAnnotation(Foo.class), notNullValue(Foo.class));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testModuleDefinition() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .name(BAR + "." + QUX)
+                .make()
+                .include(new ByteBuddy()
+                        .makeAnnotation()
+                        .name(Foo.class.getName())
+                        .annotateType(AnnotationDescription.Builder.ofType(Retention.class)
+                                .define("value", RetentionPolicy.RUNTIME)
+                                .build())
+                        .make())
+                .include(new ByteBuddy()
+                        .makeModule(FOO)
+                        .version("1")
+                        .packages(BAR)
+                        .export(BAR)
+                        .annotateType(AnnotationDescription.Builder.ofType(Foo.class).build())
+                        .make())
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded(); // TODO: filter module-info
+        ModuleDescription moduleDescription = ModuleDescription.ForLoadedModule.of(Class.class.getMethod("getModule").invoke(type));
+        assertThat(moduleDescription.getActualName(), is(ModuleDescription.MODULE_CLASS_NAME));
+        assertThat(moduleDescription.getModifiers(), is(ModifierContributor.EMPTY_MASK));
+        assertThat(moduleDescription.getDeclaredAnnotations().size(), is(1));
+        assertThat(moduleDescription.getDeclaredAnnotations().get(0).getAnnotationType().getName(), is(Foo.class.getName()));
     }
 
     @Test
