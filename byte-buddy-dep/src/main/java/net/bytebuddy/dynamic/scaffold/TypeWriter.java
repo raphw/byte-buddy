@@ -5080,7 +5080,8 @@ public interface TypeWriter<T> {
                                 instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
                                         | resolveDeprecationModifiers(modifiers)
                                         // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
-                                        | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousType()) ? Opcodes.ACC_FINAL : 0),
+                                        | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousType()) ? Opcodes.ACC_FINAL : ModifierContributor.EMPTY_MASK)
+                                        | (instrumentedType.isModule() ? Opcodes.ACC_MODULE : ModifierContributor.EMPTY_MASK),
                                 instrumentedType.getInternalName(),
                                 TypeDescription.AbstractBase.RAW_TYPES
                                         ? genericSignature

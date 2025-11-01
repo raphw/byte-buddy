@@ -3412,11 +3412,19 @@ public interface TypePool {
                         : name.substring(0, index));
             }
 
+            /**
+             * {@inheritDoc}
+             */
             @MaybeNull
             public ModuleDescription toModuleDescription() {
                 return moduleToken == null
                         ? ModuleDescription.UNDEFINED
                         : moduleToken.toModuleDescription(this);
+            }
+
+            @Override
+            public boolean isModule() {
+                return moduleToken != null;
             }
 
             /**

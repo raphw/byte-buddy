@@ -27,6 +27,7 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -795,6 +796,29 @@ public class ByteBuddy {
                 .method(isHashCode()).intercept(RecordObjectMethod.HASH_CODE)
                 .method(isEquals()).intercept(RecordObjectMethod.EQUALS)
                 .method(isToString()).intercept(RecordObjectMethod.TO_STRING);
+    }
+
+    /**
+     * Creates a new module with the given name.
+     *
+     * @param name The name of the module.
+     * @return A builder for a new module.
+     */
+    public DynamicType.Builder.ModuleDefinition<?> makeModule(String name) {
+        return makeModule(name, false);
+    }
+
+    /**
+     * Creates a new module with the given name.
+     *
+     * @param name The name of the module.
+     * @param open {@code true} if the module is to be opened.
+     * @return A builder for a new module.
+     */
+    public DynamicType.Builder.ModuleDefinition<?> makeModule(String name, boolean open) {
+        return subclass(Object.class)
+                .name(ModuleDescription.MODULE_CLASS_NAME)
+                .module(name, open ? Opcodes.ACC_OPEN : ModifierContributor.EMPTY_MASK);
     }
 
     /**

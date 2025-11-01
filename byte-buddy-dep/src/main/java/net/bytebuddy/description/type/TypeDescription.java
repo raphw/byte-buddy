@@ -337,6 +337,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     ModuleDescription toModuleDescription();
 
     /**
+     * Returns {@code true} if the represented type includes a module description.
+     *
+     * @return {@code true} if the represented type includes a module description.
+     */
+    boolean isModule();
+
+    /**
      * Returns the annotations that this type declares or inherits from super types.
      *
      * @return A list of all inherited annotations.
@@ -8013,7 +8020,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             int actualModifiers = getModifiers()
                     | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class) ? Opcodes.ACC_DEPRECATED : EMPTY_MASK)
                     | (isRecord() ? Opcodes.ACC_RECORD : EMPTY_MASK)
-                    | (superFlag ? Opcodes.ACC_SUPER : EMPTY_MASK);
+                    | (superFlag ? Opcodes.ACC_SUPER : EMPTY_MASK)
+                    | (isModule() ? Opcodes.ACC_MODULE : EMPTY_MASK);
             if (isPrivate()) {
                 return actualModifiers & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
             } else if (isProtected()) {
@@ -8057,6 +8065,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             } catch (GenericSignatureFormatError ignored) {
                 return NON_GENERIC_SIGNATURE;
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isModule() {
+            return toModuleDescription() != null;
         }
 
         /**
