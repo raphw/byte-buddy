@@ -1651,68 +1651,274 @@ public interface DynamicType extends ClassFileLocator {
              */
             ModuleDefinition<S> version(@MaybeNull String version);
 
+            /**
+             * Specifies the main class of the module being defined.
+             *
+             * @param type The main class of the module or {@code null} if no main class is to be specified.
+             * @return A new builder that is equal to this builder but with the given main class specification.
+             */
             ModuleDefinition<S> mainClass(@MaybeNull Class<?> type);
 
+            /**
+             * Specifies the main class of the module being defined.
+             *
+             * @param typeDescription The main class of the module or {@code null} if no main class is to be specified.
+             * @return A new builder that is equal to this builder but with the given main class specification.
+             */
             ModuleDefinition<S> mainClass(@MaybeNull TypeDescription typeDescription);
 
+            /**
+             * Specifies the main class of the module being defined.
+             *
+             * @param name The name of the main class of the module or {@code null} if no main class is to be specified.
+             * @return A new builder that is equal to this builder but with the given main class specification.
+             */
             ModuleDefinition<S> mainClass(@MaybeNull String name);
 
+            /**
+             * Specifies the packages that are contained within the module being defined.
+             *
+             * @param aPackage The names of the packages contained within the module.
+             * @return A new builder that is equal to this builder but with the given package specifications.
+             */
             ModuleDefinition<S> packages(String... aPackage);
 
+            /**
+             * Specifies the packages that are contained within the module being defined.
+             *
+             * @param packages The names of the packages contained within the module.
+             * @return A new builder that is equal to this builder but with the given package specifications.
+             */
             ModuleDefinition<S> packages(Collection<String> packages);
 
+            /**
+             * Specifies the modules that are required by the module being defined.
+             *
+             * @param module The names of the modules that are required.
+             * @return A new builder that is equal to this builder but with the given module requirements.
+             */
             ModuleDefinition<S> requires(String... module);
 
+            /**
+             * Specifies the modules that are required by the module being defined.
+             *
+             * @param modules The names of the modules that are required.
+             * @return A new builder that is equal to this builder but with the given module requirements.
+             */
             ModuleDefinition<S> requires(Collection<String> modules);
 
+            /**
+             * Specifies a module requirement with additional modifiers.
+             *
+             * @param module The name of the module that is required.
+             * @param modifierContributor The modifiers to apply to the module requirement.
+             * @return A builder for defining the module requirement.
+             */
             RequiresDefinition<S> require(String module, ModifierContributor.ForModule.OfRequire... modifierContributor);
 
+            /**
+             * Specifies a module requirement with additional modifiers.
+             *
+             * @param module The name of the module that is required.
+             * @param modifierContributors The modifiers to apply to the module requirement.
+             * @return A builder for defining the module requirement.
+             */
             RequiresDefinition<S> require(String module, Collection<? extends ModifierContributor.ForModule.OfRequire> modifierContributors);
 
+            /**
+             * Specifies a module requirement with explicit modifiers.
+             *
+             * @param module The name of the module that is required.
+             * @param modifiers The modifiers to apply to the module requirement.
+             * @return A builder for defining the module requirement.
+             */
             RequiresDefinition<S> require(String module, int modifiers);
 
+            /**
+             * Specifies packages that are exported by the module being defined.
+             *
+             * @param aPackage The names of the packages to export.
+             * @return A new builder that is equal to this builder but with the given package exports.
+             */
             ModuleDefinition<S> exports(String... aPackage);
 
+            /**
+             * Specifies packages that are exported by the module being defined.
+             *
+             * @param packages The names of the packages to export.
+             * @return A new builder that is equal to this builder but with the given package exports.
+             */
             ModuleDefinition<S> exports(Collection<String> packages);
 
+            /**
+             * Specifies a package export with additional modifiers.
+             *
+             * @param aPackage The name of the package to export.
+             * @param modifierContributor The modifiers to apply to the package export.
+             * @return A new builder that is equal to this builder but with the given package export.
+             */
             ModuleDefinition<S> export(String aPackage, ModifierContributor.ForModule.OfExport... modifierContributor);
 
+            /**
+             * Specifies a package export with additional modifiers.
+             *
+             * @param aPackage The name of the package to export.
+             * @param modifierContributors The modifiers to apply to the package export.
+             * @return A new builder that is equal to this builder but with the given package export.
+             */
             ModuleDefinition<S> export(String aPackage, Collection<? extends ModifierContributor.ForModule.OfExport> modifierContributors);
 
+            /**
+             * Specifies a package export with explicit modifiers.
+             *
+             * @param aPackage The name of the package to export.
+             * @param modifiers The modifiers to apply to the package export.
+             * @return A new builder that is equal to this builder but with the given package export.
+             */
             ModuleDefinition<S> export(String aPackage, int modifiers);
 
+            /**
+             * Specifies packages that are opened by the module being defined.
+             *
+             * @param aPackage The names of the packages to open.
+             * @return A new builder that is equal to this builder but with the given package openings.
+             */
             ModuleDefinition<S> opens(String... aPackage);
 
+            /**
+             * Specifies packages that are opened by the module being defined.
+             *
+             * @param packages The names of the packages to open.
+             * @return A new builder that is equal to this builder but with the given package openings.
+             */
             ModuleDefinition<S> opens(Collection<String> packages);
 
+            /**
+             * Specifies a package opening with additional modifiers.
+             *
+             * @param aPackage The name of the package to open.
+             * @param modifierContributor The modifiers to apply to the package opening.
+             * @return A new builder that is equal to this builder but with the given package opening.
+             */
             ModuleDefinition<S> open(String aPackage, ModifierContributor.ForModule.OfOpen... modifierContributor);
 
+            /**
+             * Specifies a package opening with additional modifiers.
+             *
+             * @param aPackage The name of the package to open.
+             * @param modifierContributors The modifiers to apply to the package opening.
+             * @return A new builder that is equal to this builder but with the given package opening.
+             */
             ModuleDefinition<S> open(String aPackage, Collection<? extends ModifierContributor.ForModule.OfOpen> modifierContributors);
 
+            /**
+             * Specifies a package opening with explicit modifiers.
+             *
+             * @param aPackage The name of the package to open.
+             * @param modifiers The modifiers to apply to the package opening.
+             * @return A new builder that is equal to this builder but with the given package opening.
+             */
             ModuleDefinition<S> open(String aPackage, int modifiers);
 
+            /**
+             * Specifies services that are used by the module being defined.
+             *
+             * @param service The types of the services to use.
+             * @return A new builder that is equal to this builder but with the given service uses.
+             */
             ModuleDefinition<S> uses(Class<?>... service);
 
+            /**
+             * Specifies services that are used by the module being defined.
+             *
+             * @param service The descriptions of the types of the services to use.
+             * @return A new builder that is equal to this builder but with the given service uses.
+             */
             ModuleDefinition<S> uses(TypeDescription... service);
 
+            /**
+             * Specifies services that are used by the module being defined.
+             *
+             * @param service The names of the types of the services to use.
+             * @return A new builder that is equal to this builder but with the given service uses.
+             */
             ModuleDefinition<S> uses(String... service);
 
+            /**
+             * Specifies services that are used by the module being defined.
+             *
+             * @param services The names of the types of the services to use.
+             * @return A new builder that is equal to this builder but with the given service uses.
+             */
             ModuleDefinition<S> uses(Collection<String> services);
 
+            /**
+             * Specifies service implementations that are provided by the module being defined.
+             *
+             * @param service The type of the service for which implementations are provided.
+             * @param implementation The types of the implementations that are provided.
+             * @return A new builder that is equal to this builder but with the given service provision.
+             */
             ModuleDefinition<S> provides(Class<?> service, Class<?>... implementation);
 
+            /**
+             * Specifies service implementations that are provided by the module being defined.
+             *
+             * @param service The type of the service for which implementations are provided.
+             * @param implementations The types of the implementations that are provided.
+             * @return A new builder that is equal to this builder but with the given service provision.
+             */
             ModuleDefinition<S> provides(Class<?> service, Collection<Class<?>> implementations);
 
+            /**
+             * Specifies service implementations that are provided by the module being defined.
+             *
+             * @param service The description of the type of the service for which implementations are provided.
+             * @param implementation The descriptions of the types of the implementations that are provided.
+             * @return A new builder that is equal to this builder but with the given service provision.
+             */
             ModuleDefinition<S> provides(TypeDescription service, TypeDescription... implementation);
 
+            /**
+             * Specifies service implementations that are provided by the module being defined.
+             *
+             * @param service The description of the type of the service for which implementations are provided.
+             * @param implementations The descriptions of the types of the implementations that are provided.
+             * @return A new builder that is equal to this builder but with the given service provision.
+             */
             ModuleDefinition<S> provides(TypeDescription service, Collection<TypeDescription> implementations);
 
+            /**
+             * Specifies service implementations that are provided by the module being defined.
+             *
+             * @param service The name of the type of the service for which implementations are provided.
+             * @param implementation The names of the types of the implementations that are provided.
+             * @return A new builder that is equal to this builder but with the given service provision.
+             */
             ModuleDefinition<S> provides(String service, String... implementation);
 
+            /**
+             * Specifies service implementations that are provided by the module being defined.
+             *
+             * @param service The name of the type of the service for which implementations are provided.
+             * @param implementations The names of the types of the implementations that are provided.
+             * @return A new builder that is equal to this builder but with the given service provision.
+             */
             ModuleDefinition<S> provides(String service, Collection<String> implementations);
 
+            /**
+             * A specification of a module requirement.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface RequiresDefinition<U> extends ModuleDefinition<U> {
 
+                /**
+                 * Specifies the version of the required module.
+                 *
+                 * @param version The version of the required module or {@code null} if no version is to be specified.
+                 * @return A new builder that is equal to this builder but with the given version specification.
+                 */
                 RequiresDefinition<U> requiredVersion(@MaybeNull String version);
 
                 /**
@@ -1725,10 +1931,27 @@ public interface DynamicType extends ClassFileLocator {
                 }
             }
 
+            /**
+             * A specification of a module export.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface ExportsDefinition<U> extends ModuleDefinition<U> {
 
+                /**
+                 * Specifies the modules to which the previously defined package is exported.
+                 *
+                 * @param module The names of the modules to which the package is exported.
+                 * @return A new builder that is equal to this builder but with the given modules specified.
+                 */
                 ExportsDefinition<U> to(String... module);
 
+                /**
+                 * Specifies the modules to which the previously defined package is exported.
+                 *
+                 * @param modules The names of the modules to which the package is exported.
+                 * @return A new builder that is equal to this builder but with the given modules specified.
+                 */
                 ExportsDefinition<U> to(Collection<String> modules);
 
                 /**
@@ -1747,10 +1970,27 @@ public interface DynamicType extends ClassFileLocator {
                 }
             }
 
+            /**
+             * A specification of a module opening.
+             *
+             * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface OpensDefinition<S> extends ModuleDefinition<S> {
 
+                /**
+                 * Specifies the modules to which the previously defined package is opened.
+                 *
+                 * @param module The names of the modules to which the package is opened.
+                 * @return A new builder that is equal to this builder but with the given modules specified.
+                 */
                 OpensDefinition<S> to(String... module);
 
+                /**
+                 * Specifies the modules to which the previously defined package is opened.
+                 *
+                 * @param modules The names of the modules to which the package is opened.
+                 * @return A new builder that is equal to this builder but with the given modules specified.
+                 */
                 OpensDefinition<S> to(Collection<String> modules);
 
                 /**
