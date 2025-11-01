@@ -361,6 +361,12 @@ public interface DynamicType extends ClassFileLocator {
          */
         Builder<T> merge(Collection<? extends ModifierContributor.ForType> modifierContributors);
 
+        ModuleDefinition<T> module(String name, ModifierContributor.ForModule... modifierContributors);
+
+        ModuleDefinition<T> module(String name, Collection<? extends ModifierContributor.ForModule> modifierContributors);
+
+        ModuleDefinition<T> module(String name, int modifiers);
+
         /**
          * <p>
          * Defines this type as a top-level type that is not declared by another type or enclosed by another member.
@@ -1613,11 +1619,11 @@ public interface DynamicType extends ClassFileLocator {
 
             ModuleDefinition<S> version(@MaybeNull String version);
 
-            ModuleDefinition<S> mainClass(Class<?> type);
+            ModuleDefinition<S> mainClass(@MaybeNull Class<?> type);
 
-            ModuleDefinition<S> mainClass(TypeDescription typeDescription);
+            ModuleDefinition<S> mainClass(@MaybeNull TypeDescription typeDescription);
 
-            ModuleDefinition<S> mainClass(String name);
+            ModuleDefinition<S> mainClass(@MaybeNull String name);
 
             ModuleDefinition<S> packages(String... aPackage);
 
@@ -1675,14 +1681,14 @@ public interface DynamicType extends ClassFileLocator {
 
             interface RequiresDefinition<U> extends ModuleDefinition<U> {
 
-                RequiresDefinition<U> version(@MaybeNull String version);
+                RequiresDefinition<U> requiredVersion(@MaybeNull String version);
 
                 /**
                  * An abstract base implementation of a {@link RequiresDefinition}.
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                abstract class AbstractBase<V> extends ModuleDefinition.AbstractBase<V> implements RequiresDefinition<V> {
+                abstract class Delegator<V> extends ModuleDefinition.AbstractBase.Delegator<V> implements RequiresDefinition<V> {
                     /* empty */
                 }
             }
@@ -1698,7 +1704,7 @@ public interface DynamicType extends ClassFileLocator {
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                abstract class AbstractBase<V> extends ModuleDefinition.AbstractBase<V> implements ExportsDefinition<V> {
+                abstract class Delegator<V> extends ModuleDefinition.AbstractBase.Delegator<V> implements ExportsDefinition<V> {
 
                     /**
                      * {@inheritDoc}ModuleDefinition
@@ -1720,7 +1726,7 @@ public interface DynamicType extends ClassFileLocator {
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                abstract class AbstractBase<V> extends ModuleDefinition.AbstractBase<V> implements OpensDefinition<V> {
+                abstract class Delegator<V> extends ModuleDefinition.AbstractBase.Delegator<V> implements OpensDefinition<V> {
 
                     /**
                      * {@inheritDoc}
@@ -1741,18 +1747,22 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> mainClass(Class<?> type) {
-                    return mainClass(TypeDescription.ForLoadedType.of(type));
+                public ModuleDefinition<U> mainClass(@MaybeNull Class<?> type) {
+                    return mainClass(type == null
+                            ? null
+                            : TypeDescription.ForLoadedType.of(type));
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> mainClass(TypeDescription typeDescription) {
-                    if (typeDescription.isArray() || typeDescription.isPrimitive()) {
+                public ModuleDefinition<U> mainClass(@MaybeNull TypeDescription typeDescription) {
+                    if (typeDescription != null && (typeDescription.isArray() || typeDescription.isPrimitive())) {
                         throw new IllegalArgumentException("Cannot use primitive types for main class: " + typeDescription);
                     }
-                    return mainClass(typeDescription.getName());
+                    return mainClass(typeDescription == null
+                            ? null
+                            : typeDescription.getName());
                 }
 
                 /**
@@ -1939,6 +1949,73 @@ public interface DynamicType extends ClassFileLocator {
                  */
                 public ModuleDefinition<U> provides(String service, String... implementations) {
                     return provides(service, Arrays.asList(implementations));
+                }
+
+                /**
+                 * An adapter for a {@link ModuleDefinition}.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
+                public abstract static class Delegator<V> extends ModuleDefinition.AbstractBase<V> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<V> version(@MaybeNull String version) {
+                        return materialize().version(version);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<V> mainClass(@MaybeNull String name) {
+                        return materialize().mainClass(name);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<V> packages(Collection<String> packages) {
+                        return materialize().packages(packages);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public RequiresDefinition<V> require(String module, int modifiers) {
+                        return materialize().require(module, modifiers);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<V> export(String aPackage, int modifiers) {
+                        return materialize().export(aPackage, modifiers);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<V> open(String aPackage, int modifiers) {
+                        return materialize().open(aPackage, modifiers);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<V> uses(Collection<String> services) {
+                        return materialize().uses(services);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ModuleDefinition<V> provides(String service, Collection<String> implementations) {
+                        return materialize().provides(service, implementations);
+                    }
+
+                    @Override
+                    protected abstract ModuleDefinition<V> materialize();
                 }
             }
         }
@@ -3658,6 +3735,20 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * {@inheritDoc}
              */
+            public ModuleDefinition<S> module(String name, ModifierContributor.ForModule... modifierContributors) {
+                return module(name, Arrays.asList(modifierContributors));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ModuleDefinition<S> module(String name, Collection<? extends ModifierContributor.ForModule> modifierContributors) {
+                return module(name, ModifierContributor.Resolver.of(modifierContributors).resolve());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public InnerTypeDefinition.ForType<S> innerTypeOf(Class<?> type) {
                 return innerTypeOf(TypeDescription.ForLoadedType.of(type));
             }
@@ -4169,6 +4260,13 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
+                public ModuleDefinition<U> module(String name, int modifiers) {
+                    return materialize().module(name, modifiers);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> visit(AsmVisitorWrapper asmVisitorWrapper) {
                     return materialize().visit(asmVisitorWrapper);
                 }
@@ -4654,6 +4752,13 @@ public interface DynamicType extends ClassFileLocator {
                     this.classWriterFactory = classWriterFactory;
                     this.ignoredMethods = ignoredMethods;
                     this.auxiliaryTypes = auxiliaryTypes;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> module(String name, int modifiers) {
+                    return new ModuleDefinitionAdapter(name, modifiers);
                 }
 
                 /**
@@ -5216,8 +5321,11 @@ public interface DynamicType extends ClassFileLocator {
                                                           LatentMatcher<? super MethodDescription> ignoredMethods,
                                                           List<? extends DynamicType> auxiliaryTypes);
 
+                /**
+                 * An adapter for defining a module.
+                 */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                protected class ModuleDefinitionAdapter extends Builder.ModuleDefinition.AbstractBase<U> {
+                protected class ModuleDefinitionAdapter extends ModuleDefinition.AbstractBase<U> {
 
                     /**
                      * The name of the module.
@@ -5233,12 +5341,14 @@ public interface DynamicType extends ClassFileLocator {
                      * The module version or {@code null} if no version was specified.
                      */
                     @MaybeNull
+                    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final String version;
 
                     /**
                      * The module's main class or {@code null} if no main class was specified.
                      */
                     @MaybeNull
+                    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final String mainClass;
 
                     /**
@@ -5271,19 +5381,34 @@ public interface DynamicType extends ClassFileLocator {
                      */
                     private final Map<String, ModuleDescription.Provides> provides;
 
+                    protected ModuleDefinitionAdapter(String name, int modifiers) {
+                        this(name,
+                                modifiers,
+                                null,
+                                null,
+                                Collections.<String>emptySet(),
+                                "java.base".equals(name)
+                                        ? Collections.<String, ModuleDescription.Requires>emptyMap()
+                                        : Collections.<String, ModuleDescription.Requires>singletonMap("java.base", new ModuleDescription.Requires.Simple(null, Opcodes.ACC_MANDATED)),
+                                Collections.<String, ModuleDescription.Exports>emptyMap(),
+                                Collections.<String, ModuleDescription.Opens>emptyMap(),
+                                Collections.<String>emptySet(),
+                                Collections.<String, ModuleDescription.Provides>emptyMap());
+                    }
+
                     /**
                      * Creates a new module definition adapter.
                      *
-                     * @param name        The name of the module.
-                     * @param modifiers   The modifiers of the module.
-                     * @param version     The module version or {@code null} if no version was specified.
-                     * @param mainClass   The module's main class or {@code null} if no main class was specified.
-                     * @param packages    The module's packages.
-                     * @param requires    The modules that this module requires.
-                     * @param exports     The packages that this module exports.
-                     * @param opens       The packages that this module opens.
-                     * @param uses        The services that this module uses.
-                     * @param provides    The services that this module provides.
+                     * @param name      The name of the module.
+                     * @param modifiers The modifiers of the module.
+                     * @param version   The module version or {@code null} if no version was specified.
+                     * @param mainClass The module's main class or {@code null} if no main class was specified.
+                     * @param packages  The module's packages.
+                     * @param requires  The modules that this module requires.
+                     * @param exports   The packages that this module exports.
+                     * @param opens     The packages that this module opens.
+                     * @param uses      The services that this module uses.
+                     * @param provides  The services that this module provides.
                      */
                     protected ModuleDefinitionAdapter(String name,
                                                       int modifiers,
@@ -5361,21 +5486,21 @@ public interface DynamicType extends ClassFileLocator {
                      * {@inheritDoc}
                      */
                     public RequiresDefinition<U> require(String module, int modifiers) {
-                        return null;
+                        return new RequiresDefinitionAdapter(module, modifiers);
                     }
 
                     /**
                      * {@inheritDoc}
                      */
                     public ExportsDefinition<U> export(String aPackage, int modifiers) {
-                        return null;
+                        return new ExportsDefinitionAdapter(aPackage, modifiers);
                     }
 
                     /**
                      * {@inheritDoc}
                      */
                     public OpensDefinition<U> open(String aPackage, int modifiers) {
-                        return null;
+                        return new OpensDefinitionAdapter(aPackage, modifiers);
                     }
 
                     /**
@@ -5400,12 +5525,23 @@ public interface DynamicType extends ClassFileLocator {
                      * {@inheritDoc}
                      */
                     public ModuleDefinition<U> provides(String service, Collection<String> implementations) {
-                        return null;
+                        Map<String, ModuleDescription.Provides> provides = new LinkedHashMap<String, ModuleDescription.Provides>(this.provides);
+                        provides.put(service, new ModuleDescription.Provides.Simple(new LinkedHashSet<String>(implementations)));
+                        return new ModuleDefinitionAdapter(name,
+                                modifiers,
+                                version,
+                                mainClass,
+                                packages,
+                                requires,
+                                exports,
+                                opens,
+                                uses,
+                                provides);
                     }
 
                     @Override
                     protected Builder<U> materialize() {
-                        return Adapter.this.materialize(instrumentedType.withModuleDescription(new ModuleDescription.Latent(name,
+                        return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withModuleDescription(new ModuleDescription.Latent(name,
                                         modifiers,
                                         version,
                                         mainClass,
@@ -5415,7 +5551,7 @@ public interface DynamicType extends ClassFileLocator {
                                         opens,
                                         uses,
                                         provides,
-                                        instrumentedType.getDeclaredAnnotations())), // TODO: update annotations on module description.
+                                        instrumentedType.getDeclaredAnnotations())),
                                 fieldRegistry,
                                 methodRegistry,
                                 recordComponentRegistry,
@@ -5433,6 +5569,217 @@ public interface DynamicType extends ClassFileLocator {
                                 classWriterFactory,
                                 ignoredMethods,
                                 auxiliaryTypes);
+                    }
+
+                    /**
+                     * An adapter for definining a module requirement.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                    protected class RequiresDefinitionAdapter extends RequiresDefinition.Delegator<U> {
+
+                        /**
+                         * The module that is being required.
+                         */
+                        private final String module;
+
+                        /**
+                         * The modifiers of the required module.
+                         */
+                        private final int modifiers;
+
+                        /**
+                         * The version of the required module or {@code null} if no particular version is required.
+                         */
+                        @MaybeNull
+                        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+                        private final String version;
+
+                        /**
+                         * Creates a new module requirement definition.
+                         *
+                         * @param module    The module that is being required.
+                         * @param modifiers The modifiers of the required module.
+                         */
+                        protected RequiresDefinitionAdapter(String module, int modifiers) {
+                            this(module, modifiers, null);
+                        }
+
+                        /**
+                         * Creates a new module requirement definition.
+                         *
+                         * @param module    The module that is being required.
+                         * @param modifiers The modifiers of the required module.
+                         * @param version   The version of the required module or {@code null} if no particular version is required.
+                         */
+                        protected RequiresDefinitionAdapter(String module, int modifiers, @MaybeNull String version) {
+                            this.module = module;
+                            this.modifiers = modifiers;
+                            this.version = version;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public RequiresDefinition<U> requiredVersion(@MaybeNull String version) {
+                            return new RequiresDefinitionAdapter(module, modifiers, version);
+                        }
+
+                        @Override
+                        protected ModuleDefinition<U> materialize() {
+                            Map<String, ModuleDescription.Requires> requires = new LinkedHashMap<String, ModuleDescription.Requires>(ModuleDefinitionAdapter.this.requires);
+                            requires.put(name, new ModuleDescription.Requires.Simple(version, modifiers));
+                            return new ModuleDefinitionAdapter(ModuleDefinitionAdapter.this.name,
+                                    ModuleDefinitionAdapter.this.modifiers,
+                                    ModuleDefinitionAdapter.this.version,
+                                    mainClass,
+                                    packages,
+                                    requires,
+                                    exports,
+                                    opens,
+                                    uses,
+                                    provides);
+                        }
+                    }
+
+
+                    /**
+                     * An adapter for defining a module export.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                    protected class ExportsDefinitionAdapter extends ExportsDefinition.Delegator<U> {
+
+                        /**
+                         * The package that is being exported.
+                         */
+                        private final String aPackage;
+
+                        /**
+                         * The modifiers for the exporting declaration.
+                         */
+                        private final int modifiers;
+
+                        /**
+                         * The modules to which the package is exported, or no modules if exported to all modules.
+                         */
+                        private final Set<String> targets;
+
+                        /**
+                         * Creates a new exporting definition adapter.
+                         *
+                         * @param aPackage  The package that is being exported.
+                         * @param modifiers The modifiers for the exporting declaration.
+                         */
+                        protected ExportsDefinitionAdapter(String aPackage, int modifiers) {
+                            this(aPackage, modifiers, Collections.<String>emptySet());
+                        }
+
+                        /**
+                         * Creates a new exporting definition adapter.
+                         *
+                         * @param aPackage  The package that is being exported.
+                         * @param modifiers The modifiers for the exporting declaration.
+                         * @param targets   The modules to which the package is exported, or no modules if exported to all modules.
+                         */
+                        protected ExportsDefinitionAdapter(String aPackage, int modifiers, Set<String> targets) {
+                            this.aPackage = aPackage;
+                            this.modifiers = modifiers;
+                            this.targets = targets;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public ExportsDefinition<U> to(Collection<String> modules) {
+                            Set<String> targets = new LinkedHashSet<String>(this.targets);
+                            targets.addAll(modules);
+                            return new ExportsDefinitionAdapter(aPackage, modifiers, targets);
+                        }
+
+                        @Override
+                        protected ModuleDefinition<U> materialize() {
+                            Map<String, ModuleDescription.Exports> exports = new LinkedHashMap<String, ModuleDescription.Exports>(ModuleDefinitionAdapter.this.exports);
+                            exports.put(name, new ModuleDescription.Exports.Simple(targets, modifiers));
+                            return new ModuleDefinitionAdapter(name,
+                                    ModuleDefinitionAdapter.this.modifiers,
+                                    version,
+                                    mainClass,
+                                    packages,
+                                    requires,
+                                    exports,
+                                    opens,
+                                    uses,
+                                    provides);
+                        }
+                    }
+
+                    /**
+                     * An adapter for defining a module opening.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                    protected class OpensDefinitionAdapter extends OpensDefinition.Delegator<U> {
+
+                        /**
+                         * The package that is being opened.
+                         */
+                        private final String aPackage;
+
+                        /**
+                         * The modifiers for the opening declaration.
+                         */
+                        private final int modifiers;
+
+                        /**
+                         * The modules to which the package is opened, or no modules if opened to all modules.
+                         */
+                        private final Set<String> targets;
+
+                        /**
+                         * Creates a new opens definition adapter.
+                         *
+                         * @param aPackage  The package that is being opened.
+                         * @param modifiers The modifiers for the opening declaration.
+                         */
+                        protected OpensDefinitionAdapter(String aPackage, int modifiers) {
+                            this(aPackage, modifiers, Collections.<String>emptySet());
+                        }
+
+                        /**
+                         * Creates a new opens definition adapter.
+                         *
+                         * @param aPackage  The package that is being opened.
+                         * @param modifiers The modifiers for the opening declaration.
+                         * @param targets   The modules to which the package is opened, or no modules if opened to all modules.
+                         */
+                        protected OpensDefinitionAdapter(String aPackage, int modifiers, Set<String> targets) {
+                            this.aPackage = aPackage;
+                            this.modifiers = modifiers;
+                            this.targets = targets;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public OpensDefinition<U> to(Collection<String> modules) {
+                            Set<String> targets = new LinkedHashSet<String>(this.targets);
+                            targets.addAll(modules);
+                            return new OpensDefinitionAdapter(aPackage, modifiers, targets);
+                        }
+
+                        @Override
+                        protected ModuleDefinition<U> materialize() {
+                            Map<String, ModuleDescription.Opens> opens = new LinkedHashMap<String, ModuleDescription.Opens>(ModuleDefinitionAdapter.this.opens);
+                            opens.put(name, new ModuleDescription.Opens.Simple(targets, modifiers));
+                            return new ModuleDefinitionAdapter(name,
+                                    ModuleDefinitionAdapter.this.modifiers,
+                                    version,
+                                    mainClass,
+                                    packages,
+                                    requires,
+                                    exports,
+                                    opens,
+                                    uses,
+                                    provides);
+                        }
                     }
                 }
 
