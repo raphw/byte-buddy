@@ -361,10 +361,31 @@ public interface DynamicType extends ClassFileLocator {
          */
         Builder<T> merge(Collection<? extends ModifierContributor.ForType> modifierContributors);
 
+        /**
+         * Includes a module definition in this class file. This is normally only meaningful for classes named {@code module-info}.
+         *
+         * @param name                 The name of the module.
+         * @param modifierContributors The modifiers of the module. Those modifiers will override the modifiers of the class file.
+         * @return A new builder that is equal to this builder but which adds the specified module information.
+         */
         ModuleDefinition<T> module(String name, ModifierContributor.ForModule... modifierContributors);
 
+        /**
+         * Includes a module definition in this class file. This is normally only meaningful for classes named {@code module-info}.
+         *
+         * @param name                 The name of the module.
+         * @param modifierContributors The modifiers of the module. Those modifiers will override the modifiers of the class file.
+         * @return A new builder that is equal to this builder but which adds the specified module information.
+         */
         ModuleDefinition<T> module(String name, Collection<? extends ModifierContributor.ForModule> modifierContributors);
 
+        /**
+         * Includes a module definition in this class file. This is normally only meaningful for classes named {@code module-info}.
+         *
+         * @param name      The name of the module.
+         * @param modifiers The modifiers of the module. Those modifiers will override the modifiers of the class file.
+         * @return A new builder that is equal to this builder but which adds the specified module information.
+         */
         ModuleDefinition<T> module(String name, int modifiers);
 
         /**
@@ -1615,8 +1636,19 @@ public interface DynamicType extends ClassFileLocator {
          */
         TypeDescription toTypeDescription();
 
+        /**
+         * A specification of a Java module.
+         *
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         */
         interface ModuleDefinition<S> extends Builder<S> {
 
+            /**
+             * Specifies the version of the module being defined.
+             *
+             * @param version The version of the module or {@code null} if no version is to be specified.
+             * @return A new builder that is equal to this builder but with the given version specification.
+             */
             ModuleDefinition<S> version(@MaybeNull String version);
 
             ModuleDefinition<S> mainClass(@MaybeNull Class<?> type);
@@ -5551,7 +5583,7 @@ public interface DynamicType extends ClassFileLocator {
                                         opens,
                                         uses,
                                         provides,
-                                        instrumentedType.getDeclaredAnnotations())),
+                                        instrumentedType.getDeclaredAnnotations())).withModifiers(modifiers),
                                 fieldRegistry,
                                 methodRegistry,
                                 recordComponentRegistry,
