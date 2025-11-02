@@ -3423,7 +3423,7 @@ public interface TypePool {
             }
 
             @Override
-            public boolean isModule() {
+            public boolean isModuleType() {
                 return moduleToken != null;
             }
 

@@ -5081,7 +5081,7 @@ public interface TypeWriter<T> {
                                         | resolveDeprecationModifiers(modifiers)
                                         // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
                                         | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousType()) ? Opcodes.ACC_FINAL : ModifierContributor.EMPTY_MASK)
-                                        | (instrumentedType.isModule() ? Opcodes.ACC_MODULE : ModifierContributor.EMPTY_MASK),
+                                        | (instrumentedType.isModuleType() ? Opcodes.ACC_MODULE : ModifierContributor.EMPTY_MASK),
                                 instrumentedType.getInternalName(),
                                 TypeDescription.AbstractBase.RAW_TYPES
                                         ? genericSignature

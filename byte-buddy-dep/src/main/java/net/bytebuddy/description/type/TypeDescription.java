@@ -341,7 +341,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return {@code true} if the represented type includes a module description.
      */
-    boolean isModule();
+    boolean isModuleType();
 
     /**
      * Returns the annotations that this type declares or inherits from super types.
@@ -8017,7 +8017,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public int getActualModifiers(boolean superFlag) {
-            if (isModule()) {
+            if (isModuleType()) {
                 return Opcodes.ACC_MODULE;
             }
             int actualModifiers = getModifiers()
@@ -8072,8 +8072,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public boolean isModule() {
-            return toModuleDescription() != null;
+        public boolean isModuleType() {
+            return getName().equals(ModuleDescription.MODULE_CLASS_NAME);
         }
 
         /**

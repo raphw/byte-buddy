@@ -5779,8 +5779,8 @@ public interface DynamicType extends ClassFileLocator {
                      * {@inheritDoc}
                      */
                     public ModuleDefinition<U> uses(Collection<String> services) {
-                        Set<String> merged = new LinkedHashSet<String>(this.packages);
-                        merged.addAll(packages);
+                        Set<String> uses = new LinkedHashSet<String>(this.uses);
+                        uses.addAll(services);
                         return new ModuleDefinitionAdapter(name,
                                 modifiers,
                                 version,
@@ -5789,7 +5789,7 @@ public interface DynamicType extends ClassFileLocator {
                                 requires,
                                 exports,
                                 opens,
-                                merged,
+                                uses,
                                 provides);
                     }
 

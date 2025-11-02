@@ -1756,7 +1756,8 @@ public interface InstrumentedType extends TypeDescription {
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
                 if (!annotationDescription.isSupportedOn(ElementType.TYPE)
                         && !(isAnnotation() && annotationDescription.isSupportedOn(ElementType.ANNOTATION_TYPE))
-                        && !(isPackageType() && annotationDescription.isSupportedOn(ElementType.PACKAGE))) {
+                        && !(isPackageType() && annotationDescription.isSupportedOn(ElementType.PACKAGE))
+                        && !(isModuleType() && annotationDescription.isSupportedOn("MODULE"))) {
                     throw new IllegalStateException("Cannot add " + annotationDescription + " on " + this);
                 } else if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                     throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);
