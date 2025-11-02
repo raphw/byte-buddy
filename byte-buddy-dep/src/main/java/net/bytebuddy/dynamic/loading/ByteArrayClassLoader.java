@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaModule;
@@ -366,6 +367,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 ClassFilePostProcessor.NoOp.INSTANCE);
         Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
         for (TypeDescription typeDescription : types.keySet()) {
+            if (typeDescription.getName().equals(ModuleDescription.MODULE_CLASS_NAME)) {
+                continue;
+            }
             try {
                 Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
                 if (!GraalImageCode.getCurrent().isNativeImageExecution() && forbidExisting && type.getClassLoader() != classLoader) {
@@ -1292,6 +1296,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     ClassFilePostProcessor.NoOp.INSTANCE);
             Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : types.keySet()) {
+                if (typeDescription.getName().equals(ModuleDescription.MODULE_CLASS_NAME)) {
+                    continue;
+                }
                 try {
                     Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
                     if (!GraalImageCode.getCurrent().isNativeImageExecution() && forbidExisting && type.getClassLoader() != classLoader) {

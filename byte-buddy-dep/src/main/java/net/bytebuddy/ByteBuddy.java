@@ -801,24 +801,27 @@ public class ByteBuddy {
     /**
      * Creates a new module with the given name.
      *
-     * @param name The name of the module.
+     * @param name                The name of the module.
+     * @param modifierContributor The modifier contributors for the module.
      * @return A builder for a new module.
      */
-    public DynamicType.Builder.ModuleDefinition<?> makeModule(String name) {
-        return makeModule(name, false);
+    public DynamicType.Builder.ModuleDefinition<?> makeModule(String name,
+                                                              ModifierContributor.ForModule... modifierContributor) {
+        return makeModule(name, Arrays.asList(modifierContributor));
     }
 
     /**
      * Creates a new module with the given name.
      *
-     * @param name The name of the module.
-     * @param open {@code true} if the module is to be opened.
+     * @param name                 The name of the module.
+     * @param modifierContributors The modifier contributors for the module.
      * @return A builder for a new module.
      */
-    public DynamicType.Builder.ModuleDefinition<?> makeModule(String name, boolean open) {
+    public DynamicType.Builder.ModuleDefinition<?> makeModule(String name,
+                                                              Collection<? extends ModifierContributor.ForModule> modifierContributors) {
         return subclass(Object.class)
                 .name(ModuleDescription.MODULE_CLASS_NAME)
-                .module(name, open ? Opcodes.ACC_OPEN : ModifierContributor.EMPTY_MASK);
+                .module(name, modifierContributors);
     }
 
     /**
