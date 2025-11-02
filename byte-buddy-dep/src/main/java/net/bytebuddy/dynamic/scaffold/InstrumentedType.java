@@ -440,10 +440,10 @@ public interface InstrumentedType extends TypeDescription {
          *
          * @param name       The type's name.
          * @param modifiers  The type's modifiers.
-         * @param superClass The type's super class.
+         * @param superClass The type's super class or {@code null} if no super class.
          * @return A new instrumented type representing a subclass of the given parameters.
          */
-        InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass);
+        InstrumentedType.WithFlexibleName subclass(String name, int modifiers, @MaybeNull TypeDescription.Generic superClass);
 
         /**
          * Default implementations of instrumented type factories.
@@ -501,7 +501,7 @@ public interface InstrumentedType extends TypeDescription {
             /**
              * {@inheritDoc}
              */
-            public InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass) {
+            public InstrumentedType.WithFlexibleName subclass(String name, int modifiers, @MaybeNull TypeDescription.Generic superClass) {
                 return new InstrumentedType.Default(name,
                         modifiers,
                         ModuleDescription.UNDEFINED,

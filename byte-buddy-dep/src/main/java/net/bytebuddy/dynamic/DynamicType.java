@@ -5476,7 +5476,7 @@ public interface DynamicType extends ClassFileLocator {
                                             moduleDescription.getOpens(),
                                             moduleDescription.getUses(),
                                             moduleDescription.getProvides(),
-                                            CompoundList.of(instrumentedType.getDeclaredAnnotations(), new ArrayList<>(annotations)))),
+                                            CompoundList.of(instrumentedType.getDeclaredAnnotations(), new ArrayList<AnnotationDescription>(annotations)))),
                             fieldRegistry,
                             methodRegistry,
                             recordComponentRegistry,
@@ -5740,7 +5740,7 @@ public interface DynamicType extends ClassFileLocator {
                      * {@inheritDoc}
                      */
                     public ModuleDefinition<U> packages(Collection<String> packages) {
-                        Set<String> merged = new LinkedHashSet<>(this.packages);
+                        Set<String> merged = new LinkedHashSet<String>(this.packages);
                         merged.addAll(packages);
                         return new ModuleDefinitionAdapter(name,
                                 modifiers,
@@ -5779,7 +5779,7 @@ public interface DynamicType extends ClassFileLocator {
                      * {@inheritDoc}
                      */
                     public ModuleDefinition<U> uses(Collection<String> services) {
-                        Set<String> merged = new LinkedHashSet<>(this.packages);
+                        Set<String> merged = new LinkedHashSet<String>(this.packages);
                         merged.addAll(packages);
                         return new ModuleDefinitionAdapter(name,
                                 modifiers,
@@ -5913,7 +5913,6 @@ public interface DynamicType extends ClassFileLocator {
                         }
                     }
 
-
                     /**
                      * An adapter for defining a module export.
                      */
@@ -5970,7 +5969,7 @@ public interface DynamicType extends ClassFileLocator {
                         @Override
                         protected ModuleDefinition<U> materialize() {
                             Map<String, ModuleDescription.Exports> exports = new LinkedHashMap<String, ModuleDescription.Exports>(ModuleDefinitionAdapter.this.exports);
-                            exports.put(name, new ModuleDescription.Exports.Simple(targets, modifiers));
+                            exports.put(aPackage, new ModuleDescription.Exports.Simple(targets, modifiers));
                             return new ModuleDefinitionAdapter(name,
                                     ModuleDefinitionAdapter.this.modifiers,
                                     version,
@@ -6040,7 +6039,7 @@ public interface DynamicType extends ClassFileLocator {
                         @Override
                         protected ModuleDefinition<U> materialize() {
                             Map<String, ModuleDescription.Opens> opens = new LinkedHashMap<String, ModuleDescription.Opens>(ModuleDefinitionAdapter.this.opens);
-                            opens.put(name, new ModuleDescription.Opens.Simple(targets, modifiers));
+                            opens.put(aPackage, new ModuleDescription.Opens.Simple(targets, modifiers));
                             return new ModuleDefinitionAdapter(name,
                                     ModuleDefinitionAdapter.this.modifiers,
                                     version,
@@ -7728,9 +7727,13 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * {@inheritDoc}
              */
-            @SuppressWarnings("unchecked")
             public Class<? extends T> getLoaded() {
-                return (Class<? extends T>) loadedTypes.get(typeDescription);
+                @SuppressWarnings("unchecked")
+                Class<? extends T> type = (Class<? extends T>) loadedTypes.get(typeDescription);
+                if (type == null) {
+                    throw new IllegalStateException(typeDescription + " cannot be loaded explicitly");
+                }
+                return type;
             }
 
             /**

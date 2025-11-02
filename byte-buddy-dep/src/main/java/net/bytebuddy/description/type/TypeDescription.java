@@ -8017,11 +8017,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public int getActualModifiers(boolean superFlag) {
+            if (isModule()) {
+                return Opcodes.ACC_MODULE;
+            }
             int actualModifiers = getModifiers()
                     | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class) ? Opcodes.ACC_DEPRECATED : EMPTY_MASK)
                     | (isRecord() ? Opcodes.ACC_RECORD : EMPTY_MASK)
-                    | (superFlag ? Opcodes.ACC_SUPER : EMPTY_MASK)
-                    | (isModule() ? Opcodes.ACC_MODULE : EMPTY_MASK);
+                    | (superFlag ? Opcodes.ACC_SUPER : EMPTY_MASK);
             if (isPrivate()) {
                 return actualModifiers & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
             } else if (isProtected()) {

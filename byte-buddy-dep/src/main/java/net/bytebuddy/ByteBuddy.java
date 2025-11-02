@@ -819,9 +819,21 @@ public class ByteBuddy {
      */
     public DynamicType.Builder.ModuleDefinition<?> makeModule(String name,
                                                               Collection<? extends ModifierContributor.ForModule> modifierContributors) {
-        return subclass(Object.class)
-                .name(ModuleDescription.MODULE_CLASS_NAME)
-                .module(name, modifierContributors);
+        return new SubclassDynamicTypeBuilder<Object>(instrumentedTypeFactory.subclass(ModuleDescription.MODULE_CLASS_NAME,
+                Opcodes.ACC_MODULE,
+                TypeDescription.Generic.UNDEFINED),
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                typeValidation,
+                visibilityBridgeStrategy,
+                classReaderFactory,
+                classWriterFactory,
+                ignoredMethods,
+                ConstructorStrategy.Default.NO_CONSTRUCTORS).module(name, modifierContributors);
     }
 
     /**

@@ -6108,7 +6108,7 @@ public interface TypeWriter<T> {
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
-                        (instrumentedType.getSuperClass() == null
+                        instrumentedType.getName().equals(ModuleDescription.MODULE_CLASS_NAME) ? null : (instrumentedType.getSuperClass() == null
                                 ? TypeDescription.ForLoadedType.of(Object.class)
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
