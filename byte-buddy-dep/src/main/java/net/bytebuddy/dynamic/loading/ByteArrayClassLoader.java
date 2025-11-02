@@ -20,6 +20,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.module.ModuleDescription;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaModule;
@@ -41,11 +42,13 @@ import java.net.URLEncoder;
 import java.net.URLStreamHandler;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -346,7 +349,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param sealed                    {@code true} if the class loader should be sealed.
      * @return A map of the given type descriptions pointing to their loaded representations.
      */
-    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
     public static Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader,
                                                       Map<TypeDescription, byte[]> types,
                                                       @MaybeNull ProtectionDomain protectionDomain,
@@ -354,8 +356,43 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                                       PackageDefinitionStrategy packageDefinitionStrategy,
                                                       boolean forbidExisting,
                                                       boolean sealed) {
+        return load(classLoader,
+                types,
+                protectionDomain,
+                persistenceHandler,
+                packageDefinitionStrategy,
+                ModuleLayerResolver.Disabled.INSTANCE,
+                forbidExisting,
+                sealed);
+    }
+
+    /**
+     * Loads a given set of class descriptions and their binary representations.
+     *
+     * @param classLoader               The parent class loader.
+     * @param types                     The unloaded types to be loaded.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+     * @param persistenceHandler        The persistence handler of the created class loader.
+     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+     * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
+     * @param sealed                    {@code true} if the class loader should be sealed.
+     * @return A map of the given type descriptions pointing to their loaded representations.
+     */
+    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
+    public static Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader,
+                                                      Map<TypeDescription, byte[]> types,
+                                                      @MaybeNull ProtectionDomain protectionDomain,
+                                                      PersistenceHandler persistenceHandler,
+                                                      PackageDefinitionStrategy packageDefinitionStrategy,
+                                                      ModuleLayerResolver moduleLayerResolver,
+                                                      boolean forbidExisting,
+                                                      boolean sealed) {
         Map<String, byte[]> typesByName = new HashMap<String, byte[]>();
+        ModuleDescription moduleDescription = null;
         for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+            if (entry.getKey().getName().equals(ModuleDescription.MODULE_CLASS_NAME)) {
+                moduleDescription = entry.getKey().toModuleDescription();
+            }
             typesByName.put(entry.getKey().getName(), entry.getValue());
         }
         classLoader = new ByteArrayClassLoader(classLoader,
@@ -365,14 +402,32 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 persistenceHandler,
                 packageDefinitionStrategy,
                 ClassFilePostProcessor.NoOp.INSTANCE);
+        ClassLoader moduleClassLoader;
+        Set<String> modulePackages;
+        if (moduleDescription != null) {
+            moduleClassLoader = moduleLayerResolver.resolve(classLoader, typesByName);
+            modulePackages = moduleDescription.getPackages();
+        } else {
+            moduleClassLoader = classLoader;
+            modulePackages = Collections.<String>emptySet();
+        }
         Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
         for (TypeDescription typeDescription : types.keySet()) {
-            if (typeDescription.getName().equals(ModuleDescription.MODULE_CLASS_NAME)) {
+            if (typeDescription.isModuleType()) {
                 continue;
             }
             try {
-                Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
-                if (!GraalImageCode.getCurrent().isNativeImageExecution() && forbidExisting && type.getClassLoader() != classLoader) {
+                ClassLoader typeClassLoader;
+                if (moduleDescription != null) {
+                    PackageDescription packageDescription = typeDescription.getPackage();
+                    typeClassLoader = packageDescription != null && modulePackages.contains(packageDescription.getName())
+                            ? moduleClassLoader
+                            : classLoader;
+                } else {
+                    typeClassLoader = classLoader;
+                }
+                Class<?> type = Class.forName(typeDescription.getName(), false, typeClassLoader);
+                if (!GraalImageCode.getCurrent().isNativeImageExecution() && forbidExisting && type.getClassLoader() != typeClassLoader) {
                     throw new IllegalStateException("Class already loaded: " + type);
                 }
                 result.put(typeDescription, type);
