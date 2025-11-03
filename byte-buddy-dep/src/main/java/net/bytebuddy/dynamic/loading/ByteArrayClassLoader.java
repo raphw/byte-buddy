@@ -385,6 +385,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                                       boolean forbidExisting,
                                                       boolean sealed) {
         Map<String, byte[]> typeDefinitions = new HashMap<String, byte[]>();
+        for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+            typeDefinitions.put(entry.getKey().getName(), entry.getValue());
+        }
         classLoader = new ByteArrayClassLoader(classLoader,
                 sealed,
                 typeDefinitions,
