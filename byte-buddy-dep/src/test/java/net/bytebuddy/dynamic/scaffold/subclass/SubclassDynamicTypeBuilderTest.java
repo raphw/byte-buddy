@@ -15,7 +15,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.SimpleModuleLayerResolver;
+import net.bytebuddy.dynamic.loading.ModuleLayerFromModuleInfoDecorator;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
@@ -28,7 +28,6 @@ import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.InjectionStrategyResolver;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -256,7 +255,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                         .provides(Runnable.class.getName(), BAR + "." + QUX)
                         .annotateType(AnnotationDescription.Builder.ofType(builder.toTypeDescription()).build())
                         .make())
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(new SimpleModuleLayerResolver()))
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(ModuleLayerFromModuleInfoDecorator.Factory.INSTANCE))
                 .getLoaded();
         ModuleDescription moduleDescription = ModuleDescription.ForLoadedModule.of(Class.class.getMethod("getModule").invoke(type));
         assertThat(moduleDescription.getActualName(), is(FOO));

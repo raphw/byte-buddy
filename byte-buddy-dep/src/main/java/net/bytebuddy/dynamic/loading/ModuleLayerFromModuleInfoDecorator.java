@@ -21,6 +21,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.module.ModuleDescription;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -47,17 +48,12 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 /**
- * A simple implementation of a {@link ModuleLayerResolver} that creates module layers for dynamically
- * generated types using the Java Platform Module System (JPMS).
- * <p>
- * This resolver dynamically creates module references and module finders to enable the loading of
- * types into custom module layers. It uses Byte Buddy to generate proxy classes for JPMS types
- * that are not accessible in older Java versions.
- * <p>
- * <b>Important:</b> This implementation requires Java 9 or later as it relies on the module system.
+ * A simple implementation of a {@link ClassLoaderDecorator} that creates module layers for dynamically
+ * generated types using the Java Module System. The module information is resolved from a provided
+ * {@code module-info} class. Without such a class, the decoration is omitted.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class SimpleModuleLayerResolver implements ModuleLayerResolver {
+public class ModuleLayerFromModuleInfoDecorator implements ClassLoaderDecorator {
 
     /**
      * A proxy for {@code java.lang.module.ModuleFinder}.
@@ -109,7 +105,7 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
      */
     private static final SimpleModuleFinder SIMPLE_MODULE_FINDER;
 
-    /*
+    /**
      * Attempts to resolve the dynamically generated types to interact with the module system.
      */
     static {
@@ -160,7 +156,7 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
                     .make();
             Map<TypeDescription, Class<?>> types = simpleModuleReader
                     .include(simpleModuleReference, simpleModuleFinder)
-                    .load(SimpleModuleLayerResolver.class.getClassLoader()).getAllLoaded();
+                    .load(ModuleLayerFromModuleInfoDecorator.class.getClassLoader()).getAllLoaded();
             simpleModuleReferenceClassLoader = types.get(simpleModuleReference.getTypeDescription()).getClassLoader();
             simpleModuleFinderClassLoader = types.get(simpleModuleFinder.getTypeDescription()).getClassLoader();
         } catch (Exception ignored) {
@@ -169,6 +165,46 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
         }
         SIMPLE_MODULE_REFERENCE = doPrivileged(JavaDispatcher.of(SimpleModuleReference.class, simpleModuleReferenceClassLoader));
         SIMPLE_MODULE_FINDER = doPrivileged(JavaDispatcher.of(SimpleModuleFinder.class, simpleModuleFinderClassLoader));
+    }
+
+    /**
+     * The class loader to delegate to when types are not handled by the module layer.
+     */
+    @MaybeNull
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+    private final ClassLoader classLoader;
+
+    /**
+     * The module layer containing the dynamically created module.
+     */
+    private final Object moduleLayer;
+
+    /**
+     * The name of the module within the module layer.
+     */
+    private final String name;
+
+    /**
+     * The packages that are exported by the module.
+     */
+    private final Set<String> packages;
+
+    /**
+     * Creates a new module layer from module info decorator.
+     *
+     * @param classLoader The class loader to delegate to when types are not handled by the module layer.
+     * @param moduleLayer The module layer containing the dynamically created module.
+     * @param name        The name of the module within the module layer.
+     * @param packages    The packages that are exported by the module.
+     */
+    protected ModuleLayerFromModuleInfoDecorator(@MaybeNull ClassLoader classLoader,
+                                                 Object moduleLayer,
+                                                 String name,
+                                                 Set<String> packages) {
+        this.classLoader = classLoader;
+        this.moduleLayer = moduleLayer;
+        this.name = name;
+        this.packages = packages;
     }
 
     /**
@@ -186,40 +222,55 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
     /**
      * {@inheritDoc}
      */
+    public boolean isSkipped(TypeDescription typeDescription) {
+        return typeDescription.isModuleType();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @MaybeNull
-    public ClassLoader resolve(@MaybeNull ClassLoader classLoader, Map<String, byte[]> types) {
-        Object moduleDescriptor;
-        try {
-            moduleDescriptor = MODULE_DESCRIPTOR.read(new ByteArrayInputStream(types.get(ModuleDescription.MODULE_CLASS_NAME)));
-        } catch (IOException exception) {
-            throw new IllegalStateException("Failed to create module layer", exception);
+    public ClassLoader apply(TypeDescription typeDescription) {
+        PackageDescription packageDescription = typeDescription.getPackage();
+        return packageDescription == null || !packages.contains(packageDescription.getName())
+                ? classLoader
+                : MODULE_LAYER.findLoader(moduleLayer, name);
+    }
+
+    /**
+     * A factory for creating module layer from module info decorators.
+     */
+    public enum Factory implements ClassLoaderDecorator.Factory {
+
+        /**
+         * The singleton instance of this factory.
+         */
+        INSTANCE;
+
+        /**
+         * {@inheritDoc}
+         */
+        public ClassLoaderDecorator make(@MaybeNull ClassLoader classLoader, Map<String, byte[]> typeDefinitions) {
+            if (!typeDefinitions.containsKey(ModuleDescription.MODULE_CLASS_NAME)) {
+                return new ClassLoaderDecorator.NoOp(classLoader);
+            }
+            Object moduleDescriptor;
+            try {
+                moduleDescriptor = MODULE_DESCRIPTOR.read(new ByteArrayInputStream(typeDefinitions.get(ModuleDescription.MODULE_CLASS_NAME)));
+            } catch (IOException exception) {
+                throw new IllegalStateException("Failed to create module layer", exception);
+            }
+            Object moduleReference = SIMPLE_MODULE_REFERENCE.newInstance(moduleDescriptor, null, typeDefinitions);
+            return new ModuleLayerFromModuleInfoDecorator(classLoader,
+                    MODULE_LAYER_CONTROLLER.layer(MODULE_LAYER.defineModulesWithOneLoader(CONFIGURATION.resolve(MODULE_LAYER.configuration(MODULE_LAYER.boot()),
+                                    SIMPLE_MODULE_FINDER.newInstance(MODULE_DESCRIPTOR.name(moduleDescriptor), moduleReference),
+                                    MODULE_FINDER.of(PATH.of(0)),
+                                    Collections.singleton(MODULE_DESCRIPTOR.name(moduleDescriptor))),
+                            Collections.singletonList(MODULE_LAYER.boot()),
+                            classLoader)),
+                    MODULE_DESCRIPTOR.name(moduleDescriptor),
+                    MODULE_DESCRIPTOR.packages(moduleDescriptor));
         }
-        Object moduleReference = SIMPLE_MODULE_REFERENCE.newInstance(moduleDescriptor, null, types);
-        return MODULE_LAYER.findLoader(MODULE_LAYER_CONTROLLER.layer(
-                MODULE_LAYER.defineModulesWithOneLoader(CONFIGURATION.resolve(configuration(),
-                                SIMPLE_MODULE_FINDER.newInstance(MODULE_DESCRIPTOR.name(moduleDescriptor), moduleReference),
-                                moduleFinder(),
-                                Collections.singleton(MODULE_DESCRIPTOR.name(moduleDescriptor))),
-                        Collections.singletonList(MODULE_LAYER.boot()),
-                        classLoader)), MODULE_DESCRIPTOR.name(moduleDescriptor));
-    }
-
-    /**
-     * Returns the configuration for the boot module layer.
-     *
-     * @return The configuration of the boot module layer.
-     */
-    protected Object configuration() {
-        return MODULE_LAYER.configuration(MODULE_LAYER.boot());
-    }
-
-    /**
-     * Returns an empty module finder based on an empty path.
-     *
-     * @return An empty module finder.
-     */
-    protected Object moduleFinder() {
-        return MODULE_FINDER.of(PATH.of(0));
     }
 
     /**
@@ -245,6 +296,14 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
          * @return The module name.
          */
         String name(Object value);
+
+        /**
+         * Returns the packages of the given module descriptor.
+         *
+         * @param value The module descriptor.
+         * @return The included packages.
+         */
+        Set<String> packages(Object value);
     }
 
     /**
