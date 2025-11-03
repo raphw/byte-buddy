@@ -73,7 +73,7 @@ public class ModuleLayerFromModuleInfoDecorator implements ClassLoaderDecorator 
     /**
      * A proxy for {@code java.lang.ModuleLayer.Controller}.
      */
-    private static final ModuleLayerController1 MODULE_LAYER_CONTROLLER = doPrivileged(JavaDispatcher.of(ModuleLayerController1.class));
+    private static final ModuleLayerController MODULE_LAYER_CONTROLLER = doPrivileged(JavaDispatcher.of(ModuleLayerController.class));
 
     /**
      * A proxy for {@code java.lang.module.Configuration}.
@@ -356,7 +356,7 @@ public class ModuleLayerFromModuleInfoDecorator implements ClassLoaderDecorator 
      * A proxy for the {@code java.lang.ModuleLayer.Controller} type.
      */
     @JavaDispatcher.Proxied("java.lang.ModuleLayer$Controller")
-    protected interface ModuleLayerController1 {
+    protected interface ModuleLayerController {
 
         /**
          * Returns the module layer associated with this controller.
