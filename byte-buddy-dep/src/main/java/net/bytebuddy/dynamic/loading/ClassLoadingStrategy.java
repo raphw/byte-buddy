@@ -70,14 +70,18 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * classes that were loaded by a byte array class loader, this strategy will lead to the unloading of these
          * classes once this class loader, its classes or any instances of these classes become unreachable.
          */
-        WRAPPER(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.LATENT, WrappingDispatcher.PARENT_FIRST)),
+        WRAPPER(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.LATENT,
+                ModuleLayerResolver.Disabled.INSTANCE,
+                WrappingDispatcher.PARENT_FIRST)),
 
         /**
          * The strategy is identical to {@link ClassLoadingStrategy.Default#WRAPPER} but exposes
          * the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}. For
          * this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
          */
-        WRAPPER_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST, WrappingDispatcher.PARENT_FIRST)),
+        WRAPPER_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                ModuleLayerResolver.Disabled.INSTANCE,
+                WrappingDispatcher.PARENT_FIRST)),
 
         /**
          * <p>
@@ -90,14 +94,18 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * the reach of this class loader.
          * </p>
          */
-        CHILD_FIRST(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.LATENT, WrappingDispatcher.CHILD_FIRST)),
+        CHILD_FIRST(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.LATENT,
+                ModuleLayerResolver.Disabled.INSTANCE,
+                WrappingDispatcher.CHILD_FIRST)),
 
         /**
          * The strategy is identical to {@link ClassLoadingStrategy.Default#CHILD_FIRST} but
          * exposes the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}.
          * For this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
          */
-        CHILD_FIRST_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST, WrappingDispatcher.CHILD_FIRST)),
+        CHILD_FIRST_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                ModuleLayerResolver.Disabled.INSTANCE,
+                WrappingDispatcher.CHILD_FIRST)),
 
         /**
          * <p>
@@ -160,6 +168,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          */
         public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
             return dispatcher.with(packageDefinitionStrategy);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Configurable<ClassLoader> with(ModuleLayerResolver moduleLayerResolver) {
+            return dispatcher.with(moduleLayerResolver);
         }
 
         /**
@@ -258,6 +273,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * {@inheritDoc}
              */
+            public Configurable<ClassLoader> with(ModuleLayerResolver moduleLayerResolver) {
+                throw new UnsupportedOperationException("Cannot resolve module through injection");
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> allowExistingTypes() {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
             }
@@ -300,6 +322,11 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
             /**
+             * The module layer resolver to use.
+             */
+            private final ModuleLayerResolver moduleLayerResolver;
+
+            /**
              * The package definer to be used for querying information on package information.
              */
             private final PackageDefinitionStrategy packageDefinitionStrategy;
@@ -322,11 +349,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * Creates a new wrapping dispatcher with a default protection domain and a default access control context.
              *
-             * @param persistenceHandler The persistence handler to apply.
-             * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
+             * @param persistenceHandler  The persistence handler to apply.
+             * @param moduleLayerResolver The module layer resolver to use.
+             * @param childFirst          {@code true} if the created class loader should apply child-first semantics.
              */
-            protected WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler persistenceHandler, boolean childFirst) {
+            protected WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler persistenceHandler, ModuleLayerResolver moduleLayerResolver, boolean childFirst) {
                 this(NO_PROTECTION_DOMAIN,
+                        moduleLayerResolver,
                         PackageDefinitionStrategy.Trivial.INSTANCE,
                         persistenceHandler,
                         childFirst,
@@ -338,19 +367,21 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
              * Creates a new protection domain specific class loading wrapper.
              *
              * @param protectionDomain          The protection domain to apply or {@code null} if no protection domain is set.
+             * @param moduleLayerResolver       The module layer resolver to use.
              * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
              * @param persistenceHandler        The persistence handler to apply.
              * @param childFirst                {@code true} if the created class loader should apply child-first semantics.
              * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
              * @param sealed                    {@code true} if the class loader should be sealed.
              */
-            private WrappingDispatcher(@MaybeNull ProtectionDomain protectionDomain,
+            private WrappingDispatcher(@MaybeNull ProtectionDomain protectionDomain, ModuleLayerResolver moduleLayerResolver,
                                        PackageDefinitionStrategy packageDefinitionStrategy,
                                        ByteArrayClassLoader.PersistenceHandler persistenceHandler,
                                        boolean childFirst,
                                        boolean forbidExisting,
                                        boolean sealed) {
                 this.protectionDomain = protectionDomain;
+                this.moduleLayerResolver = moduleLayerResolver;
                 this.packageDefinitionStrategy = packageDefinitionStrategy;
                 this.persistenceHandler = persistenceHandler;
                 this.childFirst = childFirst;
@@ -364,35 +395,42 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
                 return childFirst
                         ? ByteArrayClassLoader.ChildFirst.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed)
-                        : ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed);
+                        : ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, moduleLayerResolver, forbidExisting, sealed);
             }
 
             /**
              * {@inheritDoc}
              */
             public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
-                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
+                return new WrappingDispatcher(protectionDomain, moduleLayerResolver, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
             }
 
             /**
              * {@inheritDoc}
              */
             public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
-                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
+                return new WrappingDispatcher(protectionDomain, moduleLayerResolver, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Configurable<ClassLoader> with(ModuleLayerResolver moduleLayerResolver) {
+                return new WrappingDispatcher(protectionDomain, moduleLayerResolver, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
             }
 
             /**
              * {@inheritDoc}
              */
             public Configurable<ClassLoader> allowExistingTypes() {
-                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, false, sealed);
+                return new WrappingDispatcher(protectionDomain, moduleLayerResolver, packageDefinitionStrategy, persistenceHandler, childFirst, false, sealed);
             }
 
             /**
              * {@inheritDoc}
              */
             public Configurable<ClassLoader> opened() {
-                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, false);
+                return new WrappingDispatcher(protectionDomain, moduleLayerResolver, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, false);
             }
         }
     }
@@ -419,6 +457,8 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * @return A version of this class loading strategy that applies the supplied package definition strategy.
          */
         Configurable<S> with(PackageDefinitionStrategy packageDefinitionStrategy);
+
+        Configurable<S> with(ModuleLayerResolver moduleLayerResolver);
 
         /**
          * Determines if this class loading strategy should not throw an exception when attempting to load a class that

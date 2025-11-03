@@ -49,7 +49,7 @@ public class ModuleDescriptionForLoadedModuleTest extends AbstractModuleDescript
                 moduleFinderOf.invoke(null, Array.newInstance(path, 0)),
                 Collections.singleton(name));
         module = Class.forName("java.util.Optional")
-                .getMethod("orElseThrow")
+                .getMethod("get")
                 .invoke(moduleLayer.getMethod("findModule", String.class).invoke(moduleLayer.getMethod(
                     "defineModulesWithOneLoader",
                     configClass,

@@ -15,6 +15,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.SimpleModuleLayerResolver;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
@@ -229,7 +230,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     @JavaVersionRule.Enforce(9)
-    @Ignore("Currently, the module layer support is not completed")
     public void testModuleDefinition() throws Exception {
         DynamicType.Builder<? extends Annotation> builder = new ByteBuddy()
                 .makeAnnotation()
@@ -256,7 +256,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                         .provides(Runnable.class.getName(), BAR + "." + QUX)
                         .annotateType(AnnotationDescription.Builder.ofType(builder.toTypeDescription()).build())
                         .make())
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(new SimpleModuleLayerResolver()))
                 .getLoaded();
         ModuleDescription moduleDescription = ModuleDescription.ForLoadedModule.of(Class.class.getMethod("getModule").invoke(type));
         assertThat(moduleDescription.getActualName(), is(FOO));

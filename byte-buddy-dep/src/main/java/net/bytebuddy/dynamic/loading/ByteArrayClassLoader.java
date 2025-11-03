@@ -1331,12 +1331,43 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param sealed                    {@code true} if the class loader should be sealed.
          * @return A map of the given type descriptions pointing to their loaded representations.
          */
+        public static Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader,
+                                                          Map<TypeDescription, byte[]> types,
+                                                          @MaybeNull ProtectionDomain protectionDomain,
+                                                          PersistenceHandler persistenceHandler,
+                                                          PackageDefinitionStrategy packageDefinitionStrategy,
+                                                          boolean forbidExisting,
+                                                          boolean sealed) {
+            return load(classLoader,
+                    types,
+                    protectionDomain,
+                    persistenceHandler,
+                    packageDefinitionStrategy,
+                    ModuleLayerResolver.Disabled.INSTANCE,
+                    forbidExisting,
+                    sealed);
+        }
+
+        /**
+         * Loads a given set of class descriptions and their binary representations using a child-first class loader.
+         *
+         * @param classLoader               The parent class loader.
+         * @param types                     The unloaded types to be loaded.
+         * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+         * @param persistenceHandler        The persistence handler of the created class loader.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+         * @param moduleLayerResolver       The module layer resolver to use.
+         * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
+         * @param sealed                    {@code true} if the class loader should be sealed.
+         * @return A map of the given type descriptions pointing to their loaded representations.
+         */
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
         public static Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader,
                                                           Map<TypeDescription, byte[]> types,
                                                           @MaybeNull ProtectionDomain protectionDomain,
                                                           PersistenceHandler persistenceHandler,
                                                           PackageDefinitionStrategy packageDefinitionStrategy,
+                                                          ModuleLayerResolver moduleLayerResolver, // TODO: make use
                                                           boolean forbidExisting,
                                                           boolean sealed) {
             Map<String, byte[]> typesByName = new HashMap<String, byte[]>();
