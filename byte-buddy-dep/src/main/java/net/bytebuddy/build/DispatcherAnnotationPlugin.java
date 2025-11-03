@@ -37,13 +37,20 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * makes reflection-based lookup by the proxy interface's name impossible.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DispatcherAnnotationPlugin extends Plugin.ForElementMatcher implements MethodAttributeAppender.Factory, MethodAttributeAppender {
+public class DispatcherAnnotationPlugin extends Plugin.ForElementMatcher implements Plugin.Factory, MethodAttributeAppender.Factory, MethodAttributeAppender {
 
     /**
      * Creates a new dispatcher annotation plugin.
      */
     public DispatcherAnnotationPlugin() {
         super(isAnnotatedWith(JavaDispatcher.Proxied.class));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Plugin make() {
+        return this;
     }
 
     /**

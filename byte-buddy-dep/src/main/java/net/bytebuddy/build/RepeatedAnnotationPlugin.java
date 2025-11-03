@@ -42,7 +42,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * at runtime for older JVM versions what makes this approach feasible.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class RepeatedAnnotationPlugin extends Plugin.ForElementMatcher {
+public class RepeatedAnnotationPlugin extends Plugin.ForElementMatcher implements Plugin.Factory {
 
     /**
      * A description of the {@link Enhance#value()} method.
@@ -57,6 +57,13 @@ public class RepeatedAnnotationPlugin extends Plugin.ForElementMatcher {
      */
     public RepeatedAnnotationPlugin() {
         super(isAnnotatedWith(Enhance.class));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Plugin make() {
+        return this;
     }
 
     /**

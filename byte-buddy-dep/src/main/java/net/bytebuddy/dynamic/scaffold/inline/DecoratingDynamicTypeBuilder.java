@@ -294,6 +294,13 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     /**
      * {@inheritDoc}
      */
+    public ModuleDefinition<T> adjustModule() {
+        throw new UnsupportedOperationException("Cannot change module information of decorated type: " + instrumentedType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> topLevelType() {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }

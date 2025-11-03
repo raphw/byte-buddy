@@ -45,7 +45,7 @@ import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
  * A plugin that replaces names that are discovered in class files.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Plugin {
+public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Plugin, Plugin.Factory {
 
     /**
      * The renaming to apply.
@@ -96,6 +96,13 @@ public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Pl
     public RenamingPlugin(Renaming renaming, ElementMatcher<? super TypeDescription> matcher) {
         this.renaming = renaming;
         this.matcher = matcher;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Plugin make() {
+        return this;
     }
 
     /**

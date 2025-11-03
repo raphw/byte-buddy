@@ -40,13 +40,20 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
  * at runtime for older JVM versions what makes this approach feasible.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class SafeVarargsPlugin extends Plugin.ForElementMatcher {
+public class SafeVarargsPlugin extends Plugin.ForElementMatcher implements Plugin.Factory {
 
     /**
      * Creates a new plugin for creating repeated annotations.
      */
     public SafeVarargsPlugin() {
         super(declaresMethod(isAnnotatedWith(Enhance.class)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Plugin make() {
+        return this;
     }
 
     /**

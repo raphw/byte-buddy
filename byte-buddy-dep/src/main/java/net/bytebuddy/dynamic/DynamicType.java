@@ -389,6 +389,13 @@ public interface DynamicType extends ClassFileLocator {
         ModuleDefinition<T> module(String name, int modifiers);
 
         /**
+         * Adjusts a previous module definition in this class file. This is normally only meaningful for classes named {@code module-info}.
+         *
+         * @return A new builder that is equal to this builder but which adjusts the current module information.
+         */
+        ModuleDefinition<T> adjustModule();
+
+        /**
          * <p>
          * Defines this type as a top-level type that is not declared by another type or enclosed by another member.
          * </p>
@@ -4539,6 +4546,13 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
+                public ModuleDefinition<U> adjustModule() {
+                    return materialize().adjustModule();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> visit(AsmVisitorWrapper asmVisitorWrapper) {
                     return materialize().visit(asmVisitorWrapper);
                 }
@@ -5031,6 +5045,26 @@ public interface DynamicType extends ClassFileLocator {
                  */
                 public ModuleDefinition<U> module(String name, int modifiers) {
                     return new ModuleDefinitionAdapter(name, modifiers);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> adjustModule() {
+                    ModuleDescription moduleDescription = instrumentedType.toModuleDescription();
+                    if (moduleDescription == null) {
+                        throw new IllegalStateException("Expected previous module description for " + instrumentedType);
+                    }
+                    return new ModuleDefinitionAdapter(moduleDescription.getActualName(),
+                            moduleDescription.getModifiers(),
+                            moduleDescription.getVersion(),
+                            moduleDescription.getMainClass(),
+                            moduleDescription.getPackages(),
+                            moduleDescription.getRequires(),
+                            moduleDescription.getExports(),
+                            moduleDescription.getOpens(),
+                            moduleDescription.getUses(),
+                            moduleDescription.getProvides());
                 }
 
                 /**
