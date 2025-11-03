@@ -83,7 +83,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
-Byte
+
 /**
  * <p>
  * A plugin that allows for the application of Byte Buddy transformations during a build process. This plugin's
