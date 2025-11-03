@@ -243,6 +243,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .annotateType(AnnotationDescription.Builder.ofType(Retention.class)
                         .define("value", RetentionPolicy.RUNTIME)
                         .build())
+                .annotateType(AnnotationDescription.Builder.ofType(Target.class)
+                        .defineEnumerationArray("value", ElementType.class, ElementType.valueOf("MODULE"))
+                        .build())
                 .make();
         Class<?> type = new ByteBuddy()
                 .subclass(Object.class)
@@ -258,6 +261,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                         .open(BAR)
                         .uses(Runnable.class)
                         .provides(Runnable.class.getName(), BAR + "." + QUX)
+                        .annotateType(AnnotationDescription.Builder.ofType(annotation.getTypeDescription()).build())
                         .make(), annotation)
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(ModuleLayerFromSingleClassLoaderDecorator.Factory.INSTANCE))
                 .getLoaded();
@@ -286,7 +290,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(moduleDescription.getProvides().size(), is(1));
         assertThat(moduleDescription.getProvides().get(Runnable.class.getName()), notNullValue(ModuleDescription.Provides.class));
         assertThat(moduleDescription.getProvides().get(Runnable.class.getName()).getProviders(), is(Collections.singleton(BAR + "." + QUX)));
-        assertThat(moduleDescription.getDeclaredAnnotations().size(), is(0)); // This is a current limitation as resources are resolved through URIs currently.
+        // Annotations are currently not visible from dynamic layers as they are resolved via URIs, and not through the ModuleReader.
+        assertThat(moduleDescription.getDeclaredAnnotations().size(), is(0));
     }
 
     @Test
