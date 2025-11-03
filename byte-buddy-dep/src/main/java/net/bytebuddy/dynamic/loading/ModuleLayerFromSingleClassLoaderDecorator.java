@@ -53,7 +53,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
  * {@code module-info} class. Without such a class, the decoration is omitted.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class ModuleLayerFromModuleInfoDecorator implements ClassLoaderDecorator {
+public class ModuleLayerFromSingleClassLoaderDecorator implements ClassLoaderDecorator {
 
     /**
      * A proxy for {@code java.lang.module.ModuleFinder}.
@@ -156,7 +156,7 @@ public class ModuleLayerFromModuleInfoDecorator implements ClassLoaderDecorator 
                     .make();
             Map<TypeDescription, Class<?>> types = simpleModuleReader
                     .include(simpleModuleReference, simpleModuleFinder)
-                    .load(ModuleLayerFromModuleInfoDecorator.class.getClassLoader()).getAllLoaded();
+                    .load(ModuleLayerFromSingleClassLoaderDecorator.class.getClassLoader()).getAllLoaded();
             simpleModuleReferenceClassLoader = types.get(simpleModuleReference.getTypeDescription()).getClassLoader();
             simpleModuleFinderClassLoader = types.get(simpleModuleFinder.getTypeDescription()).getClassLoader();
         } catch (Exception ignored) {
@@ -197,10 +197,10 @@ public class ModuleLayerFromModuleInfoDecorator implements ClassLoaderDecorator 
      * @param name        The name of the module within the module layer.
      * @param packages    The packages that are exported by the module.
      */
-    protected ModuleLayerFromModuleInfoDecorator(@MaybeNull ClassLoader classLoader,
-                                                 Object moduleLayer,
-                                                 String name,
-                                                 Set<String> packages) {
+    protected ModuleLayerFromSingleClassLoaderDecorator(@MaybeNull ClassLoader classLoader,
+                                                        Object moduleLayer,
+                                                        String name,
+                                                        Set<String> packages) {
         this.classLoader = classLoader;
         this.moduleLayer = moduleLayer;
         this.name = name;
@@ -261,7 +261,7 @@ public class ModuleLayerFromModuleInfoDecorator implements ClassLoaderDecorator 
                 throw new IllegalStateException("Failed to create module layer", exception);
             }
             Object moduleReference = SIMPLE_MODULE_REFERENCE.newInstance(moduleDescriptor, null, typeDefinitions);
-            return new ModuleLayerFromModuleInfoDecorator(classLoader,
+            return new ModuleLayerFromSingleClassLoaderDecorator(classLoader,
                     MODULE_LAYER_CONTROLLER.layer(MODULE_LAYER.defineModulesWithOneLoader(CONFIGURATION.resolve(MODULE_LAYER.configuration(MODULE_LAYER.boot()),
                                     SIMPLE_MODULE_FINDER.newInstance(MODULE_DESCRIPTOR.name(moduleDescriptor), moduleReference),
                                     MODULE_FINDER.of(PATH.of(0)),
