@@ -39,7 +39,7 @@ public interface ClassLoaderDecorator {
      * Applies this decorator to resolve a class loader for the given type.
      *
      * @param typeDescription The type description for which to resolve a class loader.
-     * @return The class loader to use for the given type or {@code null} if no specific class loader is required.
+     * @return The class loader to use for the given type or {@code null} for the bootstrap class loader.
      */
     @MaybeNull
     ClassLoader apply(TypeDescription typeDescription);
@@ -52,7 +52,7 @@ public interface ClassLoaderDecorator {
     class NoOp implements ClassLoaderDecorator {
 
         /**
-         * The class loader to return for all type descriptions.
+         * The class loader to return for all type descriptions or {@code null} for the bootstrap class loader.
          */
         @MaybeNull
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
@@ -61,7 +61,7 @@ public interface ClassLoaderDecorator {
         /**
          * Creates a new no-operation class loader decorator.
          *
-         * @param classLoader The class loader to return for all type descriptions.
+         * @param classLoader The class loader to return for all type descriptions  or {@code null} for the bootstrap class loader.
          */
         public NoOp(@MaybeNull ClassLoader classLoader) {
             this.classLoader = classLoader;

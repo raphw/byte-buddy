@@ -3422,11 +3422,6 @@ public interface TypePool {
                         : moduleToken.toModuleDescription(this);
             }
 
-            @Override
-            public boolean isModuleType() {
-                return moduleToken != null;
-            }
-
             /**
              * {@inheritDoc}
              */
