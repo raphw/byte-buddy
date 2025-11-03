@@ -238,7 +238,7 @@ public class ModuleLayerFromSingleClassLoaderDecorator implements ClassLoaderDec
     }
 
     /**
-     * A factory for creating module layer from module info decorators.
+     * A factory for creating a single module from a {@code module-info} class file, if available.
      */
     public enum Factory implements ClassLoaderDecorator.Factory {
 
