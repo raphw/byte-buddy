@@ -246,42 +246,10 @@
             </build>
         </profile>
         <profile>
-            <id>build-java-annotations-windows</id>
+            <id>build-java-annotations</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <os>
-                    <family>Windows</family>
-                </os>
-                <jdk>(,17)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <!-- Avoids occasional segfault. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${version.plugin.surefire}</version>
-                        <configuration combine.children="append">
-                            <excludes>
-                                <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
-                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationTest</exclude>
-                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest</exclude>
-                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionLatentTest</exclude>
-                                <exclude>net.bytebuddy.pool.TypePoolDefaultAnnotationDescriptionTest</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>build-java-annotations-mac</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <os>
-                    <family>mac</family>
-                </os>
-                <jdk>(,17)</jdk>
+                <jdk>[,17)</jdk>
             </activation>
             <build>
                 <plugins>

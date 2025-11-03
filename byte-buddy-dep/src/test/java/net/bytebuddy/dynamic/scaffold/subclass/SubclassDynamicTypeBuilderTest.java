@@ -237,6 +237,13 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @JavaVersionRule.Enforce(9)
     public void testModuleDefinition() throws Exception {
+        DynamicType.Unloaded<? extends Annotation> annotation = new ByteBuddy()
+                .makeAnnotation()
+                .name(FOO + "." + FOO)
+                .annotateType(AnnotationDescription.Builder.ofType(Retention.class)
+                        .define("value", RetentionPolicy.RUNTIME)
+                        .build())
+                .make();
         Class<?> type = new ByteBuddy()
                 .subclass(Object.class)
                 .name(BAR + "." + QUX)
@@ -251,8 +258,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                         .open(BAR)
                         .uses(Runnable.class)
                         .provides(Runnable.class.getName(), BAR + "." + QUX)
-                        .make())
-                .load(ClassLoadingStrategy.Default.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(ModuleLayerFromSingleClassLoaderDecorator.Factory.INSTANCE))
+                        .make(), annotation)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(ModuleLayerFromSingleClassLoaderDecorator.Factory.INSTANCE))
                 .getLoaded();
         ModuleDescription moduleDescription = ModuleDescription.ForLoadedModule.of(Class.class.getMethod("getModule").invoke(type));
         assertThat(moduleDescription.getActualName(), is(FOO));
@@ -279,6 +286,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(moduleDescription.getProvides().size(), is(1));
         assertThat(moduleDescription.getProvides().get(Runnable.class.getName()), notNullValue(ModuleDescription.Provides.class));
         assertThat(moduleDescription.getProvides().get(Runnable.class.getName()).getProviders(), is(Collections.singleton(BAR + "." + QUX)));
+        assertThat(moduleDescription.getDeclaredAnnotations().size(), is(0)); // This is a current limitation as resources are resolved through URIs currently.
     }
 
     @Test
