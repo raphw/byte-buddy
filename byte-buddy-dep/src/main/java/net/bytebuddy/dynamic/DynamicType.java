@@ -5933,8 +5933,8 @@ public interface DynamicType extends ClassFileLocator {
                         @Override
                         protected ModuleDefinition<U> materialize() {
                             Map<String, ModuleDescription.Requires> requires = new LinkedHashMap<String, ModuleDescription.Requires>(ModuleDefinitionAdapter.this.requires);
-                            requires.put(name, new ModuleDescription.Requires.Simple(version, modifiers));
-                            return new ModuleDefinitionAdapter(ModuleDefinitionAdapter.this.name,
+                            requires.put(module, new ModuleDescription.Requires.Simple(version, modifiers));
+                            return new ModuleDefinitionAdapter(name,
                                     ModuleDefinitionAdapter.this.modifiers,
                                     ModuleDefinitionAdapter.this.version,
                                     mainClass,

@@ -31,8 +31,15 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.ASMifier;
+import org.objectweb.asm.util.Textifier;
+import org.objectweb.asm.util.TraceClassVisitor;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -230,42 +237,35 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @JavaVersionRule.Enforce(9)
     public void testModuleDefinition() throws Exception {
-        DynamicType.Builder<? extends Annotation> builder = new ByteBuddy()
-                .makeAnnotation()
-                .name(BAR + "." + FOO + BAR)
-                .annotateType(AnnotationDescription.Builder.ofType(Retention.class)
-                        .define("value", RetentionPolicy.RUNTIME)
-                        .build())
-                .annotateType(AnnotationDescription.Builder.ofType(Target.class)
-                        .defineEnumerationArray("value", ElementType.class, ElementType.valueOf("MODULE"))
-                        .build());
         Class<?> type = new ByteBuddy()
                 .subclass(Object.class)
                 .name(BAR + "." + QUX)
                 .make()
-                .include(builder.make())
                 .include(new ByteBuddy()
                         .makeModule(FOO)
                         .version("1")
                         .mainClass(BAR + "." + QUX)
                         .packages(BAR)
+                        .require("java.instrument")
                         .export(BAR)
                         .open(BAR)
                         .uses(Runnable.class)
                         .provides(Runnable.class.getName(), BAR + "." + QUX)
-                        .annotateType(AnnotationDescription.Builder.ofType(builder.toTypeDescription()).build())
                         .make())
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(ModuleLayerFromSingleClassLoaderDecorator.Factory.INSTANCE))
+                .load(ClassLoadingStrategy.Default.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(ModuleLayerFromSingleClassLoaderDecorator.Factory.INSTANCE))
                 .getLoaded();
         ModuleDescription moduleDescription = ModuleDescription.ForLoadedModule.of(Class.class.getMethod("getModule").invoke(type));
         assertThat(moduleDescription.getActualName(), is(FOO));
         assertThat(moduleDescription.getModifiers(), is(ModifierContributor.EMPTY_MASK));
         assertThat(moduleDescription.getVersion(), is("1"));
         assertThat(moduleDescription.getMainClass(), is(BAR + "." + QUX));
-        assertThat(moduleDescription.getRequires().size(), is(1));
+        assertThat(moduleDescription.getRequires().size(), is(2));
         assertThat(moduleDescription.getRequires().get("java.base"), notNullValue(ModuleDescription.Requires.class));
         assertThat(moduleDescription.getRequires().get("java.base").getModifiers(), is(Opcodes.ACC_MANDATED));
         assertThat(moduleDescription.getRequires().get("java.base").getVersion(), nullValue(String.class));
+        assertThat(moduleDescription.getRequires().get("java.instrument"), notNullValue(ModuleDescription.Requires.class));
+        assertThat(moduleDescription.getRequires().get("java.instrument").getModifiers(), is(0));
+        assertThat(moduleDescription.getRequires().get("java.instrument").getVersion(), nullValue(String.class));
         assertThat(moduleDescription.getExports().size(), is(1));
         assertThat(moduleDescription.getExports().get(BAR), notNullValue(ModuleDescription.Exports.class));
         assertThat(moduleDescription.getExports().get(BAR).getModifiers(), is(0));
@@ -279,8 +279,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(moduleDescription.getProvides().size(), is(1));
         assertThat(moduleDescription.getProvides().get(Runnable.class.getName()), notNullValue(ModuleDescription.Provides.class));
         assertThat(moduleDescription.getProvides().get(Runnable.class.getName()).getProviders(), is(Collections.singleton(BAR + "." + QUX)));
-//        assertThat(moduleDescription.getDeclaredAnnotations().size(), is(1)); TODO: why are these missing?
-//        assertThat(moduleDescription.getDeclaredAnnotations().get(0).getAnnotationType().getName(), is(BAR + "." + FOO + BAR));
     }
 
     @Test
