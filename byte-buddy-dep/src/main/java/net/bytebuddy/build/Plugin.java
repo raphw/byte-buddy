@@ -83,7 +83,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
-
+Byte
 /**
  * <p>
  * A plugin that allows for the application of Byte Buddy transformations during a build process. This plugin's
@@ -795,16 +795,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
     interface Engine {
 
         /**
-         * The module info class file.
-         */
-        String MODULE_INFO = "module-info" + ClassFileLocator.CLASS_FILE_EXTENSION;
-
-        /**
-         * The package info class file.
-         */
-        String PACKAGE_INFO = "package-info" + ClassFileLocator.CLASS_FILE_EXTENSION;
-
-        /**
          * The name of the file that contains declares Byte Buddy plugins for discovery.
          */
         String PLUGIN_FILE = "META-INF/net.bytebuddy/build.plugins";
@@ -820,7 +810,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * Defines a new type strategy which determines the transformation mode for any instrumented type.
          *
-         * @param typeStrategy The type stategy to use.
+         * @param typeStrategy The type strategy to use.
          * @return A new plugin engine that is equal to this engine but uses the supplied type strategy.
          */
         Engine with(TypeStrategy typeStrategy);
@@ -5065,10 +5055,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                     while (name.startsWith("/")) {
                                         name = name.substring(1);
                                     }
-                                    if (name.endsWith(ClassFileLocator.CLASS_FILE_EXTENSION)
-                                            && (!name.startsWith("META-INF") || name.startsWith(ClassFileLocator.META_INF_VERSIONS))
-                                            && !name.endsWith(PACKAGE_INFO)
-                                            && !name.endsWith(MODULE_INFO)) {
+                                    if (name.endsWith(ClassFileLocator.CLASS_FILE_EXTENSION) && (!name.startsWith("META-INF") || name.startsWith(ClassFileLocator.META_INF_VERSIONS))) {
                                         try {
                                             ClassFileVersion classFileVersion = name.startsWith(ClassFileLocator.META_INF_VERSIONS)
                                                     ? ClassFileVersion.ofJavaVersion(Integer.parseInt(name.substring(ClassFileLocator.META_INF_VERSIONS.length(), name.indexOf('/', ClassFileLocator.META_INF_VERSIONS.length()))))

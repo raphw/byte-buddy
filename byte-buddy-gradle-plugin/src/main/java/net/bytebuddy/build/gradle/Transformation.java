@@ -17,6 +17,7 @@ package net.bytebuddy.build.gradle;
 
 import groovy.lang.Closure;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Action;
@@ -271,7 +272,7 @@ public class Transformation {
          */
         protected Class<?> findClass(String name) throws ClassNotFoundException {
             if (!name.startsWith("net.bytebuddy.")) {
-                InputStream inputStream = classLoader.getResourceAsStream(name.replace('.', '/') + ".class");
+                InputStream inputStream = classLoader.getResourceAsStream(name.replace('.', '/') + ClassFileLocator.CLASS_FILE_EXTENSION);
                 if (inputStream == null) {
                     return super.findClass(name);
                 }

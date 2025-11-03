@@ -80,11 +80,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     private static final String JAVA_FILE_EXTENSION = ".java";
 
     /**
-     * The file extension for Java class files.
-     */
-    private static final String JAVA_CLASS_EXTENSION = ".class";
-
-    /**
      * The Maven project.
      */
     @UnknownNull
@@ -533,7 +528,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          */
         protected boolean doMatch(Plugin.Engine.Source.Element target) {
             for (String name : names) {
-                if (target.getName().equals(name + JAVA_CLASS_EXTENSION) || target.getName().startsWith(name + "$") && target.getName().endsWith(JAVA_CLASS_EXTENSION)) {
+                if (target.getName().equals(name + ClassFileLocator.CLASS_FILE_EXTENSION)
+                        || target.getName().startsWith(name + "$")
+                        && target.getName().endsWith(ClassFileLocator.CLASS_FILE_EXTENSION)) {
                     return true;
                 }
             }
@@ -608,7 +605,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 }
                 Plugin.Engine.Summary summary = transform(elements, coordinates, transformers, source, new Plugin.Engine.Target.ForFolder(root), root, true);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
-                    context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
+                    context.refresh(new File(getOutputDirectory(), typeDescription.getName() + ClassFileLocator.CLASS_FILE_EXTENSION));
                 }
             } else {
                 getLog().debug("Not applying incremental build with context: " + context);

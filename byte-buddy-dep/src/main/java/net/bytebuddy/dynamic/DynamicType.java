@@ -7332,11 +7332,6 @@ public interface DynamicType extends ClassFileLocator {
     abstract class AbstractBase implements DynamicType {
 
         /**
-         * The file name extension for Java class files.
-         */
-        private static final String CLASS_FILE_EXTENSION = ".class";
-
-        /**
          * The default version of a jar file manifest.
          */
         private static final String MANIFEST_VERSION = "1.0";

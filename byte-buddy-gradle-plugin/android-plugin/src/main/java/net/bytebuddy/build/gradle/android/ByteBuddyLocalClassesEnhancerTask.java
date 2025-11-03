@@ -352,11 +352,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     protected static class DefaultAndroidDescriptor implements AndroidDescriptor {
 
         /**
-         * The file name extension of a Java class file.
-         */
-        private static final String CLASS_FILE_EXTENSION = ".class";
-
-        /**
          * The files on the class path.
          */
         private final Set<String> names;
@@ -387,9 +382,9 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                         if (value != null) {
                             queue.addAll(Arrays.asList(value));
                         }
-                    } else if (file.getName().endsWith(CLASS_FILE_EXTENSION)) {
+                    } else if (file.getName().endsWith(ClassFileLocator.CLASS_FILE_EXTENSION)) {
                         String path = root.getAbsoluteFile().toURI().relativize(file.getAbsoluteFile().toURI()).getPath();
-                        names.add(path.substring(0, path.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'));
+                        names.add(path.substring(0, path.length() - ClassFileLocator.CLASS_FILE_EXTENSION.length()).replace('/', '.'));
                     }
                 }
             }

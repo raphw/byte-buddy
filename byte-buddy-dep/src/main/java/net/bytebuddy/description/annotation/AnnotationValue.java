@@ -22,6 +22,7 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
@@ -199,7 +200,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toSourceString(TypeDescription value) {
-                return value.getActualName() + ".class";
+                return value.getActualName() + ClassFileLocator.CLASS_FILE_EXTENSION;
             }
         },
 
@@ -251,7 +252,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toSourceString(TypeDescription value) {
-                return value.getActualName() + ".class";
+                return value.getActualName() + ClassFileLocator.CLASS_FILE_EXTENSION;
             }
         },
 
@@ -303,7 +304,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toSourceString(TypeDescription value) {
-                return value.getActualName() + ".class";
+                return value.getActualName() + ClassFileLocator.CLASS_FILE_EXTENSION;
             }
 
             @Override
@@ -360,7 +361,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toSourceString(TypeDescription value) {
-                return value.getCanonicalName() + ".class";
+                return value.getCanonicalName() + ClassFileLocator.CLASS_FILE_EXTENSION;
             }
 
             @Override

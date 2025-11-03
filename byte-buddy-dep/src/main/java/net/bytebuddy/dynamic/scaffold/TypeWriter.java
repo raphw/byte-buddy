@@ -6565,7 +6565,7 @@ public interface TypeWriter<T> {
                 OutputStream outputStream = new FileOutputStream(new File(target, instrumentedType.getName()
                         + (original ? "-original." : ".")
                         + suffix
-                        + ".class"));
+                        + ClassFileLocator.CLASS_FILE_EXTENSION));
                 try {
                     outputStream.write(binaryRepresentation);
                     return NOTHING;

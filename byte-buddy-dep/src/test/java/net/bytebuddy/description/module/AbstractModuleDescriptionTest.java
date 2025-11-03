@@ -1,5 +1,6 @@
 package net.bytebuddy.description.module;
 
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.AsmClassWriter;
 import org.junit.After;
 import org.junit.Before;
@@ -29,10 +30,10 @@ public abstract class AbstractModuleDescriptionTest {
         jar = File.createTempFile("sample", ".jar");
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(jar));
         try {
-            outputStream.putNextEntry(new JarEntry("module-info.class"));
+            outputStream.putNextEntry(new JarEntry(ModuleDescription.MODULE_CLASS_NAME + ClassFileLocator.CLASS_FILE_EXTENSION));
             AsmClassWriter classWriter = AsmClassWriter.Factory.Default.IMPLICIT.make(0);
             ClassVisitor classVisitor = classWriter.getVisitor();
-            classVisitor.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
+            classVisitor.visit(Opcodes.V9, Opcodes.ACC_MODULE, ModuleDescription.MODULE_CLASS_NAME, null, null, null);
             ModuleVisitor moduleVisitor = classVisitor.visitModule(FOO + BAR, 0, QUX);
             moduleVisitor.visitMainClass(FOO + "/" + QUX);
             moduleVisitor.visitPackage(FOO);

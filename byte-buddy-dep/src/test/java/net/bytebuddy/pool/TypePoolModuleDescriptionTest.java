@@ -27,6 +27,6 @@ public class TypePoolModuleDescriptionTest extends AbstractModuleDescriptionTest
 
     @Override
     protected ModuleDescription toModuleDescription() {
-        return typePool.describe("module-info").resolve().toModuleDescription();
+        return typePool.describe(ModuleDescription.MODULE_CLASS_NAME).resolve().toModuleDescription();
     }
 }
