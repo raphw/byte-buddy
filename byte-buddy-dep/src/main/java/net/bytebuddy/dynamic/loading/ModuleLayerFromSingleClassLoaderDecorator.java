@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.dynamic.loading;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -98,74 +99,12 @@ public class ModuleLayerFromSingleClassLoaderDecorator implements ClassLoaderDec
     /**
      * A proxy for the dynamically generated simple module reference class.
      */
-    private static final SimpleModuleReference SIMPLE_MODULE_REFERENCE;
+    private static final SimpleModuleReference SIMPLE_MODULE_REFERENCE = doPrivileged(JavaDispatcher.of(SimpleModuleReference.class, doPrivileged(SimpleModuleReference.CreationAction.INSTANCE)));
 
     /**
      * A proxy for the dynamically generated simple module finder class.
      */
-    private static final SimpleModuleFinder SIMPLE_MODULE_FINDER;
-
-    /**
-     * Attempts to resolve the dynamically generated types to interact with the module system.
-     */
-    static {
-        ClassLoader simpleModuleReferenceClassLoader, simpleModuleFinderClassLoader;
-        try {
-            ByteBuddy byteBuddy = new ByteBuddy();
-            DynamicType.Unloaded<AbstractModuleReader> simpleModuleReader = byteBuddy.subclass(AbstractModuleReader.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
-                    .implement(Class.forName("java.lang.module.ModuleReader"))
-                    .name("net.bytebuddy.dynamic.loading.SimpleModuleReader")
-                    .method(named("open").and(takesArguments(String.class)))
-                    .intercept(MethodCall.invoke(AbstractModuleReader.class.getDeclaredMethod("doOpen", String.class))
-                            .withAllArguments()
-                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                    .method(named("list").and(takesArguments(0)))
-                    .intercept(MethodCall.invoke(AbstractModuleReader.class.getDeclaredMethod("doList"))
-                            .withAllArguments()
-                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                    .method(named("find").and(takesArguments(String.class)))
-                    .intercept(MethodCall.invoke(AbstractModuleReader.class.getDeclaredMethod("doFind", String.class))
-                            .withAllArguments()
-                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                    .make();
-            Class<?> moduleDescriptor = Class.forName("java.lang.module.ModuleDescriptor"), moduleReference = Class.forName("java.lang.module.ModuleReference");
-            DynamicType.Unloaded<?> simpleModuleReference = byteBuddy.subclass(moduleReference, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                    .name("net.bytebuddy.dynamic.loading.SimpleModuleReference")
-                    .defineField("types", Map.class, Visibility.PRIVATE, FieldManifestation.FINAL)
-                    .defineConstructor(Visibility.PUBLIC)
-                    .withParameters(moduleDescriptor, URI.class, Map.class)
-                    .intercept(MethodCall.invoke(moduleReference.getDeclaredConstructor(moduleDescriptor, URI.class))
-                            .onSuper()
-                            .withArgument(0, 1).andThen(FieldAccessor.ofField("types").setsArgumentAt(2)))
-                    .method(named("open"))
-                    .intercept(MethodCall.construct(simpleModuleReader.getTypeDescription().getDeclaredMethods().filter(isConstructor()).getOnly())
-                            .withField("types")
-                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                    .make();
-            DynamicType.Unloaded<AbstractModuleFinder> simpleModuleFinder = byteBuddy.subclass(AbstractModuleFinder.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
-                    .implement(Class.forName("java.lang.module.ModuleFinder"))
-                    .name("net.bytebuddy.dynamic.loading.SimpleModuleFinder")
-                    .method(named("find").and(takesArguments(String.class)))
-                    .intercept(MethodCall.invoke(AbstractModuleFinder.class.getDeclaredMethod("doFind", String.class))
-                            .withAllArguments()
-                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                    .method(named("findAll").and(takesArguments(0)))
-                    .intercept(MethodCall.invoke(AbstractModuleFinder.class.getDeclaredMethod("doFindAll"))
-                            .withAllArguments()
-                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                    .make();
-            Map<TypeDescription, Class<?>> types = simpleModuleReader
-                    .include(simpleModuleReference, simpleModuleFinder)
-                    .load(ModuleLayerFromSingleClassLoaderDecorator.class.getClassLoader()).getAllLoaded();
-            simpleModuleReferenceClassLoader = types.get(simpleModuleReference.getTypeDescription()).getClassLoader();
-            simpleModuleFinderClassLoader = types.get(simpleModuleFinder.getTypeDescription()).getClassLoader();
-        } catch (Exception ignored) {
-            simpleModuleReferenceClassLoader = null;
-            simpleModuleFinderClassLoader = null;
-        }
-        SIMPLE_MODULE_REFERENCE = doPrivileged(JavaDispatcher.of(SimpleModuleReference.class, simpleModuleReferenceClassLoader));
-        SIMPLE_MODULE_FINDER = doPrivileged(JavaDispatcher.of(SimpleModuleFinder.class, simpleModuleFinderClassLoader));
-    }
+    private static final SimpleModuleFinder SIMPLE_MODULE_FINDER = doPrivileged(JavaDispatcher.of(SimpleModuleFinder.class, doPrivileged(SimpleModuleFinder.CreationAction.INSTANCE)));
 
     /**
      * The class loader to delegate to when types are not handled by the module layer.
@@ -439,6 +378,64 @@ public class ModuleLayerFromSingleClassLoaderDecorator implements ClassLoaderDec
         Object newInstance(@JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor") Object moduleDescriptor,
                            @MaybeNull URI location,
                            Map<String, byte[]> types);
+
+        /**
+         * An action to create {@code net.bytebuddy.dynamic.loading.SimpleModuleReference}.
+         */
+        enum CreationAction implements PrivilegedAction<ClassLoader> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            @MaybeNull
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but return null.")
+            public ClassLoader run() {
+                try {
+                    ByteBuddy byteBuddy = new ByteBuddy();
+                    DynamicType.Unloaded<AbstractModuleReader> simpleModuleReader = byteBuddy.subclass(AbstractModuleReader.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                            .implement(Class.forName("java.lang.module.ModuleReader"))
+                            .name("net.bytebuddy.dynamic.loading.SimpleModuleReader")
+                            .method(named("open").and(takesArguments(String.class)))
+                            .intercept(MethodCall.invoke(AbstractModuleReader.class.getDeclaredMethod("doOpen", String.class))
+                                    .withAllArguments()
+                                    .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                            .method(named("list").and(takesArguments(0)))
+                            .intercept(MethodCall.invoke(AbstractModuleReader.class.getDeclaredMethod("doList"))
+                                    .withAllArguments()
+                                    .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                            .method(named("find").and(takesArguments(String.class)))
+                            .intercept(MethodCall.invoke(AbstractModuleReader.class.getDeclaredMethod("doFind", String.class))
+                                    .withAllArguments()
+                                    .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                            .make();
+                    Class<?> moduleDescriptor = Class.forName("java.lang.module.ModuleDescriptor"), moduleReference = Class.forName("java.lang.module.ModuleReference");
+                    DynamicType.Unloaded<?> simpleModuleReference = byteBuddy.subclass(moduleReference, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                            .name("net.bytebuddy.dynamic.loading.SimpleModuleReference")
+                            .defineField("types", Map.class, Visibility.PRIVATE, FieldManifestation.FINAL)
+                            .defineConstructor(Visibility.PUBLIC)
+                            .withParameters(moduleDescriptor, URI.class, Map.class)
+                            .intercept(MethodCall.invoke(moduleReference.getDeclaredConstructor(moduleDescriptor, URI.class))
+                                    .onSuper()
+                                    .withArgument(0, 1).andThen(FieldAccessor.ofField("types").setsArgumentAt(2)))
+                            .method(named("open"))
+                            .intercept(MethodCall.construct(simpleModuleReader.getTypeDescription().getDeclaredMethods().filter(isConstructor()).getOnly())
+                                    .withField("types")
+                                    .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                            .make();
+                    return simpleModuleReference.include(simpleModuleReader)
+                            .load(ModuleLayerFromSingleClassLoaderDecorator.class.getClassLoader())
+                            .getLoaded()
+                            .getClassLoader();
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
+        }
     }
 
     /**
@@ -456,6 +453,45 @@ public class ModuleLayerFromSingleClassLoaderDecorator implements ClassLoaderDec
          */
         @JavaDispatcher.IsConstructor
         Object newInstance(String name, Object moduleReference);
+
+        /**
+         * An action to create {@code net.bytebuddy.dynamic.loading.SimpleModuleFinder}.
+         */
+        enum CreationAction implements PrivilegedAction<ClassLoader> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            @MaybeNull
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but return null.")
+            public ClassLoader run() {
+                try {
+                    return new ByteBuddy()
+                            .subclass(AbstractModuleFinder.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                            .implement(Class.forName("java.lang.module.ModuleFinder"))
+                            .name("net.bytebuddy.dynamic.loading.SimpleModuleFinder")
+                            .method(named("find").and(takesArguments(String.class)))
+                            .intercept(MethodCall.invoke(AbstractModuleFinder.class.getDeclaredMethod("doFind", String.class))
+                                    .withAllArguments()
+                                    .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                            .method(named("findAll").and(takesArguments(0)))
+                            .intercept(MethodCall.invoke(AbstractModuleFinder.class.getDeclaredMethod("doFindAll"))
+                                    .withAllArguments()
+                                    .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                            .make()
+                            .load(ModuleLayerFromSingleClassLoaderDecorator.class.getClassLoader())
+                            .getLoaded()
+                            .getClassLoader();
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
+        }
     }
 
     /**

@@ -152,7 +152,7 @@ public interface ClassInjector {
          * @return A permission for the {@code suppressAccessChecks} permission or {@code null} if not supported.
          */
         @MaybeNull
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown define null as value.")
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but return null.")
         private static Permission toSuppressAccessChecks() {
             try {
                 return (Permission) Class.forName("java.lang.reflect.ReflectPermission")
