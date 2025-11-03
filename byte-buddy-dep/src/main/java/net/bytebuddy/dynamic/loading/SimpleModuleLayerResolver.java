@@ -46,29 +46,72 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
+/**
+ * A simple implementation of a {@link ModuleLayerResolver} that creates module layers for dynamically
+ * generated types using the Java Platform Module System (JPMS).
+ * <p>
+ * This resolver dynamically creates module references and module finders to enable the loading of
+ * types into custom module layers. It uses Byte Buddy to generate proxy classes for JPMS types
+ * that are not accessible in older Java versions.
+ * <p>
+ * <b>Important:</b> This implementation requires Java 9 or later as it relies on the module system.
+ */
 @HashCodeAndEqualsPlugin.Enhance
 public class SimpleModuleLayerResolver implements ModuleLayerResolver {
 
+    /**
+     * A proxy for {@code java.lang.module.ModuleFinder}.
+     */
     private static final ModuleFinder MODULE_FINDER = doPrivileged(JavaDispatcher.of(ModuleFinder.class));
 
+    /**
+     * A proxy for {@code java.lang.module.ModuleDescriptor}.
+     */
     private static final ModuleDescriptor MODULE_DESCRIPTOR = doPrivileged(JavaDispatcher.of(ModuleDescriptor.class));
 
+    /**
+     * A proxy for {@code java.lang.ModuleLayer}.
+     */
     private static final ModuleLayer MODULE_LAYER = doPrivileged(JavaDispatcher.of(ModuleLayer.class));
 
+    /**
+     * A proxy for {@code java.lang.ModuleLayer.Controller}.
+     */
     private static final ModuleLayerController1 MODULE_LAYER_CONTROLLER = doPrivileged(JavaDispatcher.of(ModuleLayerController1.class));
 
+    /**
+     * A proxy for {@code java.lang.module.Configuration}.
+     */
     private static final Configuration CONFIGURATION = doPrivileged(JavaDispatcher.of(Configuration.class));
 
+    /**
+     * A proxy for {@code java.util.Optional}.
+     */
     private static final Optional OPTIONAL = doPrivileged(JavaDispatcher.of(Optional.class));
 
+    /**
+     * A proxy for {@code java.util.stream.Stream}.
+     */
     private static final Stream STREAM = doPrivileged(JavaDispatcher.of(Stream.class));
 
+    /**
+     * A proxy for {@code java.nio.file.Path}.
+     */
     private static final Path PATH = doPrivileged(JavaDispatcher.of(Path.class));
 
+    /**
+     * A proxy for the dynamically generated simple module reference class.
+     */
     private static final SimpleModuleReference SIMPLE_MODULE_REFERENCE;
 
+    /**
+     * A proxy for the dynamically generated simple module finder class.
+     */
     private static final SimpleModuleFinder SIMPLE_MODULE_FINDER;
 
+    /*
+     * Attempts to resolve the dynamically generated types to interact with the module system.
+     */
     static {
         ClassLoader simpleModuleReferenceClassLoader, simpleModuleFinderClassLoader;
         try {
@@ -161,10 +204,20 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
                         classLoader)), MODULE_DESCRIPTOR.name(moduleDescriptor));
     }
 
+    /**
+     * Returns the configuration for the boot module layer.
+     *
+     * @return The configuration of the boot module layer.
+     */
     protected Object configuration() {
         return MODULE_LAYER.configuration(MODULE_LAYER.boot());
     }
 
+    /**
+     * Returns an empty module finder based on an empty path.
+     *
+     * @return An empty module finder.
+     */
     protected Object moduleFinder() {
         return MODULE_FINDER.of(PATH.of(0));
     }
@@ -185,6 +238,12 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
         @JavaDispatcher.IsStatic
         Object read(InputStream inputStream) throws IOException;
 
+        /**
+         * Returns the name of the given module descriptor.
+         *
+         * @param value The module descriptor.
+         * @return The module name.
+         */
         String name(Object value);
     }
 
@@ -194,90 +253,219 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
     @JavaDispatcher.Proxied("java.lang.ModuleLayer")
     protected interface ModuleLayer {
 
+        /**
+         * Returns the boot module layer.
+         *
+         * @return The boot module layer.
+         */
         @JavaDispatcher.IsStatic
         Object boot();
 
+        /**
+         * Defines modules with a single class loader.
+         *
+         * @param configuration The module configuration.
+         * @param moduleLayers  The parent module layers.
+         * @param classLoaders  The class loader to use.
+         * @return The created module layer controller.
+         */
         @JavaDispatcher.IsStatic
         Object defineModulesWithOneLoader(@JavaDispatcher.Proxied("java.lang.module.Configuration") Object configuration,
                                           List<?> moduleLayers,
                                           @MaybeNull ClassLoader classLoaders);
 
+        /**
+         * Returns the configuration of the given module layer.
+         *
+         * @param value The module layer.
+         * @return The module layer's configuration.
+         */
         Object configuration(Object value);
 
+        /**
+         * Finds the class loader for a named module.
+         *
+         * @param value The module layer.
+         * @param name  The module name.
+         * @return The class loader for the module or {@code null} if not found.
+         */
         @MaybeNull
         ClassLoader findLoader(Object value, String name);
     }
 
+    /**
+     * A proxy for the {@code java.lang.ModuleLayer.Controller} type.
+     */
     @JavaDispatcher.Proxied("java.lang.ModuleLayer$Controller")
     protected interface ModuleLayerController1 {
 
+        /**
+         * Returns the module layer associated with this controller.
+         *
+         * @param value The module layer controller.
+         * @return The associated module layer.
+         */
         Object layer(Object value);
     }
 
+    /**
+     * A proxy for the {@code java.lang.module.Configuration} type.
+     */
     @JavaDispatcher.Proxied("java.lang.module.Configuration")
     protected interface Configuration {
 
+        /**
+         * Resolves a module configuration.
+         *
+         * @param value  The base configuration.
+         * @param before The module finder to search before the system module finder.
+         * @param after  The module finder to search after the system module finder.
+         * @param roots  The module names to resolve.
+         * @return The resolved configuration.
+         */
         Object resolve(Object value,
                        @JavaDispatcher.Proxied("java.lang.module.ModuleFinder") Object before,
                        @JavaDispatcher.Proxied("java.lang.module.ModuleFinder") Object after,
                        Collection<String> roots);
     }
 
+    /**
+     * A proxy for the {@code java.lang.module.ModuleFinder} type.
+     */
     @JavaDispatcher.Proxied("java.lang.module.ModuleFinder")
     protected interface ModuleFinder {
 
+        /**
+         * Creates a module finder from the given paths.
+         *
+         * @param path The paths to search for modules.
+         * @return A module finder for the given paths.
+         */
         @JavaDispatcher.IsStatic
         Object of(@JavaDispatcher.Proxied("java.nio.file.Path") Object[] path);
     }
 
+    /**
+     * A proxy for the {@code java.nio.file.Path} type.
+     */
     @JavaDispatcher.Proxied("java.nio.file.Path")
     protected interface Path {
 
+        /**
+         * Creates an array of paths with the given length.
+         *
+         * @param length The length of the path array.
+         * @return An array of paths with the specified length.
+         */
         @JavaDispatcher.Container
         Object[] of(int length);
     }
 
+    /**
+     * A proxy for the dynamically generated {@code SimpleModuleReference} type.
+     */
     @JavaDispatcher.Proxied("net.bytebuddy.dynamic.loading.SimpleModuleReference")
     protected interface SimpleModuleReference {
 
+        /**
+         * Creates a new instance of the simple module reference.
+         *
+         * @param moduleDescriptor The module descriptor.
+         * @param location         The module location URI or {@code null}.
+         * @param types            The map of type names to their byte representations.
+         * @return A new simple module reference instance.
+         */
         @JavaDispatcher.IsConstructor
         Object newInstance(@JavaDispatcher.Proxied("java.lang.module.ModuleDescriptor") Object moduleDescriptor,
                            @MaybeNull URI location,
                            Map<String, byte[]> types);
     }
 
+    /**
+     * A proxy for the dynamically generated {@code SimpleModuleFinder} type.
+     */
     @JavaDispatcher.Proxied("net.bytebuddy.dynamic.loading.SimpleModuleFinder")
     protected interface SimpleModuleFinder {
 
+        /**
+         * Creates a new instance of the simple module finder.
+         *
+         * @param name            The module name.
+         * @param moduleReference The module reference.
+         * @return A new simple module finder instance.
+         */
         @JavaDispatcher.IsConstructor
         Object newInstance(String name, Object moduleReference);
     }
 
+    /**
+     * A proxy for the {@code java.util.Optional} type.
+     */
     @JavaDispatcher.Proxied("java.util.Optional")
     protected interface Optional {
 
+        /**
+         * Creates an optional containing the given value.
+         *
+         * @param value The value to wrap.
+         * @return An optional containing the value.
+         */
         @JavaDispatcher.IsStatic
         Object of(Object value);
 
+        /**
+         * Creates an empty optional.
+         *
+         * @return An empty optional.
+         */
         @JavaDispatcher.IsStatic
         Object empty();
     }
 
+    /**
+     * A proxy for the {@code java.util.stream.Stream} type.
+     */
     @JavaDispatcher.Proxied("java.util.stream.Stream")
     protected interface Stream {
 
+        /**
+         * Creates an empty stream.
+         *
+         * @return An empty stream.
+         */
         @JavaDispatcher.IsStatic
         Object empty();
     }
 
+    /**
+     * An abstract implementation of a module reader that provides access to dynamically generated types.
+     * <p>
+     * This class serves as a base for creating module readers that can handle byte code representations
+     * of classes within a module. It implements the {@link Closeable} interface but provides an empty
+     * implementation for the close method.
+     */
     public abstract static class AbstractModuleReader implements Closeable {
 
+        /**
+         * The map containing type names and their byte representations.
+         */
         private final Map<String, byte[]> types;
 
+        /**
+         * Creates a new abstract module reader.
+         *
+         * @param types The map of type names to their byte representations.
+         */
         protected AbstractModuleReader(Map<String, byte[]> types) {
             this.types = types;
         }
 
+        /**
+         * Finds a resource within the module.
+         *
+         * @param name The resource name.
+         * @return An optional containing the resource URI if found, empty otherwise.
+         */
         protected Object doFind(String name) {
             if (name.endsWith(".class")) {
                 String value = name.substring(0, name.length() - ".class".length()).replace('/', '.');
@@ -289,10 +477,21 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
             return OPTIONAL.empty();
         }
 
+        /**
+         * Lists all resources in the module.
+         *
+         * @return An empty stream as listing is not supported.
+         */
         protected Object doList() {
             return STREAM.empty();
         }
 
+        /**
+         * Opens an input stream to a resource within the module.
+         *
+         * @param name The resource name.
+         * @return An optional containing the input stream if the resource exists, empty otherwise.
+         */
         protected Object doOpen(String name) {
             if (name.endsWith(".class")) {
                 String value = name.substring(0, name.length() - ".class".length()).replace('/', '.');
@@ -312,17 +511,41 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
         }
     }
 
+    /**
+     * An abstract implementation of a module finder that can locate specific modules.
+     * <p>
+     * This class provides the base functionality for finding modules based on their names
+     * and serves as a foundation for creating custom module finders.
+     */
     public abstract static class AbstractModuleFinder {
 
+        /**
+         * The name of the module this finder can locate.
+         */
         private final String name;
 
+        /**
+         * The module reference for the module this finder manages.
+         */
         private final Object moduleReference;
 
+        /**
+         * Creates a new abstract module finder.
+         *
+         * @param name            The name of the module.
+         * @param moduleReference The module reference.
+         */
         protected AbstractModuleFinder(String name, Object moduleReference) {
             this.name = name;
             this.moduleReference = moduleReference;
         }
 
+        /**
+         * Finds a module by name.
+         *
+         * @param name The module name to find.
+         * @return An optional containing the module reference if found, empty otherwise.
+         */
         @MaybeNull
         protected Object doFind(String name) {
             return name.equals(this.name)
@@ -330,6 +553,11 @@ public class SimpleModuleLayerResolver implements ModuleLayerResolver {
                     : OPTIONAL.empty();
         }
 
+        /**
+         * Finds all modules managed by this finder.
+         *
+         * @return A set containing the single module reference managed by this finder.
+         */
         protected Set<?> doFindAll() {
             return Collections.singleton(moduleReference);
         }
