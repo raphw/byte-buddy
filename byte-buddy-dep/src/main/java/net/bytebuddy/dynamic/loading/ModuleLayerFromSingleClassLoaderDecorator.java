@@ -260,10 +260,11 @@ public class ModuleLayerFromSingleClassLoaderDecorator implements ClassLoaderDec
             } catch (IOException exception) {
                 throw new IllegalStateException("Failed to create module layer", exception);
             }
-            Object moduleReference = SIMPLE_MODULE_REFERENCE.newInstance(moduleDescriptor, null, typeDefinitions);
             return new ModuleLayerFromSingleClassLoaderDecorator(classLoader,
                     MODULE_LAYER_CONTROLLER.layer(MODULE_LAYER.defineModulesWithOneLoader(CONFIGURATION.resolve(MODULE_LAYER.configuration(MODULE_LAYER.boot()),
-                                    SIMPLE_MODULE_FINDER.newInstance(MODULE_DESCRIPTOR.name(moduleDescriptor), moduleReference),
+                                    SIMPLE_MODULE_FINDER.newInstance(
+                                            MODULE_DESCRIPTOR.name(moduleDescriptor),
+                                            SIMPLE_MODULE_REFERENCE.newInstance(moduleDescriptor, null, typeDefinitions)),
                                     MODULE_FINDER.of(PATH.of(0)),
                                     Collections.singleton(MODULE_DESCRIPTOR.name(moduleDescriptor))),
                             Collections.singletonList(MODULE_LAYER.boot()),
