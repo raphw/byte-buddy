@@ -26,6 +26,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -115,7 +116,7 @@ public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Pl
     /**
      * {@inheritDoc}
      */
-    public boolean matches(TypeDescription target) {
+    public boolean matches(@MaybeNull TypeDescription target) {
         return matcher.matches(target);
     }
 

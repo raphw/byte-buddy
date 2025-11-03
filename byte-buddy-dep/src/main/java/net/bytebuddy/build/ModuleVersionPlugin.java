@@ -59,8 +59,8 @@ public class ModuleVersionPlugin implements Plugin, Plugin.Factory {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(TypeDescription target) {
-        return target.isModuleType();
+    public boolean matches(@MaybeNull TypeDescription target) {
+        return target != null && target.isModuleType();
     }
 
     /**
