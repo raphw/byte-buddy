@@ -375,6 +375,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param persistenceHandler        The persistence handler of the created class loader.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
+     * @param moduleLayerResolver       The module layer resolver to use.
      * @param sealed                    {@code true} if the class loader should be sealed.
      * @return A map of the given type descriptions pointing to their loaded representations.
      */

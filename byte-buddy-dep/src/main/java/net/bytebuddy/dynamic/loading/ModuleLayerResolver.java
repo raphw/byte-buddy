@@ -40,7 +40,7 @@ public interface ModuleLayerResolver {
     enum Disabled implements ModuleLayerResolver {
 
         /**
-         * The singleton instance
+         * The singleton instance.
          */
         INSTANCE;
 
