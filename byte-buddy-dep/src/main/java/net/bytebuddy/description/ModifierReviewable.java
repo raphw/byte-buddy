@@ -18,13 +18,17 @@ package net.bytebuddy.description;
 import net.bytebuddy.description.modifier.EnumerationState;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.FieldPersistence;
+import net.bytebuddy.description.modifier.Mandate;
 import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.modifier.MethodStrictness;
+import net.bytebuddy.description.modifier.Openness;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.ParameterManifestation;
 import net.bytebuddy.description.modifier.ProvisioningState;
+import net.bytebuddy.description.modifier.RequiredPhase;
 import net.bytebuddy.description.modifier.SynchronizationState;
 import net.bytebuddy.description.modifier.SyntheticState;
+import net.bytebuddy.description.modifier.Transitivity;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import org.objectweb.asm.Opcodes;
@@ -175,6 +179,13 @@ public interface ModifierReviewable {
          * @return {@code true} if the modifier described by this object is mandated.
          */
         boolean isMandated();
+
+        /**
+         * Returns the mandate of this instance.
+         *
+         * @return The mandate of this instance.
+         */
+        Mandate getMandate();
     }
 
     /**
@@ -331,6 +342,13 @@ public interface ModifierReviewable {
          * @return {@code true} if the module is open.
          */
         boolean isOpen();
+
+        /**
+         * Returns the openness of this module.
+         *
+         * @return A description of the openness of this module.
+         */
+        Openness getOpenness();
     }
 
     /**
@@ -351,6 +369,20 @@ public interface ModifierReviewable {
          * @return {@code true} if the module requirement is during the static phase only.
          */
         boolean isStaticPhase();
+
+        /**
+         * Returns the transitivity of this module requirement.
+         *
+         * @return The transitivity of this module requirement.
+         */
+        Transitivity getTransitivity();
+
+        /**
+         * Returns the phase in which this module requirement is relevant.
+         *
+         * @return The phase in which this module requirement is relevant.
+         */
+        RequiredPhase getRequiredPhase();
     }
 
     /**
@@ -536,6 +568,15 @@ public interface ModifierReviewable {
         /**
          * {@inheritDoc}
          */
+        public Mandate getMandate() {
+            return isMandated()
+                    ? Mandate.MANDATED
+                    : Mandate.PLAIN;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public Visibility getVisibility() {
             int modifiers = getModifiers();
             switch (modifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE)) {
@@ -682,6 +723,33 @@ public interface ModifierReviewable {
             return isMandated()
                     ? ProvisioningState.MANDATED
                     : ProvisioningState.PLAIN;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Openness getOpenness() {
+            return isOpen()
+                    ? Openness.OPEN
+                    : Openness.CLOSED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Transitivity getTransitivity() {
+            return isTransitive()
+                    ? Transitivity.TRANSITIVE
+                    : Transitivity.NONE;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RequiredPhase getRequiredPhase() {
+            return isStaticPhase()
+                    ? RequiredPhase.STATIC
+                    : RequiredPhase.ALWAYS;
         }
 
         /**

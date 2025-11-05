@@ -25,7 +25,7 @@ public enum RequiredPhase implements ModifierContributor.ForModule.OfRequire {
     /**
      * Modifier for requiring another module during all phases. (This is the default modifier.)
      */
-    NONE(EMPTY_MASK),
+    ALWAYS(EMPTY_MASK),
 
     /**
      * Modifier for requiring another module only during assembly.
@@ -64,7 +64,7 @@ public enum RequiredPhase implements ModifierContributor.ForModule.OfRequire {
      * {@inheritDoc}
      */
     public boolean isDefault() {
-        return this == NONE;
+        return this == ALWAYS;
     }
 
     /**
