@@ -2447,7 +2447,9 @@ public interface TypeWriter<T> {
                 ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(version);
                 List<Constraint> constraints = new ArrayList<Constraint>();
                 constraints.add(new Constraint.ForClassFileVersion(classFileVersion));
-                if (name.endsWith('/' + PackageDescription.PACKAGE_CLASS_NAME)) {
+                if (name.equals(ModuleDescription.MODULE_CLASS_NAME)) {
+                    constraints.add(Constraint.ForModuleType.INSTANCE);
+                } else if (name.endsWith('/' + PackageDescription.PACKAGE_CLASS_NAME)) {
                     constraints.add(Constraint.ForPackageType.INSTANCE);
                 } else if ((modifiers & Opcodes.ACC_ANNOTATION) != 0) {
                     if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
@@ -2860,6 +2862,120 @@ public interface TypeWriter<T> {
                      */
                     public void assertPermittedSubclass() {
                         /* do nothing */
+                    }
+                }
+
+                /**
+                 * Represents the constraint of a module type.
+                 */
+                enum ForModuleType implements Constraint {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
+                        throw new IllegalStateException("Cannot define a field for a module description type");
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertMethod(String name, boolean isAbstract, boolean isPublic, boolean isPrivate, boolean isStatic, boolean isVirtual, boolean isConstructor, boolean isDefaultValueIncompatible, boolean isGeneric) {
+                        throw new IllegalStateException("Cannot define a method for a module description type");
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertAnnotation() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertTypeAnnotation() {
+                        throw new IllegalStateException("Cannot define a type annotation for a module description type");
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertDefaultValue(String name) {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertDefaultMethodCall() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertTypeInConstantPool() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertMethodTypeInConstantPool() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertHandleInConstantPool() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertInvokeDynamic() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertSubRoutine() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertDynamicValueInConstantPool() {
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertNestMate() {
+                        throw new IllegalStateException("Cannot define a nest mate for a module description type");
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
+                        throw new IllegalStateException("Cannot define a record entry for a module description type");
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
+                        throw new IllegalStateException("Cannot permitt a subclass for a module description type");
                     }
                 }
 
