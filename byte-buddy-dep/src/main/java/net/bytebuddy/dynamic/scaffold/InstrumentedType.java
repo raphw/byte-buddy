@@ -1651,6 +1651,8 @@ public interface InstrumentedType extends TypeDescription {
                 throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for " + this);
             } else if (isPackageType() && getModifiers() != PackageDescription.PACKAGE_MODIFIERS) {
                 throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for package " + this);
+            } else if (isModuleType() && getModifiers() != ModifierContributor.EMPTY_MASK) {
+                throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for module " + this);
             }
             TypeDescription.Generic superClass = getSuperClass();
             if (superClass != null) {
