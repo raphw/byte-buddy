@@ -2475,7 +2475,10 @@ public interface TypeWriter<T> {
                     record = false;
                 }
                 constraint = new Constraint.Compound(constraints);
-                constraint.assertType(modifiers, interfaceInternalName != null, signature != null);
+                constraint.assertType(modifiers,
+                        superName,
+                        interfaceInternalName != null,
+                        signature != null);
                 if (record) {
                     constraint.assertRecord();
                 }
@@ -2606,11 +2609,12 @@ public interface TypeWriter<T> {
                 /**
                  * Asserts if the type can legally represent a package description.
                  *
-                 * @param modifier          The modifier that is to be written to the type.
-                 * @param definesInterfaces {@code true} if this type implements at least one interface.
-                 * @param isGeneric         {@code true} if this type defines a generic type signature.
+                 * @param modifier               The modifier that is to be written to the type.
+                 * @param superClassInternalName The internal name of the super class or {@code null} if none.
+                 * @param definesInterfaces      {@code true} if this type implements at least one interface.
+                 * @param isGeneric              {@code true} if this type defines a generic type signature.
                  */
-                void assertType(int modifier, boolean definesInterfaces, boolean isGeneric);
+                void assertType(int modifier, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric);
 
                 /**
                  * Asserts a field for being valid.
@@ -2745,7 +2749,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                    public void assertType(int modifier, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
                         /* do nothing */
                     }
 
@@ -2878,8 +2882,12 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
-
+                    public void assertType(int modifier, String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
+                        if (modifier != Opcodes.ACC_MODULE) {
+                            throw new IllegalStateException("Module must only define module modifier");
+                        } else if (superClassInternalName != null) {
+                            throw new IllegalStateException("A module cannot define a super class");
+                        }
                     }
 
                     /**
@@ -3077,9 +3085,11 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                    public void assertType(int modifier, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
                         if (modifier != PackageDescription.PACKAGE_MODIFIERS) {
                             throw new IllegalStateException("A package description type must define " + PackageDescription.PACKAGE_MODIFIERS + " as modifier");
+                        } else if (!Type.getInternalName(Object.class).equals(superClassInternalName)) {
+                            throw new IllegalStateException("A package class must inherit from java.lang.Object");
                         } else if (definesInterfaces) {
                             throw new IllegalStateException("Cannot implement interface for package type");
                         }
@@ -3208,8 +3218,10 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
-                        /* do nothing */
+                    public void assertType(int modifier, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
+                        if (!Type.getInternalName(Object.class).equals(superClassInternalName)) {
+                            throw new IllegalStateException("An interface must inherit from java.lang.Object");
+                        }
                     }
 
                     /**
@@ -3339,9 +3351,11 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                    public void assertType(int modifier, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
                         if ((modifier & Opcodes.ACC_ABSTRACT) != 0) {
                             throw new IllegalStateException("Cannot define a record class as abstract");
+                        } else if ("java/lang/Record".equals(superClassInternalName)) {
+                            throw new IllegalStateException("A record must inherit from java.lang.Record");
                         }
                     }
 
@@ -3501,7 +3515,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                    public void assertType(int modifier, String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
                         if ((modifier & Opcodes.ACC_INTERFACE) == 0) {
                             throw new IllegalStateException("Cannot define annotation type without interface modifier");
                         }
@@ -3594,7 +3608,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifiers, boolean definesInterfaces, boolean isGeneric) {
+                    public void assertType(int modifiers, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
                         if ((modifiers & Opcodes.ACC_ANNOTATION) != 0 && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define annotation type for class file version " + classFileVersion);
                         } else if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V4)) { // JSR14 allows for generic 1.4 classes.
@@ -3776,9 +3790,9 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                    public void assertType(int modifier, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
                         for (Constraint constraint : constraints) {
-                            constraint.assertType(modifier, definesInterfaces, isGeneric);
+                            constraint.assertType(modifier, superClassInternalName, definesInterfaces, isGeneric);
                         }
                     }
 
