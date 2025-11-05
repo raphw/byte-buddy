@@ -3354,7 +3354,7 @@ public interface TypeWriter<T> {
                     public void assertType(int modifier, @MaybeNull String superClassInternalName, boolean definesInterfaces, boolean isGeneric) {
                         if ((modifier & Opcodes.ACC_ABSTRACT) != 0) {
                             throw new IllegalStateException("Cannot define a record class as abstract");
-                        } else if ("java/lang/Record".equals(superClassInternalName)) {
+                        } else if (!"java/lang/Record".equals(superClassInternalName)) {
                             throw new IllegalStateException("A record must inherit from java.lang.Record");
                         }
                     }
