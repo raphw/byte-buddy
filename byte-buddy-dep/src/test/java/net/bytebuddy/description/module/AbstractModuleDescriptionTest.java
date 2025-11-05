@@ -1,5 +1,10 @@
 package net.bytebuddy.description.module;
 
+import net.bytebuddy.description.modifier.Mandate;
+import net.bytebuddy.description.modifier.Openness;
+import net.bytebuddy.description.modifier.RequiredPhase;
+import net.bytebuddy.description.modifier.SyntheticState;
+import net.bytebuddy.description.modifier.Transitivity;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.AsmClassWriter;
 import org.junit.After;
@@ -63,6 +68,8 @@ public abstract class AbstractModuleDescriptionTest {
         ModuleDescription moduleDescription = toModuleDescription();
         assertThat(moduleDescription.getActualName(), is(FOO + BAR));
         assertThat(moduleDescription.getModifiers(), is(0));
+        assertThat(moduleDescription.isOpen(), is(false));
+        assertThat(moduleDescription.getOpenness(), is(Openness.CLOSED));
         assertThat(moduleDescription.getMainClass(), is(FOO + "." + QUX));
         assertThat(moduleDescription.getPackages(), is(Collections.singleton(FOO)));
         assertThat(moduleDescription.getUses(), is(Collections.singleton(Runnable.class.getName())));
@@ -72,12 +79,20 @@ public abstract class AbstractModuleDescriptionTest {
         assertThat(moduleDescription.getExports(), is(Collections.<String, ModuleDescription.Exports>singletonMap(
                 FOO,
                 new ModuleDescription.Exports.Simple(Collections.singleton(BAR), 0))));
+        assertThat(moduleDescription.getExports().get(FOO).getMandate(), is(Mandate.PLAIN));
+        assertThat(moduleDescription.getExports().get(FOO).getSyntheticState(), is(SyntheticState.PLAIN));
         assertThat(moduleDescription.getOpens(), is(Collections.<String, ModuleDescription.Opens>singletonMap(
                 FOO,
                 new ModuleDescription.Opens.Simple(Collections.singleton(QUX), 0))));
+        assertThat(moduleDescription.getOpens().get(FOO).getMandate(), is(Mandate.PLAIN));
+        assertThat(moduleDescription.getOpens().get(FOO).getSyntheticState(), is(SyntheticState.PLAIN));
         assertThat(moduleDescription.getRequires(), is(Collections.<String, ModuleDescription.Requires>singletonMap(
                 "java.base",
                 new ModuleDescription.Requires.Simple(null, Opcodes.ACC_MANDATED))));
+        assertThat(moduleDescription.getRequires().get("java.base").getRequiredPhase(), is(RequiredPhase.ALWAYS));
+        assertThat(moduleDescription.getRequires().get("java.base").getTransitivity(), is(Transitivity.NONE));
+        assertThat(moduleDescription.getRequires().get("java.base").getMandate(), is(Mandate.MANDATED));
+        assertThat(moduleDescription.getRequires().get("java.base").getSyntheticState(), is(SyntheticState.PLAIN));
         assertThat(moduleDescription.hashCode(), is(toModuleDescription().hashCode()));
         assertThat(moduleDescription, is(toModuleDescription()));
         assertThat(moduleDescription.getProvides().hashCode(), is(toModuleDescription().getProvides().hashCode()));
