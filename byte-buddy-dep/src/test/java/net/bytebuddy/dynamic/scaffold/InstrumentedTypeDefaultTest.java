@@ -370,6 +370,16 @@ public class InstrumentedTypeDefaultTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    public void testWithModuleDescription() throws Exception {
+        ModuleDescription moduleDescription = mock(ModuleDescription.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.toModuleDescription(), nullValue(ModuleDescription.class));
+        instrumentedType = instrumentedType.withModuleDescription(moduleDescription);
+        assertThat(instrumentedType.toModuleDescription(), is(moduleDescription));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void testWithInterface() throws Exception {
         TypeDescription.Generic interfaceType = mock(TypeDescription.Generic.class);
         when(interfaceType.asGenericType()).thenReturn(interfaceType);
