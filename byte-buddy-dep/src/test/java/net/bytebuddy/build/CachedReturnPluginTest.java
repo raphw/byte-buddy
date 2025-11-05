@@ -23,17 +23,17 @@ public class CachedReturnPluginTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {BooleanSample.class, true, boolean.class},
-                {ByteSample.class, (byte) 42, byte.class},
-                {ShortSample.class, (short) 42, short.class},
-                {CharacterSample.class, (char) 42, char.class},
-                {IntegerSample.class, 42, int.class},
-                {LongSample.class, 42L, long.class},
-                {FloatSample.class, 42f, float.class},
-                {DoubleSample.class, 42d, double.class},
-                {ReferenceSample.class, FOO, Object.class},
-                {ReferenceStaticSample.class, FOO, Object.class},
-                {ReferenceNamedSample.class, FOO, Object.class}
+                {BooleanSample.class, true},
+                {ByteSample.class, (byte) 42},
+                {ShortSample.class, (short) 42},
+                {CharacterSample.class, (char) 42},
+                {IntegerSample.class, 42},
+                {LongSample.class, 42L},
+                {FloatSample.class, 42f},
+                {DoubleSample.class, 42d},
+                {ReferenceSample.class, FOO},
+                {ReferenceStaticSample.class, FOO},
+                {ReferenceNamedSample.class, FOO}
         });
     }
 
@@ -41,12 +41,9 @@ public class CachedReturnPluginTest {
 
     private final Object value;
 
-    private final Class<?> adviceArgument;
-
-    public CachedReturnPluginTest(Class<?> type, Object value, Class<?> adviceArgument) {
+    public CachedReturnPluginTest(Class<?> type, Object value) {
         this.type = type;
         this.value = value;
-        this.adviceArgument = adviceArgument;
     }
 
     private Plugin plugin;

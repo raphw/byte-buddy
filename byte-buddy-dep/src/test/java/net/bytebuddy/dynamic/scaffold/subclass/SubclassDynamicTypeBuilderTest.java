@@ -239,7 +239,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     public void testModuleDefinition() throws Exception {
         DynamicType.Unloaded<? extends Annotation> annotation = new ByteBuddy()
                 .makeAnnotation()
-                .name(FOO + "." + FOO)
+                .name(BAR + "." + FOO)
                 .annotateType(AnnotationDescription.Builder.ofType(Retention.class)
                         .define("value", RetentionPolicy.RUNTIME)
                         .build())
