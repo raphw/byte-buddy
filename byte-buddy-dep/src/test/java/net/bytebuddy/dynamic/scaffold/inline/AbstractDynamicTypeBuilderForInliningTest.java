@@ -7,8 +7,10 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.MethodManifestation;
+import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -17,6 +19,7 @@ import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
+import net.bytebuddy.dynamic.loading.ModuleLayerFromSingleClassLoaderDecorator;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
@@ -43,8 +46,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
@@ -53,6 +58,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -75,9 +81,9 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractDynamicTypeBuilderForInliningTest extends AbstractDynamicTypeBuilderTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
-    private static final int QUX = 42;
+    private static final int BAZ = 42;
 
     private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.v8parameters.ParameterNames";
 
@@ -475,17 +481,17 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> type = create(Class.forName(SIMPLE_TYPE_ANNOTATED))
                 .merge(TypeManifestation.ABSTRACT)
                 .implement(TypeDescription.Generic.Builder.rawType(Callable.class)
-                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, QUX * 3).build()))
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, BAZ * 3).build()))
                 .make()
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getInterfaces().length, is(2));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 0).asList().size(), is(1));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 0).asList().ofType(typeAnnotationType)
-                .getValue(value).resolve(Integer.class), is(QUX * 2));
+                .getValue(value).resolve(Integer.class), is(BAZ * 2));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 1).asList().size(), is(1));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 1).asList().ofType(typeAnnotationType)
-                .getValue(value).resolve(Integer.class), is(QUX * 3));
+                .getValue(value).resolve(Integer.class), is(BAZ * 3));
     }
 
     @Test
@@ -497,22 +503,91 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> type = create(Class.forName(SIMPLE_TYPE_ANNOTATED))
                 .merge(TypeManifestation.ABSTRACT)
                 .typeVariable(BAR, TypeDescription.Generic.Builder.rawType(Callable.class)
-                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, QUX * 4).build()))
-                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, QUX * 3).build())
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, BAZ * 4).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, BAZ * 3).build())
                 .make()
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getTypeParameters().length, is(2));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
-                .getValue(value).resolve(Integer.class), is(QUX));
+                .getValue(value).resolve(Integer.class), is(BAZ));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).asList().size(), is(1));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).asList().ofType(typeAnnotationType)
-                .getValue(value).resolve(Integer.class), is(QUX * 3));
+                .getValue(value).resolve(Integer.class), is(BAZ * 3));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
                 .asList().size(), is(1));
         assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
-                .asList().ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(QUX * 4));
+                .asList().ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ * 4));
+    }
+
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testModuleReDefinition() throws Exception {
+        DynamicType.Unloaded<? extends Annotation> annotation = new ByteBuddy()
+                .makeAnnotation()
+                .name(BAR + "." + FOO)
+                .annotateType(AnnotationDescription.Builder.ofType(Retention.class)
+                        .define("value", RetentionPolicy.RUNTIME)
+                        .build())
+                .annotateType(AnnotationDescription.Builder.ofType(Target.class)
+                        .defineEnumerationArray("value", ElementType.class, ElementType.valueOf("MODULE"))
+                        .build())
+                .make();
+        DynamicType.Unloaded<Object> dynamicType = new ByteBuddy()
+                .subclass(Object.class)
+                .name(BAR + "." + QUX)
+                .make()
+                .include(new ByteBuddy()
+                        .makeModule(FOO)
+                        .version("1")
+                        .mainClass(BAR + "." + QUX)
+                        .packages(BAR)
+                        .require("java.instrument")
+                        .export(BAR)
+                        .open(BAR)
+                        .uses(Runnable.class)
+                        .provides(Runnable.class.getName(), BAR + "." + QUX)
+                        .annotateType(AnnotationDescription.Builder.ofType(annotation.getTypeDescription()).build())
+                        .make(), annotation);
+        Class<?> transformed = new ByteBuddy()
+                .subclass(Object.class)
+                .name(BAR + "." + QUX)
+                .make()
+                .include(create(TypePool.Default.of(dynamicType).describe(ModuleDescription.MODULE_CLASS_NAME).resolve(), dynamicType)
+                        .adjustModule()
+                        .version("2")
+                        .make(), annotation)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.with(ModuleLayerFromSingleClassLoaderDecorator.Factory.INSTANCE))
+                .getLoaded();
+        ModuleDescription moduleDescription = ModuleDescription.ForLoadedModule.of(Class.class.getMethod("getModule").invoke(transformed));
+        assertThat(moduleDescription.getActualName(), is(FOO));
+        assertThat(moduleDescription.getModifiers(), is(ModifierContributor.EMPTY_MASK));
+        assertThat(moduleDescription.getVersion(), is("2"));
+        assertThat(moduleDescription.getMainClass(), is(BAR + "." + QUX));
+        assertThat(moduleDescription.getRequires().size(), is(2));
+        assertThat(moduleDescription.getRequires().get("java.base"), notNullValue(ModuleDescription.Requires.class));
+        assertThat(moduleDescription.getRequires().get("java.base").getModifiers(), is(Opcodes.ACC_MANDATED));
+        assertThat(moduleDescription.getRequires().get("java.base").getVersion(), nullValue(String.class));
+        assertThat(moduleDescription.getRequires().get("java.instrument"), notNullValue(ModuleDescription.Requires.class));
+        assertThat(moduleDescription.getRequires().get("java.instrument").getModifiers(), is(0));
+        assertThat(moduleDescription.getRequires().get("java.instrument").getVersion(), nullValue(String.class));
+        assertThat(moduleDescription.getExports().size(), is(1));
+        assertThat(moduleDescription.getExports().get(BAR), notNullValue(ModuleDescription.Exports.class));
+        assertThat(moduleDescription.getExports().get(BAR).getModifiers(), is(0));
+        assertThat(moduleDescription.getExports().get(BAR).getTargets().size(), is(0));
+        assertThat(moduleDescription.getOpens().size(), is(1));
+        assertThat(moduleDescription.getOpens().get(BAR), notNullValue(ModuleDescription.Opens.class));
+        assertThat(moduleDescription.getOpens().get(BAR).getModifiers(), is(0));
+        assertThat(moduleDescription.getOpens().get(BAR).getTargets().size(), is(0));
+        assertThat(moduleDescription.getUses().size(), is(1));
+        assertThat(moduleDescription.getUses().contains(Runnable.class.getName()), is(true));
+        assertThat(moduleDescription.getProvides().size(), is(1));
+        assertThat(moduleDescription.getProvides().get(Runnable.class.getName()), notNullValue(ModuleDescription.Provides.class));
+        assertThat(moduleDescription.getProvides().get(Runnable.class.getName()).getProviders(), is(Collections.singleton(BAR + "." + QUX)));
+        // Annotations are currently not visible from dynamic layers as they are resolved via URIs, and not through the ModuleReader.
+        assertThat(moduleDescription.getDeclaredAnnotations().size(), is(0));
     }
 
     public @interface Baz {

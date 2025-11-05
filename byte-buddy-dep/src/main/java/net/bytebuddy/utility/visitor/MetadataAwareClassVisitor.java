@@ -250,7 +250,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     @MaybeNull
-    public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @MaybeNull String signature) {
+    public final RecordComponentVisitor visitRecordComponent(String name, String descriptor, @MaybeNull String signature) {
         considerTriggerSource();
         considerTriggerModule();
         considerTriggerNestHost();

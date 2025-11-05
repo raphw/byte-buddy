@@ -5093,6 +5093,21 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @MaybeNull
+                    protected ModuleVisitor onVisitModule(String name, int modifiers, @MaybeNull String version) {
+                        onModule();
+                        return null;
+                    }
+
+                    @Override
+                    protected void onModule() {
+                        ModuleDescription moduleDescription = instrumentedType.toModuleDescription();
+                        if (moduleDescription != null) {
+                            moduleDescription.accept(cv);
+                        }
+                    }
+
+                    @Override
                     protected void onVisitNestHost(String nestHost) {
                         onNestHost();
                     }
