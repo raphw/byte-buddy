@@ -391,9 +391,18 @@ public interface DynamicType extends ClassFileLocator {
         /**
          * Adjusts a previous module definition in this class file. This is normally only meaningful for classes named {@code module-info}.
          *
+         * @param modifierContributor The modifier contributors to merge into the module.
          * @return A new builder that is equal to this builder but which adjusts the current module information.
          */
-        ModuleDefinition<T> adjustModule();
+        ModuleDefinition<T> adjustModule(ModifierContributor.ForModule... modifierContributor);
+
+        /**
+         * Adjusts a previous module definition in this class file. This is normally only meaningful for classes named {@code module-info}.
+         *
+         * @param modifierContributors The modifier contributors to merge into the module.
+         * @return A new builder that is equal to this builder but which adjusts the current module information.
+         */
+        ModuleDefinition<T> adjustModule(Collection<? extends ModifierContributor.ForModule> modifierContributors);
 
         /**
          * <p>
@@ -1717,7 +1726,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a module requirement with additional modifiers.
              *
-             * @param module The name of the module that is required.
+             * @param module              The name of the module that is required.
              * @param modifierContributor The modifiers to apply to the module requirement.
              * @return A builder for defining the module requirement.
              */
@@ -1726,7 +1735,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a module requirement with additional modifiers.
              *
-             * @param module The name of the module that is required.
+             * @param module               The name of the module that is required.
              * @param modifierContributors The modifiers to apply to the module requirement.
              * @return A builder for defining the module requirement.
              */
@@ -1735,7 +1744,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a module requirement with explicit modifiers.
              *
-             * @param module The name of the module that is required.
+             * @param module    The name of the module that is required.
              * @param modifiers The modifiers to apply to the module requirement.
              * @return A builder for defining the module requirement.
              */
@@ -1760,7 +1769,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a package export with additional modifiers.
              *
-             * @param aPackage The name of the package to export.
+             * @param aPackage            The name of the package to export.
              * @param modifierContributor The modifiers to apply to the package export.
              * @return A new builder that is equal to this builder but with the given package export.
              */
@@ -1769,7 +1778,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a package export with additional modifiers.
              *
-             * @param aPackage The name of the package to export.
+             * @param aPackage             The name of the package to export.
              * @param modifierContributors The modifiers to apply to the package export.
              * @return A new builder that is equal to this builder but with the given package export.
              */
@@ -1778,7 +1787,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a package export with explicit modifiers.
              *
-             * @param aPackage The name of the package to export.
+             * @param aPackage  The name of the package to export.
              * @param modifiers The modifiers to apply to the package export.
              * @return A new builder that is equal to this builder but with the given package export.
              */
@@ -1803,7 +1812,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a package opening with additional modifiers.
              *
-             * @param aPackage The name of the package to open.
+             * @param aPackage            The name of the package to open.
              * @param modifierContributor The modifiers to apply to the package opening.
              * @return A new builder that is equal to this builder but with the given package opening.
              */
@@ -1812,7 +1821,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a package opening with additional modifiers.
              *
-             * @param aPackage The name of the package to open.
+             * @param aPackage             The name of the package to open.
              * @param modifierContributors The modifiers to apply to the package opening.
              * @return A new builder that is equal to this builder but with the given package opening.
              */
@@ -1821,7 +1830,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies a package opening with explicit modifiers.
              *
-             * @param aPackage The name of the package to open.
+             * @param aPackage  The name of the package to open.
              * @param modifiers The modifiers to apply to the package opening.
              * @return A new builder that is equal to this builder but with the given package opening.
              */
@@ -1862,7 +1871,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies service implementations that are provided by the module being defined.
              *
-             * @param service The type of the service for which implementations are provided.
+             * @param service        The type of the service for which implementations are provided.
              * @param implementation The types of the implementations that are provided.
              * @return A new builder that is equal to this builder but with the given service provision.
              */
@@ -1871,7 +1880,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies service implementations that are provided by the module being defined.
              *
-             * @param service The type of the service for which implementations are provided.
+             * @param service         The type of the service for which implementations are provided.
              * @param implementations The types of the implementations that are provided.
              * @return A new builder that is equal to this builder but with the given service provision.
              */
@@ -1880,7 +1889,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies service implementations that are provided by the module being defined.
              *
-             * @param service The description of the type of the service for which implementations are provided.
+             * @param service        The description of the type of the service for which implementations are provided.
              * @param implementation The descriptions of the types of the implementations that are provided.
              * @return A new builder that is equal to this builder but with the given service provision.
              */
@@ -1889,7 +1898,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies service implementations that are provided by the module being defined.
              *
-             * @param service The description of the type of the service for which implementations are provided.
+             * @param service         The description of the type of the service for which implementations are provided.
              * @param implementations The descriptions of the types of the implementations that are provided.
              * @return A new builder that is equal to this builder but with the given service provision.
              */
@@ -1898,7 +1907,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies service implementations that are provided by the module being defined.
              *
-             * @param service The name of the type of the service for which implementations are provided.
+             * @param service        The name of the type of the service for which implementations are provided.
              * @param implementation The names of the types of the implementations that are provided.
              * @return A new builder that is equal to this builder but with the given service provision.
              */
@@ -1907,7 +1916,7 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * Specifies service implementations that are provided by the module being defined.
              *
-             * @param service The name of the type of the service for which implementations are provided.
+             * @param service         The name of the type of the service for which implementations are provided.
              * @param implementations The names of the types of the implementations that are provided.
              * @return A new builder that is equal to this builder but with the given service provision.
              */
@@ -4028,6 +4037,13 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * {@inheritDoc}
              */
+            public ModuleDefinition<S> adjustModule(ModifierContributor.ForModule... modifierContributor) {
+                return adjustModule(Arrays.asList(modifierContributor));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public InnerTypeDefinition.ForType<S> innerTypeOf(Class<?> type) {
                 return innerTypeOf(TypeDescription.ForLoadedType.of(type));
             }
@@ -4546,8 +4562,15 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> adjustModule() {
-                    return materialize().adjustModule();
+                public ModuleDefinition<U> adjustModule(ModifierContributor.ForModule... modifierContributor) {
+                    return materialize().adjustModule(modifierContributor);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ModuleDefinition<U> adjustModule(Collection<? extends ModifierContributor.ForModule> modifierContributors) {
+                    return materialize().adjustModule(modifierContributors);
                 }
 
                 /**
@@ -5050,13 +5073,13 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
-                public ModuleDefinition<U> adjustModule() {
+                public ModuleDefinition<U> adjustModule(Collection<? extends ModifierContributor.ForModule> modifierContributors) {
                     ModuleDescription moduleDescription = instrumentedType.toModuleDescription();
                     if (moduleDescription == null) {
                         throw new IllegalStateException("Expected previous module description for " + instrumentedType);
                     }
                     return new ModuleDefinitionAdapter(moduleDescription.getActualName(),
-                            moduleDescription.getModifiers(),
+                            ModifierContributor.Resolver.of(modifierContributors).resolve(moduleDescription.getModifiers()),
                             moduleDescription.getVersion(),
                             moduleDescription.getMainClass(),
                             moduleDescription.getPackages(),

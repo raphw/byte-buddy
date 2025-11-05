@@ -294,7 +294,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     /**
      * {@inheritDoc}
      */
-    public ModuleDefinition<T> adjustModule() {
+    public ModuleDefinition<T> adjustModule(Collection<? extends ModifierContributor.ForModule> modifierContributors) {
         throw new UnsupportedOperationException("Cannot change module information of decorated type: " + instrumentedType);
     }
 
