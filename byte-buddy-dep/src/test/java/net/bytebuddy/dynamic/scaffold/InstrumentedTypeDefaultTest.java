@@ -369,7 +369,6 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testWithModuleDescription() throws Exception {
         ModuleDescription moduleDescription = mock(ModuleDescription.class);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
