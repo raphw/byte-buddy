@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.module.ModuleDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -70,6 +71,11 @@ public class InstrumentedTypeFrozenTest {
     @Test(expected = IllegalStateException.class)
     public void testInitializer() throws Exception {
         new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withInitializer(mock(ByteCodeAppender.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithModuleDescription() throws Exception {
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withModuleDescription(mock(ModuleDescription.class));
     }
 
     @Test(expected = IllegalStateException.class)
