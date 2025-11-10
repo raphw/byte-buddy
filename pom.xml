@@ -58,7 +58,7 @@
 
     <properties>
         <copyright.holder>Rafael Winterhalter</copyright.holder>
-        <versioning.sematic>true</versioning.sematic>
+        <versioning.sematic>false</versioning.sematic>
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.original-sources>true</bytebuddy.original-sources>
         <bytebuddy.integration>false</bytebuddy.integration>
