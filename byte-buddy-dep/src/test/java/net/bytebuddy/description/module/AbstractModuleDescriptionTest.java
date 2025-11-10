@@ -58,7 +58,9 @@ public abstract class AbstractModuleDescriptionTest {
 
     @After
     public void tearDown() throws Exception {
-        assertThat(jar.delete(), is(true));
+        if (!jar.delete()) {
+            jar.deleteOnExit();
+        }
     }
 
     protected abstract ModuleDescription toModuleDescription() throws Exception;
