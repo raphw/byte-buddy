@@ -11,6 +11,10 @@ public class TypePoolModuleDescriptionTest extends AbstractModuleDescriptionTest
     private ClassFileLocator classFileLocator;
     private TypePool typePool;
 
+    public TypePoolModuleDescriptionTest() {
+        super(true);
+    }
+
     @Before
     public void setUp() throws Exception {
         super.setUp();

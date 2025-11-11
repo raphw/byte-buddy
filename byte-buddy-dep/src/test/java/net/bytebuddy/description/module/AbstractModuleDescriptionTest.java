@@ -28,7 +28,13 @@ public abstract class AbstractModuleDescriptionTest {
 
     protected static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
+    private final boolean readAnnotations;
+
     protected File jar;
+
+    protected AbstractModuleDescriptionTest(boolean readAnnotations) {
+        this.readAnnotations = readAnnotations;
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -107,6 +113,8 @@ public abstract class AbstractModuleDescriptionTest {
         assertThat(moduleDescription.getRequires(), is(toModuleDescription().getRequires()));
         assertThat(moduleDescription, is(toModuleDescription()));
         assertThat(moduleDescription.toString(), is("module " + moduleDescription.getActualName()));
-        assertThat(moduleDescription.getDeclaredAnnotations().size(), is(0));
+        if (readAnnotations) {
+            assertThat(moduleDescription.getDeclaredAnnotations().size(), is(0));
+        }
     }
 }

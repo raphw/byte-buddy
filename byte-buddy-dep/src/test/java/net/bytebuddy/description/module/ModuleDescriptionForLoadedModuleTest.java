@@ -1,5 +1,6 @@
 package net.bytebuddy.description.module;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.After;
 import org.junit.Before;
@@ -23,6 +24,10 @@ public class ModuleDescriptionForLoadedModuleTest extends AbstractModuleDescript
 
     private ClassLoader classLoader;
     private Object module;
+
+    public ModuleDescriptionForLoadedModuleTest() {
+        super(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V15)); // bug on previous VMs.
+    }
 
     @Before
     public void setUp() throws Exception {
