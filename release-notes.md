@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 7. November 2025: version 1.18.0
+### 11. November 2025: version 1.18.0
 
 - Add support for `module-info` class files and `ModuleDescription`s.
 - Allow for manipulating module information using the `ByteBuddy` API.
