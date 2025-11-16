@@ -265,6 +265,7 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(17)
     public void testEquals() throws Exception {
         AnnotationDescription identical = describe(first);
         assertThat(identical, is(identical));
