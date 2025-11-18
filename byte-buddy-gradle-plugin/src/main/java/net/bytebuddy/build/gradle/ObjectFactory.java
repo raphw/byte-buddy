@@ -23,7 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- * A object factory for Gradle that uses the {@code org.gradle.api.model.ObjectFactory} API if available.
+ * An object factory for Gradle that uses the {@code org.gradle.api.model.ObjectFactory} API if available.
  */
 public class ObjectFactory {
 
