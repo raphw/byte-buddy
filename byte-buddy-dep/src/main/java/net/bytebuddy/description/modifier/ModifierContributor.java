@@ -89,7 +89,7 @@ public interface ModifierContributor {
             /**
              * A mask for all legal modifiers of a Java module requirement.
              */
-            int MASK = Opcodes.ACC_TRANSITIVE | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+            int MASK = Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_TRANSITIVE | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
         }
 
         /**
@@ -100,7 +100,7 @@ public interface ModifierContributor {
             /**
              * A mask for all legal modifiers of a Java module export.
              */
-            int MASK = Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+            int MASK = Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
         }
 
         /**
@@ -111,7 +111,7 @@ public interface ModifierContributor {
             /**
              * A mask for all legal modifiers of a Java module opening.
              */
-            int MASK = Opcodes.ACC_STATIC_PHASE | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+            int MASK = Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
         }
     }
 
