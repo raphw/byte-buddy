@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. November 2025: version 1.18.2
+
+- Support modifiers for value classes in Valhalla builds.
+- Improve use of build cache in Gradle.
+
 ### 12. November 2025: version 1.18.1
 
 - Fix generated module-info to include new package.
