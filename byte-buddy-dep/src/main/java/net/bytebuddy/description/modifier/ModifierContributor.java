@@ -68,7 +68,7 @@ public interface ModifierContributor {
          */
         int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
                 | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION | Opcodes.ACC_DEPRECATED
-                | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_STRICT;
+                | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_STRICT | 0x00000020; // ACC_IDENTIT.
     }
 
     /**
@@ -151,7 +151,6 @@ public interface ModifierContributor {
          * A mask for all legal modifiers of a Java parameter.
          */
         int MASK = Opcodes.ACC_MANDATED | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
-
     }
 
     /**
