@@ -637,7 +637,7 @@ assertThat(foo.m(), is("bar"));
 <p>
     HotSwap只能用<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/instrument/package-summary.html">所谓的
     Java agent </a>访问。这样的代理可以通过在虚拟机启动时使用<code>-javaagent</code>参数指定它来安装，其中 javaagent 的参数得是 Byte Buddy
-    的代理jar，它可以从<a href="https://search.maven.org/search?q=a:byte-buddy-agent">从 Maven 仓库下载</a>。
+    的代理jar，它可以从<a href="https://central.sonatype.com/artifact/net.bytebuddy/byte-buddy-agent">从 Maven 仓库下载</a>。
     然而，当 Java 应用从虚拟机的一个JDK运行时，即使应用启动后，Byte Buddy 也可以通过<code>ByteBuddyAgent.install()</code>加载 Java 代理。
     因为类重定义主要用在工具和测试的实现上，这可能是一个非常方便的可选方案。从 Java 9 开始，在没有JDK的情况下，运行时安装代理成为可能。
 </p>
