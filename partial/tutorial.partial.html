@@ -769,7 +769,7 @@ assertThat(foo.m(), is("bar"));
         agent</a>.
     Such an agent can be installed by either specifying it on the startup of the Java virtual machine by using the
     <code>-javaagent</code> parameter where the parameter's argument needs to be Byte Buddy's agent jar which can be
-    <a href="https://search.maven.org/search?q=a:byte-buddy-agent">downloaded from Maven Central</a>. However,
+    <a href="https://central.sonatype.com/artifact/net.bytebuddy/byte-buddy-agent">downloaded from Maven Central</a>. However,
     when a Java application is run from a JDK-installation of the Java virtual machine, Byte Buddy can load a Java
     agent even after application startup by <code>ByteBuddyAgent.install()</code>. Because class redefinition
     is mostly used to implement tooling or testing, this can be a very convenient alternative.
