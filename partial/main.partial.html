@@ -43,7 +43,7 @@
             Byte Buddy is written in Java {{javaVersion}} but supports the generation of classes for any Java version. Byte Buddy is a
             light-weight library and only depends on the visitor API of the Java byte code parser library
             <a data-ng-href="{{classFileFormatUrl}}">ASM</a> which does itself
-            <a href="https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom">not require any
+            <a href="https://central.sonatype.com/artifact/asm/asm/dependencies">not require any
                 further dependencies</a>.
         </p>
 
@@ -173,7 +173,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             <dd>
                 <div>
                     You can download Byte Buddy directly from
-                    <a href="https://search.maven.org/search?q=g:net.bytebuddy">Maven Central</a>.
+                    <a href="https://central.sonatype.com/search?namespace=net.bytebuddy">Maven Central</a>.
                     Alternatively, you can also download the
                     <a href="https://github.com/raphw/byte-buddy/releases">source code from GitHub</a>.
                 </div>
@@ -190,7 +190,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <dl>
             <dt>Repositories</dt>
             <dd>
-                Byte Buddy binaries are available from the <a href="http://search.maven.org/">Maven Central</a>.
+                Byte Buddy binaries are available from the <a href="https://central.sonatype.com">Maven Central</a>.
                 Using a build manager, it is therefore easy to define a project dependency on Byte Buddy. Before
                 releasing your project, please take the time to read through the information on
                 <a href="#dependency" data-du-smooth-scroll="" data-offset="40">maintaining a project dependency</a> on
