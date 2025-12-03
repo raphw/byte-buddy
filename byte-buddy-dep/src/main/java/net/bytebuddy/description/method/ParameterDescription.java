@@ -33,7 +33,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
