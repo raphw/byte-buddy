@@ -9845,7 +9845,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public void visitParameter(String name, int modifiers) {
+                public void visitParameter(@MaybeNull String name, int modifiers) {
                     parameterTokens.add(new LazyTypeDescription.MethodToken.ParameterToken(name, modifiers));
                 }
 

@@ -10612,7 +10612,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitParameter(String name, int modifiers) {
+                public void visitParameter(@MaybeNull String name, int modifiers) {
                     /* do nothing */
                 }
 

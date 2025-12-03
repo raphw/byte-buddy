@@ -33,6 +33,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
@@ -231,6 +232,13 @@ public interface ParameterDescription extends AnnotationSource,
     abstract class ForLoadedParameter<T extends AccessibleObject> extends InDefinedShape.AbstractBase {
 
         /**
+         * The name of the {@code java.lang.reflect.MalformedParametersException}. Due to compiler bugs, parameter
+         * declarations might not always be legal, and by checking for this exception, one can trigger a fallback
+         * behaviour.
+         */
+        private static final String MALFORMED_PARAMETERS_EXCEPTION = "java.lang.reflect.MalformedParametersException";
+
+        /**
          * A dispatcher for reading properties from {@code java.lang.reflect.Parameter} instances.
          */
         private static final Parameter PARAMETER = doPrivileged(JavaDispatcher.of(Parameter.class));
@@ -279,7 +287,14 @@ public interface ParameterDescription extends AnnotationSource,
          * {@inheritDoc}
          */
         public String getName() {
-            return PARAMETER.getName(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
+            try {
+                return PARAMETER.getName(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
+            } catch (RuntimeException exception) {
+                if (exception.getClass().getName().equals(MALFORMED_PARAMETERS_EXCEPTION)) {
+                    return super.getName();
+                }
+                throw exception;
+            }
         }
 
         /**
@@ -293,14 +308,28 @@ public interface ParameterDescription extends AnnotationSource,
          * {@inheritDoc}
          */
         public boolean isNamed() {
-            return PARAMETER.isNamePresent(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
+            try {
+                return PARAMETER.isNamePresent(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
+            } catch (RuntimeException exception) {
+                if (exception.getClass().getName().equals(MALFORMED_PARAMETERS_EXCEPTION)) {
+                    return false;
+                }
+                throw exception;
+            }
         }
 
         /**
          * {@inheritDoc}
          */
         public int getModifiers() {
-            return PARAMETER.getModifiers(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
+            try {
+                return PARAMETER.getModifiers(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
+            } catch (RuntimeException exception) {
+                if (exception.getClass().getName().equals(MALFORMED_PARAMETERS_EXCEPTION)) {
+                    return super.getModifiers();
+                }
+                throw exception;
+            }
         }
 
         /**
