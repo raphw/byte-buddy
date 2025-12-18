@@ -139,7 +139,7 @@ public interface AsmClassReader {
                  * {@inheritDoc}
                  */
                 public AsmClassReader make(byte[] binaryRepresentation, boolean experimental) {
-                    return ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
+                    return AsmClassReader.class.getClassLoader() != null && ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
                             ? CLASS_FILE_API_ONLY.make(binaryRepresentation, experimental)
                             : ASM_ONLY.make(binaryRepresentation, experimental);
                 }

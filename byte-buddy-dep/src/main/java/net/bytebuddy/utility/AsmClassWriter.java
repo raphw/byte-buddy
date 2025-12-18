@@ -119,7 +119,7 @@ public interface AsmClassWriter {
                  * {@inheritDoc}
                  */
                 public AsmClassWriter make(int flags, AsmClassReader classReader, TypePool typePool) {
-                    return ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
+                    return AsmClassWriter.class.getClassLoader() != null && ClassFileVersion.ofThisVm().isGreaterThan(ClassFileVersion.latest())
                             ? CLASS_FILE_API_ONLY.make(flags, classReader, typePool)
                             : ASM_ONLY.make(flags, classReader, typePool);
                 }
