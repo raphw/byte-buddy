@@ -265,7 +265,6 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    @JavaVersionRule.Enforce(17)
     public void testEquals() throws Exception {
         AnnotationDescription identical = describe(first);
         assertThat(identical, is(identical));
@@ -301,11 +300,14 @@ public abstract class AbstractAnnotationDescriptionTest {
         AnnotationValue<?, ?> annotationValue = mock(AnnotationValue.class);
         when(annotationValue.resolve()).thenReturn(null);
         when(equalFirstNameOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn((AnnotationValue) annotationValue);
-        assertThat(describe(first), not(equalFirstNameOnly));
-        assertThat(describe(first), not(equalSecond));
-        assertThat(describe(first), not(new Object()));
-        assertThat(describe(first), not(equalTo(null)));
-        assertThat(describe(empty), is(describe(empty)));
+        // Very commonly buggy in intermediate releases.
+        if (ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17) || ClassFileVersion.ofThisVm().equals(ClassFileVersion.JAVA_V8)) {
+            assertThat(describe(first), not(equalFirstNameOnly));
+            assertThat(describe(first), not(equalSecond));
+            assertThat(describe(first), not(new Object()));
+            assertThat(describe(first), not(equalTo(null)));
+            assertThat(describe(empty), is(describe(empty)));
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
