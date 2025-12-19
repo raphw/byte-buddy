@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. November 2025: version 1.18.3
+
+- Avoid using Class File API when Byte Buddy is loaded on the boot loader where multi-release jars are not available.
+- Add additional safety when processing class files with illegally formed parameters.
+- Update to latest ASM.
+
 ### 26. November 2025: version 1.18.2
 
 - Support modifiers for value classes in Valhalla builds.
