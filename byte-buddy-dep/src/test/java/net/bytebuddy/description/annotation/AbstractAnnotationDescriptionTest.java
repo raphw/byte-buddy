@@ -301,7 +301,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         when(annotationValue.resolve()).thenReturn(null);
         when(equalFirstNameOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn((AnnotationValue) annotationValue);
         // Very commonly buggy in intermediate releases.
-        if (ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17) || ClassFileVersion.ofThisVm().equals(ClassFileVersion.JAVA_V8)) {
+        if (ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V21) || ClassFileVersion.ofThisVm().equals(ClassFileVersion.JAVA_V8)) {
             assertThat(describe(first), not(equalFirstNameOnly));
             assertThat(describe(first), not(equalSecond));
             assertThat(describe(first), not(new Object()));
