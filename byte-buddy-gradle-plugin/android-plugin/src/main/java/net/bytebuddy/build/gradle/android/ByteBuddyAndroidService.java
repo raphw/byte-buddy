@@ -32,8 +32,10 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
+import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
@@ -379,15 +381,29 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         /**
          * The base extension.
          */
-        private final BaseExtension extension;
+        private final ApplicationExtension extension;
 
         /**
          * Creates a new configuration action.
          *
          * @param extension The base extension.
          */
-        protected ConfigurationAction(BaseExtension extension) {
+        protected ConfigurationAction(ApplicationExtension extension) {
             this.extension = extension;
+        }
+
+        /**
+         * Resolves a configuration action for the current platform.
+         *
+         * @param container The extension container to query.
+         * @return An appropriate configuration action.
+         */
+        protected static Action<BuildServiceSpec<Parameters>> of(ExtensionContainer container) {
+            try {
+                return new ConfigurationAction(container.getByType(ApplicationExtension.class));
+            } catch (UnknownDomainObjectException ignored) {
+                return new ForLegacyAndroid(container.getByType(BaseExtension.class));
+            }
         }
 
         /**
@@ -397,6 +413,36 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
+        }
+
+        /**
+         * A configuration action for the {@link BuildServiceSpec} of the {@link Parameters} of {@link ByteBuddyAndroidService}
+         * used on legacy Android platforms that do not support the current extension.
+         */
+        protected static class ForLegacyAndroid implements Action<BuildServiceSpec<Parameters>> {
+
+            /**
+             * The base extension.
+             */
+            private final BaseExtension extension;
+
+            /**
+             * Creates a new configuration action.
+             *
+             * @param extension The base extension.
+             */
+            protected ForLegacyAndroid(BaseExtension extension) {
+                this.extension = extension;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void execute(BuildServiceSpec<Parameters> spec) {
+                spec.getParameters()
+                        .getJavaTargetCompatibilityVersion()
+                        .set(extension.getCompileOptions().getTargetCompatibility());
+            }
         }
     }
 
