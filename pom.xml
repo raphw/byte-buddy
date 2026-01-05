@@ -449,6 +449,21 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>publish-jdk8</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>byte-buddy</module>
+                <module>byte-buddy-dep</module>
+                <module>byte-buddy-agent</module>
+            </modules>
+            <properties>
+                <bytecode.main.version>1.8</bytecode.main.version>
+                <bytecode.test.version>1.8</bytecode.test.version>
+            </properties>
+        </profile>
         <!-- Runs the build with compatibility for Java 6 JVMs. -->
         <profile>
             <id>java6-compatibility</id>
