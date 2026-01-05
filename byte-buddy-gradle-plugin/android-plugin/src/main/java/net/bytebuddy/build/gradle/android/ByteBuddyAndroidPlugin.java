@@ -613,7 +613,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     ByteBuddyLocalClassesEnhancerTask.class,
                     ByteBuddyLocalClassesEnhancerTask.ConfigurationAction.of(
                             ByteBuddyViewConfiguration.toClassPath(project, configuration),
-                            project.getExtensions());
+                            project.getExtensions()));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
