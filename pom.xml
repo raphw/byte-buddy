@@ -124,6 +124,7 @@
         <modulemaker.skip>false</modulemaker.skip>
         <javadoc.download.skip>false</javadoc.download.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
+        <release.profiles>extras,gpg,gradle-release,multi-release</release.profiles>
         <surefire.arguments />
     </properties>
 
@@ -188,7 +189,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${version.plugin.release}</version>
                 <configuration>
-                    <releaseProfiles>extras,gpg,gradle-release,multi-release</releaseProfiles>
+                    <releaseProfiles>${release.profiles}</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>byte-buddy-@{project.version}</tagNameFormat>
                 </configuration>
@@ -462,6 +463,7 @@
             <properties>
                 <bytecode.main.version>1.8</bytecode.main.version>
                 <bytecode.test.version>1.8</bytecode.test.version>
+                <release.profiles>extras,gpg</release.profiles>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 6 JVMs. -->
