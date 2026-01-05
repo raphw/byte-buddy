@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build.gradle.android;
 
+import com.android.build.api.dsl.ApplicationExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.gradle.BaseExtension;
 import net.bytebuddy.ByteBuddy;
