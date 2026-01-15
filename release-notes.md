@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. January 2026: version 1.18.4
+
+- Add support for new build description in Android 9.
+
 ### 26. November 2025: version 1.18.3
 
 - Avoid using Class File API when Byte Buddy is loaded on the boot loader where multi-release jars are not available.
