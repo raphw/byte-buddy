@@ -37,6 +37,7 @@ import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
@@ -196,7 +197,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(
                         variantName + "ByteBuddyAndroidService",
                         ByteBuddyAndroidService.class,
-                        new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
+                        ByteBuddyAndroidService.ConfigurationAction.of(project.getExtensions()));
                 FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
                 variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
                         variantResolvableConfiguration,
@@ -346,7 +347,11 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          */
         public Unit invoke(ByteBuddyInstrumentationParameters parameters) {
             parameters.getByteBuddyClasspath().from(ByteBuddyViewConfiguration.toClassPath(project, configuration));
-            parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
+            try {
+                parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(AndroidComponentsExtension.class).getSdkComponents().getBootClasspath());
+            } catch (UnknownDomainObjectException ignored) {
+                parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
+            }
             parameters.getRuntimeClasspath().from(classPath);
             parameters.getByteBuddyService().set(byteBuddyAndroidServiceProvider);
             return Unit.INSTANCE;
@@ -607,9 +612,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 }
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
-                            project.getExtensions().getByType(BaseExtension.class),
-                            project.getExtensions().getByType(ByteBuddyAndroidTaskExtension.class)));
+                    ByteBuddyLocalClassesEnhancerTask.ConfigurationAction.of(
+                            ByteBuddyViewConfiguration.toClassPath(project, configuration),
+                            project.getExtensions()));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
