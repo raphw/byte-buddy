@@ -58,6 +58,7 @@
 
     <properties>
         <copyright.holder>Rafael Winterhalter</copyright.holder>
+        <asm.url>https://asm.ow2.io</asm.url>
         <versioning.sematic>true</versioning.sematic>
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.original-sources>true</bytebuddy.original-sources>
