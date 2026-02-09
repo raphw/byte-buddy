@@ -552,8 +552,24 @@ public interface VirtualMachine {
                     public Connection connect(String processId) throws IOException {
                         File socket = new File(temporaryDirectory, SOCKET_FILE_PREFIX + processId);
                         if (!socket.exists()) {
+                            String target = ATTACH_FILE_PREFIX + processId, path = "/proc/" + processId + "/cwd/" + target;
+                            File attachFile = new File(path);
+                            try {
+                                if (!attachFile.createNewFile() && !attachFile.isFile()) {
+                                    throw new IllegalStateException("Could not create attach file: " + attachFile);
+                                }
+                            } catch (IOException ignored) {
+                                attachFile = new File(temporaryDirectory, target);
+                                if (!attachFile.createNewFile() && !attachFile.isFile()) {
+                                    throw new IllegalStateException("Could not create attach file: " + attachFile);
+                                }
+                            }
                             // Keep canonical file for cleanup in case target process ends and /proc/<pid>/cwd link disappears
-                            File attachFile = createAttachFile(processId).getCanonicalFile();
+                            try {
+                                attachFile = attachFile.getCanonicalFile();
+                            } catch (IOException ignored){
+                                // Ignore exception if canonical file cannot be resolved
+                            }
                             try {
                                 kill(processId, 3);
                                 int attempts = this.attempts;
@@ -573,30 +589,6 @@ public interface VirtualMachine {
                             }
                         }
                         return doConnect(socket);
-                    }
-
-                    /**
-                     * Creates .attach_pid file in the target VM's working directory or temp directory
-                     * to initiate the attachment process if not started
-                     *
-                     * @param processId The process id.
-                     * @return AttachPid file created
-                     * @throws IOException If an I/O exception occurred.
-                     */
-                    private File createAttachFile(String processId) throws IOException {
-                        String target = ATTACH_FILE_PREFIX + processId, path = "/proc/" + processId + "/cwd/" + target;
-                        File attachFile = new File(path);
-                        try {
-                            if (!attachFile.createNewFile() && !attachFile.isFile()) {
-                                throw new IllegalStateException("Could not create attach file: " + attachFile);
-                            }
-                        } catch (IOException ignored) {
-                            attachFile = new File(temporaryDirectory, target);
-                            if (!attachFile.createNewFile() && !attachFile.isFile()) {
-                                throw new IllegalStateException("Could not create attach file: " + attachFile);
-                            }
-                        }
-                        return attachFile;
                     }
 
                     /**
