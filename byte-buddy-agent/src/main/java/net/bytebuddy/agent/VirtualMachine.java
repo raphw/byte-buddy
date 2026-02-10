@@ -564,11 +564,10 @@ public interface VirtualMachine {
                                     throw new IllegalStateException("Could not create attach file: " + attachFile);
                                 }
                             }
-                            // Keep canonical file for cleanup in case target process ends and /proc/<pid>/cwd link disappears
-                            try {
+                            try {  // Keep canonical file for cleanup in case target process ends and /proc/<pid>/cwd link disappears
                                 attachFile = attachFile.getCanonicalFile();
-                            } catch (IOException ignored){
-                                // Ignore exception if canonical file cannot be resolved
+                            } catch (IOException ignored) {
+                                /* do nothing */
                             }
                             try {
                                 kill(processId, 3);
