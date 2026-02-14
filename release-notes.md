@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. February 2026: version 1.18.5
+
+- Eagerly resolve of canonical files during attach emulation to avoid failure when process ends before file can be deleted.
+- Add super classes to hash code / equals computation in `Advice` that were missing.
+
 ### 16. January 2026: version 1.18.4
 
 - Add support for new build description in Android 9.
