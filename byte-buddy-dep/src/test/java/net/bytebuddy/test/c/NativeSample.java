@@ -15,6 +15,9 @@ public class NativeSample {
         }
         try {
             InputStream inputStream = NativeSample.class.getResourceAsStream("/net_bytebuddy_test_c_NativeSample.so");
+            if (inputStream == null)  {
+                throw new IllegalStateException("Cannot find .so file");
+            }
             File file;
             try {
                 file = File.createTempFile("native_sample", ".so");

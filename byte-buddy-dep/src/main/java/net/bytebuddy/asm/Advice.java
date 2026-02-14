@@ -9440,6 +9440,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A resolved version of a dispatcher.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             protected abstract static class Resolved extends Dispatcher.Resolved.AbstractBase {
 
                 /**
@@ -10881,6 +10882,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A resolved version of a dispatcher.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             protected abstract static class Resolved extends Dispatcher.Resolved.AbstractBase {
 
                 /**
