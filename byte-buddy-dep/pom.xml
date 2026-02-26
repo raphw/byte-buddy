@@ -223,15 +223,15 @@
     </build>
 
     <profiles>
+        <!-- Avoids occasional segfault that occurs on JDK7 only. -->
         <profile>
-            <id>build-java-7</id>
+            <id>skip-member-substitution-tests</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <jdk>1.7</jdk>
             </activation>
             <build>
                 <plugins>
-                    <!-- Avoids occasional segfault. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -246,14 +246,52 @@
             </build>
         </profile>
         <profile>
-            <id>build-java-annotations</id>
+            <id>skip-annotation-tests-legacy-jdk</id>
+            <!-- Skip annotation tests on legacy JDKs due to flakeyness. -->
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <jdk>[,17)</jdk>
+                <jdk>[,7]</jdk>
+            </activation>
+            <properties>
+                <skip.annotation.tests>true</skip.annotation.tests>
+            </properties>
+        </profile>
+        <profile>
+            <id>skip-annotation-tests-intermediate-jdk</id>
+            <activation>
+                <!-- Skip annotation tests on JDKs 9-16 due to flakeyness. -->
+                <activeByDefault>false</activeByDefault>
+                <jdk>[9,16]</jdk>
+            </activation>
+            <properties>
+                <skip.annotation.tests>true</skip.annotation.tests>
+            </properties>
+        </profile>
+        <profile>
+            <id>skip-annotation-tests-non-linux</id>
+            <activation>
+                <!-- Skip annotation tests on all non-linux environments due to flakeyness. -->
+                <activeByDefault>false</activeByDefault>
+                <os>
+                    <family>!linux</family>
+                </os>
+            </activation>
+            <properties>
+                <skip.annotation.tests>true</skip.annotation.tests>
+            </properties>
+        </profile>
+        <profile>
+            <id>skip-annotation-tests</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>skip.annotation.tests</name>
+                    <value>true</value>
+                </property>
             </activation>
             <build>
                 <plugins>
-                    <!-- Avoids occasional segfault. -->
+                    <!-- Skip annotation tests as they sometimes fail with NullPointerExceptions within JDK code in some environments. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
