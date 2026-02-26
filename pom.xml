@@ -461,7 +461,7 @@
             <properties>
                 <bytecode.main.version>1.8</bytecode.main.version>
                 <bytecode.test.version>1.8</bytecode.test.version>
-                <release.profiles>extras,gpg,gradle-release</release.profiles>
+                <release.profiles>extras,gpg,gradle-release,upgrade-release</release.profiles>
                 <maven.test.skip>true</maven.test.skip>
                 <skipTests>true</skipTests>
                 <japicmp.skip>true</japicmp.skip>
