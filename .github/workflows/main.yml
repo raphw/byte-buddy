@@ -174,8 +174,32 @@ jobs:
           distribution: temurin
           architecture: x64
           gpg-private-key: ${{ secrets.gpg_secret }}
-      - name: Publish new version
+      - name: Publish new versions
         run: |
           git config user.name "${{ github.event.head_commit.committer.name }}"
           git config user.email "${{ github.event.head_commit.committer.email }}"
-          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${{ github.actor }}:${{ secrets.github_token }}@github.com/${{ github.repository }}.git -Dcentral.username=${{ secrets.central_user }} -Dcentral.password=${{ secrets.central_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 -Dgradle.key=${{ secrets.gradle_key }} -Dgradle.secret=${{ secrets.gradle_secret }} -Pchecksum-enforce
+          CURRENT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          BASE_VERSION=${CURRENT_VERSION%-SNAPSHOT}
+          JDK5_VERSION="${BASE_VERSION}-jdk5"
+          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform \
+            -DreleaseVersion=${JDK5_VERSION} \
+            -Dtag=byte-buddy-${BASE_VERSION} \
+            -Drepository.url=https://${{ github.actor }}:${{ secrets.github_token }}@github.com/${{ github.repository }}.git \
+            -Dcentral.username=${{ secrets.central_user }} \
+            -Dcentral.password=${{ secrets.central_password }} \
+            -Dgpg.passphrase=${{ secrets.gpg_passphrase }} \
+            -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 \
+            -Dgradle.key=${{ secrets.gradle_key }} \
+            -Dgradle.secret=${{ secrets.gradle_secret }} \
+            -Pchecksum-enforce
+          git checkout byte-buddy-${BASE_VERSION}
+          ./mvnw versions:set -DnewVersion=${BASE_VERSION} -DgenerateBackupPoms=false
+          ./mvnw -B -s .mvn/release.settings.xml clean deploy \
+            -Dcentral.username=${{ secrets.central_user }} \
+            -Dcentral.password=${{ secrets.central_password }} \
+            -Dgpg.passphrase=${{ secrets.gpg_passphrase }} \
+            -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 \
+            -Dgradle.key=${{ secrets.gradle_key }} \
+            -Dgradle.secret=${{ secrets.gradle_secret }} \
+            -Pchecksum-enforce \
+            -Ppublish-jdk8-fast

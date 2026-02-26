@@ -451,21 +451,41 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Publishes with Java 8 baseline and skips all non-essential build steps. -->
         <profile>
-            <id>publish-jdk8</id>
+            <id>publish-jdk8-fast</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
+                <jdk>[1.8,)</jdk>
             </activation>
-            <modules>
-                <module>byte-buddy</module>
-                <module>byte-buddy-dep</module>
-                <module>byte-buddy-agent</module>
-            </modules>
             <properties>
                 <bytecode.main.version>1.8</bytecode.main.version>
                 <bytecode.test.version>1.8</bytecode.test.version>
-                <release.profiles>extras,gpg</release.profiles>
+                <release.profiles>extras,gpg,gradle-release</release.profiles>
+                <maven.test.skip>true</maven.test.skip>
+                <skipTests>true</skipTests>
+                <japicmp.skip>true</japicmp.skip>
+                <animal.sniffer.skip>true</animal.sniffer.skip>
+                <spotbugs.skip>true</spotbugs.skip>
+                <checkstyle.skip>true</checkstyle.skip>
+                <enforcer.skip>true</enforcer.skip>
+                <jacoco.skip>true</jacoco.skip>
+                <modulemaker.skip>true</modulemaker.skip>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${version.plugin.publishing}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <autoPublish>true</autoPublish>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <!-- Runs the build with compatibility for Java 6 JVMs. -->
         <profile>
