@@ -156,10 +156,10 @@ jobs:
           ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report \
             -DrepoToken=${{ secrets.coveralls }} \
             -Pextras \
-            -Pchecks \ 
+            -Pchecks \
             -Panalysis \
             -Pintegration \
-            -Pmulti-release \ 
+            -Pmulti-release \
             -Pchecksum-enforce
   release:
     name: Release new version
