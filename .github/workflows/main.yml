@@ -195,6 +195,7 @@ jobs:
           gpg-private-key: ${{ secrets.gpg_secret }}
       - name: Publish new versions
         run: |
+          set -e
           git config user.name "${{ github.event.head_commit.committer.name }}"
           git config user.email "${{ github.event.head_commit.committer.email }}"
           CURRENT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
@@ -234,6 +235,6 @@ jobs:
             -multi-release \
             -Pchecksum-enforce
           ./mvnw versions:set -DnewVersion=$NEXT_SNAPSHOT_VERSION -DgenerateBackupPoms=false -Pchecksum-enforce
-          git add git add --all
+          git add --all
           git commit -m "Start next development iteration $NEXT_SNAPSHOT_VERSION"
-          git push --tags
+          git push --follow-tags
