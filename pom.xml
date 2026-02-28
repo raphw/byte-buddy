@@ -453,7 +453,7 @@
                         <version>${version.plugin.publishing}</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <autoPublish>true</autoPublish>
+                            <autoPublish>false</autoPublish>
                             <publishingServerId>central</publishingServerId>
                         </configuration>
                     </plugin>
@@ -486,7 +486,7 @@
                         <version>${version.plugin.publishing}</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <autoPublish>true</autoPublish>
+                            <autoPublish>false</autoPublish>
                             <publishingServerId>central</publishingServerId>
                         </configuration>
                     </plugin>
