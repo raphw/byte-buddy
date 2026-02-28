@@ -222,4 +222,8 @@ jobs:
             -Dgradle.key=${{ secrets.gradle_key }} \
             -Dgradle.secret=${{ secrets.gradle_secret }} \
             -Ppublish-jdk8 \
+            -Pextras \
+            -Pgpg \
+            -Pgradle-release \
+            -Pupgrade-release \
             -Pchecksum-enforce
