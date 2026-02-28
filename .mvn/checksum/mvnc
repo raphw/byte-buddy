@@ -19,9 +19,9 @@
 # ----------------------------------------------------------------------------
 
 # Possible user configuration.
-checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.3/maven-checksum-extension-0.0.3.jar"
+checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.4/maven-checksum-extension-0.0.4.jar"
 checksumJar="maven-checksum-extension.jar"
-checksumSha256Sum="ac1f5da5be49bb94db9b4cb16c447ca656332e8d90460a798cc18a9036651de6"
+checksumSha256Sum="077624a1d2037082b3f22262de55854bbb358097a3c7d6552456e3e3fbbd8a19"
 
 # Define log function.
 log() {
