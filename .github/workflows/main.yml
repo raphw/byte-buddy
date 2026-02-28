@@ -198,22 +198,14 @@ jobs:
           git config user.name "${{ github.event.head_commit.committer.name }}"
           git config user.email "${{ github.event.head_commit.committer.email }}"
           CURRENT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
-          BASE_VERSION=${CURRENT_VERSION%-SNAPSHOT}
-          JDK5_VERSION="${BASE_VERSION}-jdk5"
-          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform \
-            -DreleaseVersion=${JDK5_VERSION} \
-            -Dtag=byte-buddy-${BASE_VERSION} \
-            -Drepository.url=https://${{ github.actor }}:${{ secrets.github_token }}@github.com/${{ github.repository }}.git \
-            -Dcentral.username=${{ secrets.central_user }} \
-            -Dcentral.password=${{ secrets.central_password }} \
-            -Dgpg.passphrase=${{ secrets.gpg_passphrase }} \
-            -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 \
-            -Dgradle.key=${{ secrets.gradle_key }} \
-            -Dgradle.secret=${{ secrets.gradle_secret }} \
-            -Ppublish-jdk5 \
-            -Pchecksum-enforce
-          git checkout byte-buddy-${BASE_VERSION}
-          ./mvnw versions:set -DnewVersion=${BASE_VERSION} -DgenerateBackupPoms=false
+          RELEASE_VERSION=${CURRENT_VERSION%-SNAPSHOT}
+          IFS='.' read -r MAJOR_VERSION MINOR_VERSION PATCH_VERSION <<< "${RELEASE_VERSION}"
+          NEXT_PATCH_VERSION=$((PATCH_VERSION + 1))
+          NEXT_SNAPSHOT_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${NEXT_PATCH_VERSION}-SNAPSHOT"
+          ./mvnw versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false -Pchecksum-enforce
+          git add --all
+          git commit -m "Releasing Byte Buddy $RELEASE_VERSION"
+          git tag -a "v$RELEASE_VERSION" -m "Byte Buddy $RELEASE_VERSION"
           ./mvnw -B -s .mvn/release.settings.xml clean deploy \
             -Dcentral.username=${{ secrets.central_user }} \
             -Dcentral.password=${{ secrets.central_password }} \
@@ -225,5 +217,23 @@ jobs:
             -Pextras \
             -Pgpg \
             -Pgradle-release \
-            -Pupgrade-release \
+            -upgrade-release \
             -Pchecksum-enforce
+          ./mvnw versions:set -DnewVersion=${RELEASE_VERSION}-jdk5 -DgenerateBackupPoms=false -Pchecksum-enforce
+          ./mvnw -B -s .mvn/release.settings.xml clean deploy \
+            -Dcentral.username=${{ secrets.central_user }} \
+            -Dcentral.password=${{ secrets.central_password }} \
+            -Dgpg.passphrase=${{ secrets.gpg_passphrase }} \
+            -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 \
+            -Dgradle.key=${{ secrets.gradle_key }} \
+            -Dgradle.secret=${{ secrets.gradle_secret }} \
+            -Ppublish-jdk5 \
+            -Pextras \
+            -Pgpg \
+            -Pgradle-release \
+            -multi-release \
+            -Pchecksum-enforce
+          ./mvnw versions:set -DnewVersion=$NEXT_SNAPSHOT_VERSION -DgenerateBackupPoms=false -Pchecksum-enforce
+          git add git add --all
+          git commit -m "Start next development iteration $NEXT_SNAPSHOT_VERSION"
+          git push --tags
