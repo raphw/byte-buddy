@@ -1699,6 +1699,8 @@ org.apache.maven.plugins:maven-enforcer-plugin:jar:1.4.1 122800fa10c3cc82ab6a979
 org.apache.maven.plugins:maven-enforcer-plugin:jar:3.1.0 4ef6e99a7fa0483465e6d0a26e71461287f604eaa40cd82f1e77c1225c5b728e
 org.apache.maven.plugins:maven-enforcer-plugin:pom:1.4.1 478e2147a8a0c546947ef1e3cd2e3bea80e4e2bcd51fd7cf7700c479f9a5516b
 org.apache.maven.plugins:maven-enforcer-plugin:pom:3.1.0 1d68782011b1ff04a14079e4572864d468bd2f691de6e4bb682ca886fa6ffe19
+org.apache.maven.plugins:maven-gpg-plugin:jar:3.0.1 d2ffe5a02e3107154376fdfafe53e444e491dd280122aff2b7277a6a293710c9
+org.apache.maven.plugins:maven-gpg-plugin:pom:3.0.1 e69f8c98a2eec0ace050d98fb5b2ffe7a58508f7ce81b1348d10fd4cb4192ea8
 org.apache.maven.plugins:maven-help-plugin:jar:2.2 bcd2e866fa59388e30b21eb66ca5e837df4ac642a74a95a2ab99d6b56fadbe23
 org.apache.maven.plugins:maven-help-plugin:jar:3.2.0 8e1523b7afd9fce3974040e1bb64e0a065ba686c97e1137e2b8960932a29de11
 org.apache.maven.plugins:maven-help-plugin:pom:2.2 bec9c840463172b1763433ecc60dd082667dffa0371837260aab73f84cdff5cc
@@ -1940,9 +1942,11 @@ org.apache.maven.shared:file-management:pom:3.0.0 0ad8749b05438dd80b6f421dcad956
 org.apache.maven.shared:file-management:pom:3.1.0 5e93a63b3042023e558dcbeb19914ce82e6a6fbccdbd68797f80b135121a8bde
 org.apache.maven.shared:maven-artifact-transfer:jar:0.10.0 6f919f97c9272263fa910cfe7fa88595982a0451e7d7b121cca8ac85f6162882
 org.apache.maven.shared:maven-artifact-transfer:jar:0.10.1 303804aa1c7255d29749c41ca6949a7c3da098823adc763c27411266dae012bc
+org.apache.maven.shared:maven-artifact-transfer:jar:0.12.0 9db171bd616cb69c295aeac050bb4c564e5d1302aa69bd85c8fbf949c2277eca
 org.apache.maven.shared:maven-artifact-transfer:jar:0.13.1 1ac88accde99ed71e65253bd130868c0e654f940f01ade073b895eb2f817cf06
 org.apache.maven.shared:maven-artifact-transfer:pom:0.10.0 b78766b1bcf69834ed931e20ad1ccbb92dbcd03d517b568b207108f9cd89bed8
 org.apache.maven.shared:maven-artifact-transfer:pom:0.10.1 ac9c76befa736c2ffd5f1d8371c1868d21d1660b8551c510d41a982dc6af8bd5
+org.apache.maven.shared:maven-artifact-transfer:pom:0.12.0 3a7cf86df5bd621c5b2fa2fa5af7de7d58ebbe0dc2433f740a95d842eba6cef3
 org.apache.maven.shared:maven-artifact-transfer:pom:0.13.1 e4b15a1e7cfbfe480408cfbaa148d66ea3324bf19e9ac6d6c17053bdb18ac4cd
 org.apache.maven.shared:maven-common-artifact-filters:jar:1.3 eabb4ba67917a8d5762f35f35314105bac2265588295c6b77a4feac9d210a336
 org.apache.maven.shared:maven-common-artifact-filters:jar:1.4 5a769ea4c7530fb53c6b4b979a0f822e4c07770bc696838280abd1f9467abe08
