@@ -28,17 +28,19 @@ class file version without experimental support. The oldest supported Java versi
 of any older version can be transformed. As of 1.17.0, support will extend to new Java versions unless previously
 unknown class file features are discovered. This is possible through Byte Buddy's support of the Class File API. 
 
-| Byte Buddy version | Supported Java version |
-|--------------------|------------------------|
-| 1.17.0             | 25+                    |
-| 1.15.4             | 24                     |
-| 1.14.12            | 23                     |
-| 1.14.8             | 22                     |
-| 1.14.3             | 21                     |
-| 1.12.18            | 20                     |
-| 1.12.9             | 19                     |
-| 1.11.6             | 18                     |
-| 1.10.19            | 17                     |
+| Byte Buddy version | Supported Java version | Minimum JVM version |
+|--------------------|------------------------|---------------------|
+| 1.18.7             | 25+                    | 8                   |
+| 1.18.7-jdk5        | 25+                    | 5                   |
+| 1.17.0             | 25+                    | 5                   |
+| 1.15.4             | 24                     | 5                   |
+| 1.14.12            | 23                     | 5                   |
+| 1.14.8             | 22                     | 5                   |
+| 1.14.3             | 21                     | 5                   |
+| 1.12.18            | 20                     | 5                   |
+| 1.12.9             | 19                     | 5                   |
+| 1.11.6             | 18                     | 5                   |
+| 1.10.19            | 17                     | 5                   |
 
 Usage
 =====
