@@ -218,7 +218,7 @@ jobs:
             -Pextras \
             -Pgpg \
             -Pgradle-release \
-            -upgrade-release \
+            -Pupgrade-release \
             -Pchecksum-enforce
           ./mvnw versions:set -DnewVersion=${RELEASE_VERSION}-jdk5 -DgenerateBackupPoms=false -Pchecksum-enforce
           ./mvnw -B -s .mvn/release.settings.xml clean deploy \
@@ -232,7 +232,7 @@ jobs:
             -Pextras \
             -Pgpg \
             -Pgradle-release \
-            -multi-release \
+            -Pmulti-release \
             -Pchecksum-enforce
           ./mvnw versions:set -DnewVersion=$NEXT_SNAPSHOT_VERSION -DgenerateBackupPoms=false -Pchecksum-enforce
           git add --all
