@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 13. February 2026: version 1.18.6
+### 27. February 2026: version 1.18.6
 
 _Accidental release during rework of release pipeline. Functional, but with incorrect suffices._
 
