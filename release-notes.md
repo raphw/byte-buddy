@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. February 2026: version 1.18.6
+
+_Accidental release during rework of release pipeline. Functional, but with incorrect suffices._
+
 ### 15. February 2026: version 1.18.5
 
 - Eagerly resolve of canonical files during attach emulation to avoid failure when process ends before file can be deleted.

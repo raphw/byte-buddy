@@ -206,7 +206,7 @@ jobs:
           ./mvnw versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false -Pchecksum-enforce
           git add --all
           git commit -m "Releasing Byte Buddy $RELEASE_VERSION"
-          git tag -a "v$RELEASE_VERSION" -m "Byte Buddy $RELEASE_VERSION"
+          git tag -a "byte-buddy-$RELEASE_VERSION" -m "Byte Buddy $RELEASE_VERSION"
           ./mvnw -B -s .mvn/release.settings.xml clean deploy \
             -Dcentral.username=${{ secrets.central_user }} \
             -Dcentral.password=${{ secrets.central_password }} \
