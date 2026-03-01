@@ -205,7 +205,7 @@ jobs:
           NEXT_SNAPSHOT_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${NEXT_PATCH_VERSION}-SNAPSHOT"
           ./mvnw versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false -Pchecksum-enforce
           git add --all
-          git commit -m "Releasing Byte Buddy $RELEASE_VERSION"
+          git commit -m "[publish] Releasing Byte Buddy $RELEASE_VERSION"
           git tag -a "byte-buddy-$RELEASE_VERSION" -m "Byte Buddy $RELEASE_VERSION"
           ./mvnw -B -s .mvn/release.settings.xml clean deploy \
             -Dcentral.username=${{ secrets.central_user }} \
@@ -236,5 +236,5 @@ jobs:
             -Pchecksum-enforce
           ./mvnw versions:set -DnewVersion=$NEXT_SNAPSHOT_VERSION -DgenerateBackupPoms=false -Pchecksum-enforce
           git add --all
-          git commit -m "Start next development iteration $NEXT_SNAPSHOT_VERSION"
+          git commit -m "[publish] Start next development iteration $NEXT_SNAPSHOT_VERSION"
           git push --follow-tags

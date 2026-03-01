@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. March 2026: version 1.18.7
+
+- Introduce new versioning concept with *-jdk5* suffix for backwards-compatible jar and Java 8 baseline for regular jar.
+
 ### 27. February 2026: version 1.18.6
 
 _Accidental release during rework of release pipeline. Functional, but with incorrect suffices._
