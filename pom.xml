@@ -81,7 +81,7 @@
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
         <version.plugin.install>3.0.1</version.plugin.install>
         <version.plugin.deploy>3.0.0</version.plugin.deploy>
-        <version.plugin.publishing>0.7.0</version.plugin.publishing>
+        <version.plugin.publishing>0.10.0</version.plugin.publishing>
         <version.plugin.versions>2.18.0</version.plugin.versions>
         <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
         <version.plugin.source>3.2.1</version.plugin.source>
@@ -453,7 +453,7 @@
                         <version>${version.plugin.publishing}</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <autoPublish>false</autoPublish>
+                            <autoPublish>true</autoPublish>
                             <publishingServerId>central</publishingServerId>
                         </configuration>
                     </plugin>
@@ -486,7 +486,7 @@
                         <version>${version.plugin.publishing}</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <autoPublish>false</autoPublish>
+                            <autoPublish>true</autoPublish>
                             <publishingServerId>central</publishingServerId>
                         </configuration>
                     </plugin>
