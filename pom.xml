@@ -124,7 +124,7 @@
         <japicmp.skip>false</japicmp.skip>
         <modulemaker.skip>false</modulemaker.skip>
         <javadoc.download.skip>false</javadoc.download.skip>
-        <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
+        <repository.git-url>git@github.com:raphw/byte-buddy.git</repository.git-url>
         <release.profiles>extras,gpg,gradle-release,multi-release</release.profiles>
         <surefire.arguments />
     </properties>
@@ -159,9 +159,9 @@
     <!-- Cannot fix artifact appending, as this requires newer Maven what breaks builds on old JDKs.
          https://maven.apache.org/ref/3.9.9/maven-model-builder/index.html#inheritance-assembly -->
     <scm>
-        <connection>scm:git:${repository.url}</connection>
-        <developerConnection>scm:git:${repository.url}</developerConnection>
-        <url>${repository.url}</url>
+        <connection>scm:git:${repository.git-url}</connection>
+        <developerConnection>scm:git:${repository.git-url}</developerConnection>
+        <url>https://github.com/raphw/byte-buddy</url>
         <tag>HEAD</tag>
     </scm>
 
