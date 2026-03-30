@@ -428,13 +428,13 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
 
 <pre class="prettyprint">
 ByteBuddy byteBuddy = new ByteBuddy();
-byteBuddy.withNamingStrategy(new NamingStrategy.SuffixingRandom("suffix"));
+byteBuddy.with(new NamingStrategy.SuffixingRandom("suffix"));
 DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).make();
 </pre>
 
 <p>
     你可能期望用自定义命名策略<code>new NamingStrategy.SuffixingRandom("suffix")</code>生成动态类型。
-    <code>withNamingStrategy</code>方法的调用不是改变存储在<code>byteBuddy</code>变量中的实例，
+    <code>with</code>方法的调用不是改变存储在<code>byteBuddy</code>变量中的实例，
     而是返回一个自定义且丢失了的<code>ByteBuddy</code>实例。因此，此动态类型是用原始创建的默认配置创建的。
 </p>
 
