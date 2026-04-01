@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. April 2026: version 1.18.8
+
+- Improve support for repeatable builds.
+- Fix reordering of exception table in type initializers when instrumenting.
+
 ### 1. March 2026: version 1.18.7
 
 - Introduce new versioning concept with *-jdk5* suffix for backwards-compatible jar and Java 8 baseline for regular jar.
