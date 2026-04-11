@@ -987,7 +987,9 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
                 protected static Initializable make() throws Exception {
-                    if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(GraalImageCode.getCurrent().isDefined())))) {
+                    if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(ClassFileVersion
+                            .ofThisVm()
+                            .isAtLeast(ClassFileVersion.JAVA_V25) || GraalImageCode.getCurrent().isDefined())))) {
                         return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
                     }
                     Class<?> unsafe = Class.forName("sun.misc.Unsafe");
