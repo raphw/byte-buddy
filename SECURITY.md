@@ -70,6 +70,42 @@ Advisories will include:
 
 ---
 
+## Incident Response Plan
+
+### Identification
+
+- Incidents may be identified through vulnerability reports, dependency alerts, or community reports
+- All reports received via GitHub Security Advisories are treated as potential incidents
+
+### Assessment
+
+- The maintainer evaluates severity using the classification above
+- Critical and High issues are prioritized immediately
+- Affected versions and attack surface are determined
+
+### Containment
+
+- If a released artifact is compromised, affected versions are flagged in the advisory
+- Users are directed to pin a known-safe version or disable the affected feature (e.g., detaching a Java agent)
+
+### Remediation
+
+- A fix is developed and validated in a private branch
+- The fix is released as a new version on Maven Central
+- The GitHub Security Advisory is updated with the fixed version and mitigation steps
+
+### Notification
+
+- Users are notified through the GitHub Security Advisory
+- Critical issues may also be announced via release notes and the project README
+
+### Post-Incident Review
+
+- The root cause and timeline are documented in the advisory
+- Process improvements are applied to prevent recurrence
+
+---
+
 ## Security Best Practices for Users
 
 - Restrict use of Java agents in production environments
