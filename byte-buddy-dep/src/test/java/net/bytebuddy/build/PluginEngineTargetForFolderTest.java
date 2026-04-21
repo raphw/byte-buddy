@@ -209,4 +209,12 @@ public class PluginEngineTargetForFolderTest {
         when(element.getName()).thenReturn("../illegal");
         target.write(Plugin.Engine.Source.Origin.NO_MANIFEST).retain(element);
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCannotWriteRelativeDirectory() throws Exception {
+        Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
+        Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
+        when(element.getName()).thenReturn("../illegal/");
+        target.write(Plugin.Engine.Source.Origin.NO_MANIFEST).retain(element);
+    }
 }

@@ -3860,11 +3860,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public void retain(Source.Element element) throws IOException {
                     String name = element.getName();
                     File target = new File(folder, name);
-                    if (!name.endsWith("/")) {
+                    String basePath = folder.getCanonicalPath(), targetPath = target.getCanonicalPath(), prefix = basePath;
+                    if (!prefix.endsWith(File.separator)) {
+                        prefix += File.separatorChar;
+                    }
+                    if (!targetPath.equals(basePath) && !targetPath.startsWith(prefix)) {
+                        throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
+                    } else if (!name.endsWith("/")) {
                         File resolved = element.resolveAs(File.class);
-                        if (!target.getCanonicalPath().startsWith(folder.getCanonicalPath() + File.separatorChar)) {
-                            throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
-                        } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
+                        if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
                         } else if (resolved != null && !resolved.equals(target)) {
                             if (link) {
