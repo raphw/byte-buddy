@@ -18,7 +18,7 @@ package net.bytebuddy.build.gradle;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import org.gradle.api.tasks.CompileClasspath;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
@@ -114,7 +114,7 @@ public class ByteBuddyJarsTask extends AbstractByteBuddyTask {
      * @return The class path to supply to the plugin engine.
      */
     @InputFiles
-    @CompileClasspath
+    @Classpath
     public Iterable<File> getClassPath() {
         return classPath;
     }

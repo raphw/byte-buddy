@@ -20,7 +20,7 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.CompileClasspath;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
@@ -87,7 +87,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      * @return The class path to supply to the plugin engine.
      */
     @InputFiles
-    @CompileClasspath
+    @Classpath
     public abstract ConfigurableFileCollection getClassPath();
 
     /**
@@ -270,7 +270,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
     public abstract static class WithIncrementalClassPath extends ByteBuddyTask {
 
         @Incremental
-        @CompileClasspath
+        @Classpath
         @Override
         public abstract ConfigurableFileCollection getClassPath();
 

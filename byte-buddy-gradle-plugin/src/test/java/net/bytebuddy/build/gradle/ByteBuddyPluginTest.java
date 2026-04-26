@@ -1,5 +1,8 @@
 package net.bytebuddy.build.gradle;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.jar.asm.ClassReader;
 import net.bytebuddy.jar.asm.ClassVisitor;
 import net.bytebuddy.jar.asm.FieldVisitor;
@@ -21,6 +24,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -229,6 +234,84 @@ public class ByteBuddyPluginTest {
         assertThat(task.getOutcome(), is(TaskOutcome.SUCCESS));
         assertResult(FOO, "sample/", "SampleClass.class");
         assertThat(result.task(":byteBuddyTest"), nullValue(BuildTask.class));
+    }
+
+    @Test
+    @IntegrationRule.Enforce
+    public void testClassPathFingerprintTracksMethodBodies() throws Exception {
+        // Verifies the task's classPath input uses @Classpath (full bytecode hashing) rather
+        // than @CompileClasspath (ABI-only), since plugins may inspect arbitrary bytecode.
+        File dependencyJar = new File(folder, "dependency.jar");
+        writeClassPathJar(dependencyJar, 1);
+        write("build.gradle",
+            "plugins {",
+            "  id 'java'",
+            "  id 'net.bytebuddy.byte-buddy-gradle-plugin'",
+            "}",
+            "dependencies {",
+            "  implementation files('" + dependencyJar.getAbsolutePath().replace('\\', '/') + "')",
+            "}",
+            "byteBuddy {",
+            "  transformation {",
+            "    plugin = net.bytebuddy.build.Plugin.NoOp.class",
+            "  }",
+            "}");
+        write("src/main/java/sample/SampleClass.java",
+            "package sample;",
+            "public class SampleClass { }");
+        // Prime the cache. GradleRunner.build() throws on failure, so no outcome assertion
+        // is needed here.
+        GradleRunner.create()
+            .withProjectDir(folder)
+            .withArguments("byteBuddy")
+            .withPluginClasspath()
+            .build();
+
+        // Re-run with no input changes: the task must be UP_TO_DATE. This rules out the
+        // possibility that a third-run SUCCESS is caused by some unrelated volatile input
+        // rather than by the classpath jar swap performed below.
+        TaskOutcome unchangedOutcome = GradleRunner.create()
+            .withProjectDir(folder)
+            .withArguments("byteBuddy")
+            .withPluginClasspath()
+            .build()
+            .task(":byteBuddy")
+            .getOutcome();
+        assertThat(unchangedOutcome, is(TaskOutcome.UP_TO_DATE));
+
+        // Replace the dependency jar with a variant that has the SAME ABI but a different
+        // method body. With @CompileClasspath this change is invisible to the cache key
+        // and the task is incorrectly reported as UP_TO_DATE. With @Classpath the
+        // byte-level change busts the fingerprint and the task re-executes (SUCCESS).
+        writeClassPathJar(dependencyJar, 2);
+        TaskOutcome swappedOutcome = GradleRunner.create()
+            .withProjectDir(folder)
+            .withArguments("byteBuddy")
+            .withPluginClasspath()
+            .build()
+            .task(":byteBuddy")
+            .getOutcome();
+        assertThat(swappedOutcome, is(TaskOutcome.SUCCESS));
+    }
+
+    private static void writeClassPathJar(File jar, int constant) throws IOException {
+        // Two invocations with different `constant` values share the same public ABI but
+        // have different method bodies, so they must produce different bytecode hashes.
+        byte[] bytes = new ByteBuddy()
+            .subclass(Object.class)
+            .name("sample.ClassPathClass")
+            .defineMethod("value", int.class, Visibility.PUBLIC)
+            .intercept(FixedValue.value(constant))
+            .make()
+            .getBytes();
+        JarOutputStream out = new JarOutputStream(new FileOutputStream(jar));
+        try {
+            out.putNextEntry(new JarEntry("sample/ClassPathClass.class"));
+            out.write(bytes);
+            out.closeEntry();
+        } finally {
+            out.close();
+        }
     }
 
     private File create(List<String> segments) {
