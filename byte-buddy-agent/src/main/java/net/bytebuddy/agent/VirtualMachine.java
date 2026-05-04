@@ -1712,13 +1712,23 @@ public interface VirtualMachine {
                     ? new File(dispatcher.getTemporaryFolder(processId), ".com_ibm_tools_attach")
                     : new File(temporary);
             long userId = dispatcher.userId();
-            RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
+            File attachLockFile = new File(directory, "_attachlock");
+            boolean attachLockCreated = attachLockFile.createNewFile();
+            RandomAccessFile attachLock = new RandomAccessFile(attachLockFile, "rw");
             try {
+                if (attachLockCreated || userId == 0 || dispatcher.getOwnerIdOf(attachLockFile) == userId) {
+                    dispatcher.setPermissions(attachLockFile, 0666);
+                }
                 FileLock attachLockLock = attachLock.getChannel().lock();
                 try {
                     List<Properties> virtualMachines;
-                    RandomAccessFile master = new RandomAccessFile(new File(directory, "_master"), "rw");
+                    File masterFile = new File(directory, "_master");
+                    boolean masterCreated = masterFile.createNewFile();
+                    RandomAccessFile master = new RandomAccessFile(masterFile, "rw");
                     try {
+                        if (masterCreated || userId == 0 || dispatcher.getOwnerIdOf(masterFile) == userId) {
+                            dispatcher.setPermissions(masterFile, 0666);
+                        }
                         FileLock masterLock = master.getChannel().lock();
                         try {
                             File[] vmFolder = directory.listFiles();
