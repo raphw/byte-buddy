@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
+
 import java.lang.annotation.Annotation;
 import java.util.Comparator;
 
@@ -31,9 +33,13 @@ public enum AnnotationComparator implements Comparator<Annotation> {
     /**
      * {@inheritDoc}
      */
-    public int compare(Annotation left, Annotation right) {
+    public int compare(@MaybeNull Annotation left, @MaybeNull Annotation right) {
         if (left == right) {
             return 0;
+        } else if (left == null) {
+            return 1;
+        } else if (right == null) {
+            return -1;
         }
         return left.annotationType().getName().compareTo(right.annotationType().getName());
     }

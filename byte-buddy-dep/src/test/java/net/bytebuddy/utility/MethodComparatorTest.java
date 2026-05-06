@@ -37,6 +37,13 @@ public class MethodComparatorTest {
                 Sample.class.getDeclaredMethod("method", String.class)), is(-10));
     }
 
+    @Test
+    public void testNullSafe() throws Exception {
+        assertThat(MethodComparator.INSTANCE.compare(null, null) == 0, is(true));
+        assertThat(MethodComparator.INSTANCE.compare(null, Sample.class.getDeclaredMethod("method")) > 0, is(true));
+        assertThat(MethodComparator.INSTANCE.compare(Sample.class.getDeclaredMethod("method"), null) < 0, is(true));
+    }
+
     @SuppressWarnings("unused")
     private static class Sample {
 

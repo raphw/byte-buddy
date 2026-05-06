@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
+
 import java.util.Comparator;
 
 /**
@@ -30,9 +32,13 @@ public enum TypeComparator implements Comparator<Class<?>> {
     /**
      * {@inheritDoc}
      */
-    public int compare(Class<?> left, Class<?> right) {
+    public int compare(@MaybeNull Class<?> left, @MaybeNull Class<?> right) {
         if (left == right) {
             return 0;
+        } else if (left == null) {
+            return 1;
+        } else if (right == null) {
+            return -1;
         }
         return left.getName().compareTo(right.getName());
     }

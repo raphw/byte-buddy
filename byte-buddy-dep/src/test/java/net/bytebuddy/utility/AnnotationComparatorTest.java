@@ -29,4 +29,11 @@ public class AnnotationComparatorTest {
         assertThat(AnnotationComparator.INSTANCE.compare(left, right) < 0, is(true));
         assertThat(AnnotationComparator.INSTANCE.compare(right, left) > 0, is(true));
     }
+
+    @Test
+    public void testNullSafe() {
+        assertThat(AnnotationComparator.INSTANCE.compare(null, null) == 0, is(true));
+        assertThat(AnnotationComparator.INSTANCE.compare(null, right) > 0, is(true));
+        assertThat(AnnotationComparator.INSTANCE.compare(left, null) < 0, is(true));
+    }
 }

@@ -24,6 +24,13 @@ public class FieldComparatorTest {
                 Sample.class.getDeclaredField("first")), is(13));
     }
 
+    @Test
+    public void testNullSafe() throws Exception {
+        assertThat(FieldComparator.INSTANCE.compare(null, null) == 0, is(true));
+        assertThat(FieldComparator.INSTANCE.compare(null, Sample.class.getDeclaredField("first")) > 0, is(true));
+        assertThat(FieldComparator.INSTANCE.compare(Sample.class.getDeclaredField("first"), null) < 0, is(true));
+    }
+
     @SuppressWarnings("unused")
     private static class Sample {
 

@@ -233,12 +233,24 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         /**
-         * Creates a new list of loaded annotations.
+         * Creates a new list of loaded annotations. Any {@code null} entries are filtered out as the JVM's
+         * reflection API can return {@code null} for annotations whose annotation type is not available on
+         * the class path.
          *
          * @param annotations The represented annotations.
          */
         public ForLoadedAnnotations(List<? extends Annotation> annotations) {
-            this.annotations = annotations;
+            List<Annotation> resolved = null;
+            for (int index = 0; index < annotations.size(); index++) {
+                if (annotations.get(index) == null) {
+                    if (resolved == null) {
+                        resolved = new ArrayList<Annotation>(annotations.subList(0, index));
+                    }
+                } else if (resolved != null) {
+                    resolved.add(annotations.get(index));
+                }
+            }
+            this.annotations = resolved == null ? annotations : resolved;
         }
 
         /**

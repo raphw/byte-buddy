@@ -37,6 +37,13 @@ public class ConstructorComparatorTest {
                 Sample.class.getDeclaredConstructor(String.class)), is(-10));
     }
 
+    @Test
+    public void testNullSafe() throws Exception {
+        assertThat(ConstructorComparator.INSTANCE.compare(null, null) == 0, is(true));
+        assertThat(ConstructorComparator.INSTANCE.compare(null, Sample.class.getDeclaredConstructor()) > 0, is(true));
+        assertThat(ConstructorComparator.INSTANCE.compare(Sample.class.getDeclaredConstructor(), null) < 0, is(true));
+    }
+
     @SuppressWarnings("unused")
     private static class Sample {
 

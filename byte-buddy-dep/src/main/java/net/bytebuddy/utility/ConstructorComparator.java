@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
+
 import java.lang.reflect.Constructor;
 import java.util.Comparator;
 
@@ -31,9 +33,13 @@ public enum ConstructorComparator implements Comparator<Constructor<?>> {
     /**
      * {@inheritDoc}
      */
-    public int compare(Constructor<?> left, Constructor<?> right) {
+    public int compare(@MaybeNull Constructor<?> left, @MaybeNull Constructor<?> right) {
         if (left == right) {
             return 0;
+        } else if (left == null) {
+            return 1;
+        } else if (right == null) {
+            return -1;
         }
         int comparison = left.getName().compareTo(right.getName());
         if (comparison == 0) {
