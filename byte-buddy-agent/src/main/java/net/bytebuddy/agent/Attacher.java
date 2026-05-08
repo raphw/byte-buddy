@@ -27,10 +27,11 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class Attacher {
 
-    /**
-     * Indicates that any error during attachment should be dumped to a given file location.
-     */
-    public static final String DUMP_PROPERTY = "net.bytebuddy.agent.attacher.dump";
+	/**
+	 * Indicates that any error during attachment should be dumped to a given file location.
+	 * When set for external attachment, diagnostic information is appended to this file.
+	 */
+	public static final String DUMP_PROPERTY = "net.bytebuddy.agent.attacher.dump";
 
     /**
      * The attacher provides only {@code static} utility methods and should not be instantiated.

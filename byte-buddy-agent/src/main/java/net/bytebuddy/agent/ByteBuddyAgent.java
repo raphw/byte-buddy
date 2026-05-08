@@ -670,18 +670,22 @@ public class ByteBuddyAgent {
             for (File jar : externalAttachment.getClassPath()) {
                 classPath.append(File.pathSeparatorChar).append(jar.getCanonicalPath());
             }
-            if (new ProcessBuilder(System.getProperty(JAVA_HOME)
-                    + File.separatorChar + "bin"
-                    + File.separatorChar + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java"),
-                    "-D" + Attacher.DUMP_PROPERTY + AGENT_ARGUMENT_SEPARATOR + System.getProperty(Attacher.DUMP_PROPERTY, ""),
-                    CLASS_PATH_ARGUMENT,
-                    classPath.toString(),
-                    Attacher.class.getName(),
-                    externalAttachment.getVirtualMachineType(),
-                    processId,
-                    agent.getAbsolutePath(),
-                    Boolean.toString(isNative),
-                    argument == null ? "" : (AGENT_ARGUMENT_SEPARATOR + argument)).start().waitFor() != 0) {
+            List<String> command = new ArrayList<String>();
+            command.add(System.getProperty(JAVA_HOME) + File.separatorChar + "bin" + File.separatorChar
+                    + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java"));
+            command.add("-D" + Attacher.DUMP_PROPERTY + AGENT_ARGUMENT_SEPARATOR + System.getProperty(Attacher.DUMP_PROPERTY, ""));
+            command.add(CLASS_PATH_ARGUMENT);
+            command.add(classPath.toString());
+            command.add(Attacher.class.getName());
+            command.add(externalAttachment.getVirtualMachineType());
+            command.add(processId);
+            command.add(agent.getAbsolutePath());
+            command.add(Boolean.toString(isNative));
+            command.add(argument == null ? "" : (AGENT_ARGUMENT_SEPARATOR + argument));
+
+            dumpExternalAttachmentCommand(command);
+
+            if (new ProcessBuilder(command).start().waitFor() != 0) {
                 throw new IllegalStateException("Could not self-attach to current VM using external process - set a property "
                         + Attacher.DUMP_PROPERTY
                         + " to dump the process output to a file at the specified location");
@@ -690,6 +694,37 @@ public class ByteBuddyAgent {
             if (attachmentJar != null) {
                 if (!attachmentJar.delete()) {
                     attachmentJar.deleteOnExit();
+                }
+            }
+        }
+    }
+    /**
+     * Dumps the external attachment command if a dump location is configured.
+     *
+     * @param arguments The external attachment process arguments.
+     */
+    private static void dumpExternalAttachmentCommand(List<String> arguments) {
+        String dump = System.getProperty(Attacher.DUMP_PROPERTY);
+        if (dump == null || dump.length() == 0) {
+            return;
+        }
+        OutputStream outputStream = null;
+        try {
+            outputStream = new FileOutputStream(dump, true);
+            outputStream.write("Byte Buddy external attachment command line:".getBytes("UTF-8"));
+            outputStream.write(System.lineSeparator().getBytes("UTF-8"));
+            for (String argument : arguments) {
+                outputStream.write(argument.getBytes("UTF-8"));
+                outputStream.write(System.lineSeparator().getBytes("UTF-8"));
+            }
+        } catch (IOException ignored) {
+            /* do nothing */
+        } finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException ignored) {
+                    /* do nothing */
                 }
             }
         }
