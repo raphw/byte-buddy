@@ -23,10 +23,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +34,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.UnsupportedCharsetException;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -687,7 +688,9 @@ public class ByteBuddyAgent {
             String dump = System.getProperty(Attacher.DUMP_PROPERTY);
             if (dump != null && dump.length() > 0) {
                 try {
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(dump, true));
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                            new FileOutputStream(dump, true),
+                            "UTF-8"));
                     try {
                         for (String command : commands) {
                             writer.write(command);
@@ -699,6 +702,8 @@ public class ByteBuddyAgent {
                     }
                 } catch (IOException ignored) {
                     /* do nothing */
+                } catch (UnsupportedCharsetException exception) {
+                    throw new IllegalStateException(exception);
                 }
             }
             if (new ProcessBuilder(commands).start().waitFor() != 0) {
