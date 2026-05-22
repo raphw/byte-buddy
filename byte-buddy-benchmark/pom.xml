@@ -25,6 +25,7 @@
     <properties>
         <benchmark.mainClass>net.bytebuddy.benchmark.runner.BenchmarkRunner</benchmark.mainClass>
         <japicmp.skip>true</japicmp.skip>
+        <surefire.arguments>-Dnet.bytebuddy.safe=false</surefire.arguments>
     </properties>
 
     <dependencies>
@@ -125,6 +126,19 @@
     </build>
 
     <profiles>
+        <!-- On JDK 9 and later, reflective ClassLoader.defineClass calls (used by cglib and javassist) require an
+             explicit 'add-opens' for java.base/java.lang. The flag itself is not recognized on JDK 8, so it must be
+             applied conditionally. -->
+        <profile>
+            <id>benchmark-modular-args</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <surefire.arguments>-Dnet.bytebuddy.safe=false --add-opens java.base/java.lang=ALL-UNNAMED</surefire.arguments>
+            </properties>
+        </profile>
         <profile>
             <id>extras</id>
             <activation>
@@ -187,26 +201,6 @@
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <!-- Do not run tests on JDK 11 or later as the benchmark currently requires sun.misc.Unsafe::defineClass. -->
-        <profile>
-            <id>java11-tests</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>[11,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${version.plugin.surefire}</version>
-                        <configuration>
-                            <skipTests>true</skipTests>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

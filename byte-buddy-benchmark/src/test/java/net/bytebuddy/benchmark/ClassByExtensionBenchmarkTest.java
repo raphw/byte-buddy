@@ -1,15 +1,25 @@
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.benchmark.specimen.ExampleClass;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.UnsafeAccessRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassByExtensionBenchmarkTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Rule
+    public MethodRule unsafeAccessRule = new UnsafeAccessRule();
 
     private static final boolean BOOLEAN_VALUE = true;
 
@@ -75,6 +85,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithProxiesClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithProxy();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -84,6 +95,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithProxiesClassCreationCached() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithProxyAndReusedDelegator();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -93,6 +105,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithProxiesClassCreationWithTypePool() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithProxyWithTypePool();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -102,6 +115,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithProxiesClassCreationCachedWithTypePool() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithProxyAndReusedDelegatorWithTypePool();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -111,6 +125,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithAccessorClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAccessor();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -120,6 +135,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithAccessorClassCreationCached() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAccessorAndReusedDelegator();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -129,6 +145,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithAccessorClassCreationWithTypePool() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAccessorWithTypePool();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -138,6 +155,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithAccessorClassCreationCachedWithTypePool() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAccessorAndReusedDelegatorWithTypePool();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -147,6 +165,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithPrefixClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithPrefix();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -156,6 +175,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithPrefixClassCreationCached() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithPrefixAndReusedDelegator();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -165,6 +185,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithPrefixClassCreationWithTypePool() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithPrefixWithTypePool();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -174,6 +195,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyWithPrefixClassCreationCachedWithTypePool() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithPrefixAndReusedDelegatorWithTypePool();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -183,6 +205,7 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddySpecializedClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddySpecialized();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -192,6 +215,8 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(atMost = 10)
+    @UnsafeAccessRule.Enforce
     public void testCglibClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkCglib();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
@@ -201,6 +226,8 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(atMost = 10)
+    @UnsafeAccessRule.Enforce
     public void testJavassistClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkJavassist();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));

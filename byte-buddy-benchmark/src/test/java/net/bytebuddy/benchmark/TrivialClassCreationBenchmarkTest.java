@@ -1,8 +1,12 @@
 package net.bytebuddy.benchmark;
 
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.UnsafeAccessRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Proxy;
 
@@ -10,6 +14,12 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TrivialClassCreationBenchmarkTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Rule
+    public MethodRule unsafeAccessRule = new UnsafeAccessRule();
 
     private TrivialClassCreationBenchmark trivialClassCreationBenchmark;
 
@@ -25,6 +35,7 @@ public class TrivialClassCreationBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyClassCreation() throws Exception {
         Class<?> type = trivialClassCreationBenchmark.benchmarkByteBuddy();
         assertThat(type, not(CoreMatchers.<Class<?>>is(TrivialClassCreationBenchmark.BASE_CLASS)));
@@ -33,6 +44,8 @@ public class TrivialClassCreationBenchmarkTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(atMost = 10)
+    @UnsafeAccessRule.Enforce
     public void testCglibClassCreation() throws Exception {
         Class<?> type = trivialClassCreationBenchmark.benchmarkCglib();
         assertThat(type, not(CoreMatchers.<Class<?>>is(TrivialClassCreationBenchmark.BASE_CLASS)));
@@ -41,6 +54,8 @@ public class TrivialClassCreationBenchmarkTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(atMost = 10)
+    @UnsafeAccessRule.Enforce
     public void testJavassistClassCreation() throws Exception {
         Class<?> type = trivialClassCreationBenchmark.benchmarkJavassist();
         assertThat(type, not(CoreMatchers.<Class<?>>is(TrivialClassCreationBenchmark.BASE_CLASS)));

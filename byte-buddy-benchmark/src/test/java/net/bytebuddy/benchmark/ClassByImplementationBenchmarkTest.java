@@ -1,9 +1,13 @@
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.benchmark.specimen.ExampleInterface;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.UnsafeAccessRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
@@ -14,6 +18,12 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassByImplementationBenchmarkTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Rule
+    public MethodRule unsafeAccessRule = new UnsafeAccessRule();
 
     private static final boolean BOOLEAN_VALUE = true;
 
@@ -72,6 +82,7 @@ public class ClassByImplementationBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testBaseline() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.baseline();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
@@ -81,6 +92,7 @@ public class ClassByImplementationBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkByteBuddy();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
@@ -90,6 +102,7 @@ public class ClassByImplementationBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testByteBuddyClassCreationWithTypePool() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkByteBuddyWithTypePool();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
@@ -99,6 +112,8 @@ public class ClassByImplementationBenchmarkTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(atMost = 10)
+    @UnsafeAccessRule.Enforce
     public void testCglibClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkCglib();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
@@ -108,6 +123,8 @@ public class ClassByImplementationBenchmarkTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(atMost = 10)
+    @UnsafeAccessRule.Enforce
     public void testJavassistClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkJavassist();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
@@ -117,6 +134,7 @@ public class ClassByImplementationBenchmarkTest {
     }
 
     @Test
+    @UnsafeAccessRule.Enforce
     public void testJdkProxyClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkJdkProxy();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));

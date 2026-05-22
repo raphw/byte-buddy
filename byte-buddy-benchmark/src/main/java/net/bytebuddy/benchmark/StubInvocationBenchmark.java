@@ -131,9 +131,9 @@ public class StubInvocationBenchmark {
         ClassByImplementationBenchmark classByImplementationBenchmark = new ClassByImplementationBenchmark();
         baselineInstance = classByImplementationBenchmark.baseline();
         byteBuddyInstance = classByImplementationBenchmark.benchmarkByteBuddy();
+        jdkProxyInstance = classByImplementationBenchmark.benchmarkJdkProxy();
         cglibInstance = classByImplementationBenchmark.benchmarkCglib();
         javassistInstance = classByImplementationBenchmark.benchmarkJavassist();
-        jdkProxyInstance = classByImplementationBenchmark.benchmarkJdkProxy();
     }
 
     /**
