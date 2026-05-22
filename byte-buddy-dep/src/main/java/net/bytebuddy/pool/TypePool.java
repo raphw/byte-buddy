@@ -8174,6 +8174,14 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
+                @Override
+                public String getDescriptor() {
+                    return descriptor;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 @MaybeNull
                 public String getGenericSignature() {
                     return genericSignature;
@@ -8409,6 +8417,18 @@ public interface TypePool {
                  */
                 public int getModifiers() {
                     return modifiers;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public String getDescriptor() {
+                    StringBuilder descriptor = new StringBuilder().append('(');
+                    for (String parameterTypeDescriptor : parameterTypeDescriptors) {
+                        descriptor.append(parameterTypeDescriptor);
+                    }
+                    return descriptor.append(')').append(returnTypeDescriptor).toString();
                 }
 
                 /**
