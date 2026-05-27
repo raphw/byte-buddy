@@ -15,9 +15,8 @@
  */
 package net.bytebuddy.build.gradle.android;
 
-import com.android.build.api.dsl.ApplicationExtension;
+import com.android.build.api.dsl.CommonExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
-import com.android.build.gradle.BaseExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AndroidDescriptor;
@@ -31,14 +30,12 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -321,7 +318,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         /**
          * The Android Gradle extension.
          */
-        private final ApplicationExtension applicationExtension;
+        private final CommonExtension<?, ?, ?, ?> commonExtension;
 
         /**
          * The Android components extension.
@@ -335,89 +332,26 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
 
         /**
          * @param byteBuddyClassPath         The current variant Byte Buddy configuration.
-         * @param applicationExtension       The Android Gradle extension.
+         * @param commonExtension            The Android Gradle extension.
          * @param androidComponentsExtension The Android components extension.
          * @param byteBuddyExtension         The Byte Buddy task extension.
          */
         protected ConfigurationAction(FileCollection byteBuddyClassPath,
-                                      ApplicationExtension applicationExtension,
+                                      CommonExtension<?, ?, ?, ?> commonExtension,
                                       AndroidComponentsExtension<?, ?, ?> androidComponentsExtension,
                                       ByteBuddyAndroidTaskExtension byteBuddyExtension) {
             this.byteBuddyClassPath = byteBuddyClassPath;
-            this.applicationExtension = applicationExtension;
+            this.commonExtension = commonExtension;
             this.androidComponentsExtension = androidComponentsExtension;
             this.byteBuddyExtension = byteBuddyExtension;
-        }
-
-        /**
-         * Resolves an appropriate configuration action for the current Android platform.
-         * @param byteBuddyClassPath The current variant Byte Buddy configuration.
-         * @param container          The extensions container to use.
-         * @return An appropriate configuration action.
-         */
-        @SuppressWarnings("unchecked")
-        public static Action<ByteBuddyLocalClassesEnhancerTask> of(FileCollection byteBuddyClassPath, ExtensionContainer container) {
-            try {
-                return new ConfigurationAction(byteBuddyClassPath,
-                        container.getByType(ApplicationExtension.class),
-                        container.getByType(AndroidComponentsExtension.class),
-                        container.getByType(ByteBuddyAndroidTaskExtension.class));
-            } catch (UnknownDomainObjectException ignored) {
-                return new ForLegacyAndroid(byteBuddyClassPath,
-                        container.getByType(BaseExtension.class),
-                        container.getByType(ByteBuddyAndroidTaskExtension.class));
-            }
         }
 
         @Override
         public void execute(ByteBuddyLocalClassesEnhancerTask task) {
             task.getByteBuddyClasspath().from(byteBuddyClassPath);
             task.getAndroidBootClasspath().from(androidComponentsExtension.getSdkComponents().getBootClasspath());
-            task.getJavaTargetCompatibilityVersion().set(applicationExtension.getCompileOptions().getTargetCompatibility());
+            task.getJavaTargetCompatibilityVersion().set(commonExtension.getCompileOptions().getTargetCompatibility());
             byteBuddyExtension.configure(task);
-        }
-
-        /**
-         * A configuration action for the {@link ByteBuddyLocalClassesEnhancerTask} task for
-         * legacy Android platforms.
-         */
-        protected static class ForLegacyAndroid implements Action<ByteBuddyLocalClassesEnhancerTask> {
-
-            /**
-             * The current variant's Byte Buddy configuration.
-             */
-            private final FileCollection byteBuddyClassPath;
-
-            /**
-             * The Android Gradle extension.
-             */
-            private final BaseExtension baseExtension;
-
-            /**
-             * The Byte Buddy task extension.
-             */
-            private final ByteBuddyAndroidTaskExtension byteBuddyExtension;
-
-            /**
-             * @param byteBuddyClassPath The current variant Byte Buddy configuration.
-             * @param baseExtension      The Android Gradle extension.
-             * @param byteBuddyExtension The Byte Buddy task extension.
-             */
-            protected ForLegacyAndroid(FileCollection byteBuddyClassPath,
-                                       BaseExtension baseExtension,
-                                       ByteBuddyAndroidTaskExtension byteBuddyExtension) {
-                this.byteBuddyClassPath = byteBuddyClassPath;
-                this.baseExtension = baseExtension;
-                this.byteBuddyExtension = byteBuddyExtension;
-            }
-
-            @Override
-            public void execute(ByteBuddyLocalClassesEnhancerTask task) {
-                task.getByteBuddyClasspath().from(byteBuddyClassPath);
-                task.getAndroidBootClasspath().from(baseExtension.getBootClasspath());
-                task.getJavaTargetCompatibilityVersion().set(baseExtension.getCompileOptions().getTargetCompatibility());
-                byteBuddyExtension.configure(task);
-            }
         }
     }
 
