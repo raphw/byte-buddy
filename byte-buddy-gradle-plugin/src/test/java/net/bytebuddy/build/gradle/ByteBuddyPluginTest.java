@@ -241,7 +241,11 @@ public class ByteBuddyPluginTest {
     public void testClassPathFingerprintTracksMethodBodies() throws Exception {
         // Verifies the task's classPath input uses @Classpath (full bytecode hashing) rather
         // than @CompileClasspath (ABI-only), since plugins may inspect arbitrary bytecode.
-        File dependencyJar = new File(folder, "dependency.jar");
+        // The dependency jar is kept outside of the project folder that is deleted on tear-down as
+        // the Gradle daemon may retain a lock on a class path entry on Windows which would otherwise
+        // fail the recursive folder cleanup.
+        File dependencyJar = File.createTempFile("byte-buddy-gradle-plugin-dependency", ".jar");
+        dependencyJar.deleteOnExit();
         writeClassPathJar(dependencyJar, 1);
         write("build.gradle",
             "plugins {",
@@ -249,7 +253,12 @@ public class ByteBuddyPluginTest {
             "  id 'net.bytebuddy.byte-buddy-gradle-plugin'",
             "}",
             "dependencies {",
-            "  implementation files('" + dependencyJar.getAbsolutePath().replace('\\', '/') + "')",
+            // The 'implementation' configuration does not exist on the legacy Gradle 2.x distribution.
+            "  if (gradle.gradleVersion.startsWith(\"2.\")) {",
+            "    compile files('" + dependencyJar.getAbsolutePath().replace('\\', '/') + "')",
+            "  } else {",
+            "    implementation files('" + dependencyJar.getAbsolutePath().replace('\\', '/') + "')",
+            "  }",
             "}",
             "byteBuddy {",
             "  transformation {",
