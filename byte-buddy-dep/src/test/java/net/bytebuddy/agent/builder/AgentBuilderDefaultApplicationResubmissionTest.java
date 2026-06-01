@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -59,8 +60,10 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     @IntegrationRule.Enforce
     public void testResubmission() throws Exception {
-        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        // The transformer deliberately fails on the first, unloaded transformation attempt to trigger a
+        // resubmission. The resubmitted retransformation of the now-loaded type then succeeds. An external
+        // class is used as the resubmission reflects on loaded types which, for outer/inner classes, causes
+        // type equality to fail during the eager validation of a redefinition (Java 7- for redefinition).
         final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         try {
             assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -79,7 +82,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                         }
                     })
                     .resubmitOnError()
-                    .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new SampleTransformer())
+                    .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FailingTransformer())
                     .installOnByteBuddyAgent();
             try {
                 Class<?> type = classLoader.loadClass(SimpleType.class.getName());
@@ -150,6 +153,22 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                                                 ClassLoader classLoader,
                                                 JavaModule module,
                                                 ProtectionDomain protectionDomain) {
+            return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
+        }
+    }
+
+    private static class FailingTransformer implements AgentBuilder.Transformer {
+
+        private final AtomicBoolean failed = new AtomicBoolean();
+
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
+            if (failed.compareAndSet(false, true)) {
+                throw new RuntimeException("Failing first transformation attempt to enforce a resubmission");
+            }
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }
