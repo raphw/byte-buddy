@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. June 2026: version 1.18.9
+
+- Disable use of Unsafe by default when Java 25or newer is discovered.
+- Check for escape when creating folders in `Plugin.Engine`.
+- Improve OpenJ9 attachment.
+- Avoid null pointer on missing annotation types.
+- Improve diagnostics for external agent attachment.
+- Improve on Gradle context discovery.
+- Support Android libraries on AGP9 or newer.
+- Update ASM.
+
 ### 1. April 2026: version 1.18.8
 
 - Improve support for repeatable builds.
