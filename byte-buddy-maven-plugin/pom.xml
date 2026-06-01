@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.18.9-SNAPSHOT</version>
+        <version>1.18.9-jdk5</version>
     </parent>
 
     <artifactId>byte-buddy-maven-plugin</artifactId>
