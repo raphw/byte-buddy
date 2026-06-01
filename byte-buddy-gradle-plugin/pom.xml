@@ -189,12 +189,13 @@
             </properties>
         </profile>
 
-        <!-- Avoids triggering Gradle on JDK versions that Gradle does not currently support. -->
+        <!-- Avoids triggering Gradle on JDK versions that Gradle does not currently support.
+             The bundled Gradle wrapper (8.11.1) supports running on JDK 23 but not on JDK 24 or later. -->
         <profile>
             <id>gradle-disabled</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <jdk>[22,)</jdk>
+                <jdk>[24,)</jdk>
             </activation>
             <properties>
                 <gradle.disabled>true</gradle.disabled>

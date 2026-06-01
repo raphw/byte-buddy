@@ -19,4 +19,8 @@
     <Match>
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
+    <!-- Byte Buddy exposes value types with cached instances but retains public constructors as part of its API. -->
+    <Match>
+        <Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
+    </Match>
 </FindBugsFilter>

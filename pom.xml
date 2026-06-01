@@ -71,7 +71,7 @@
         <bytecode.main.version>1.5</bytecode.main.version>
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
-        <version.asm>9.9.1</version.asm>
+        <version.asm>9.10.1</version.asm>
         <version.asmjdkbridge>0.0.13</version.asmjdkbridge>
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
@@ -102,11 +102,11 @@
         <version.plugin.pitest>1.17.3</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.21</version.plugin.animal-sniffer>
         <version.plugin.enforcer>3.1.0</version.plugin.enforcer>
-        <version.plugin.jacoco>0.8.12</version.plugin.jacoco>
+        <version.plugin.jacoco>0.8.14</version.plugin.jacoco>
         <version.plugin.coveralls>4.3.0</version.plugin.coveralls>
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
-        <version.plugin.spotbugs>4.8.3.1</version.plugin.spotbugs>
+        <version.plugin.spotbugs>4.8.6.8</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.11</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
@@ -719,7 +719,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 17 JVMs. -->
@@ -734,7 +733,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 18 JVMs. -->
@@ -749,7 +747,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 19 JVMs. -->
@@ -764,7 +761,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 20 JVMs. -->
@@ -779,7 +775,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 21 JVMs. -->
@@ -794,7 +789,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 22 JVMs. -->
@@ -809,7 +803,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 23 JVMs. -->
@@ -824,7 +817,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 24 JVMs. -->
@@ -839,7 +831,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 25 JVMs. -->
@@ -854,7 +845,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 26 JVMs. -->
@@ -869,7 +859,6 @@
                 <sourcecode.test.version>8</sourcecode.test.version>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 6. -->
@@ -1012,7 +1001,6 @@
             <properties>
                 <bytecode.main.version>18</bytecode.main.version>
                 <bytecode.test.version>18</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 19. -->
@@ -1024,7 +1012,6 @@
             <properties>
                 <bytecode.main.version>19</bytecode.main.version>
                 <bytecode.test.version>19</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 20. -->
@@ -1036,7 +1023,6 @@
             <properties>
                 <bytecode.main.version>20</bytecode.main.version>
                 <bytecode.test.version>20</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 21. -->
@@ -1048,7 +1034,6 @@
             <properties>
                 <bytecode.main.version>21</bytecode.main.version>
                 <bytecode.test.version>21</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 22. -->
@@ -1060,7 +1045,6 @@
             <properties>
                 <bytecode.main.version>22</bytecode.main.version>
                 <bytecode.test.version>22</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 23. -->
@@ -1072,7 +1056,6 @@
             <properties>
                 <bytecode.main.version>23</bytecode.main.version>
                 <bytecode.test.version>23</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 24. -->
@@ -1084,7 +1067,6 @@
             <properties>
                 <bytecode.main.version>24</bytecode.main.version>
                 <bytecode.test.version>24</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 25. -->
@@ -1096,7 +1078,6 @@
             <properties>
                 <bytecode.main.version>25</bytecode.main.version>
                 <bytecode.test.version>25</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 26. -->
@@ -1108,7 +1089,6 @@
             <properties>
                 <bytecode.main.version>26</bytecode.main.version>
                 <bytecode.test.version>26</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Enables dynamic agent loading when running a JDK 22 or newer. -->
