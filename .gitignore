@@ -40,3 +40,6 @@ release.properties
 
 # JVM
 .attach*
+
+# Fuzzing seed corpus is generated at build time; never commit the class files.
+byte-buddy-fuzz/src/test/resources/net/bytebuddy/fuzz/FuzzRegressionTestInputs/

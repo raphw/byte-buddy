@@ -1280,6 +1280,19 @@
                 <bytebuddy.integration>true</bytebuddy.integration>
             </properties>
         </profile>
+        <!-- Builds and runs the coverage-guided fuzzing harnesses. The module requires Java 8 or later (Jazzer's
+             minimum) and pulls in the Jazzer dependency, so it is kept out of the default reactor and the release and
+             must be opted into explicitly with -Pfuzz. The module itself compiles to Java 8 byte code and therefore
+             fails fast if it is built on an older JDK. -->
+        <profile>
+            <id>fuzz</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>byte-buddy-fuzz</module>
+            </modules>
+        </profile>
         <!-- Integration profile that executes static code analysis. -->
         <profile>
             <id>analysis</id>
