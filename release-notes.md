@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. June 2026: version 1.18.10
+
+- Delay change of default for unsage use to Java 26 and improve error message.
+
 ### 1. June 2026: version 1.18.9
 
 - Disable use of Unsafe by default when Java 25or newer is discovered.
