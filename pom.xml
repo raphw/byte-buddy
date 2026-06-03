@@ -116,7 +116,7 @@
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <version.utility.jsr305>3.0.2</version.utility.jsr305>
-        <version.jmh>1.35</version.jmh>
+        <version.jmh>1.37</version.jmh>
         <version.cglib>3.3.0</version.cglib>
         <version.javassist>3.29.0-GA</version.javassist>
         <spotbugs.skip>false</spotbugs.skip>
