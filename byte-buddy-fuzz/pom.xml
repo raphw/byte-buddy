@@ -6,7 +6,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.18.10-jdk5</version>
+        <version>1.18.11-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
