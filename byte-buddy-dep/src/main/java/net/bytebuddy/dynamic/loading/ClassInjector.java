@@ -989,8 +989,11 @@ public interface ClassInjector {
                 protected static Initializable make() throws Exception {
                     if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(ClassFileVersion
                             .ofThisVm()
-                            .isAtLeast(ClassFileVersion.JAVA_V25) || GraalImageCode.getCurrent().isDefined())))) {
-                        return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
+                            .isAtLeast(ClassFileVersion.JAVA_V26) || GraalImageCode.getCurrent().isDefined())))) {
+                        return new Initializable.Unavailable("As of Java 26, using Unsafe is disabled by default, set "
+                                + UsingUnsafe.SAFE_PROPERTY + " to true if you want to use the JVM's internal unsafe API "
+                                + "even though it will become unsupported in the future and should be replaced by injection "
+                                + "using method handles: " + UsingLookup.class.getName());
                     }
                     Class<?> unsafe = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafe.getDeclaredField("theUnsafe");
@@ -1253,8 +1256,13 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
                 protected static Initializable make() throws Exception {
-                    if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(GraalImageCode.getCurrent().isDefined())))) {
-                        return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
+                    if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(ClassFileVersion
+                            .ofThisVm()
+                            .isAtLeast(ClassFileVersion.JAVA_V26) || GraalImageCode.getCurrent().isDefined())))) {
+                        return new Initializable.Unavailable("As of Java 26, using Unsafe is disabled by default, set "
+                                + UsingUnsafe.SAFE_PROPERTY + " to true if you want to use the JVM's internal unsafe API "
+                                + "even though it will become unsupported in the future and should be replaced by injection "
+                                + "using method handles: " + UsingLookup.class.getName());
                     }
                     Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafeType.getDeclaredField("theUnsafe");
@@ -2021,6 +2029,14 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                 public Initializable run() {
+                    if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(ClassFileVersion
+                            .ofThisVm()
+                            .isAtLeast(ClassFileVersion.JAVA_V26) || GraalImageCode.getCurrent().isDefined())))) {
+                        return new Unavailable("As of Java 26, using Unsafe is disabled by default, set "
+                                + UsingUnsafe.SAFE_PROPERTY + " to true if you want to use the JVM's internal unsafe API "
+                                + "even though it will become unsupported in the future and should be replaced by injection "
+                                + "using method handles: " + UsingLookup.class.getName());
+                    }
                     if (Boolean.parseBoolean(java.lang.System.getProperty(SAFE_PROPERTY, Boolean.toString(GraalImageCode.getCurrent().isDefined())))) {
                         return new Unavailable("Use of Unsafe was disabled by system property");
                     }
