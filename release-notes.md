@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. July 2026: version 1.18.11
+
+- Add SBOM to published artifacts.
+- Check for traversable paths injected into class files as a rather hypothetical attack vector.
+
 ### 3. June 2026: version 1.18.10
 
 - Delay change of default for unsage use to Java 26 and improve error message.
