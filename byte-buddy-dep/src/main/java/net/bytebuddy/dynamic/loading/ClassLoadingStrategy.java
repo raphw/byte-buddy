@@ -669,7 +669,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * {@inheritDoc}
          */
         public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-            return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
+            return new ClassInjector.UsingJna(classLoader, protectionDomain).inject(types);
         }
     }
 }
