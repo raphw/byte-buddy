@@ -862,6 +862,20 @@
                 <bytecode.test.version>8</bytecode.test.version>
             </properties>
         </profile>
+        <!-- Runs the build with compatibility for Java 27 JVMs. -->
+        <profile>
+            <id>java27-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>27</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+            </properties>
+        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
@@ -1090,6 +1104,17 @@
             <properties>
                 <bytecode.main.version>26</bytecode.main.version>
                 <bytecode.test.version>26</bytecode.test.version>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 27. -->
+        <profile>
+            <id>java27</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>27</bytecode.main.version>
+                <bytecode.test.version>27</bytecode.test.version>
             </properties>
         </profile>
         <!-- Enables dynamic agent loading when running a JDK 22 or newer. -->
