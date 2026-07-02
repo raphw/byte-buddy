@@ -7466,7 +7466,7 @@ public interface DynamicType extends ClassFileLocator {
          */
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
             Map<TypeDescription, File> files = new HashMap<TypeDescription, File>();
-            File target = new File(folder, getTypeDescription().getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
+            File target = FileSystem.validated(folder, new File(folder, getTypeDescription().getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION));
             if (target.getParentFile() != null && !target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                 throw new IllegalArgumentException("Could not create directory: " + target.getParentFile());
             }
@@ -7546,7 +7546,7 @@ public interface DynamicType extends ClassFileLocator {
                         jarOutputStream.closeEntry();
                     }
                     for (Map.Entry<String, byte[]> entry : files.entrySet()) {
-                        jarOutputStream.putNextEntry(new JarEntry(entry.getKey()));
+                        jarOutputStream.putNextEntry(new JarEntry(FileSystem.validated(entry.getKey())));
                         jarOutputStream.write(entry.getValue());
                         jarOutputStream.closeEntry();
                     }
@@ -7582,11 +7582,11 @@ public interface DynamicType extends ClassFileLocator {
             try {
                 JarOutputStream jarOutputStream = new JarOutputStream(outputStream, manifest);
                 for (Map.Entry<TypeDescription, byte[]> entry : getAuxiliaryTypes().entrySet()) {
-                    jarOutputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
+                    jarOutputStream.putNextEntry(new JarEntry(FileSystem.validated(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION)));
                     jarOutputStream.write(entry.getValue());
                     jarOutputStream.closeEntry();
                 }
-                jarOutputStream.putNextEntry(new JarEntry(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION));
+                jarOutputStream.putNextEntry(new JarEntry(FileSystem.validated(getTypeDescription().getInternalName() + CLASS_FILE_EXTENSION)));
                 jarOutputStream.write(getBytes());
                 jarOutputStream.closeEntry();
                 jarOutputStream.close();

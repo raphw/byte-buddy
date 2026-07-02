@@ -50,6 +50,50 @@ public abstract class FileSystem {
     }
 
     /**
+     * Validates that a {@code /}-separated entry name does not escape the root directory it is resolved against
+     * when it is written to a folder or extracted from an archive. This guards against a path traversal from a
+     * type name that contains traversal segments, for example from a crafted {@code this_class} constant pool entry.
+     *
+     * @param name The entry name to validate, using {@code /} as a separator.
+     * @return The supplied entry name.
+     */
+    public static String validated(String name) {
+        int depth = 0;
+        for (String segment : name.split("/")) {
+            if (segment.equals("..")) {
+                if (depth == 0) {
+                    throw new IllegalArgumentException(name + " is not a valid entry within a contained root directory");
+                }
+                depth -= 1;
+            } else if (!segment.equals(".") && segment.length() != 0) {
+                depth += 1;
+            }
+        }
+        return name;
+    }
+
+    /**
+     * Validates that a target file is contained within a folder once both paths are canonicalized. This guards
+     * against a path traversal from a type or entry name that contains traversal segments when a file is written
+     * to the file system.
+     *
+     * @param folder The folder that the target file must be contained within.
+     * @param target The target file to validate.
+     * @return The supplied target file.
+     * @throws IOException If the canonical path of either file cannot be resolved.
+     */
+    public static File validated(File folder, File target) throws IOException {
+        String basePath = folder.getCanonicalPath(), targetPath = target.getCanonicalPath(), prefix = basePath;
+        if (!prefix.endsWith(File.separator)) {
+            prefix += File.separatorChar;
+        }
+        if (!targetPath.equals(basePath) && !targetPath.startsWith(prefix)) {
+            throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
+        }
+        return target;
+    }
+
+    /**
      * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
      *
      * @param action The action to execute from a privileged context.

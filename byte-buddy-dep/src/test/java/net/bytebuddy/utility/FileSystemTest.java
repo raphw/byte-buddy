@@ -86,4 +86,64 @@ public class FileSystemTest {
                 ? FileSystem.ForNio2CapableVm.class
                 : FileSystem.ForLegacyVm.class)));
     }
+
+    @Test
+    public void testValidatedReturnsContainedName() {
+        assertThat(FileSystem.validated("foo/Bar.class"), is("foo/Bar.class"));
+    }
+
+    @Test
+    public void testValidatedReturnsMultiReleaseName() {
+        assertThat(FileSystem.validated("META-INF/versions/11/foo/Bar.class"), is("META-INF/versions/11/foo/Bar.class"));
+    }
+
+    @Test
+    public void testValidatedAllowsContainedTraversal() {
+        assertThat(FileSystem.validated("foo/../bar/Qux.class"), is("foo/../bar/Qux.class"));
+    }
+
+    @Test
+    public void testValidatedAllowsCurrentDirectory() {
+        assertThat(FileSystem.validated("foo/./Bar.class"), is("foo/./Bar.class"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidatedRejectsLeadingTraversal() {
+        FileSystem.validated("../foo/Bar.class");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidatedRejectsEscapingTraversal() {
+        FileSystem.validated("foo/../../bar/Qux.class");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidatedRejectsDeepTraversal() {
+        FileSystem.validated("../../../etc/cron.d/evil.class");
+    }
+
+    @Test
+    public void testValidatedFolderReturnsContainedTarget() throws Exception {
+        File folder = temporaryFolder.getRoot();
+        File target = new File(folder, "foo/Bar.class");
+        assertThat(FileSystem.validated(folder, target), is(target));
+    }
+
+    @Test
+    public void testValidatedFolderAllowsFolderItself() throws Exception {
+        File folder = temporaryFolder.getRoot();
+        assertThat(FileSystem.validated(folder, folder), is(folder));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidatedFolderRejectsEscapingTarget() throws Exception {
+        File folder = temporaryFolder.getRoot();
+        FileSystem.validated(folder, new File(folder, "../evil.class"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testValidatedFolderRejectsSiblingWithSharedPrefix() throws Exception {
+        File folder = temporaryFolder.getRoot();
+        FileSystem.validated(folder, new File(folder.getParentFile(), folder.getName() + "-evil"));
+    }
 }

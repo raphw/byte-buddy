@@ -3498,7 +3498,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      */
                     public void store(Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                         for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                            outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION));
+                            outputStream.putNextEntry(new JarEntry(FileSystem.validated(entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION)));
                             outputStream.write(entry.getValue());
                             outputStream.closeEntry();
                         }
@@ -3509,11 +3509,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      */
                     public void store(ClassFileVersion classFileVersion, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                         for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                            outputStream.putNextEntry(new JarEntry(ClassFileLocator.META_INF_VERSIONS
+                            outputStream.putNextEntry(new JarEntry(FileSystem.validated(ClassFileLocator.META_INF_VERSIONS
                                     + classFileVersion.getJavaVersion()
                                     + "/"
                                     + entry.getKey().getInternalName()
-                                    + ClassFileLocator.CLASS_FILE_EXTENSION));
+                                    + ClassFileLocator.CLASS_FILE_EXTENSION)));
                             outputStream.write(entry.getValue());
                             outputStream.closeEntry();
                         }
@@ -3808,7 +3808,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 private static void doStore(File folder, Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
                     for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                        File target = new File(folder, entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION);
+                        File target = FileSystem.validated(folder, new File(folder, entry.getKey().getInternalName() + ClassFileLocator.CLASS_FILE_EXTENSION));
                         if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
                         }
@@ -3859,14 +3859,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void retain(Source.Element element) throws IOException {
                     String name = element.getName();
-                    File target = new File(folder, name);
-                    String basePath = folder.getCanonicalPath(), targetPath = target.getCanonicalPath(), prefix = basePath;
-                    if (!prefix.endsWith(File.separator)) {
-                        prefix += File.separatorChar;
-                    }
-                    if (!targetPath.equals(basePath) && !targetPath.startsWith(prefix)) {
-                        throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
-                    } else if (!name.endsWith("/")) {
+                    File target = FileSystem.validated(folder, new File(folder, name));
+                    if (!name.endsWith("/")) {
                         File resolved = element.resolveAs(File.class);
                         if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
