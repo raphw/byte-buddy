@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. July 2026: version 1.18.12
+
+- Support dynamic attach on Windows ARM64 by shipping a native `attach_hotspot_windows` library for `win32-aarch64`.
+
 ### 2. July 2026: version 1.18.11
 
 - Add SBOM to published artifacts.
