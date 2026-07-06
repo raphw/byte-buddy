@@ -12,6 +12,7 @@ runtime code generation for the Java virtual machine
 [![Coverage Status](https://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
 [![Maven Central](https://img.shields.io/maven-central/v/net.bytebuddy/byte-buddy)](https://central.sonatype.com/artifact/net.bytebuddy/byte-buddy)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6251/badge)](https://bestpractices.coreinfrastructure.org/projects/6251)
+[![Reproducible Builds](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/jvm-repo-rebuild/reproducible-central/master/content/net/bytebuddy/badge.json)](https://github.com/jvm-repo-rebuild/reproducible-central/blob/master/content/net/bytebuddy/README.md)
 
 Byte Buddy is a code generation and manipulation library for creating and modifying Java classes during the runtime of a
 Java application and without the help of a compiler. Other than the code generation utilities
