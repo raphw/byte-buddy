@@ -113,7 +113,7 @@
         <version.plugin.antrun>3.1.0</version.plugin.antrun>
         <version.plugin.bytecode-update>1.0</version.plugin.bytecode-update>
         <version.plugin.cyclonedx>2.9.1</version.plugin.cyclonedx>
-        <version.checkstyle>9.3</version.checkstyle>
+        <version.checkstyle>13.5.0</version.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <version.utility.jsr305>3.0.2</version.utility.jsr305>
