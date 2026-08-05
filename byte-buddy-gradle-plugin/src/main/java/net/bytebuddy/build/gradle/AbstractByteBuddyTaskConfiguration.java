@@ -65,6 +65,10 @@ public abstract class AbstractByteBuddyTaskConfiguration<
      * {@inheritDoc}
      */
     public void execute(Project project) {
+        if (sourceSet.getJava().isEmpty()) {
+            project.getLogger().debug("Skipping byteBuddy task for source set '{}' as no Java sources are present", sourceSet.getName());
+            return;
+        }
         @SuppressWarnings("unchecked")
         S extension = (S) project.getExtensions().getByName(name);
         if (extension.getTransformations().isEmpty() && (extension.getDiscovery() == Discovery.NONE || extension.isEmptyDiscovery())) {

@@ -21,6 +21,7 @@ import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.SourceDirectorySet;
+import org.gradle.api.plugins.AppliedPlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -70,6 +71,9 @@ public class ByteBuddyPlugin implements Plugin<Project> {
         } else {
             project.getLogger().debug("Applying Byte Buddy plugin (legacy mode: {})", DISPATCHER instanceof Dispatcher.ForLegacyGradle);
             project.getPlugins().withType(JavaPlugin.class, new JavaPluginConfigurationAction(project));
+            if (KotlinByteBuddyTaskConfiguration.isAvailable()) {
+                project.getPluginManager().withPlugin("org.jetbrains.kotlin.jvm", new KotlinPluginConfigurationAction(project));
+            }
         }
     }
 
@@ -116,6 +120,46 @@ public class ByteBuddyPlugin implements Plugin<Project> {
                     project.getExtensions().add(name, extension);
                     project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));
                 }
+            }
+        }
+    }
+
+    /**
+     * An action to configure the Kotlin plugin to apply transformations. Reuses the extension
+     * registered per source set by {@link JavaPluginConfigurationAction}, so a single
+     * {@code byteBuddy} DSL block drives both Java and Kotlin Byte Buddy tasks.
+     */
+    protected static class KotlinPluginConfigurationAction implements Action<AppliedPlugin> {
+
+        /**
+         * The Gradle project.
+         */
+        private final Project project;
+
+        /**
+         * Creates a Kotlin plugin configuration action.
+         *
+         * @param project The Gradle project.
+         */
+        protected KotlinPluginConfigurationAction(Project project) {
+            this.project = project;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(AppliedPlugin plugin) {
+            project.getLogger().debug("Kotlin plugin was discovered for modification: {}", plugin.getId());
+            JavaConventionConfiguration configuration = JavaConventionConfiguration.of(project);
+            if (configuration == null) {
+                project.getLogger().warn("Skipping implicit Byte Buddy Kotlin task configuration since Java plugin did not register Java plugin convention or extension");
+                return;
+            }
+            for (SourceSet sourceSet : configuration.getSourceSets()) {
+                String name = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME)
+                        ? "byteBuddy"
+                        : (sourceSet.getName() + "ByteBuddy");
+                project.afterEvaluate(new KotlinByteBuddyTaskConfiguration(name, sourceSet));
             }
         }
     }
