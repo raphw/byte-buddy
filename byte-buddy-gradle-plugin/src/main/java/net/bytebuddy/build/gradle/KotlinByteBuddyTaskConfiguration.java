@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
  * {@link ByteBuddyPlugin.JavaPluginConfigurationAction} so a single {@code byteBuddy} DSL block
  * applies to both Java and Kotlin outputs.
  *
- * <p>If the Kotlin Gradle plugin is not on the classpath, or the source set has no Kotlin sources
+ * <p>If the Kotlin Gradle plugin (KGP) is not on the classpath, or the source set has no Kotlin sources
  * or no {@code compile{SourceSet}Kotlin} task, this action is a no-op. Depends on the Kotlin
  * Gradle plugin API only via reflection so the Byte Buddy Gradle plugin remains usable in
  * Java-only projects.</p>
@@ -164,7 +164,7 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
         byteBuddyTask.setDescription("Transforms the classes compiled by " + compileTask.getName());
         byteBuddyTask.dependsOn(compileTask);
         extension.configure(byteBuddyTask);
-        configureDirectories((SourceDirectorySet) kotlinSources, compileTask, byteBuddyTask);
+        configureDirectories(project, taskName, (SourceDirectorySet) kotlinSources, compileTask, byteBuddyTask);
         Task compileJavaTask = project.getTasks().findByName(sourceSet.getCompileJavaTaskName());
         if (compileJavaTask instanceof AbstractCompile) {
             byteBuddyTask.dependsOn(compileJavaTask);
@@ -181,11 +181,17 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
      * compile task: the Kotlin compile task writes to a sibling {@code kotlinByteBuddyRaw}
      * folder which the Byte Buddy task reads and then writes back to the original destination.
      *
+     * @param project       The current project (used to look up the Byte Buddy task provider).
+     * @param taskName      The registered name of the Byte Buddy Kotlin task.
      * @param source        The Kotlin source directory set.
      * @param compileTask   The Kotlin compile task (a {@code KotlinCompileTool}).
      * @param byteBuddyTask The Byte Buddy task consuming the compilation output.
      */
-    private static void configureDirectories(SourceDirectorySet source, Task compileTask, ByteBuddyTask byteBuddyTask) {
+    private static void configureDirectories(Project project,
+                                             String taskName,
+                                             SourceDirectorySet source,
+                                             Task compileTask,
+                                             ByteBuddyTask byteBuddyTask) {
         try {
             DirectoryProperty directory = (DirectoryProperty) GET_DESTINATION_DIRECTORY_SOURCE.invoke(source);
             String rawPath = "../kotlin" + AbstractByteBuddyTaskConfiguration.RAW_FOLDER_SUFFIX;
@@ -195,6 +201,21 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
             byteBuddyTask.getClassPath().from((FileCollection) GET_LIBRARIES.invoke(compileTask));
         } catch (Exception exception) {
             throw new GradleException("Could not adjust directories for Kotlin Byte Buddy task", exception);
+        }
+        // The raw redirect above pointed compileKotlin.destinationDirectory at kotlinByteBuddyRaw.
+        // KGP's `jar.from(SDS.classesDirectory)` follows that property, so jar would pick up raw.
+        // Rebind SDS.classesDirectory to byteBuddyKotlin.target (kotlin/main).
+        try {
+            org.gradle.api.tasks.TaskProvider<ByteBuddyTask> provider = project.getTasks().named(taskName, ByteBuddyTask.class);
+            source.compiledBy(provider, new java.util.function.Function<ByteBuddyTask, DirectoryProperty>() {
+                public DirectoryProperty apply(ByteBuddyTask task) {
+                    return task.getTarget();
+                }
+            });
+        } catch (Throwable exception) {
+            project.getLogger().debug(
+                    "Could not rebind kotlin SourceDirectorySet.classesDirectory; jar may include raw output",
+                    exception);
         }
     }
 
