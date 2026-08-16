@@ -23,6 +23,7 @@ import org.gradle.api.Task;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.SourceDirectorySet;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 
@@ -61,17 +62,29 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
     private static final Method GET_LIBRARIES;
 
     /**
-     * The {@code SourceDirectorySet#getDestinationDirectory} method, or {@code null} on legacy Gradle.
+     * The {@code org.gradle.api.tasks.SourceSet#getExtensions} method, or {@code null} on legacy Gradle.
+     */
+    @MaybeNull
+    private static final Method GET_EXTENSIONS;
+
+    /**
+     * The {@code org.gradle.api.file.SourceDirectorySet#getDestinationDirectory} method, or {@code null} on legacy Gradle.
      */
     @MaybeNull
     private static final Method GET_DESTINATION_DIRECTORY_SOURCE;
+
+    /**
+     * The {@code org.gradle.api.tasks.compile.AbstractCompile#getDestinationDirectory} method, or {@code null} on legacy Gradle.
+     */
+    @MaybeNull
+    private static final Method GET_DESTINATION_DIRECTORY_TARGET;
 
     /*
      * Resolves Kotlin Gradle plugin API entry points, if available.
      */
     static {
         Class<?> kotlinCompileTool;
-        Method getDestinationDirectory, getLibraries, getDestinationDirectorySource;
+        Method getDestinationDirectory, getLibraries;
         try {
             kotlinCompileTool = Class.forName("org.jetbrains.kotlin.gradle.tasks.KotlinCompileTool");
             getDestinationDirectory = kotlinCompileTool.getMethod("getDestinationDirectory");
@@ -81,25 +94,36 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
             getDestinationDirectory = null;
             getLibraries = null;
         }
+        Method getExtensions, getDestinationDirectorySource, getDestinationDirectoryTarget;
         try {
+            getExtensions = SourceSet.class.getMethod("getExtensions");
             getDestinationDirectorySource = SourceDirectorySet.class.getMethod("getDestinationDirectory");
+            getDestinationDirectoryTarget = AbstractCompile.class.getMethod("getDestinationDirectory");
         } catch (Throwable ignored) {
+            getExtensions = null;
             getDestinationDirectorySource = null;
+            getDestinationDirectoryTarget = null;
         }
         KOTLIN_COMPILE_TOOL = kotlinCompileTool;
         GET_DESTINATION_DIRECTORY = getDestinationDirectory;
         GET_LIBRARIES = getLibraries;
+        GET_EXTENSIONS = getExtensions;
         GET_DESTINATION_DIRECTORY_SOURCE = getDestinationDirectorySource;
+        GET_DESTINATION_DIRECTORY_TARGET = getDestinationDirectoryTarget;
     }
 
     /**
      * Returns {@code true} if the Kotlin Gradle plugin API is available on the classpath and the
-     * running Gradle version exposes {@code SourceDirectorySet#getDestinationDirectory}.
+     * running Gradle version exposes {@code SourceSet#getExtensions}, {@code SourceDirectorySet#getDestinationDirectory}
+     * and {@code AbstractCompile#getDestinationDirectory}.
      *
      * @return {@code true} if Kotlin support can be wired.
      */
     public static boolean isAvailable() {
-        return KOTLIN_COMPILE_TOOL != null && GET_DESTINATION_DIRECTORY_SOURCE != null;
+        return KOTLIN_COMPILE_TOOL != null
+                && GET_EXTENSIONS != null
+                && GET_DESTINATION_DIRECTORY_SOURCE != null
+                && GET_DESTINATION_DIRECTORY_TARGET != null;
     }
 
     /**
@@ -139,7 +163,12 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
                     sourceSet.getName(), kotlinCompileTaskName);
             return;
         }
-        Object kotlinSources = sourceSet.getExtensions().findByName("kotlin");
+        Object kotlinSources;
+        try {
+            kotlinSources = ((ExtensionContainer) GET_EXTENSIONS.invoke(sourceSet)).findByName("kotlin");
+        } catch (Exception exception) {
+            throw new GradleException("Could not resolve extensions of source set " + sourceSet.getName(), exception);
+        }
         if (!(kotlinSources instanceof SourceDirectorySet)) {
             project.getLogger().debug("Skipping Kotlin Byte Buddy configuration for source set '{}': no 'kotlin' SourceDirectorySet extension",
                     sourceSet.getName());
@@ -167,7 +196,11 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
         Task compileJavaTask = project.getTasks().findByName(sourceSet.getCompileJavaTaskName());
         if (compileJavaTask instanceof AbstractCompile) {
             byteBuddyTask.dependsOn(compileJavaTask);
-            byteBuddyTask.getClassPath().from(((AbstractCompile) compileJavaTask).getDestinationDirectory());
+            try {
+                byteBuddyTask.getClassPath().from(GET_DESTINATION_DIRECTORY_TARGET.invoke(compileJavaTask));
+            } catch (Exception exception) {
+                throw new GradleException("Could not resolve destination directory of " + compileJavaTask.getName(), exception);
+            }
         }
         Task classesTask = project.getTasks().findByName(sourceSet.getClassesTaskName());
         if (classesTask != null) {
