@@ -1171,6 +1171,9 @@
                         <groupId>org.cyclonedx</groupId>
                         <artifactId>cyclonedx-maven-plugin</artifactId>
                         <version>${version.plugin.cyclonedx}</version>
+                        <configuration>
+                            <skipNotDeployed>false</skipNotDeployed>
+                        </configuration>
                         <executions>
                             <execution>
                                 <phase>package</phase>
