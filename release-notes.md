@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. July 2026: version 1.18.13
+
+- Automatically support Kotlin in Gradle plugin.
+- Add support for native attach on Windows for ARM64.
+- Correct JNA injector which accidentally created on based on Unsafe.
+
 ### 6. July 2026: version 1.18.12
 
 - Support dynamic attach on Windows ARM64 by shipping a native `attach_hotspot_windows` library for `win32-aarch64`.
