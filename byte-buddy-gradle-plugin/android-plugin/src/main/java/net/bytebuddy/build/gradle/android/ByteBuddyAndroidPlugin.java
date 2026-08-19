@@ -113,6 +113,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     }
 
     /**
+     * Creates a new Byte Buddy plugin for Android.
+     */
+    public ByteBuddyAndroidPlugin() {
+        /* empty */
+    }
+
+    /**
      * {@inheritDoc}
      */
     public void apply(Project project) {
@@ -214,6 +221,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     protected abstract static class RuntimeClassPathResolver {
 
         /**
+         * Creates a new runtime class path resolver.
+         */
+        protected RuntimeClassPathResolver() {
+            /* empty */
+        }
+
+        /**
          * The runtime class path resolver to use.
          */
         protected static final RuntimeClassPathResolver INSTANCE;
@@ -244,6 +258,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * internal cast must be used to resolve the runtime class path.
          */
         protected static class OfLegacyAgp extends RuntimeClassPathResolver {
+
+            /**
+             * Creates a new runtime class path resolver for a legacy Android Gradle plugin.
+             */
+            protected OfLegacyAgp() {
+                /* empty */
+            }
 
             @Override
             protected FileCollection apply(Variant variant) {
@@ -441,6 +462,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     protected static class AttributeMatchingStrategyConfigurationAction implements Action<AttributeMatchingStrategy<String>> {
 
         /**
+         * Creates a new configuration action for an attribute matching strategy.
+         */
+        protected AttributeMatchingStrategyConfigurationAction() {
+            /* empty */
+        }
+
+        /**
          * {@inheritDoc}
          */
         public void execute(AttributeMatchingStrategy<String> stringAttributeMatchingStrategy) {
@@ -452,6 +480,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      * A configuration action for a {@link Configuration}.
      */
     protected static class ConfigurationConfigurationAction implements Action<Configuration> {
+
+        /**
+         * Creates a new configuration action for a configuration.
+         */
+        protected ConfigurationConfigurationAction() {
+            /* empty */
+        }
 
         /**
          * {@inheritDoc}
@@ -466,6 +501,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      * A rule to check for jar compatibility.
      */
     public abstract static class ByteBuddyDependencyRule implements AttributeCompatibilityRule<String> {
+
+        /**
+         * Creates a new dependency rule.
+         */
+        public ByteBuddyDependencyRule() {
+            /* empty */
+        }
 
         /**
          * {@inheritDoc}
@@ -725,6 +767,10 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * For external dependencies, it provides their JAR files. For local project's dependencies, it provides their local
          * build dirs for both classes and resources. The latter allows for faster and more reliable (up-to-date) compilation processes
          * when using local plugins.
+         *
+         * @param project       The current project.
+         * @param configuration The configuration to resolve.
+         * @return The class path that is represented by the supplied configuration.
          */
         protected static FileCollection toClassPath(Project project, Configuration configuration) {
             return project.files(

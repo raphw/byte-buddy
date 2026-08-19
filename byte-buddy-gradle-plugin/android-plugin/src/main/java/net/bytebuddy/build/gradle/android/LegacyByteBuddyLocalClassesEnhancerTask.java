@@ -53,9 +53,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Transformation task for instrumenting the project's local classes using the legacy AGP api < 7.4.0.
+ * Transformation task for instrumenting the project's local classes using the legacy AGP api prior to version 7.4.0.
  */
 public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTask {
+
+    /**
+     * Creates a new legacy local classes enhancer task.
+     */
+    public LegacyByteBuddyLocalClassesEnhancerTask() {
+        /* empty */
+    }
 
     /**
      * Returns the boot class path of Android.
@@ -223,6 +230,8 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
         private final FileCollection runtimeClasspath;
 
         /**
+         * Creates a new configuration action.
+         *
          * @param byteBuddyConfiguration The current variant Byte Buddy configuration.
          * @param androidExtension       The android gradle extension.
          * @param runtimeClasspath       The current variant's runtime classpath.

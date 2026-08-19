@@ -75,6 +75,18 @@ import java.util.zip.ZipException;
  */
 public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
 
+    /**
+     * Creates a new local classes enhancer task.
+     */
+    public ByteBuddyLocalClassesEnhancerTask() {
+        /* empty */
+    }
+
+    /**
+     * Returns the transformations to apply.
+     *
+     * @return The transformations to apply.
+     */
     @Nested
     public abstract ListProperty<Transformation> getTransformations();
 
@@ -331,6 +343,8 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         private final ByteBuddyAndroidTaskExtension byteBuddyExtension;
 
         /**
+         * Creates a new configuration action.
+         *
          * @param byteBuddyClassPath         The current variant Byte Buddy configuration.
          * @param commonExtension            The Android Gradle extension.
          * @param androidComponentsExtension The Android components extension.

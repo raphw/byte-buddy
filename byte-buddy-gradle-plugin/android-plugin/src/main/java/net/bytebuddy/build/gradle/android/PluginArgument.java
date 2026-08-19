@@ -107,6 +107,11 @@ public class PluginArgument implements Serializable {
         this.value = value;
     }
 
+    /**
+     * Resolves this argument to an equivalent argument of the non-Android Byte Buddy Gradle plugin.
+     *
+     * @return A {@code net.bytebuddy.build.gradle.PluginArgument} that represents this argument.
+     */
     protected Object resolve() {
         try {
             Class<?> type = Class.forName("net.bytebuddy.build.gradle.PluginArgument");

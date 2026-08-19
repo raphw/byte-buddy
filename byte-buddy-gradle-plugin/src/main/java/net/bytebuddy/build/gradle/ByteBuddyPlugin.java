@@ -56,6 +56,13 @@ public class ByteBuddyPlugin implements Plugin<Project> {
     }
 
     /**
+     * Creates a new Byte Buddy plugin.
+     */
+    public ByteBuddyPlugin() {
+        /* empty */
+    }
+
+    /**
      * {@inheritDoc}
      */
     public void apply(Project project) {

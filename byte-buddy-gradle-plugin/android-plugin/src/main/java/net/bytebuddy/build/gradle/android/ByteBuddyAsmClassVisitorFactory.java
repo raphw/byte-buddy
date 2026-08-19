@@ -26,6 +26,13 @@ import org.objectweb.asm.ClassVisitor;
 public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitorFactory<ByteBuddyInstrumentationParameters> {
 
     /**
+     * Creates a new class visitor factory.
+     */
+    public ByteBuddyAsmClassVisitorFactory() {
+        /* empty */
+    }
+
+    /**
      * {@inheritDoc}
      */
     public boolean isInstrumentable(ClassData classData) {

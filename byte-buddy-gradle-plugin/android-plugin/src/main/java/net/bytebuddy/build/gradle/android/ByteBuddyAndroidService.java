@@ -56,6 +56,13 @@ import java.util.List;
 public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyAndroidService.Parameters>, Closeable {
 
     /**
+     * Creates a new Byte Buddy Android service.
+     */
+    public ByteBuddyAndroidService() {
+        /* empty */
+    }
+
+    /**
      * A {@link ClassVisitorFactory} to bridge between Android and Byte Buddy's ASM namespace.
      */
     private final ClassVisitorFactory<ClassVisitor> classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class);

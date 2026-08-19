@@ -149,6 +149,11 @@ public class Transformation {
         this.pluginName = pluginName;
     }
 
+    /**
+     * Resolves this transformation to an equivalent transformation of the non-Android Byte Buddy Gradle plugin.
+     *
+     * @return A {@code net.bytebuddy.build.gradle.Transformation} that represents this transformation.
+     */
     protected Object resolve() {
         try {
             Class<?> type = Class.forName("net.bytebuddy.build.gradle.Transformation");
