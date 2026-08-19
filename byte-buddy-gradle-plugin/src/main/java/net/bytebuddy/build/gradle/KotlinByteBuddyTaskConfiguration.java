@@ -25,9 +25,12 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.compile.AbstractCompile;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 /**
  * Configures a Byte Buddy task that transforms the output of a Kotlin compilation. Reuses the
@@ -35,7 +38,7 @@ import java.lang.reflect.Method;
  * {@link ByteBuddyPlugin.JavaPluginConfigurationAction} so a single {@code byteBuddy} DSL block
  * applies to both Java and Kotlin outputs.
  *
- * <p>If the Kotlin Gradle plugin (KGP) is not on the classpath, or the source set has no Kotlin sources
+ * <p>If the Kotlin Gradle plugin is not on the classpath, or the source set has no Kotlin sources
  * or no {@code compile{SourceSet}Kotlin} task, this action is a no-op. Depends on the Kotlin
  * Gradle plugin API only via reflection so the Byte Buddy Gradle plugin remains usable in
  * Java-only projects.</p>
@@ -79,6 +82,24 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
     @MaybeNull
     private static final Method GET_DESTINATION_DIRECTORY_TARGET;
 
+    /**
+     * The {@code org.gradle.api.tasks.TaskContainer#named} method, or {@code null} on legacy Gradle.
+     */
+    @MaybeNull
+    private static final Method NAMED;
+
+    /**
+     * The {@code org.gradle.api.file.SourceDirectorySet#compiledBy} method, or {@code null} on legacy Gradle.
+     */
+    @MaybeNull
+    private static final Method COMPILED_BY;
+
+    /**
+     * The {@code java.util.function.Function} type, or {@code null} on legacy JVMs.
+     */
+    @MaybeNull
+    private static final Class<?> FUNCTION;
+
     /*
      * Resolves Kotlin Gradle plugin API entry points, if available.
      */
@@ -104,12 +125,26 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
             getDestinationDirectorySource = null;
             getDestinationDirectoryTarget = null;
         }
+        Method named, compiledBy;
+        Class<?> function;
+        try {
+            function = Class.forName("java.util.function.Function");
+            named = TaskContainer.class.getMethod("named", String.class);
+            compiledBy = SourceDirectorySet.class.getMethod("compiledBy", Class.forName("org.gradle.api.tasks.TaskProvider"), function);
+        } catch (Throwable ignored) {
+            named = null;
+            compiledBy = null;
+            function = null;
+        }
         KOTLIN_COMPILE_TOOL = kotlinCompileTool;
         GET_DESTINATION_DIRECTORY = getDestinationDirectory;
         GET_LIBRARIES = getLibraries;
         GET_EXTENSIONS = getExtensions;
         GET_DESTINATION_DIRECTORY_SOURCE = getDestinationDirectorySource;
         GET_DESTINATION_DIRECTORY_TARGET = getDestinationDirectoryTarget;
+        NAMED = named;
+        COMPILED_BY = compiledBy;
+        FUNCTION = function;
     }
 
     /**
@@ -192,7 +227,7 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
         byteBuddyTask.setDescription("Transforms the classes compiled by " + compileTask.getName());
         byteBuddyTask.dependsOn(compileTask);
         extension.configure(byteBuddyTask);
-        configureDirectories(project, taskName, (SourceDirectorySet) kotlinSources, compileTask, byteBuddyTask);
+        configureDirectories(project, (SourceDirectorySet) kotlinSources, compileTask, byteBuddyTask);
         Task compileJavaTask = project.getTasks().findByName(sourceSet.getCompileJavaTaskName());
         if (compileJavaTask instanceof AbstractCompile) {
             byteBuddyTask.dependsOn(compileJavaTask);
@@ -213,17 +248,16 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
      * compile task: the Kotlin compile task writes to a sibling {@code kotlinByteBuddyRaw}
      * folder which the Byte Buddy task reads and then writes back to the original destination.
      *
-     * @param project       The current project (used to look up the Byte Buddy task provider).
-     * @param taskName      The registered name of the Byte Buddy Kotlin task.
+     * <p>As the Kotlin Gradle plugin binds the source directory set's classes directory to the
+     * Kotlin compile task's destination directory, this binding is redirected onto the Byte Buddy
+     * task to avoid that consumers such as the jar task resolve the untransformed classes.</p>
+     *
+     * @param project       The current project.
      * @param source        The Kotlin source directory set.
      * @param compileTask   The Kotlin compile task (a {@code KotlinCompileTool}).
      * @param byteBuddyTask The Byte Buddy task consuming the compilation output.
      */
-    private static void configureDirectories(Project project,
-                                             String taskName,
-                                             SourceDirectorySet source,
-                                             Task compileTask,
-                                             ByteBuddyTask byteBuddyTask) {
+    private static void configureDirectories(Project project, SourceDirectorySet source, Task compileTask, ByteBuddyTask byteBuddyTask) {
         try {
             DirectoryProperty directory = (DirectoryProperty) GET_DESTINATION_DIRECTORY_SOURCE.invoke(source);
             String rawPath = "../kotlin" + AbstractByteBuddyTaskConfiguration.RAW_FOLDER_SUFFIX;
@@ -231,23 +265,51 @@ public class KotlinByteBuddyTaskConfiguration implements Action<Project> {
             byteBuddyTask.getSource().set(directory.dir(rawPath));
             byteBuddyTask.getTarget().set(directory);
             byteBuddyTask.getClassPath().from((FileCollection) GET_LIBRARIES.invoke(compileTask));
+            if (NAMED == null || COMPILED_BY == null || FUNCTION == null) {
+                project.getLogger().debug("Not rebinding the classes directory of the Kotlin source set as the current Gradle version does not support it");
+            } else {
+                COMPILED_BY.invoke(source,
+                        NAMED.invoke(project.getTasks(), byteBuddyTask.getName()),
+                        Proxy.newProxyInstance(KotlinByteBuddyTaskConfiguration.class.getClassLoader(),
+                                new Class<?>[]{FUNCTION},
+                                new TargetDirectoryFunction(byteBuddyTask.getTarget())));
+            }
         } catch (Exception exception) {
             throw new GradleException("Could not adjust directories for Kotlin Byte Buddy task", exception);
         }
-        // The raw redirect above pointed compileKotlin.destinationDirectory at kotlinByteBuddyRaw.
-        // KGP's `jar.from(SDS.classesDirectory)` follows that property, so jar would pick up raw.
-        // Rebind SDS.classesDirectory to byteBuddyKotlin.target (kotlin/main).
-        try {
-            org.gradle.api.tasks.TaskProvider<ByteBuddyTask> provider = project.getTasks().named(taskName, ByteBuddyTask.class);
-            source.compiledBy(provider, new java.util.function.Function<ByteBuddyTask, DirectoryProperty>() {
-                public DirectoryProperty apply(ByteBuddyTask task) {
-                    return task.getTarget();
-                }
-            });
-        } catch (Throwable exception) {
-            project.getLogger().debug(
-                    "Could not rebind kotlin SourceDirectorySet.classesDirectory; jar may include raw output",
-                    exception);
+    }
+
+    /**
+     * An invocation handler that implements {@code java.util.function.Function} to resolve a Byte
+     * Buddy task's target directory, without requiring a compile-time dependency on Java 8.
+     */
+    protected static class TargetDirectoryFunction implements InvocationHandler {
+
+        /**
+         * The target directory of the represented Byte Buddy task.
+         */
+        private final DirectoryProperty target;
+
+        /**
+         * Creates a new function that resolves a Byte Buddy task's target directory.
+         *
+         * @param target The target directory of the represented Byte Buddy task.
+         */
+        protected TargetDirectoryFunction(DirectoryProperty target) {
+            this.target = target;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object invoke(Object proxy, Method method, @MaybeNull Object[] argument) throws Throwable {
+            if (method.getDeclaringClass() == Object.class) {
+                return method.invoke(this, argument);
+            } else if (method.getName().equals("apply")) {
+                return target;
+            } else {
+                throw new UnsupportedOperationException("Unexpected method: " + method);
+            }
         }
     }
 
