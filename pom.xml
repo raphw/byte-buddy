@@ -77,7 +77,7 @@
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
         <version.plugin.clean>3.2.0</version.plugin.clean>
-        <version.plugin.bundle>5.1.9</version.plugin.bundle>
+        <version.plugin.bundle>6.1.0</version.plugin.bundle>
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
         <version.plugin.install>3.0.1</version.plugin.install>
         <version.plugin.deploy>3.0.0</version.plugin.deploy>
