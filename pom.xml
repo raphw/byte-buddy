@@ -85,7 +85,7 @@
         <version.plugin.versions>2.18.0</version.plugin.versions>
         <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
         <version.plugin.source>3.2.1</version.plugin.source>
-        <version.plugin.shade>3.5.2</version.plugin.shade>
+        <version.plugin.shade>3.6.2</version.plugin.shade>
         <version.plugin.gpg>3.0.1</version.plugin.gpg>
         <version.plugin.jxr>3.2.0</version.plugin.jxr>
         <version.plugin.buildhelper>3.3.0</version.plugin.buildhelper>
