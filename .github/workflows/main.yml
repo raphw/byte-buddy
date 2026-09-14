@@ -8,6 +8,12 @@ on:
       - master
   schedule:
     - cron: "0 0 * * 1"
+  workflow_dispatch:
+    inputs:
+      sigstore:
+        description: "Run a sigstore signing dry run, without deploying anything."
+        type: boolean
+        default: true
 permissions: read-all
 jobs:
   hotspot-ea:
@@ -249,3 +255,58 @@ jobs:
           git add --all
           git commit -m "[publish] Start next development iteration $NEXT_SNAPSHOT_VERSION"
           git push --follow-tags
+  sigstore-dry-run:
+    name: Sigstore (dry run)
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'workflow_dispatch' && inputs.sigstore
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
+        with:
+          java-version: 8
+          distribution: temurin
+          architecture: x64
+          cache: maven
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.0.6
+      # Installs into the local repository only, such that nothing is ever deployed by this job.
+      - name: Build and sign without deploying
+        run: ./mvnw install -DskipTests -Pextras -Psigstore
+      # Each bundle must verify against the artifact that is installed next to it, which is the
+      # file that a release would deploy. This catches a bundle that signs the wrong file.
+      - name: Verify bundles against the installed artifacts
+        run: |
+          set -euo pipefail
+          VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "Verifying sigstore bundles for version ${VERSION}"
+          COUNT=0
+          FAILED=0
+          while IFS= read -r bundle; do
+            COUNT=$((COUNT + 1))
+            target="${bundle%.sigstore.json}"
+            if [ ! -f "${target}" ]; then
+              echo "::error::no artifact is installed for bundle ${bundle}"
+              FAILED=$((FAILED + 1))
+              continue
+            fi
+            if cosign verify-blob \
+                --bundle "${bundle}" \
+                --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/" \
+                --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+                "${target}" > /dev/null 2>&1; then
+              echo "ok       $(basename "${target}")"
+            else
+              echo "::error::signature does not verify for ${target}"
+              FAILED=$((FAILED + 1))
+            fi
+          done < <(find ~/.m2/repository/net/bytebuddy -path "*/${VERSION}/*" -name "*.sigstore.json" | sort)
+          echo "Checked ${COUNT} bundle(s) with ${FAILED} failure(s)"
+          if [ "${COUNT}" -eq 0 ]; then
+            echo "::error::no sigstore bundles were created"
+            exit 1
+          fi
+          [ "${FAILED}" -eq 0 ]
