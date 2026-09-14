@@ -40,7 +40,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -580,7 +579,9 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
-     * Deletes a file or a folder recursively.
+     * Deletes a file or a folder recursively. Symbolic links that are discovered during the traversal are
+     * deleted without being resolved, such that files outside of the supplied folder are never affected. A
+     * symbolic link that is supplied as an argument is always resolved.
      *
      * @param file The file or folder to delete.
      * @return {@code true} if the file or folders were deleted.
@@ -591,15 +592,42 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         queue.add(file);
         while (!queue.isEmpty()) {
             File current = queue.remove();
-            File[] child = current.listFiles();
-            if (child == null || child.length == 0) {
+            File[] children = current.listFiles();
+            if (children == null || children.length == 0) {
                 deleted = current.delete() || deleted;
             } else {
-                queue.addAll(Arrays.asList(child));
+                for (File child : children) {
+                    if (isSymbolicLink(child)) {
+                        deleted = child.delete() || deleted;
+                    } else {
+                        queue.add(child);
+                    }
+                }
                 queue.add(current);
             }
         }
         return deleted;
+    }
+
+    /**
+     * Checks if a file represents a symbolic link. This check does not rely on {@code java.nio.file} to
+     * retain compatibility with the class file version that this plugin is compiled to.
+     *
+     * @param file The file to check.
+     * @return {@code true} if the supplied file represents a symbolic link. If the link status cannot be
+     * resolved, {@code false} is returned to retain the traversal behavior of previous releases.
+     */
+    private static boolean isSymbolicLink(File file) {
+        File folder = file.getParentFile();
+        if (folder == null) {
+            return false;
+        }
+        try {
+            File resolved = new File(folder.getCanonicalFile(), file.getName());
+            return !resolved.getCanonicalFile().equals(resolved.getAbsoluteFile());
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 
     /**

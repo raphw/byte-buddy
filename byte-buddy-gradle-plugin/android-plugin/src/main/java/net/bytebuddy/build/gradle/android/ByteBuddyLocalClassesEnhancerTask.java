@@ -24,6 +24,7 @@ import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
@@ -493,7 +494,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                 if (entry != null && entry.isDirectory()) {
                     return;
                 }
-                String name = element.getName();
+                String name = FileSystem.validated(element.getName());
                 try {
                     outputStream.putNextEntry(new JarEntry(name));
                     if (!name.endsWith("/")) {
