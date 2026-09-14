@@ -21,6 +21,7 @@
       There are several build profiles available:
       - extras: Creates additional artifacts containing source files and javadoc. (activated on release)
       - gpg: Sign all artifacts using gpg. (activated on release)
+      - sigstore: Sign all deployed files using sigstore. Requires cosign. (activated on release)
       - checks: Applies style checks to the source files. (activated by default, activated on release)
       - integration: Runs additional unit tests that are long-running (activated on CI server)
       - analysis: Executes static code analysis (activated on CI server)
@@ -86,7 +87,7 @@
         <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
         <version.plugin.source>3.2.1</version.plugin.source>
         <version.plugin.shade>3.5.2</version.plugin.shade>
-        <version.plugin.gpg>3.0.1</version.plugin.gpg>
+        <version.plugin.gpg>3.2.8</version.plugin.gpg>
         <version.plugin.jxr>3.2.0</version.plugin.jxr>
         <version.plugin.buildhelper>3.3.0</version.plugin.buildhelper>
         <version.plugin.jar>3.2.2</version.plugin.jar>
@@ -125,8 +126,9 @@
         <japicmp.skip>false</japicmp.skip>
         <modulemaker.skip>false</modulemaker.skip>
         <javadoc.download.skip>false</javadoc.download.skip>
+        <sigstore.artifacts.skip>false</sigstore.artifacts.skip>
         <repository.git-url>git@github.com:raphw/byte-buddy.git</repository.git-url>
-        <release.profiles>extras,gpg,gradle-release,multi-release</release.profiles>
+        <release.profiles>extras,gpg,sigstore,gradle-release,multi-release</release.profiles>
         <surefire.arguments />
     </properties>
 
@@ -470,7 +472,7 @@
             <properties>
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
-                <release.profiles>extras,gpg,gradle-release,upgrade-release</release.profiles>
+                <release.profiles>extras,gpg,sigstore,gradle-release,upgrade-release</release.profiles>
                 <maven.test.skip>true</maven.test.skip>
                 <skipTests>true</skipTests>
                 <japicmp.skip>true</japicmp.skip>
@@ -1216,6 +1218,207 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <!-- Sign any deployed file using sigstore, in addition to the gpg signature. (Requires cosign on the executing machine.) -->
+        <profile>
+            <id>sigstore</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Create a sigstore bundle for each deployed file. Runs after gpg such that the bundles are not signed. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${version.plugin.exec}</version>
+                        <executions>
+                            <execution>
+                                <id>sigstore-pom</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cosign</executable>
+                                    <arguments>
+                                        <argument>sign-blob</argument>
+                                        <argument>--yes</argument>
+                                        <argument>--new-bundle-format</argument>
+                                        <argument>--bundle</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}.pom.sigstore.json</argument>
+                                        <argument>${project.basedir}/pom.xml</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>sigstore-cyclonedx-json</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cosign</executable>
+                                    <arguments>
+                                        <argument>sign-blob</argument>
+                                        <argument>--yes</argument>
+                                        <argument>--new-bundle-format</argument>
+                                        <argument>--bundle</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}-cyclonedx.json.sigstore.json</argument>
+                                        <argument>${project.build.directory}/bom.json</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>sigstore-cyclonedx-xml</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cosign</executable>
+                                    <arguments>
+                                        <argument>sign-blob</argument>
+                                        <argument>--yes</argument>
+                                        <argument>--new-bundle-format</argument>
+                                        <argument>--bundle</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}-cyclonedx.xml.sigstore.json</argument>
+                                        <argument>${project.build.directory}/bom.xml</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>sigstore-jar</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${sigstore.artifacts.skip}</skip>
+                                    <executable>cosign</executable>
+                                    <arguments>
+                                        <argument>sign-blob</argument>
+                                        <argument>--yes</argument>
+                                        <argument>--new-bundle-format</argument>
+                                        <argument>--bundle</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}.jar.sigstore.json</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}.jar</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>sigstore-sources</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${sigstore.artifacts.skip}</skip>
+                                    <executable>cosign</executable>
+                                    <arguments>
+                                        <argument>sign-blob</argument>
+                                        <argument>--yes</argument>
+                                        <argument>--new-bundle-format</argument>
+                                        <argument>--bundle</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}-sources.jar.sigstore.json</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}-sources.jar</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>sigstore-javadoc</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${sigstore.artifacts.skip}</skip>
+                                    <executable>cosign</executable>
+                                    <arguments>
+                                        <argument>sign-blob</argument>
+                                        <argument>--yes</argument>
+                                        <argument>--new-bundle-format</argument>
+                                        <argument>--bundle</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}-javadoc.jar.sigstore.json</argument>
+                                        <argument>${project.build.directory}/${project.build.finalName}-javadoc.jar</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Attach the bundles such that they are deployed next to the files that they sign. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${version.plugin.buildhelper}</version>
+                        <executions>
+                            <execution>
+                                <id>sigstore-attach</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>attach-artifact</goal>
+                                </goals>
+                                <configuration>
+                                    <artifacts>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.build.finalName}.pom.sigstore.json</file>
+                                            <type>pom.sigstore.json</type>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.build.finalName}-cyclonedx.json.sigstore.json</file>
+                                            <type>json.sigstore.json</type>
+                                            <classifier>cyclonedx</classifier>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.build.finalName}-cyclonedx.xml.sigstore.json</file>
+                                            <type>xml.sigstore.json</type>
+                                            <classifier>cyclonedx</classifier>
+                                        </artifact>
+                                    </artifacts>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>sigstore-attach-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>attach-artifact</goal>
+                                </goals>
+                                <configuration>
+                                    <skipAttach>${sigstore.artifacts.skip}</skipAttach>
+                                    <artifacts>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.build.finalName}.jar.sigstore.json</file>
+                                            <type>jar.sigstore.json</type>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.build.finalName}-sources.jar.sigstore.json</file>
+                                            <type>jar.sigstore.json</type>
+                                            <classifier>sources</classifier>
+                                        </artifact>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.build.finalName}-javadoc.jar.sigstore.json</file>
+                                            <type>jar.sigstore.json</type>
+                                            <classifier>javadoc</classifier>
+                                        </artifact>
+                                    </artifacts>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- The aggregator does not create any jar artifact what is discovered by the Maven wrapper that only it contains. -->
+        <profile>
+            <id>sigstore-aggregator</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/mvnw</exists>
+                </file>
+            </activation>
+            <properties>
+                <sigstore.artifacts.skip>true</sigstore.artifacts.skip>
+            </properties>
         </profile>
         <!-- Basic checks that are not requiring too much runtime. -->
         <profile>
