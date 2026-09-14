@@ -632,6 +632,9 @@ public class ByteBuddyAgent {
      * @param agent              The Java agent to install.
      * @param isNative           {@code true} if the agent is native.
      * @param argument           The argument to provide to the agent or {@code null} if no argument should be supplied.
+     *                           The argument is supplied to the spawned process by an environment variable and not as a
+     *                           command line argument, as the arguments of a process can be read by other users of the
+     *                           same host such that the argument is not exposed to them unnecessarily.
      * @throws Exception If an exception occurs during the attachment or the external process fails the attachment.
      */
     @SuppressFBWarnings(value = "OS_OPEN_STREAM_EXCEPTION_PATH", justification = "Outer stream holds file handle and is closed")
@@ -684,7 +687,7 @@ public class ByteBuddyAgent {
                     processId,
                     agent.getAbsolutePath(),
                     Boolean.toString(isNative),
-                    argument == null ? "" : (AGENT_ARGUMENT_SEPARATOR + argument));
+                    "");
             String dump = System.getProperty(Attacher.DUMP_PROPERTY);
             if (dump != null && dump.length() > 0) {
                 try {
@@ -706,7 +709,13 @@ public class ByteBuddyAgent {
                     throw new IllegalStateException(exception);
                 }
             }
-            if (new ProcessBuilder(commands).start().waitFor() != 0) {
+            ProcessBuilder processBuilder = new ProcessBuilder(commands);
+            if (argument == null) {
+                processBuilder.environment().remove(Attacher.ARGUMENT_ENVIRONMENT_VARIABLE);
+            } else {
+                processBuilder.environment().put(Attacher.ARGUMENT_ENVIRONMENT_VARIABLE, argument);
+            }
+            if (processBuilder.start().waitFor() != 0) {
                 throw new IllegalStateException("Could not self-attach to current VM using external process - set a property "
                         + Attacher.DUMP_PROPERTY
                         + " to dump the process output to a file at the specified location");

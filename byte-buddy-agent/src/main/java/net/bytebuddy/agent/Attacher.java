@@ -34,6 +34,14 @@ public class Attacher {
     public static final String DUMP_PROPERTY = "net.bytebuddy.agent.attacher.dump";
 
     /**
+     * The environment variable that supplies the agent argument. The argument is not supplied as a command
+     * line argument as the arguments of a process can be read by other users of the same host, for example
+     * by reading {@code /proc/[pid]/cmdline} on a Linux host, such that the argument is not exposed to them
+     * unnecessarily.
+     */
+    public static final String ARGUMENT_ENVIRONMENT_VARIABLE = "BYTE_BUDDY_AGENT_ARGUMENT";
+
+    /**
      * The attacher provides only {@code static} utility methods and should not be instantiated.
      */
     private Attacher() {
@@ -47,20 +55,25 @@ public class Attacher {
      *             the process id, the fully qualified name of the Java agent jar followed by
      *             an empty string if the argument to the agent is {@code null} or any number
      *             of strings where the first argument is proceeded by any single character
-     *             which is stripped off.
+     *             which is stripped off. The agent argument is only read from this list if it
+     *             is not supplied by the {@link Attacher#ARGUMENT_ENVIRONMENT_VARIABLE}
+     *             environment variable which is preferred to avoid its exposure on the
+     *             command line.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     public static void main(String[] args) {
         try {
-            String argument;
-            if (args.length < 5 || args[4].length() == 0) {
-                argument = null;
-            } else {
-                StringBuilder stringBuilder = new StringBuilder(args[4].substring(1));
-                for (int index = 5; index < args.length; index++) {
-                    stringBuilder.append(' ').append(args[index]);
+            String argument = System.getenv(ARGUMENT_ENVIRONMENT_VARIABLE);
+            if (argument == null) {
+                if (args.length < 5 || args[4].length() == 0) {
+                    argument = null;
+                } else {
+                    StringBuilder stringBuilder = new StringBuilder(args[4].substring(1));
+                    for (int index = 5; index < args.length; index++) {
+                        stringBuilder.append(' ').append(args[index]);
+                    }
+                    argument = stringBuilder.toString();
                 }
-                argument = stringBuilder.toString();
             }
             install(Class.forName(args[0]), args[1], args[2], Boolean.parseBoolean(args[3]), argument);
         } catch (Throwable throwable) {
