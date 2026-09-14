@@ -1247,7 +1247,7 @@
                                         <argument>--new-bundle-format</argument>
                                         <argument>--bundle</argument>
                                         <argument>${project.build.directory}/${project.build.finalName}.pom.sigstore.json</argument>
-                                        <argument>${project.file}</argument>
+                                        <argument>${project.file.path}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
