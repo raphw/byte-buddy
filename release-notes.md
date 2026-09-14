@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. September 2026: version 1.18.14
+
+- Avoid exposure of the agent argument on the command line of the process that is spawned for an external attachment.
+- Avoid the resolution of symbolic links when the Gradle plugin deletes a folder recursively.
+- Limit the nesting depth that is accepted when parsing a generic type signature to avoid an exhaustion of the stack for a malformed class file.
+- Sign all deployed files using sigstore, in addition to the existing GPG signature.
+- Validate entry names when the Android plugin retains a file to avoid the propagation of path traversals.
+
 ### 2. September 2026: version 1.18.13
 
 - Actually include the SBOM within the published artifacts.
