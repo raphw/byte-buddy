@@ -126,6 +126,7 @@
         <japicmp.skip>false</japicmp.skip>
         <modulemaker.skip>false</modulemaker.skip>
         <javadoc.download.skip>false</javadoc.download.skip>
+        <sigstore.skip>false</sigstore.skip>
         <sigstore.artifacts.skip>false</sigstore.artifacts.skip>
         <repository.git-url>git@github.com:raphw/byte-buddy.git</repository.git-url>
         <release.profiles>extras,gpg,sigstore,gradle-release,multi-release</release.profiles>
@@ -1240,6 +1241,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${sigstore.skip}</skip>
                                     <executable>cosign</executable>
                                     <arguments>
                                         <argument>sign-blob</argument>
@@ -1258,6 +1260,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${sigstore.skip}</skip>
                                     <executable>cosign</executable>
                                     <arguments>
                                         <argument>sign-blob</argument>
@@ -1276,6 +1279,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${sigstore.skip}</skip>
                                     <executable>cosign</executable>
                                     <arguments>
                                         <argument>sign-blob</argument>
@@ -1359,6 +1363,7 @@
                                     <goal>attach-artifact</goal>
                                 </goals>
                                 <configuration>
+                                    <skipAttach>${sigstore.skip}</skipAttach>
                                     <artifacts>
                                         <artifact>
                                             <file>${project.build.directory}/${project.build.finalName}.pom.sigstore.json</file>

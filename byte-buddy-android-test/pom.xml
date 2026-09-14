@@ -20,6 +20,9 @@
         <version.maven.android>4.6.0</version.maven.android>
         <version.android.sdk.platform>4</version.android.sdk.platform>
         <japicmp.skip>true</japicmp.skip>
+        <!-- This artifact is not deployed such that none of its files require a signature. -->
+        <sigstore.skip>true</sigstore.skip>
+        <sigstore.artifacts.skip>true</sigstore.artifacts.skip>
     </properties>
 
     <!--
