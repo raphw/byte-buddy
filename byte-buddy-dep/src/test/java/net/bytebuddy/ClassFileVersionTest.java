@@ -84,7 +84,8 @@ public class ClassFileVersionTest {
                 {24, 24, Collections.singletonList("24"), Opcodes.V24, (short) 68, (short) 0, true, true, true},
                 {25, 25, Collections.singletonList("25"), Opcodes.V25, (short) 69, (short) 0, true, true, true},
                 {26, 26, Collections.singletonList("26"), Opcodes.V26, (short) 70, (short) 0, true, true, true},
-                {27, 27, Collections.singletonList("27"), Opcodes.V27, (short) 71, (short) 0, true, true, true}
+                {27, 27, Collections.singletonList("27"), Opcodes.V27, (short) 71, (short) 0, true, true, true},
+                {28, 28, Collections.singletonList("28"), Opcodes.V28, (short) 72, (short) 0, true, true, true}
         });
     }
 

@@ -121,10 +121,10 @@ public class TypePoolDefaultSignatureDepthTest {
         assertMalformed(fieldDescription.getType());
     }
 
-    @Test
+    @Test(expected = GenericSignatureFormatError.class)
     public void testFieldParameterizedSignatureAtMaximumDepth() throws Exception {
         FieldDescription fieldDescription = ofField(parameterizedSignature(TypePool.Default.SIGNATURE_DEPTH)).getDeclaredFields().getOnly();
-        assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        fieldDescription.getType().getSort();
     }
 
     @Test

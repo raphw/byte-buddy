@@ -35,14 +35,14 @@ public class ClassFileVersionOtherTest {
     }
 
     @Test
-    public void testMaximumVersion() {
+    public void testMaximumVersion() throws Exception {
         ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(0xFFFFFFFF);
         assertThat(classFileVersion.getMinorVersion(), is((short) 0xFFFF));
         assertThat(classFileVersion.getMajorVersion(), is((short) 0xFFFF));
     }
 
     @Test
-    public void testMaximumNegativeVersion() {
+    public void testMaximumNegativeVersion() throws Exception {
         ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(0x0FFFFFFF);
         assertThat(classFileVersion.getMinorVersion(), is((short) 0x0FFF));
         assertThat(classFileVersion.getMajorVersion(), is((short) 0xFFFF));
