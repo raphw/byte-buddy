@@ -72,8 +72,8 @@
         <bytecode.main.version>1.5</bytecode.main.version>
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
-        <version.asm>9.11</version.asm>
-        <version.asmjdkbridge>0.0.13</version.asmjdkbridge>
+        <version.asm>9.11.1</version.asm>
+        <version.asmjdkbridge>0.0.14</version.asmjdkbridge>
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
@@ -113,7 +113,7 @@
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
         <version.plugin.antrun>3.1.0</version.plugin.antrun>
         <version.plugin.bytecode-update>1.0</version.plugin.bytecode-update>
-        <version.plugin.cyclonedx>2.9.1</version.plugin.cyclonedx>
+        <version.plugin.cyclonedx>2.9.3</version.plugin.cyclonedx>
         <version.checkstyle>9.3</version.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
