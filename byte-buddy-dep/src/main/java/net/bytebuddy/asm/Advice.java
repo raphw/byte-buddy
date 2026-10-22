@@ -7875,7 +7875,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalArgumentException("Unexpected frame type: " + type);
                         }
-                        if (instrumentedMethod.isConstructor() && currentFrameDivergence < instrumentedMethod.getStackSize()) {
+                        if (instrumentedMethod.isConstructor() && currentFrameDivergence < instrumentedMethod.getParameters().size() + 1) {
                             throw new IllegalStateException(instrumentedMethod + " dropped implicit 'this' frame");
                         }
                         methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);

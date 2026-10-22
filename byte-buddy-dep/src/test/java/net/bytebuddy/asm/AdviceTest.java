@@ -1914,6 +1914,30 @@ public class AdviceTest {
                 .make();
     }
 
+    @Test
+    public void testConstructorWithLongParameterAndCompactFrame() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ConstructorLongParameterSample.class)
+                .visit(Advice.to(EmptyExitAdvice.class).on(isConstructor()))
+                .make()
+                .load(ConstructorLongParameterSample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getField(FOO).get(type.getConstructor(long.class).newInstance(0L)), is((Object) 1));
+        assertThat(type.getField(FOO).get(type.getConstructor(long.class).newInstance(1L)), is((Object) 2));
+    }
+
+    @Test
+    public void testConstructorWithDoubleParameterAndCompactFrame() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ConstructorDoubleParameterSample.class)
+                .visit(Advice.to(EmptyExitAdvice.class).on(isConstructor()))
+                .make()
+                .load(ConstructorDoubleParameterSample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getField(FOO).get(type.getConstructor(double.class).newInstance(0d)), is((Object) 1));
+        assertThat(type.getField(FOO).get(type.getConstructor(double.class).newInstance(1d)), is((Object) 2));
+    }
+
 
     @Test(expected = IllegalArgumentException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
@@ -4353,6 +4377,29 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         static String enter(@Advice.FieldValue(value = "foo", readOnly = false) String value) {
             return value = "foo";
+        }
+    }
+
+    public static class ConstructorParameterBase {
+
+        public final int foo;
+
+        public ConstructorParameterBase(int foo) {
+            this.foo = foo;
+        }
+    }
+
+    public static class ConstructorLongParameterSample extends ConstructorParameterBase {
+
+        public ConstructorLongParameterSample(long value) {
+            super(value == 0L ? 1 : 2);
+        }
+    }
+
+    public static class ConstructorDoubleParameterSample extends ConstructorParameterBase {
+
+        public ConstructorDoubleParameterSample(double value) {
+            super(value == 0d ? 1 : 2);
         }
     }
 
