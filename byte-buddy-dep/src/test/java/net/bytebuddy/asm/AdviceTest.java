@@ -1914,6 +1914,64 @@ public class AdviceTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testDroppingOfThisFrameInConstructorAfterFullFrame() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineConstructor(Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(
+                        new StackManipulation.AbstractBase() {
+                            @Override
+                            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                                Label label = new Label();
+                                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                methodVisitor.visitJumpInsn(Opcodes.IFEQ, label);
+                                methodVisitor.visitLabel(label);
+                                methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{Opcodes.UNINITIALIZED_THIS}, 1, new Object[]{Opcodes.UNINITIALIZED_THIS});
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(Object.class), MethodDescription.CONSTRUCTOR_INTERNAL_NAME, "()V", false);
+                                methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                                return new Size(0, 2);
+                            }
+                        },
+                        MethodReturn.VOID
+                ))
+                .visit(Advice.to(EmptyExitAdvice.class).on(isConstructor()))
+                .make();
+    }
+
+    @Test
+    public void testDroppingOfInitializedThisFrameInConstructorAfterFullFrame() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineConstructor(Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(
+                        new StackManipulation.AbstractBase() {
+                            @Override
+                            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                                Label initialized = new Label(), dropped = new Label();
+                                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(Object.class), MethodDescription.CONSTRUCTOR_INTERNAL_NAME, "()V", false);
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                methodVisitor.visitJumpInsn(Opcodes.IFEQ, initialized);
+                                methodVisitor.visitLabel(initialized);
+                                methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{implementationContext.getInstrumentedType().getInternalName()}, 0, new Object[0]);
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                methodVisitor.visitJumpInsn(Opcodes.IFEQ, dropped);
+                                methodVisitor.visitLabel(dropped);
+                                methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                                return new Size(0, 1);
+                            }
+                        },
+                        MethodReturn.VOID
+                ))
+                .visit(Advice.to(EmptyExitAdvice.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getConstructor().newInstance(), notNullValue(Object.class));
+    }
+
     @Test
     public void testConstructorWithLongParameterAndCompactFrame() throws Exception {
         Class<?> type = new ByteBuddy()

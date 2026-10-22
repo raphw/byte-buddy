@@ -7745,6 +7745,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class WithArgumentCopy extends WithPreservedArguments {
 
                     /**
+                     * {@code true} if the copy of the {@code this} reference that precedes the original local variables is uninitialized.
+                     */
+                    protected boolean uninitializedThisCopy;
+
+                    /**
                      * Creates a new stack map frame handler that expects an argument copy.
                      *
                      * @param instrumentedType   The instrumented type.
@@ -7814,6 +7819,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                         }
                         currentFrameDivergence = (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size();
+                        uninitializedThisCopy = instrumentedMethod.isConstructor();
                     }
 
                     /**
@@ -7853,6 +7859,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         }
                                     }
                                     translated[index++] = initialization.toFrame(instrumentedType);
+                                    uninitializedThisCopy = initialization == Initialization.UNITIALIZED;
                                 } else if (!instrumentedMethod.isStatic()) {
                                     translated[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                                 }
@@ -7868,14 +7875,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 if (localVariableLength > 0) {
                                     System.arraycopy(localVariable, 0, translated, index, localVariableLength);
                                 }
+                                currentFrameDivergence = localVariableLength;
                                 localVariableLength = translated.length;
                                 localVariable = translated;
-                                currentFrameDivergence = localVariableLength;
                                 break;
                             default:
                                 throw new IllegalArgumentException("Unexpected frame type: " + type);
                         }
-                        if (instrumentedMethod.isConstructor() && currentFrameDivergence < instrumentedMethod.getParameters().size() + 1) {
+                        if (uninitializedThisCopy && currentFrameDivergence < instrumentedMethod.getParameters().size() + 1) {
                             throw new IllegalStateException(instrumentedMethod + " dropped implicit 'this' frame");
                         }
                         methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
