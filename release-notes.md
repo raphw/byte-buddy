@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 23. October 2026: version 1.18.16
+
+- Correct detection of a dropped implicit `this` frame in constructors with `long` or `double` parameters when using `Advice`.
+- Detect a dropped uninitialized `this` frame in constructors after full frames when using `Advice` with copied arguments.
+- Update ASM to version 9.11.1 and the ASM to Class File API bridge to version 0.0.14.
+- Use a valid tag for the Gradle plugin portal.
+
+### 13. October 2026: version 1.18.15
+
+- Update ASM to version 9.11 and add support for Java 28.
+
 ### 14. September 2026: version 1.18.14
 
 - Avoid exposure of the agent argument on the command line of the process that is spawned for an external attachment.
