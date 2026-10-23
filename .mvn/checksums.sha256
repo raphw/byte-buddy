@@ -825,6 +825,7 @@ net.bytebuddy:byte-buddy-agent:jar:1.18.11 780b3601c34150ab9fb822673c472f7229c10
 net.bytebuddy:byte-buddy-agent:jar:1.18.12 287703bea3473edf89e1b373a097e49bad04ed48b85796228f68b1474dc93cf8
 net.bytebuddy:byte-buddy-agent:jar:1.18.13 990c630297fb8c84fea5b16085a4b3035b81748084a94a98f0b9dc0c5d63d499
 net.bytebuddy:byte-buddy-agent:jar:1.18.14 6f9159206c4c7950c7ce571b534dcc6457cc27b960146724fbe70c552dd55b97
+net.bytebuddy:byte-buddy-agent:jar:1.18.15 9744e23dfbed9ca95f576fdd699409b76dc975a93a332022aeda6de0daf0c5b5
 net.bytebuddy:byte-buddy-agent:jar:1.18.2 d91e2d6d1b777687ab14a52b18b08aca32c4c91274131c99907674c661402a76
 net.bytebuddy:byte-buddy-agent:jar:1.18.3 3d4c6ff9a441306969ec223db1b37e986788f0b9e077be2a39e2fbbfc11b04e0
 net.bytebuddy:byte-buddy-agent:jar:1.18.4 f22dd13a5a501fa84948d9332e9624794dbb3532f843a30d2faaeba5e5078953
@@ -887,6 +888,7 @@ net.bytebuddy:byte-buddy-android:jar:1.18.11 c4897e39efe299e9df07d589992f9b120db
 net.bytebuddy:byte-buddy-android:jar:1.18.12 9e60a85ec0950715156b67422672dcb4ca60f0c9cb528c3493af91e5e6224c1f
 net.bytebuddy:byte-buddy-android:jar:1.18.13 8a8764d595b2e38cc5af93ad26b363f1be1c623ba76b1e83e62fd49cc53b7dad
 net.bytebuddy:byte-buddy-android:jar:1.18.14 9d1972abf0b931deb178204c01e16a0c2f1d335faedfd1f622f516b7e0d8b235
+net.bytebuddy:byte-buddy-android:jar:1.18.15 bb821ec8622c9aa87198a2960b6b62dc6756668bc21cda9abe4237a86a798f85
 net.bytebuddy:byte-buddy-android:jar:1.18.2 9bf06f5a1ff1487a8f0c95d83189102c0aa830664f1a6705129f7bfcb251b4bb
 net.bytebuddy:byte-buddy-android:jar:1.18.3 948bf5ea5b35dd08cd6fbbe0e07c476ff14cc872c64d7b0e091486fa0ee51742
 net.bytebuddy:byte-buddy-android:jar:1.18.4 52ce4d88516edeabb1b1223eaee24874a44f652704c5441b4a300ea36fba72ac
@@ -949,6 +951,7 @@ net.bytebuddy:byte-buddy-dep:jar:1.18.11 2c9b37c851ebcbb7c22610e0d6bfc800d0203ca
 net.bytebuddy:byte-buddy-dep:jar:1.18.12 e25af148d483fc7c964d9f7e4a77a3f34b71f5eb3c31cb5f6c422939c3c08008
 net.bytebuddy:byte-buddy-dep:jar:1.18.13 87980ae6f860f701ce43b890f21137617a3915cc3cf09cca8cc15646bbc45c75
 net.bytebuddy:byte-buddy-dep:jar:1.18.14 f06059c47001683dc0b83fd734ad9ecddd1869eecafbf6f1efd13a96441f1a6a
+net.bytebuddy:byte-buddy-dep:jar:1.18.15 a84db4cd860223ef677ddc12fdbd361fd19160c91e1f983e8c13eb3c8f43468b
 net.bytebuddy:byte-buddy-dep:jar:1.18.2 c437ae76a7fc23b60e6dad41e5c4b5efc585272123b3eba202298f1e90661cbe
 net.bytebuddy:byte-buddy-dep:jar:1.18.3 4099a282280933c48dfbd09a8c1872ca8912013dc0e4f579535a1e6d3d5e2e1b
 net.bytebuddy:byte-buddy-dep:jar:1.18.4 02bbd7e29dad019631e625d39b86d964c6867368a71146e8c94586d59138fead
