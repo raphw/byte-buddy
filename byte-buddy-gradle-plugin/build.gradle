@@ -69,7 +69,7 @@ gradlePlugin {
             implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
             displayName = 'Byte Buddy Gradle plugin'
             description = 'The Byte Buddy plugin allows for post processing Java classes with byte code transformation.'
-            tags.set(['Byte Buddy', 'bytecode', 'enhancement'])
+            tags.set(['byte-buddy', 'bytecode', 'enhancement'])
         }
     }
 }
