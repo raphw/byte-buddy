@@ -217,20 +217,18 @@ jobs:
           git add --all
           git commit -m "[publish] Releasing Byte Buddy $RELEASE_VERSION"
           git tag -a "byte-buddy-$RELEASE_VERSION" -m "Byte Buddy $RELEASE_VERSION"
-          ./mvnw -B -s .mvn/release.settings.xml clean deploy \
-            -Dcentral.username=${{ secrets.central_user }} \
-            -Dcentral.password=${{ secrets.central_password }} \
-            -Dgpg.passphrase=${{ secrets.gpg_passphrase }} \
-            -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 \
-            -Dgradle.key=${{ secrets.gradle_key }} \
-            -Dgradle.secret=${{ secrets.gradle_secret }} \
+          ./mvnw -B clean package \
             -Ppublish-jdk5 \
             -Pextras \
-            -Pgpg \
-            -Psigstore \
             -Pgradle-release \
             -Pmulti-release \
             -Pchecksum-enforce
+          (cd byte-buddy-gradle-plugin && ./gradlew publishPlugins --info \
+            -Dnet.bytebuddy.test.integration=false \
+            -Dnet.bytebuddy.misc.extras=true \
+            -Dnet.bytebuddy.gradle.release=true \
+            -Pgradle.publish.key=${{ secrets.gradle_key }} \
+            -Pgradle.publish.secret=${{ secrets.gradle_secret }})
           ./mvnw versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false -Pchecksum-enforce
           ./mvnw -B -s .mvn/release.settings.xml clean deploy \
             -Dcentral.username=${{ secrets.central_user }} \
