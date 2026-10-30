@@ -20,9 +20,6 @@ ext.javaVersion = JavaVersion.VERSION_11
 
 subprojects {
     repositories {
-        maven {
-            url = rootProject.layout.buildDirectory.dir('repository')
-        }
         mavenCentral()
         google()
     }
