@@ -1,15 +1,16 @@
 plugins {
     id 'com.android.library'
+    id 'maven-publish'
 }
 apply from: "$rootDir/bytebuddy.gradle"
 
 android {
+    namespace 'net.bytebuddy.plugin.gradle.test.aar'
     compileSdk 32
     defaultConfig {
         minSdk 21
         targetSdk 32
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles "consumer-rules.pro"
     }
     buildTypes {
         release {
@@ -20,5 +21,28 @@ android {
     compileOptions {
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
+    }
+    publishing {
+        singleVariant('release')
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'test'
+            url = rootProject.layout.buildDirectory.dir('repository')
+        }
+    }
+}
+
+afterEvaluate {
+    publishing.publications {
+        release(MavenPublication) {
+            groupId = 'net.bytebuddy.gradle.test'
+            artifactId = project.name
+            version = byteBuddyVersion
+            from components.release
+        }
     }
 }

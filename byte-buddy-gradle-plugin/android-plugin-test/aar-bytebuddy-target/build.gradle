@@ -4,12 +4,12 @@ plugins {
 apply from: "$rootDir/bytebuddy.gradle"
 
 android {
+    namespace 'net.bytebuddy.android.test.aar.target'
     compileSdk 32
     defaultConfig {
         minSdk 21
         targetSdk 32
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles "consumer-rules.pro"
     }
     buildTypes {
         release {

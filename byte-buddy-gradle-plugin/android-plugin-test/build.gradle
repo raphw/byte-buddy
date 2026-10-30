@@ -8,7 +8,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath group: 'com.android.tools.build', name: 'gradle', version: '7.4.0'
+        classpath group: 'com.android.tools.build', name: 'gradle', version: project.findProperty('agpVersion') ?: '7.4.0'
         def byteBuddyPlugin = new File("${rootDir}/../build/libs/byte-buddy-gradle-plugin-${byteBuddyVersion}.jar").canonicalFile
         def byteBuddyLib = new File("$rootDir/../../byte-buddy/target/byte-buddy-${byteBuddyVersion}.jar").canonicalFile
         classpath files(byteBuddyPlugin)
@@ -20,6 +20,9 @@ ext.javaVersion = JavaVersion.VERSION_11
 
 subprojects {
     repositories {
+        maven {
+            url = rootProject.layout.buildDirectory.dir('repository')
+        }
         mavenCentral()
         google()
     }
