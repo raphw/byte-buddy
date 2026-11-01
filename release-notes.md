@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. November 2026: version 1.18.17
+
+- Resolve Android classes jars for AAR Byte Buddy plugins on AGP 9.5
+
 ### 23. October 2026: version 1.18.16
 
 - Correct detection of a dropped implicit `this` frame in constructors with `long` or `double` parameters when using `Advice`.
