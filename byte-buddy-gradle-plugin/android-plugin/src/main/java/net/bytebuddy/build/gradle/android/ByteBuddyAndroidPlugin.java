@@ -43,9 +43,11 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.AttributeCompatibilityRule;
 import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.attributes.AttributeDisambiguationRule;
 import org.gradle.api.attributes.AttributeMatchingStrategy;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
+import org.gradle.api.attributes.MultipleCandidatesDetails;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.attributes.java.TargetJvmEnvironment;
 import org.gradle.api.file.Directory;
@@ -473,6 +475,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          */
         public void execute(AttributeMatchingStrategy<String> stringAttributeMatchingStrategy) {
             stringAttributeMatchingStrategy.getCompatibilityRules().add(ByteBuddyDependencyRule.class);
+            stringAttributeMatchingStrategy.getDisambiguationRules().add(ByteBuddyDisambiguationRule.class);
         }
     }
 
@@ -515,7 +518,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         public void execute(CompatibilityCheckDetails<String> details) {
             if (BYTE_BUDDY_CLASSES_TYPE.equals(details.getConsumerValue())) {
                 String producerValue = details.getProducerValue();
-                if ("java-classes-directory".equals(producerValue) || "android-classes-directory".equals(producerValue)) {
+                if ("java-classes-directory".equals(producerValue)
+                        || "android-classes-directory".equals(producerValue)
+                        || "android-classes-jar".equals(producerValue)) {
                     details.compatible();
                 }
             } else if (BYTE_BUDDY_RESOURCES_TYPE.equals(details.getConsumerValue())) {
@@ -523,6 +528,28 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 if ("java-resources-directory".equals(producerValue) || "android-java-res".equals(producerValue)) {
                     details.compatible();
                 }
+            }
+        }
+    }
+
+    /**
+     * A rule to prefer class directories over class jars, as local Android projects offer both.
+     */
+    public abstract static class ByteBuddyDisambiguationRule implements AttributeDisambiguationRule<String> {
+
+        /**
+         * Creates a new disambiguation rule.
+         */
+        public ByteBuddyDisambiguationRule() {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(MultipleCandidatesDetails<String> details) {
+            if (BYTE_BUDDY_CLASSES_TYPE.equals(details.getConsumerValue()) && details.getCandidateValues().contains("android-classes-directory")) {
+                details.closestMatch("android-classes-directory");
             }
         }
     }

@@ -5,6 +5,7 @@ plugins {
 apply from: "$rootDir/bytebuddy.gradle"
 
 android {
+    namespace 'net.bytebuddy.android.test'
     compileSdk 32
     defaultConfig {
         applicationId "net.bytebuddy.android.test"

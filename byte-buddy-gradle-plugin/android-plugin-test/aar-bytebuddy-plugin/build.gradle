@@ -4,6 +4,7 @@ plugins {
 apply from: "$rootDir/bytebuddy.gradle"
 
 android {
+    namespace 'net.bytebuddy.plugin.gradle.test.aar'
     compileSdk 32
     defaultConfig {
         minSdk 21
