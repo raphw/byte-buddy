@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, macos-14, windows-2022 ]
+        os: [ ubuntu-24.04, macos-15, windows-2022 ]
         java: [ 8, 11, 17, 21, 25 ]
     runs-on: ${{ matrix.os }}
     needs: [ extended ]
@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, macos-14, windows-2022 ]
+        os: [ ubuntu-24.04, macos-15, windows-2022 ]
         java: [ 8, 11 ]
     runs-on: ${{ matrix.os }}
     needs: [ extended ]
