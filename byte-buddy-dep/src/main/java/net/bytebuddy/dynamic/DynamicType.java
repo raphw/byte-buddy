@@ -1592,7 +1592,7 @@ public interface DynamicType extends ClassFileLocator {
          * Creates the dynamic type this builder represents. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
          * </p>
          * <p>
-         * Other than {@link DynamicType.Builder#make(TypePool)}, this method supplies a context-dependant type pool to the underlying class writer.
+         * Other than {@link DynamicType.Builder#make(TypePool)}, this method supplies a context-dependent type pool to the underlying class writer.
          * Supplying a type pool only makes sense if custom byte code is created by adding a custom {@link AsmVisitorWrapper} where ASM might be
          * required to compute stack map frames by processing information over any mentioned type's class hierarchy.
          * </p>

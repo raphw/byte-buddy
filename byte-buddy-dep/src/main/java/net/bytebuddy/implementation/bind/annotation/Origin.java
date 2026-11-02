@@ -45,7 +45,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 /**
  * <p>
  * The origin annotation provides some meta information about the source method that is bound to this method where
- * the binding is dependant of the parameter's type:
+ * the binding is dependent on the parameter's type:
  * </p>
  * <ol>
  * <li>If the annotated parameter is of type {@link java.lang.reflect.Method}, {@link java.lang.reflect.Constructor} or

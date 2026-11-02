@@ -1147,7 +1147,7 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment provider that is dependant on the existence of a <i>tools.jar</i> file on the local
+         * An attachment provider that is dependent on the existence of a <i>tools.jar</i> file on the local
          * file system.
          */
         enum ForStandardToolsJarVm implements AttachmentProvider {
