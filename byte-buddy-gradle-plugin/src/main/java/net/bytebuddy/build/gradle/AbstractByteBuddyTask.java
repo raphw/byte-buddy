@@ -400,7 +400,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         ClassFileVersion classFileVersion;
         if (this.classFileVersion == null) {
             classFileVersion = ClassFileVersion.ofThisVm();
-            getLogger().warn("Could not locate Java target version, build is JDK dependant: {}", classFileVersion.getJavaVersion());
+            getLogger().warn("Could not locate Java target version, build is JDK dependent: {}", classFileVersion.getJavaVersion());
         } else {
             classFileVersion = this.classFileVersion;
             getLogger().debug("Java version was configured: {}", classFileVersion.getJavaVersion());

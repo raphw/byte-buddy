@@ -1136,7 +1136,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         interface ErrorHandler {
 
             /**
-             * Invoked if an error occured during a plugin's application on a given type.
+             * Invoked if an error occurred during a plugin's application on a given type.
              *
              * @param typeDescription The type being matched or transformed.
              * @param plugin          The plugin being applied.
@@ -1145,7 +1145,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             void onError(TypeDescription typeDescription, Plugin plugin, Throwable throwable);
 
             /**
-             * Invoked after the application of all plugins was attempted if at least one error occured during handling a given type.
+             * Invoked after the application of all plugins was attempted if at least one error occurred during handling a given type.
              *
              * @param typeDescription The type being transformed.
              * @param throwables      The throwables that caused errors during the application.

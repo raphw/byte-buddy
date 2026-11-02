@@ -67,7 +67,7 @@ public enum Removal implements StackManipulation {
     }
 
     /**
-     * Removes a value from the operand stack dependant of its size.
+     * Removes a value from the operand stack dependent on its size.
      *
      * @param typeDefinition The type to remove from the stack.
      * @return A stack manipulation that represents the removal.
