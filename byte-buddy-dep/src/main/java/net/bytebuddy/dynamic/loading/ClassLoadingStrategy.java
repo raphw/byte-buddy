@@ -75,7 +75,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * The strategy is identical to {@link ClassLoadingStrategy.Default#WRAPPER} but exposes
          * the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}. For
-         * this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
+         * this purpose, all class files are persisted as byte arrays within the wrapping class loader.
          */
         WRAPPER_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST, WrappingDispatcher.PARENT_FIRST)),
 
